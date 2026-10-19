@@ -1,114 +1,119 @@
-# STARTER: ฐานข้อมูล + API Spec 🗄️
+# STARTER: ฐานข้อมูล + รายการ API 🗄️
 
 > **⚡ สรุป 30 วินาที**
-> - อย่างน้อย **6 ตาราง** ทุกตารางมี `id`, `created_at`, `updated_at`
-> - ทุก endpoint ขึ้นต้นด้วย `/api` แบ่งเป็น **public** (ใครก็เรียกได้) กับ **admin** (ต้องมี cookie login)
-> - response **หน้าตาเหมือนกันทุก endpoint** และใช้ status code ให้ถูก
+> - ฐานข้อมูลมี **6 ตารางขึ้นไป** ทุกตารางมีช่อง `id` (เลขประจำแถว), `created_at` (สร้างเมื่อ), `updated_at` (แก้ล่าสุดเมื่อ)
+> - ที่อยู่ API ทุกตัวขึ้นต้นด้วย `/api` แบ่งเป็น 2 กลุ่ม: **ใครก็เรียกได้** กับ **ต้อง login เป็นเจ้าของร้านก่อน**
+> - API ทุกตัวตอบกลับ **หน้าตาเดียวกัน** และใช้ตัวเลขบอกผล (status code) ให้ถูก
+
+> **📖 คำใหม่ในหน้านี้**
+> [ตาราง](../glossary.md#table) · [Primary key](../glossary.md#primary-key) · [Foreign key](../glossary.md#foreign-key) · [Unique](../glossary.md#unique) · [jsonb](../glossary.md#jsonb) · [Migration](../glossary.md#migration) · [Seed](../glossary.md#seed) · [Endpoint](../glossary.md#endpoint) · [Status code](../glossary.md#status-code)
 
 ---
 
-## 1. ฐานข้อมูลขั้นต่ำ
+## 1. ตารางที่ต้องมี
 
-มีอย่างน้อย 6 ตาราง ทุกตารางต้องมี `id`, `created_at`, `updated_at` น้องเพิ่มฟิลด์ตามธุรกิจได้ แต่ **ห้ามตัดฟิลด์ข้างล่าง**
+อย่างน้อย 6 ตาราง เพิ่มช่องตามร้านของตัวเองได้ แต่ **ห้ามตัดช่องที่เขียนไว้ข้างล่าง**
+(ชื่อตารางและชื่อช่องเขียนเป็นภาษาอังกฤษตามนี้ เพราะเป็นชื่อในโค้ด)
 
-| ตาราง | ฟิลด์หลัก | หมายเหตุ |
-|---|---|---|
-| `admins` | `email` (unique), `password_hash`, `name` | ห้ามเก็บรหัสผ่านตรงๆ ([บทที่ 10 ข้อ 2](../10-security.md#_2-เก็บรหัสผ่านผู้ใช้-hash-ไม่ใช่-encrypt)) |
-| `site_settings` | `shop_name`, `logo_url`, `phone`, `email`, `address`, `opening_hours`, `line_url`, `facebook_url`, `instagram_url`, `map_url` | มีแถวเดียวทั้งระบบ |
-| `pages` | `slug` (unique: home/about/contact), `seo_title`, `seo_description`, `og_image_url`, `content` (jsonb) | `content` เก็บข้อความ hero/จุดเด่น/about |
-| `categories` | `name`, `slug` (unique), `sort_order` | |
-| `services` | `category_id` (FK), `name`, `description`, `price` (nullable), `image_url`, `is_featured`, `is_active`, `sort_order` | FK ห้ามลบ category ทิ้งถ้ายังมี service |
-| `contact_messages` | `name`, `phone`, `email`, `subject`, `message`, `is_read` | |
+| ตาราง | เก็บอะไร | ช่องที่ต้องมี | ข้อควรรู้ |
+|---|---|---|---|
+| `admins` | บัญชีเจ้าของร้าน | `email` (ห้ามซ้ำ), `password_hash`, `name` | ห้ามเก็บรหัสผ่านจริง เก็บแบบเข้ารหัสทางเดียวเท่านั้น ([บทที่ 10 ข้อ 2](../10-security.md#_2-เก็บรหัสผ่านผู้ใช้-hash-ไม่ใช่-encrypt)) |
+| `site_settings` | ข้อมูลร้าน | `shop_name`, `logo_url`, `phone`, `email`, `address`, `opening_hours`, `line_url`, `facebook_url`, `instagram_url`, `map_url` | ทั้งระบบมีแค่แถวเดียว |
+| `pages` | ข้อความของแต่ละหน้า | `slug` (ชื่อหน้า: home/about/contact ห้ามซ้ำ), `seo_title`, `seo_description`, `og_image_url`, `content` | `content` เก็บข้อความภาพใหญ่ จุดเด่น เรื่องราวร้าน |
+| `categories` | หมวดสินค้า | `name`, `slug` (ห้ามซ้ำ), `sort_order` | |
+| `services` | สินค้า/บริการ | `category_id` (อยู่หมวดไหน), `name`, `description`, `price` (เว้นว่างได้), `image_url`, `is_featured`, `is_active`, `sort_order` | ห้ามลบหมวดที่ยังมีสินค้าอยู่ |
+| `contact_messages` | ข้อความจากลูกค้า | `name`, `phone`, `email`, `subject`, `message`, `is_read` | |
 
+**ตารางเชื่อมกันยังไง**
 ```
-categories 1 ──── * services          (category_id FK)
-admins / site_settings / pages / contact_messages   (ตารางเดี่ยว ไม่มี FK)
+categories (หมวด) 1 ──── หลาย services (สินค้า)    ← สินค้าจดเลขหมวดไว้ใน category_id
+admins / site_settings / pages / contact_messages     ← อยู่เดี่ยวๆ ไม่เชื่อมกับใคร
 ```
 
-> 💡 **ทำไม `pages.content` เป็น jsonb:** แต่ละหน้ามีโครงสร้างต่างกัน ถ้าแตกเป็นตารางย่อยจะเยอะเกินสำหรับ 3 หน้า แต่ **ต้องมี Zod schema คุม shape ของ jsonb ทุกครั้งที่บันทึก**
-> ทบทวน: `JSONB` ของ PostgreSQL ใน [บทที่ 7](../07-mysql-postgres.md#_5-ชนิดข้อมูลพิเศษ) และ "NoSQL ยืดหยุ่นแต่ต้องตรวจเอง" ใน [บทที่ 6](../06-sql-nosql.md#_5-nosql)
+> 💡 **ทำไม `content` ของหน้าเก็บแบบ JSON?** แต่ละหน้ามีข้อความไม่เหมือนกัน (หน้าแรกมีภาพใหญ่ หน้า about มีเรื่องราว) ถ้าแยกเป็นตารางย่อยจะเยอะเกินไปสำหรับแค่ 3 หน้า
+> แต่ JSON ใส่อะไรก็ได้ จึง **ต้องมีกฎตรวจ (Zod) ทุกครั้งก่อนบันทึก** ไม่งั้นข้อมูลจะเละ
+> ทบทวน: [บทที่ 7](../07-mysql-postgres.md#_5-ชนิดข้อมูลพิเศษ) และ [บทที่ 6](../06-sql-nosql.md#_5-nosql)
 
-> ⚠️ **กับดัก FK:** Drizzle ตั้งค่า `onDelete` ได้ ถ้าตั้งเป็น `cascade` ลบหมวดแล้ว service หายไปด้วย 😱 requirement ต้องการ **ห้ามลบ** ให้ใช้ `restrict` แล้วตอบ `409` กลับไป
+> ⚠️ **กับดัก:** ตอนเชื่อมสินค้ากับหมวด ถ้าตั้งเป็น `cascade` ลบหมวดแล้ว **สินค้าในหมวดหายไปด้วย** 😱 งานนี้ต้องการ "ห้ามลบ" ให้ตั้งเป็น `restrict` และตอบกลับด้วยเลข `409`
 
-> 📚 ตัวอย่าง schema, migration และ seed ที่รันซ้ำได้: [บทที่ 14 ข้อ 3](../14-hono-api.md)
+> 📚 ตัวอย่างโค้ดตาราง, ไฟล์ migration และ seed ที่รันซ้ำได้: [บทที่ 14 ข้อ 3](../14-hono-api.md)
 
 **ต้องส่ง**
-- ไฟล์ `schema.ts`
-- migration ที่รันได้ ([บทที่ 8: Migration](../08-orm.md#_3-migration))
-- seed script: admin 1 คน, หมวด 2, service 6, settings 1, pages 3
-- รูป ER Diagram (export จาก pgAdmin หรือวาดเองก็ได้)
+- ไฟล์แบบแปลนตาราง `schema.ts`
+- ไฟล์ migration ที่รันได้จริง ([บทที่ 8](../08-orm.md#_3-migration))
+- คำสั่งใส่ข้อมูลตั้งต้น (seed): เจ้าของร้าน 1 คน, หมวด 2, สินค้า 6, ข้อมูลร้าน 1, หน้า 3
+- รูปผังตาราง (ER Diagram) จะให้ pgAdmin วาดให้ หรือวาดเองก็ได้
 
 ---
 
-## 2. API Spec
+## 2. รายการ API
 
-ทุก endpoint ขึ้นต้นด้วย `/api` แบ่งเป็น public (ใครก็เรียกได้) กับ admin (ต้องมี cookie login)
-ทบทวน method และ status code ใน [บทที่ 5](../05-http-api.md)
+ที่อยู่ทุกตัวขึ้นต้นด้วย `/api` ทบทวนเรื่อง GET / POST / PATCH / DELETE และตัวเลขบอกผลใน [บทที่ 5](../05-http-api.md)
 
-### Public
+### กลุ่มที่ใครก็เรียกได้ (หน้าเว็บของลูกค้าใช้)
 
-| Method | Endpoint | ใช้ทำอะไร |
+| ทำอะไร | ที่อยู่ | ใช้ทำอะไร |
 |---|---|---|
-| `GET` | `/api/settings` | ข้อมูลร้าน (ใช้ใน navbar/footer) |
-| `GET` | `/api/pages/:slug` | เนื้อหา + SEO ของหน้านั้น |
-| `GET` | `/api/categories` | หมวดหมู่ทั้งหมด |
-| `GET` | `/api/services?category=&featured=` | บริการที่เปิดแสดงผล |
-| `POST` | `/api/contact` | ส่งข้อความติดต่อ |
+| `GET` | `/api/settings` | ข้อมูลร้าน (ใช้ในเมนูบนและส่วนท้ายหน้า) |
+| `GET` | `/api/pages/:slug` | ข้อความของหน้านั้น + ข้อมูลสำหรับ Google |
+| `GET` | `/api/categories` | หมวดทั้งหมด |
+| `GET` | `/api/services?category=&featured=` | สินค้าที่เปิดแสดงอยู่ (เลือกหมวด / เฉพาะสินค้าเด่นได้) |
+| `POST` | `/api/contact` | ส่งข้อความจากฟอร์มติดต่อ |
 
-### Admin
+### กลุ่มที่ต้อง login เป็นเจ้าของร้าน (หน้าจัดการร้านใช้)
 
-| Method | Endpoint | ใช้ทำอะไร |
+| ทำอะไร | ที่อยู่ | ใช้ทำอะไร |
 |---|---|---|
-| `POST` | `/api/admin/login` | login ตั้ง cookie |
-| `POST` | `/api/admin/logout` | ลบ cookie |
-| `GET` | `/api/admin/me` | เช็คว่ายัง login อยู่ไหม |
-| `GET` | `/api/admin/dashboard` | ตัวเลขสรุปหน้า dashboard |
+| `POST` | `/api/admin/login` | เข้าสู่ระบบ (ได้ cookie กลับมา) |
+| `POST` | `/api/admin/logout` | ออกจากระบบ (ลบ cookie) |
+| `GET` | `/api/admin/me` | ถามว่ายัง login อยู่ไหม |
+| `GET` | `/api/admin/dashboard` | ตัวเลขสรุปหน้าแรกของหลังบ้าน |
 | `PUT` | `/api/admin/settings` | แก้ข้อมูลร้าน |
-| `PUT` | `/api/admin/pages/:slug` | แก้เนื้อหา/SEO |
+| `PUT` | `/api/admin/pages/:slug` | แก้ข้อความของหน้า |
 | `GET` / `POST` | `/api/admin/categories` | ดู / เพิ่มหมวด |
 | `PATCH` / `DELETE` | `/api/admin/categories/:id` | แก้ / ลบหมวด |
-| `GET` / `POST` | `/api/admin/services?q=&category=&page=` | ดู (มี search + pagination) / เพิ่ม |
-| `PATCH` / `DELETE` | `/api/admin/services/:id` | แก้ / ลบ |
+| `GET` / `POST` | `/api/admin/services?q=&category=&page=` | ดู (ค้นหาได้ แบ่งหน้าได้) / เพิ่มสินค้า |
+| `PATCH` / `DELETE` | `/api/admin/services/:id` | แก้ / ลบสินค้า |
 | `GET` | `/api/admin/messages` | รายการข้อความ |
-| `GET` / `DELETE` | `/api/admin/messages/:id` | เปิดอ่าน (mark read) / ลบ |
+| `GET` / `DELETE` | `/api/admin/messages/:id` | เปิดอ่าน (กลายเป็นอ่านแล้ว) / ลบ |
 
-### รูปแบบ response ต้องเหมือนกันทุก endpoint
+### ทุก API ต้องตอบกลับหน้าตาเดียวกัน
 
 ```jsonc
 // สำเร็จ
 { "success": true, "data": { } }
 
-// list ที่มีแบ่งหน้า
+// รายการที่แบ่งหน้า (meta บอกว่าอยู่หน้าไหน ทั้งหมดกี่รายการ)
 { "success": true, "data": [ ], "meta": { "page": 1, "limit": 10, "total": 42 } }
 
-// ผิดพลาด
+// ไม่สำเร็จ
 { "success": false, "error": { "code": "VALIDATION_ERROR", "message": "...", "details": { } } }
 ```
 
-> 💡 เขียน helper `ok()` / `AppError` ไว้ที่เดียวแล้วเรียกใช้ทุก route ดีกว่าพิมพ์ object เองทุกที่ ลืมฟิลด์ทีเดียว frontend พังทั้งเว็บ ([ตัวอย่างในบทที่ 14 ข้อ 4](../14-hono-api.md))
+> 💡 เขียนตัวช่วยสร้างคำตอบไว้ที่เดียว แล้วทุก API เรียกใช้ ดีกว่าพิมพ์เองทุกที่ ลืมสักช่องทีเดียว หน้าเว็บพังทั้งเว็บ ([ตัวอย่างในบทที่ 14 ข้อ 4](../14-hono-api.md))
 
-### Status code ที่ต้องใช้ให้ถูก
+### ตัวเลขบอกผลที่ต้องใช้ให้ถูก
 
-| Code | ใช้เมื่อ |
+| เลข | ใช้เมื่อ |
 |---|---|
 | `200` | สำเร็จ |
-| `201` | สร้างใหม่ |
-| `400` | validate ไม่ผ่าน |
-| `401` | ไม่ได้ login |
-| `404` | ไม่พบ |
-| `409` | ซ้ำ เช่น slug ซ้ำ, ลบหมวดที่มีสินค้า |
-| `500` | server พัง (ห้ามส่ง stack trace กลับไป) |
+| `201` | สร้างของใหม่สำเร็จ |
+| `400` | ข้อมูลที่ส่งมาไม่ครบหรือผิดรูปแบบ |
+| `401` | ยังไม่ได้ login |
+| `404` | หาไม่เจอ |
+| `409` | ขัดกับข้อมูลที่มีอยู่ เช่น ชื่อซ้ำ, ลบหมวดที่ยังมีสินค้า |
+| `500` | server พังเอง (ห้ามส่งรายละเอียดข้างในของโค้ดกลับไปให้คนนอกเห็น) |
 
 ---
 
-## ✅ เช็คตัวเองก่อน Review รอบที่ 1
+## ✅ เช็คตัวเองก่อนพี่เลี้ยงตรวจรอบที่ 1
 
-- [ ] `bun run seed` แล้วเปิด pgAdmin เห็นข้อมูลครบทุกตาราง
-- [ ] ลบ DB ทิ้งแล้วรัน migration + seed ใหม่ได้โดยไม่ error
-- [ ] ทุก endpoint ทดสอบผ่าน Postman/HTTPie ทั้งกรณีสำเร็จและ error
-- [ ] เรียก `/api/admin/*` โดยไม่ login แล้วได้ `401`
-- [ ] ลบหมวดที่ยังมี service แล้วได้ `409`
+- [ ] รัน `bun run seed` แล้วเปิด pgAdmin เห็นข้อมูลครบทุกตาราง
+- [ ] ลบฐานข้อมูลทิ้ง แล้วสร้างใหม่ (migration + seed) ได้โดยไม่ error
+- [ ] ลองเรียก API ทุกตัวด้วย Postman หรือไฟล์ `.http` ทั้งกรณีสำเร็จและกรณีผิด
+- [ ] เรียก `/api/admin/...` ตอนยังไม่ login แล้วได้ `401`
+- [ ] ลบหมวดที่ยังมีสินค้า แล้วได้ `409`
 
 ---
 
-[← Requirement หน้าบ้าน + หลังบ้าน](./requirements.md) · [🏠 สารบัญ](../README.md) · [Non-functional Requirement →](./quality.md)
+[← หน้าเว็บ + หน้าจัดการร้าน](./requirements.md) · [🏠 สารบัญ](../README.md) · [คุณภาพที่ต้องได้ →](./quality.md)

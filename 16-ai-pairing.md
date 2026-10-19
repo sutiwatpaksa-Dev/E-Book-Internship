@@ -8,6 +8,9 @@
 > - prompt ที่ดีมี 5 ส่วน: **บริบท, เป้าหมาย, ข้อจำกัด, รูปแบบคำตอบ, เกณฑ์ว่าเสร็จ**
 > - ทุกชิ้นที่ AI ทำ ต้อง **อ่าน → รัน → อธิบายได้ด้วยคำพูดตัวเอง** ก่อน commit
 
+> **📖 คำใหม่ในบทนี้**
+> [Prompt](./glossary.md#prompt) · [Context (บริบท)](./glossary.md#context) · [CLAUDE.md](./glossary.md#claude-md) · [Diff](./glossary.md#diff) · [Coding agent](./glossary.md#agent) · [Commit](./glossary.md#commit) · [Branch](./glossary.md#branch)
+
 ---
 
 ## 📖 เรื่องเล่า

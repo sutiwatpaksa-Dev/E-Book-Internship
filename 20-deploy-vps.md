@@ -1,54 +1,59 @@
-# บทที่ 20: Deploy ขึ้น VPS (Docker Compose + Caddy + HTTPS) 🚀
+# บทที่ 20: ขึ้นเว็บจริงบนเครื่องเช่า (VPS) 🚀
 
 > ⏱ ประมาณ 4 ชั่วโมง · 🧩 ต้องผ่านก่อน: บทที่ 14, 15, 18 และ 19 · 🛠 ใช้: Docker Compose, Caddy, Git, SSH
 
 > **⚡ สรุป 30 วินาที**
-> - production มี 3 กล่อง: **db** (PostgreSQL), **server** (Hono), **web** (Caddy เสิร์ฟหน้าเว็บ + HTTPS + ส่ง `/api` ต่อให้ server)
-> - เปิดสู่โลกแค่ **web (80/443)** ส่วน db และ server คุยกันในเครือข่ายภายในของ Docker
-> - Caddy ขอ **certificate ฟรีจาก Let's Encrypt และต่ออายุให้เอง** แค่ DNS ชี้ถูก
-> - ลำดับ deploy ทุกครั้ง: **pull → build → migrate → up**
+> - ระบบจริงมี 3 กล่อง: **ฐานข้อมูล** (`db`), **ส่วนเบื้องหลัง** (`server`), **ประตูหน้า** (`web` = Caddy ที่เสิร์ฟหน้าเว็บด้วย)
+> - คนนอกเข้าได้ทาง **ประตูหน้าบานเดียว** ส่วนฐานข้อมูลกับ server อยู่ห้องข้างใน คนนอกเดินเข้าไปตรงๆ ไม่ได้
+> - Caddy ขอ **ใบรับรอง HTTPS ฟรีและต่ออายุให้เอง** ขอแค่ชื่อเว็บชี้มาที่เครื่องถูก
+> - ทุกครั้งที่อัปเดต ทำตามลำดับ: **ดึงโค้ด → สร้างกล่องใหม่ → อัปเดตตาราง → เปิดกล่องใหม่**
+
+> **📖 คำใหม่ในบทนี้**
+> [Deploy](./glossary.md#deploy) · [Production](./glossary.md#production) · [Reverse proxy](./glossary.md#reverse-proxy) · [Docker Compose](./glossary.md#docker-compose) · [Volume](./glossary.md#volume) · [HTTPS](./glossary.md#https) · [Migration](./glossary.md#migration) · [Rollback](./glossary.md#rollback)
 
 ---
 
 ## 📖 เรื่องเล่า
 
-บิตเคย deploy โดย SSH เข้าเครื่อง รัน `bun run dev` ทิ้งไว้ใน terminal แล้วปิดโน้ตบุ๊คกลับบ้าน
-เช้ามาเว็บล่ม เพราะปิด terminal = process ตายตาม 😅 ส่วนหน้าเว็บก็เป็น `http://` ขึ้น "Not secure" ตัวแดง
+บิตเคยขึ้นเว็บโดยเข้าไปที่เครื่องเช่า พิมพ์ `bun run dev` ทิ้งไว้ แล้วปิดโน้ตบุ๊คกลับบ้าน
+เช้ามาเว็บล่ม เพราะปิดหน้าต่างพิมพ์คำสั่ง = โปรแกรมปิดตามไปด้วย 😅 แถมเว็บเป็น `http://` ขึ้นคำว่า "Not secure" สีแดง
 
-พี่ไบต์: *"production ต้อง **รันเองได้ ฟื้นเองได้ ปลอดภัยเอง** โดยไม่มีใครนั่งเฝ้า"*
+พี่ไบต์: *"ระบบจริงต้อง **เปิดเองได้ ฟื้นเองได้ ปลอดภัยเอง** โดยไม่ต้องมีใครนั่งเฝ้า"*
 
 ---
 
-## 1. ภาพ production
+## 1. หน้าตาระบบจริง
 
 ```
- Internet
-    │  https://example.com            (DNS A record → IP ของ VPS: บทที่ 18)
-    ▼
- ┌──────────────────────────── VPS (ufw: 22, 80, 443) ────────────────────────────┐
- │                                                                                │
- │  ┌─ web (Caddy) :80 :443 ─┐        Docker network ภายใน (คนนอกเข้าไม่ได้)        │
- │  │  /api/*  ──────────────┼──────>  server (Hono) :3000  ──────>  db (Postgres) │
- │  │  /*  → ไฟล์ React /srv  │                                        volume: pgdata│
- │  └────────────────────────┘                                                    │
- │     volume: caddy_data (เก็บ certificate)                                       │
- └────────────────────────────────────────────────────────────────────────────────┘
+ ลูกค้าเปิด https://example.com
+            │   (ชื่อเว็บชี้มาที่เครื่องเช่า: ตั้งในบทที่ 18)
+            ▼
+ ┌──────────────── เครื่องเช่า (เปิดประตูไว้แค่ 22, 80, 443) ────────────────┐
+ │                                                                         │
+ │  🚪 web (Caddy)  ← ประตูหน้าบานเดียว                                      │
+ │     ├─ ขอหน้าเว็บ      → ส่งไฟล์หน้าเว็บ React ให้                          │
+ │     └─ ขอ /api/...    → ส่งต่อให้ ⚙️ server ──────> 🗄️ db (ฐานข้อมูล)      │
+ │                                              ห้องข้างใน คนนอกเข้าไม่ได้     │
+ │                                                                         │
+ │  💾 ที่เก็บถาวร: ข้อมูลในฐานข้อมูล + ใบรับรอง HTTPS (ลบกล่องแล้วไม่หาย)       │
+ └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-**ทำไมออกแบบแบบนี้**
-| การตัดสินใจ | เหตุผล |
+**ทำไมจัดแบบนี้**
+| ตัดสินใจว่า | เพราะ |
 |---|---|
-| หน้าเว็บกับ API อยู่โดเมนเดียว (`/api`) | cookie login ใช้ได้ทันที ไม่ต้อง CORS (บทที่ 15) |
-| Caddy อยู่ในกล่องเดียวกับไฟล์หน้าเว็บ | build หน้าเว็บครั้งเดียวได้ image พร้อมเสิร์ฟ |
-| db/server ไม่มี `ports:` | ไม่หลุดสู่โลก แม้ Docker จะข้าม ufw (บทที่ 19) |
-| `restart: unless-stopped` | process ตาย / server reboot แล้วขึ้นเอง |
-| volume สำหรับ db และ caddy | สร้างกล่องใหม่กี่ครั้งข้อมูลและ certificate ก็ไม่หาย |
+| หน้าเว็บกับ API ใช้ชื่อเว็บเดียวกัน (API อยู่ที่ `/api`) | ระบบ login ด้วย cookie ทำงานได้ทันที (บทที่ 15) |
+| Caddy อยู่กล่องเดียวกับไฟล์หน้าเว็บ | สร้างหน้าเว็บครั้งเดียว ได้กล่องที่พร้อมเสิร์ฟเลย |
+| `db` และ `server` ไม่เปิดประตูออกนอกเครื่อง | คนนอกเข้าถึงตรงๆ ไม่ได้ (บทที่ 19 เล่าว่าทำไมต้องระวัง) |
+| ตั้งให้กล่อง **เปิดใหม่เองเมื่อดับ** | โปรแกรมล่มหรือเครื่องรีสตาร์ท แล้วระบบกลับมาเอง |
+| มีที่เก็บถาวร (volume) | สร้างกล่องใหม่กี่ครั้ง ข้อมูลกับใบรับรองก็ไม่หาย |
 
 ---
 
-## 2. 🔧 เตรียมไฟล์ใน repo (ทำในเครื่องเรา)
+## 2. 🔧 เตรียมไฟล์ในโปรเจกต์ (ทำที่เครื่องเรา)
 
-โครงสร้างหลังเพิ่มไฟล์
+หน้าตาโฟลเดอร์หลังเพิ่มไฟล์
+
 ```
 bit-cafe/
 ├─ client/
@@ -64,7 +69,9 @@ bit-cafe/
 └─ .env.prod.example      ← ใหม่ (ไม่มีค่าจริง)
 ```
 
-### `server/Dockerfile`
+### สูตรสร้างกล่อง server: `server/Dockerfile`
+ไฟล์ Dockerfile คือ **สูตรทำกล่อง** บอกทีละขั้นว่าต้องใส่อะไรลงไป
+
 ```dockerfile
 FROM oven/bun:1
 WORKDIR /app
@@ -78,16 +85,19 @@ USER bun                                         # ไม่รันด้ว�
 EXPOSE 3000
 CMD ["bun", "src/index.ts"]
 ```
-`server/.dockerignore`
+รายการไฟล์ที่ **ไม่ต้องใส่ลงกล่อง** `server/.dockerignore`
+
 ```
 node_modules
 .env
 *.http
 *.log
 ```
-> 💡 Bun รัน TypeScript ได้ตรงๆ ไม่ต้อง build เป็น JS ก่อน และ `src/db/migrate.ts` (บทที่ 14) ใช้แค่ `drizzle-orm` จึงรัน migration ใน image นี้ได้แม้ไม่มี `drizzle-kit`
+> 💡 Bun รันไฟล์ TypeScript ได้เลย ไม่ต้องแปลงก่อน และไฟล์อัปเดตตาราง `src/db/migrate.ts` (บทที่ 14) ใช้แค่ `drizzle-orm` จึงรันในกล่องนี้ได้
 
-### `client/Dockerfile` (multi-stage: build แล้วส่งต่อให้ Caddy)
+### สูตรสร้างกล่องหน้าเว็บ: `client/Dockerfile`
+สูตรนี้มี 2 ขั้น: ขั้นแรก **แพ็กหน้าเว็บเป็นไฟล์พร้อมใช้** ขั้นที่สอง **ย้ายเฉพาะไฟล์ที่แพ็กแล้วไปใส่กล่อง Caddy** (กล่องสุดท้ายจึงเล็กและสะอาด)
+
 ```dockerfile
 # ขั้นที่ 1: build หน้าเว็บเป็นไฟล์ static
 FROM oven/bun:1 AS build
@@ -102,13 +112,15 @@ FROM caddy:2
 COPY --from=build /app/dist /srv
 ```
 `client/.dockerignore`
+
 ```
 node_modules
 dist
 *.log
 ```
 
-### `deploy/Caddyfile`
+### ตั้งค่าประตูหน้า: `deploy/Caddyfile`
+
 ```
 {$DOMAIN} {
 	encode zstd gzip
@@ -138,20 +150,23 @@ www.{$DOMAIN} {
 	redir https://{$DOMAIN}{uri} permanent
 }
 ```
-อ่านทีละส่วน:
+อ่านทีละส่วน
 | บรรทัด | ทำอะไร |
 |---|---|
-| `{$DOMAIN} {` | เว็บของโดเมนนี้ (อ่านจาก env) เขียนชื่อโดเมน = **Caddy ทำ HTTPS ให้อัตโนมัติ** และ redirect http → https |
-| `encode zstd gzip` | บีบอัดไฟล์ก่อนส่ง เว็บโหลดเร็วขึ้น |
-| `header { ... }` | header ความปลอดภัย: บังคับ HTTPS, ห้ามเว็บอื่นเอาเราไปใส่ iframe, ซ่อนชื่อ server |
-| `handle /api/*` → `reverse_proxy server:3000` | request API ส่งต่อให้กล่องชื่อ `server` (ชื่อ service ใน compose) |
-| `try_files {path} /index.html` | ไม่มีไฟล์ตาม path (เช่น `/about`) → ส่ง `index.html` ให้ React Router จัดการ (บทที่ 13) |
-| `@assets ... immutable` | ไฟล์ใน `/assets/` มี hash ในชื่อ ให้ browser จำได้ 1 ปี |
-| `www.{$DOMAIN}` | `www.example.com` → redirect ไป `example.com` |
+| `{$DOMAIN} {` | ตั้งค่าของเว็บชื่อนี้ (อ่านชื่อเว็บจากไฟล์ `.env`) แค่ใส่ชื่อเว็บ **Caddy ก็ทำ HTTPS ให้เอง** และพาคนที่เข้า `http://` ไป `https://` |
+| `encode zstd gzip` | บีบไฟล์ให้เล็กลงก่อนส่ง เว็บโหลดเร็วขึ้น |
+| `header { ... }` | ป้ายกันภัยที่แนบไปกับทุกหน้า เช่น บังคับใช้ HTTPS, ห้ามเว็บอื่นเอาหน้าเราไปซ้อน |
+| `handle /api/*` → `reverse_proxy server:3000` | คำขอที่ขึ้นต้น `/api` ส่งต่อให้กล่องชื่อ `server` |
+| `try_files {path} /index.html` | ถ้าไม่มีไฟล์ตามที่ขอ (เช่น `/about`) ให้ส่งหน้าหลักไป แล้วให้ React เลือกหน้าเอง (บทที่ 13) |
+| `@assets ... immutable` | ไฟล์ในโฟลเดอร์ `/assets/` ให้เบราว์เซอร์จำไว้ได้ 1 ปี เปิดครั้งต่อไปเร็วขึ้น |
+| `www.{$DOMAIN}` | คนที่พิมพ์ `www.` นำหน้า ให้พาไปเว็บหลัก |
 
-> 🔐 Caddy **เขียนทับ** header `X-Forwarded-For` ที่ client ส่งมาเองด้วย IP จริง rate limit ใน `rateLimit.ts` (บทที่ 14) จึงเชื่อค่านี้ได้ **เฉพาะเมื่อ API เข้าได้ทางเดียวผ่าน Caddy** ซึ่งเป็นเหตุผลที่ server ห้ามมี `ports:`
+> 🔐 Caddy **เขียนทับ** ข้อมูล "IP ของคนที่ส่งมา" ด้วยค่าจริงเสมอ ตัวจำกัดการส่งฟอร์ม (บทที่ 14) จึงเชื่อค่านี้ได้
+> แต่ต้องเป็นแบบนี้ **เฉพาะเมื่อ server เข้าได้ทางเดียวคือผ่าน Caddy** นี่คือเหตุผลที่ห้ามเปิดประตูให้กล่อง server
 
-### `compose.prod.yaml`
+### ไฟล์สั่งเปิดทั้งระบบ: `compose.prod.yaml`
+ไฟล์นี้บอก Docker ว่ามีกี่กล่อง แต่ละกล่องตั้งค่ายังไง (เหมือนรายการเปิดร้าน)
+
 ```yaml
 name: bitcafe
 
@@ -217,9 +232,20 @@ volumes:
   caddy_data:
   caddy_config:
 ```
-👀 `${ตัวแปร:?ข้อความ}` = ถ้าไม่ได้ตั้งค่า compose จะหยุดพร้อมบอกข้อความ ดีกว่าเปิดระบบขึ้นมาด้วยรหัสผ่านว่าง
+👀 `${ชื่อ:?ข้อความ}` แปลว่า "ถ้าไม่ได้ตั้งค่านี้ไว้ ให้หยุดและบอกข้อความนี้" ดีกว่าปล่อยให้ระบบเปิดขึ้นมาโดยรหัสผ่านว่าง
 
-### `.env.prod.example` (commit ได้ ไม่มีค่าจริง)
+**อ่านส่วนที่สำคัญ**
+| ในไฟล์ | แปลว่า |
+|---|---|
+| `restart: unless-stopped` | กล่องดับเมื่อไหร่ เปิดใหม่เอง (ยกเว้นเราสั่งปิดเอง) |
+| `healthcheck` | วิธีถามฐานข้อมูลว่า "พร้อมรับงานหรือยัง" |
+| `depends_on: ... service_healthy` | รอฐานข้อมูลพร้อมจริงก่อน ค่อยเปิด server |
+| `ports:` (มีแค่ที่ `web`) | ประตูที่เปิดให้คนนอก มีแค่ 80 และ 443 |
+| `volumes:` | ที่เก็บถาวร: ฐานข้อมูล และใบรับรอง HTTPS |
+| `x-logging` | จำกัดขนาดบันทึกการทำงาน ไม่ให้โตจนเต็มเครื่อง |
+
+### ตัวอย่างไฟล์ตั้งค่า `.env.prod.example` (ขึ้น Git ได้ เพราะไม่มีค่าจริง)
+
 ```
 DOMAIN=example.com
 POSTGRES_PASSWORD=
@@ -228,44 +254,47 @@ ADMIN_EMAIL=
 ADMIN_PASSWORD=
 ```
 
-### อย่าลืมแก้
-- โฟลเดอร์ `server/drizzle/` (ไฟล์ migration) ต้อง **commit ขึ้น Git** server จะรัน migration จากไฟล์ชุดนี้
-- `client/public/robots.txt` และ `sitemap.xml` เปลี่ยน `example.com` เป็นโดเมนจริง (บทที่ 13)
-- meta OG ค่าเริ่มต้นใน `client/index.html` (บทที่ 13 ข้อ 7)
+### อย่าลืม
+- โฟลเดอร์ `server/drizzle/` (ไฟล์อัปเดตตาราง) ต้อง **ขึ้น Git ด้วย** เครื่องเช่าจะใช้ไฟล์ชุดนี้สร้างตาราง
+- แก้ `example.com` ใน `client/public/robots.txt` และ `sitemap.xml` เป็นชื่อเว็บจริง (บทที่ 13)
+- ใส่ข้อมูลการ์ดตอนแชร์ค่าเริ่มต้นไว้ใน `client/index.html` (บทที่ 13 ข้อ 7)
 
-**ทดสอบในเครื่องก่อน** (ตรวจไฟล์ compose โดยไม่ต้องรัน)
+**ลองตรวจไฟล์ในเครื่องเราก่อน** (แค่ตรวจว่าเขียนถูก ยังไม่ได้เปิดจริง)
+
 ```bash
 cp .env.prod.example .env       # ใส่ค่าอะไรก็ได้ชั่วคราว
 docker compose -f compose.prod.yaml config --quiet && echo OK
 rm .env
 ```
-แล้ว commit + push ขึ้น GitHub/GitLab
+แล้วบันทึกงาน (commit) และส่งขึ้น GitHub/GitLab
 
 ---
 
-## 3. 🔧 ชี้ DNS
+## 3. 🔧 ชี้ชื่อเว็บมาที่เครื่องเช่า
 
-ที่ Cloudflare (บทที่ 18) เพิ่ม `A @ → IP ของ VPS` และ `CNAME www → example.com` แบบ **DNS only** แล้วตรวจ:
+ที่ Cloudflare (บทที่ 18) เพิ่ม `A @ → IP ของเครื่องเช่า` และ `CNAME www → example.com` แบบ **DNS only** (เมฆสีเทา) แล้วตรวจ:
+
 ```bash
 dig +short example.com          # ต้องได้ IP ของ VPS ก่อนไปขั้นต่อไป
 ```
-> ⚠️ ถ้า DNS ยังไม่ชี้มาที่ VPS แล้วเปิด Caddy ไปก่อน Caddy จะขอ certificate ไม่ผ่าน (Let's Encrypt ตรวจไม่เจอเรา) และถ้าลองซ้ำหลายครั้งอาจโดนจำกัดชั่วคราว **DNS ก่อน แล้วค่อย up**
+> ⚠️ **ต้องชี้ชื่อเว็บให้เสร็จก่อนเปิด Caddy** ถ้าเปิดก่อน Caddy จะขอใบรับรองไม่ผ่าน (ผู้ออกใบรับรองหาเครื่องเราไม่เจอ) และถ้าลองซ้ำหลายรอบอาจถูกพักไว้ชั่วคราว
 
 ---
 
-## 4. 🔧 เอาโค้ดขึ้น server
+## 4. 🔧 เอาโค้ดขึ้นเครื่องเช่า
 
 ```bash
 ssh bitcafe
 ```
 
-**repo เป็น private** ใช้ **deploy key** (กุญแจที่อ่าน repo นี้ได้อย่างเดียว)
+**ถ้าโปรเจกต์ใน Git เป็นแบบส่วนตัว** ให้สร้าง **กุญแจสำหรับอ่านโปรเจกต์นี้อย่างเดียว** (deploy key)
+
 ```bash
 ssh-keygen -t ed25519 -f ~/.ssh/deploy_key -N "" -C "bitcafe-server"
 cat ~/.ssh/deploy_key.pub
 ```
-- GitHub: repo → Settings → **Deploy keys** → Add (ไม่ต้องติ๊ก write access)
-- GitLab: repo → Settings → Repository → **Deploy keys**
+- GitHub: เข้าโปรเจกต์ → Settings → **Deploy keys** → Add (ไม่ต้องติ๊กให้เขียนได้)
+- GitLab: เข้าโปรเจกต์ → Settings → Repository → **Deploy keys**
 
 ```bash
 cat >> ~/.ssh/config <<'EOF'
@@ -277,7 +306,8 @@ git clone git@github.com:<org>/bit-cafe.git ~/bit-cafe
 cd ~/bit-cafe
 ```
 
-**สร้าง `.env` บน server** (ไฟล์นี้อยู่บน server เท่านั้น ไม่เคยอยู่ใน Git)
+**สร้างไฟล์ `.env` บนเครื่องเช่า** (ไฟล์นี้อยู่บนเครื่องเช่าเท่านั้น ไม่เคยขึ้น Git)
+
 ```bash
 cp .env.prod.example .env
 openssl rand -hex 24          # → ใช้เป็น POSTGRES_PASSWORD (hex ไม่มีอักขระพิเศษ ใส่ใน URL ได้)
@@ -297,15 +327,16 @@ docker compose -f compose.prod.yaml run --rm server bun run seed       # ③ ข
 docker compose -f compose.prod.yaml up -d                              # ④ เปิดทั้งระบบ
 docker compose -f compose.prod.yaml ps                                 # ทุกกล่องต้อง running (db = healthy)
 ```
-💡 พิมพ์ยาวเหนื่อย ตั้ง alias ใน `~/.bashrc` ของ server: `alias dc='docker compose -f ~/bit-cafe/compose.prod.yaml'` แล้วใช้ `dc ps`, `dc logs -f`
+💡 คำสั่งยาวพิมพ์เหนื่อย ตั้งคำย่อไว้ในไฟล์ `~/.bashrc` บนเครื่องเช่า: `alias dc='docker compose -f ~/bit-cafe/compose.prod.yaml'` แล้วใช้ `dc ps`, `dc logs -f`
 
-ดู Caddy ขอ certificate:
+ดูว่า Caddy ได้ใบรับรอง HTTPS หรือยัง:
+
 ```bash
 docker compose -f compose.prod.yaml logs -f web
 # มองหา "certificate obtained successfully" แล้วกด Ctrl+C
 ```
 
-**หลัง seed เสร็จ** ลบบรรทัด `ADMIN_PASSWORD` ออกจาก `.env` (ไม่ต้องเก็บรหัสผ่านไว้บน server) แล้ว `up -d` อีกครั้ง และให้เจ้าของร้านเปลี่ยนรหัสผ่านเองเมื่อมีหน้าเปลี่ยนรหัส
+**หลังสร้างบัญชีเจ้าของร้านเสร็จ** ลบบรรทัด `ADMIN_PASSWORD` ออกจาก `.env` (ไม่ต้องเก็บรหัสผ่านไว้บนเครื่อง) แล้วสั่ง `up -d` อีกครั้ง และให้เจ้าของร้านเปลี่ยนรหัสผ่านเองเมื่อมีหน้าเปลี่ยนรหัส
 
 ---
 
@@ -319,20 +350,22 @@ curl -sS https://example.com/api/services  # ข้อมูลจาก seed
 curl -I https://example.com/about          # 200 (ไม่ใช่ 404: try_files ทำงาน)
 curl -s -o /dev/null -w "%{http_code}\n" https://example.com/api/admin/me   # 401
 ```
-**ในเครื่อง server** ตรวจว่า db กับ server ไม่หลุดสู่โลก:
+**บนเครื่องเช่า** ตรวจว่าฐานข้อมูลกับ server ไม่ได้เปิดประตูออกนอกเครื่อง:
+
 ```bash
 sudo ss -tlnp | grep -E ':5432|:3000' || echo "✅ ไม่มี 5432/3000 เปิดสู่ภายนอก"
 ```
-**จากเครื่องเรา**:
+**จากเครื่องเรา** ลองต่อตรงๆ ต้องไม่ติด:
+
 ```bash
 curl -m 5 http://203.0.113.10:5432 ; curl -m 5 http://203.0.113.10:3000   # ต้อง timeout / refused ทั้งคู่
 ```
-**ใน browser:** เปิดเว็บ → 🔒 ขึ้น, login หลังบ้านได้, DevTools → Application → Cookies ต้องเห็น `session` มี ✅ HttpOnly ✅ Secure, SameSite = Lax
-**มือถือจริง:** เปิดผ่าน 4G (ไม่ใช่ Wi-Fi บริษัท) แล้วลองแชร์ลิงก์ลง LINE
+**ในเบราว์เซอร์:** เปิดเว็บแล้วเห็นรูปกุญแจ 🔒, login หน้าจัดการร้านได้, เปิด DevTools → Application → Cookies ต้องเห็น `session` ที่ติ๊ก ✅ HttpOnly ✅ Secure และ SameSite = Lax
+**มือถือจริง:** เปิดผ่านเน็ตมือถือ (ไม่ใช่ Wi-Fi บริษัท) แล้วลองแชร์ลิงก์ลง LINE
 
 ---
 
-## 7. 🔄 อัปเดตเวอร์ชันใหม่ (manual)
+## 7. 🔄 อัปเดตเวอร์ชันใหม่ (ทำเอง)
 
 ```bash
 ssh bitcafe
@@ -343,19 +376,21 @@ docker compose -f compose.prod.yaml run --rm server bun run db:migrate
 docker compose -f compose.prod.yaml up -d
 docker image prune -f                      # ลบ image เก่าที่ไม่ใช้ กันดิสก์เต็ม
 ```
-**ทำไม migrate ก่อน up?** โค้ดใหม่อาจต้องใช้คอลัมน์ใหม่ ถ้าเปิดโค้ดใหม่ก่อนมีคอลัมน์ ลูกค้าจะเจอ error ช่วงสั้นๆ
+**ทำไมต้องอัปเดตตารางก่อนเปิดกล่องใหม่?** โค้ดใหม่อาจใช้ช่องในตารางที่เพิ่งเพิ่ม ถ้าเปิดโค้ดใหม่ก่อน ลูกค้าจะเจอหน้า error ช่วงสั้นๆ
 
-> ⚠️ **migration ต้อง "เพิ่มอย่างเดียว" (expand-only)** ระหว่าง migrate โค้ดเก่ายังวิ่งอยู่ ถ้า migration ลบ/เปลี่ยนชื่อคอลัมน์ที่โค้ดเก่าใช้ เว็บจะพังทันที จำเป็นต้องลบจริงให้แยก 2 รอบ deploy: รอบแรกเลิกใช้คอลัมน์ในโค้ด รอบที่สองค่อยลบ
+> ⚠️ **การแก้ตารางต้อง "เพิ่มอย่างเดียว"** ระหว่างอัปเดต โค้ดเก่ายังทำงานอยู่ ถ้าไปลบหรือเปลี่ยนชื่อช่องที่โค้ดเก่าใช้ เว็บพังทันที
+> ถ้าจำเป็นต้องลบจริง ให้แบ่งเป็น 2 รอบ: รอบแรกแก้โค้ดให้เลิกใช้ช่องนั้น รอบที่สองค่อยลบช่อง
 
-**ถอยเวอร์ชัน (rollback)** เมื่อเวอร์ชันใหม่มีปัญหา
+**ถอยกลับเวอร์ชันเก่า** เมื่อเวอร์ชันใหม่มีปัญหา
+
 ```bash
 git log --oneline -5                       # หา commit ที่ดีล่าสุด
 git checkout <commit>
 docker compose -f compose.prod.yaml up -d --build
 ```
-(ถอยได้เฉพาะโค้ด migration ที่รันไปแล้วไม่ถอยตาม จึงสำคัญที่ต้องเป็น expand-only) แก้เสร็จแล้วกลับมา `git checkout main`
+ถอยได้เฉพาะโค้ด ส่วนตารางที่อัปเดตไปแล้วไม่ถอยตาม จึงสำคัญมากที่ต้อง "เพิ่มอย่างเดียว" แก้เสร็จแล้วกลับมาที่ `git checkout main`
 
-บทที่ 21 จะทำให้ขั้นตอนนี้เกิดเองทุกครั้งที่ merge เข้า `main`
+บทที่ 21 จะทำให้ขั้นตอนนี้เกิดขึ้นเองทุกครั้งที่รวมงานเข้า `main`
 
 ---
 
@@ -363,54 +398,54 @@ docker compose -f compose.prod.yaml up -d --build
 
 | อาการ | สาเหตุ | วิธีแก้ |
 |---|---|---|
-| log ของ web: `challenge failed` / `no such host` | DNS ยังไม่ชี้มา VPS, เปิด Cloudflare proxy (เมฆส้ม), ufw ปิด 80 | `dig +short`, ใช้ DNS only, `sudo ufw status` |
-| เว็บขึ้นแต่ `/api/...` ได้ `502` | server ล่ม / ชื่อใน Caddyfile ไม่ตรงชื่อ service | `dc ps`, `dc logs server` |
-| server restart วนไม่หยุด | `.env` ขาดค่า (ZodError ใน log), ต่อ db ไม่ได้ | `dc logs server` อ่านบรรทัดแรกของ error |
-| refresh `/about` ได้ 404 | ไม่มี `try_files` | ตรวจ Caddyfile |
-| login ได้แต่ refresh แล้วหลุด | cookie มี `Secure` แต่เปิดผ่าน `http://` | ใช้ `https://` เสมอ (Caddy redirect ให้แล้ว) |
-| `required variable ... is missing a value` | ยังไม่สร้าง `.env` หรือไม่ได้อยู่ในโฟลเดอร์ repo | `cd ~/bit-cafe` แล้วตรวจ `.env` |
-| build ค้าง / โดน `Killed` | RAM ไม่พอ | เปิด swap (บทที่ 19) |
-| ดิสก์เต็ม | image เก่าสะสม | `docker image prune -f`, `docker system df` |
-| `down -v` แล้วข้อมูลหาย 😱 | `-v` ลบ volume ทั้ง db และ certificate | **ห้ามใช้ `-v` บน production** กู้จาก backup (บทที่ 23) |
+| บันทึกของ `web` ขึ้น `challenge failed` | ชื่อเว็บยังไม่ชี้มาเครื่องนี้, เปิดเมฆสีส้มใน Cloudflare, หรือประตู 80 ปิด | `dig +short`, ใช้เมฆสีเทา, `sudo ufw status` |
+| หน้าเว็บขึ้น แต่ `/api/...` ได้ `502` | กล่อง server ล่ม หรือชื่อใน Caddyfile ไม่ตรงกับชื่อกล่อง | `dc ps`, `dc logs server` |
+| กล่อง server ดับแล้วเปิดใหม่วนไม่หยุด | ไฟล์ `.env` ขาดค่า หรือต่อฐานข้อมูลไม่ได้ | `dc logs server` อ่านบรรทัดแรกของ error |
+| กดรีเฟรชหน้า `/about` แล้วได้ 404 | Caddyfile ไม่มี `try_files` | ตรวจ Caddyfile |
+| login ได้ แต่รีเฟรชแล้วหลุด | เปิดผ่าน `http://` (cookie แบบ Secure ส่งได้เฉพาะ `https://`) | ใช้ `https://` เสมอ |
+| `required variable ... is missing a value` | ยังไม่สร้าง `.env` หรือไม่ได้อยู่ในโฟลเดอร์โปรเจกต์ | `cd ~/bit-cafe` แล้วตรวจ `.env` |
+| สร้างกล่องค้าง หรือขึ้น `Killed` | หน่วยความจำ (RAM) ไม่พอ | เปิด swap (บทที่ 19) |
+| เครื่องเต็ม | กล่องเวอร์ชันเก่าสะสม | `docker image prune -f`, `docker system df` |
+| สั่ง `down -v` แล้วข้อมูลหาย 😱 | `-v` ลบที่เก็บถาวรทั้งฐานข้อมูลและใบรับรอง | **ห้ามใช้ `-v` กับระบบจริงเด็ดขาด** กู้จากข้อมูลสำรอง (บทที่ 23) |
 
 ---
 
 ## 🧠 เช็คความเข้าใจ
 
-<details><summary>1. ทำไม service <code>db</code> และ <code>server</code> ไม่มี <code>ports:</code> แล้ว Caddy ยังเรียก server ได้?</summary>
+<details><summary>1. กล่อง <code>db</code> กับ <code>server</code> ไม่ได้เปิดประตู แล้ว Caddy เรียก server ได้ยังไง?</summary>
 
-ทุกกล่องใน compose เดียวกันอยู่ใน Docker network ภายใน เรียกกันด้วยชื่อ service (`server:3000`, `db:5432`) ได้โดยไม่ต้องเปิด port สู่เครื่อง host `ports:` มีไว้เปิดให้คนนอกเท่านั้น
+ทุกกล่องในไฟล์ compose เดียวกันอยู่ในเครือข่ายภายในเดียวกัน เรียกหากันด้วยชื่อกล่องได้ (`server:3000`, `db:5432`) ส่วน `ports:` มีไว้เปิดให้คนนอกเครื่องเท่านั้น
 </details>
 
-<details><summary>2. ถ้าลบ volume <code>caddy_data</code> จะเกิดอะไร?</summary>
+<details><summary>2. ถ้าที่เก็บ <code>caddy_data</code> หายไป จะเกิดอะไร?</summary>
 
-certificate หายต้องขอใหม่ทุกครั้งที่สร้างกล่อง ถ้าทำบ่อยจะชน rate limit ของ Let's Encrypt แล้วเว็บไม่มี HTTPS ไปช่วงหนึ่ง
+ใบรับรอง HTTPS หาย ต้องขอใหม่ทุกครั้งที่สร้างกล่อง ถ้าขอบ่อยจะโดนผู้ออกใบรับรองพักไว้ แล้วเว็บไม่มี HTTPS ไปช่วงหนึ่ง
 </details>
 
-<details><summary>3. ทำไมลำดับคือ build → migrate → up ไม่ใช่ up แล้วค่อย migrate?</summary>
+<details><summary>3. ทำไมลำดับคือ สร้างกล่องใหม่ → อัปเดตตาราง → เปิดกล่องใหม่?</summary>
 
-build ก่อนเพื่อให้ image ใหม่พร้อม (เว็บเดิมยังวิ่งอยู่) migrate ก่อนเปิดโค้ดใหม่เพื่อให้คอลัมน์ที่โค้ดใหม่ต้องใช้มีอยู่แล้ว แล้วค่อยสลับเป็นโค้ดใหม่
+สร้างกล่องใหม่ก่อน ระหว่างนั้นเว็บเดิมยังเปิดอยู่ แล้วอัปเดตตารางให้มีช่องที่โค้ดใหม่ต้องใช้ จากนั้นค่อยสลับไปใช้โค้ดใหม่ ลูกค้าจะไม่เจอ error
 </details>
 
-<details><summary>4. <code>/api/admin/me</code> บน production ได้ 200 โดยไม่ login ควรทำอะไร?</summary>
+<details><summary>4. บนระบบจริง เรียก <code>/api/admin/me</code> ได้ 200 ทั้งที่ไม่ได้ login ควรทำยังไง?</summary>
 
-หยุดทุกอย่างแล้วแก้ทันที เป็นข้อที่ทำให้ไม่ผ่าน ตรวจลำดับ `app.route` / `app.use` ใน `index.ts` (บทที่ 15) และเขียน test ให้ทุก admin endpoint ต้อง 401
+หยุดทุกอย่างแล้วแก้ทันที เพราะเป็นข้อที่ทำให้ไม่ผ่าน ตรวจลำดับบรรทัด `app.route` / `app.use` ใน `index.ts` (บทที่ 15) และเขียนโค้ดทดสอบให้ทุก API หลังบ้านต้องได้ 401 (บทที่ 21)
 </details>
 
 ---
 
 ## ✏️ แบบฝึกหัด
 
-deploy Bit Café (หรือ STARTER ของตัวเอง) ขึ้น VPS ด้วยโดเมนจริงหรือ subdomain ที่พี่เลี้ยงให้ แล้วส่ง: ลิงก์เว็บ, ผล `curl -I` ข้อ 6 ทั้งหมด, แคปจอ cookie ใน DevTools และแคปจอการ์ดตอนแชร์ลิงก์ลง LINE
+ขึ้น Bit Café (หรืองาน STARTER ของตัวเอง) บนเครื่องเช่า ด้วยชื่อเว็บจริงหรือชื่อย่อยที่พี่เลี้ยงให้ แล้วส่ง: ลิงก์เว็บ, ผลคำสั่งในข้อ 6 ทั้งหมด, ภาพหน้าจอ cookie ใน DevTools และภาพการ์ดตอนแชร์ลิงก์ลง LINE
 
 ## ✅ ผ่านด่าน
 
-- [ ] เขียน Dockerfile ของ server และ client (multi-stage) ได้
+- [ ] เขียนสูตรสร้างกล่องของ server และหน้าเว็บได้
 - [ ] อธิบาย Caddyfile ได้ทุกบรรทัด
-- [ ] compose.prod.yaml เปิดสู่โลกแค่ 80/443 และมี healthcheck, restart, volume, log rotation
-- [ ] deploy ครั้งแรกได้ HTTPS อัตโนมัติ และตรวจครบตามข้อ 6
-- [ ] อัปเดตเวอร์ชันและ rollback ได้ และเข้าใจ migration แบบ expand-only
+- [ ] ไฟล์ compose เปิดประตูแค่ 80/443 และมีการเปิดใหม่เอง, เช็คความพร้อม, ที่เก็บถาวร, จำกัดขนาดบันทึก
+- [ ] ขึ้นเว็บครั้งแรกแล้วได้ HTTPS เอง และตรวจครบตามข้อ 6
+- [ ] อัปเดตและถอยเวอร์ชันได้ และเข้าใจว่าทำไมการแก้ตารางต้อง "เพิ่มอย่างเดียว"
 
 ---
 
-[← บทที่ 19: Server](./19-server.md) · [🏠 สารบัญ](./README.md) · [บทที่ 21: CI/CD →](./21-cicd.md)
+[← บทที่ 19: เครื่องเช่า](./19-server.md) · [🏠 สารบัญ](./README.md) · [บทที่ 21: ตรวจและขึ้นระบบอัตโนมัติ →](./21-cicd.md)

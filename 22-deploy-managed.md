@@ -1,99 +1,102 @@
-# บทที่ 22: Deploy แบบ Managed (Vercel + Cloud) ☁️
+# บทที่ 22: ขึ้นเว็บด้วยบริการสำเร็จรูป (Vercel + Render + Neon) ☁️
 
 > ⏱ ประมาณ 2 ชั่วโมง · 🧩 ต้องผ่านก่อน: บทที่ 18 และ 20 · 🛠 ใช้: Vercel, Render (หรือ Railway / Fly.io), Neon (หรือ Supabase)
 
 > **⚡ สรุป 30 วินาที**
-> - **Managed** = ให้ผู้ให้บริการดูแลเครื่อง, OS, HTTPS, scale ให้ เราแค่ส่งโค้ด
-> - หน้าเว็บ (static) → **Vercel** / API (Docker) → **Render** / PostgreSQL → **Neon**
-> - หัวใจคือ **rewrite `/api/*` ผ่าน Vercel** ให้ browser เห็นโดเมนเดียว cookie login จึงทำงานเหมือนบทที่ 20
-> - สะดวกกว่า VPS แต่ควบคุมได้น้อยกว่า และ free tier มีข้อจำกัด (หลับ, โควตา)
+> - **บริการสำเร็จรูป (managed)** = มีคนดูแลเครื่อง ระบบปฏิบัติการ HTTPS ให้ เราแค่ส่งโค้ดขึ้น Git
+> - หน้าเว็บ → **Vercel** / ส่วนเบื้องหลัง (API) → **Render** / ฐานข้อมูล → **Neon**
+> - หัวใจของบทนี้คือให้ **Vercel ส่งต่อคำขอ `/api` ไปที่ Render** เบราว์เซอร์จะเห็นชื่อเว็บเดียว ระบบ login ด้วย cookie จึงใช้ได้เหมือนบทที่ 20
+> - สะดวกกว่าเช่าเครื่องเอง แต่ปรับแต่งได้น้อยกว่า และแผนฟรีมีข้อจำกัด (เช่น หลับเมื่อไม่มีคนใช้)
+
+> **📖 คำใหม่ในบทนี้**
+> [Managed service](./glossary.md#managed) · [Rewrite](./glossary.md#rewrite) · [Preview](./glossary.md#preview) · [DNS record](./glossary.md#dns-record) · [Env](./glossary.md#env)
 
 ---
 
 ## 📖 เรื่องเล่า
 
-ลูกค้ารายใหม่บอกว่า *"ผมไม่อยากจ่ายค่าดูแล server รายเดือน มีทางที่ไม่ต้องมีใครคอยอัปเดต Ubuntu ไหม?"*
-พี่ไบต์: *"มี แต่ต้องเข้าใจว่าเรายกงานอะไรให้คนอื่น และแลกกับอะไร"*
+ลูกค้ารายใหม่บอกว่า *"ผมไม่อยากจ่ายค่าดูแลเครื่องรายเดือน มีทางที่ไม่ต้องมีใครคอยอัปเดตเครื่องไหม?"*
+พี่ไบต์: *"มี แต่ต้องเข้าใจว่าเรายกงานส่วนไหนให้คนอื่น และแลกกับอะไร"*
 
-คู่มือที่น้องกำลังอ่านอยู่นี้ก็ deploy แบบนี้: push ขึ้น GitHub แล้ว Vercel build และอัปเดตเว็บให้เอง 📖
+คู่มือที่น้องอ่านอยู่นี้ก็ใช้วิธีนี้: ส่งงานขึ้น GitHub แล้ว Vercel อัปเดตเว็บให้เอง 📖
 
 ---
 
-## 1. VPS vs Managed
+## 1. เช่าเครื่องเอง vs ใช้บริการสำเร็จรูป
 
-| | 🖥️ VPS (บทที่ 19–21) | ☁️ Managed (บทนี้) |
+| | 🖥️ เช่าเครื่องเอง (บทที่ 19–21) | ☁️ บริการสำเร็จรูป (บทนี้) |
 |---|---|---|
-| ใครดูแล OS, security patch | เรา | ผู้ให้บริการ |
-| HTTPS / certificate | Caddy (ตั้งครั้งเดียว) | อัตโนมัติ |
-| deploy | เราเขียน CI/CD | push แล้ว deploy เอง + ได้ **preview URL ต่อ PR** |
-| ค่าใช้จ่าย | คงที่รายเดือน ถูกเมื่อมีหลายเว็บในเครื่องเดียว | free tier เริ่มง่าย แต่โตแล้วคิดตามการใช้งาน |
-| ควบคุมได้ | ทุกอย่าง | ตามที่แพลตฟอร์มอนุญาต |
-| ข้อจำกัด | ต้องมีความรู้ดูแล server | free tier หลับเมื่อไม่มีคนใช้, ผูกกับแพลตฟอร์ม |
-| ได้เรียนรู้ | network, Linux, Docker ลึก | เร็ว โฟกัสที่แอป |
+| ใครอัปเดตความปลอดภัยของเครื่อง | เรา | ผู้ให้บริการ |
+| HTTPS | Caddy ทำให้ (ตั้งครั้งเดียว) | ได้เองอัตโนมัติ |
+| ขึ้นระบบ | เราเขียนขั้นตอนอัตโนมัติเอง | ส่งงานขึ้น Git แล้วขึ้นระบบเอง + ได้ **เว็บทดลองของทุกคำขอรวมงาน** |
+| ค่าใช้จ่าย | เท่าเดิมทุกเดือน ถูกถ้าวางหลายเว็บในเครื่องเดียว | เริ่มฟรีได้ แต่พอคนใช้เยอะขึ้น จ่ายตามการใช้งาน |
+| ปรับแต่งได้ | ทุกอย่าง | เท่าที่บริการเปิดให้ |
+| ข้อเสีย | ต้องรู้เรื่องดูแลเครื่อง | แผนฟรีหลับเมื่อไม่มีคนใช้, ย้ายไปที่อื่นทีหลังเหนื่อย |
+| ได้เรียนรู้ | ลึกเรื่องเครือข่าย, Linux, Docker | เร็ว เน้นที่ตัวแอป |
 
-> 💡 ไม่มีแบบไหน "ดีกว่า" เสมอ dev ที่ดี **อธิบายข้อแลกเปลี่ยนให้ลูกค้าเลือกได้**
+> 💡 ไม่มีแบบไหน "ดีกว่า" เสมอ dev ที่ดี **อธิบายข้อดีข้อเสียให้ลูกค้าเลือกเองได้**
 
 ---
 
-## 2. ภาพระบบ
+## 2. หน้าตาระบบ
 
 ```
- Browser ── https://example.com ──> Vercel
-                                     ├─ /assets/*, /index.html  → ไฟล์ React ที่ build แล้ว
-                                     ├─ /about, /contact ...    → index.html (SPA fallback)
-                                     └─ /api/*  ──(rewrite)──> https://bitcafe-api.onrender.com/api/*  (Hono ใน Docker)
-                                                                       │
-                                                                       └──SSL──> Neon (PostgreSQL)
+ ลูกค้าเปิด https://example.com ──> Vercel
+                                     ├─ ขอไฟล์หน้าเว็บ           → ส่งไฟล์ React ที่แพ็กแล้ว
+                                     ├─ ขอหน้า /about, /contact  → ส่งหน้าหลัก ให้ React เลือกหน้าเอง
+                                     └─ ขอ /api/...  ──(ส่งต่อ)──> Render (API ในกล่อง Docker)
+                                                                        │
+                                                                        └──(เข้ารหัส)──> Neon (ฐานข้อมูล)
 ```
-👀 browser คุยกับ `example.com` ที่เดียว cookie ที่ API ตั้งจึงเป็นของ `example.com` ไม่ต้องตั้ง CORS หรือ `SameSite=None` (บทที่ 15 ข้อ 4)
+👀 เบราว์เซอร์คุยกับ `example.com` ที่เดียว cookie ที่ API ตั้งจึงเป็นของ `example.com` ไม่ต้องตั้งค่าเพิ่มให้ยุ่ง (บทที่ 15 ข้อ 4)
 
 ---
 
 ## 3. 🔧 ฐานข้อมูล: Neon
 
-1. สมัคร neon.tech → **Create project** → region **Singapore** (ใกล้ไทย) → PostgreSQL 17
-2. ก๊อป **connection string** หน้าตาแบบ
+1. สมัคร neon.tech → **Create project** → เลือก **Singapore** (ใกล้ไทย) → PostgreSQL 17
+2. ก๊อป **ที่อยู่สำหรับต่อฐานข้อมูล** (connection string) หน้าตาแบบนี้
    ```
    postgresql://<user>:<password>@<host>.neon.tech/<db>?sslmode=require
    ```
-   `sslmode=require` = บังคับเข้ารหัสระหว่าง API กับ DB (คนละเครื่อง คนละศูนย์ข้อมูล ต้องเข้ารหัส)
-3. สร้างตาราง + ข้อมูลตั้งต้น **จากเครื่องเรา** (ครั้งแรก)
+   `sslmode=require` = บังคับเข้ารหัสระหว่าง API กับฐานข้อมูล (อยู่คนละที่ ต้องเข้ารหัส)
+3. สร้างตาราง + ข้อมูลตั้งต้น **จากเครื่องเรา** (ทำครั้งแรกครั้งเดียว)
    ```bash
    cd server
    DATABASE_URL='postgresql://...neon.tech/...?sslmode=require' bun run db:migrate
    DATABASE_URL='postgresql://...' JWT_SECRET='<สุ่ม>' ADMIN_EMAIL='owner@example.com' ADMIN_PASSWORD='<รหัส>' bun run seed
    ```
-   ⚠️ คำสั่งที่มีรหัสผ่านจะค้างอยู่ใน history ของ shell ลบด้วย `history -d` หรือขึ้นต้นคำสั่งด้วยช่องว่าง (zsh/bash ที่ตั้ง `HIST_IGNORE_SPACE`/`ignorespace` ไว้จะไม่บันทึก)
+   ⚠️ คำสั่งที่มีรหัสผ่านจะค้างอยู่ในประวัติคำสั่งของ Terminal ให้ลบทิ้ง (`history -d`) หรือพิมพ์ช่องว่างนำหน้าคำสั่ง (ถ้าตั้งค่าให้ไม่จำคำสั่งที่ขึ้นต้นด้วยช่องว่างไว้)
 
-> 💡 ทางเลือก: **Supabase** (Postgres + ของแถม), **Railway** (มี Postgres ในโปรเจกต์เดียวกับ API)
+> 💡 ใช้ที่อื่นแทนได้: **Supabase** (มี PostgreSQL + ของแถม), **Railway** (มีฐานข้อมูลในโปรเจกต์เดียวกับ API)
 
 ---
 
-## 4. 🔧 API: Render (Docker)
+## 4. 🔧 ส่วนเบื้องหลัง (API): Render
 
-1. render.com → **New → Web Service** → เชื่อม GitHub repo
+1. render.com → **New → Web Service** → เชื่อมกับโปรเจกต์ใน GitHub
 2. ตั้งค่า
-   | ช่อง | ค่า |
+   | ช่อง | ใส่ |
    |---|---|
-   | Root Directory | `server` |
-   | Runtime | **Docker** (ใช้ `server/Dockerfile` จากบทที่ 20) |
-   | Region | Singapore |
-   | Health Check Path | `/api/health` |
-3. **Environment Variables**
-   | Key | Value |
+   | Root Directory (โฟลเดอร์ที่ใช้) | `server` |
+   | Runtime (วิธีรัน) | **Docker** (ใช้ `server/Dockerfile` จากบทที่ 20) |
+   | Region (ที่ตั้งเครื่อง) | Singapore |
+   | Health Check Path (ที่อยู่ไว้เช็คว่าปกติ) | `/api/health` |
+3. **Environment Variables** (ค่าตั้งค่า แบบเดียวกับไฟล์ `.env`)
+   | ชื่อ | ค่า |
    |---|---|
-   | `DATABASE_URL` | connection string จาก Neon |
-   | `JWT_SECRET` | `openssl rand -base64 48` |
+   | `DATABASE_URL` | ที่อยู่ฐานข้อมูลจาก Neon |
+   | `JWT_SECRET` | ผลจาก `openssl rand -base64 48` |
    | `NODE_ENV` | `production` |
    | `PORT` | `3000` |
-4. Deploy → ได้ URL เช่น `https://bitcafe-api.onrender.com` ลอง `curl https://bitcafe-api.onrender.com/api/health`
+4. กด Deploy → ได้ลิงก์เช่น `https://bitcafe-api.onrender.com` ลอง `curl https://bitcafe-api.onrender.com/api/health`
 
-**migration ครั้งต่อๆ ไป** เลือกทางใดทางหนึ่ง:
-- ตั้ง **Pre-Deploy Command** = `bun run db:migrate` (ถ้าแผนที่ใช้รองรับ) แพลตฟอร์มจะรันก่อนสลับเป็นเวอร์ชันใหม่ ลำดับเดียวกับบทที่ 20
-- หรือให้ CI (บทที่ 21) รัน `bun run db:migrate` ด้วย `DATABASE_URL` จาก Secrets ก่อนสั่ง deploy
+**อัปเดตตารางครั้งต่อๆ ไป** เลือกทางใดทางหนึ่ง
+- ตั้ง **Pre-Deploy Command** เป็น `bun run db:migrate` (ถ้าแผนที่ใช้มีให้) Render จะอัปเดตตารางก่อนสลับเป็นโค้ดใหม่ ลำดับเดียวกับบทที่ 20
+- หรือให้ขั้นตอนอัตโนมัติในบทที่ 21 สั่ง `bun run db:migrate` ก่อนขึ้นระบบ
 
-> ⚠️ **free tier ของหลายแพลตฟอร์มจะ "หลับ"** เมื่อไม่มีคนใช้สักพัก request แรกหลังหลับรอได้หลายสิบวินาที ใช้ demo ได้ แต่ **เว็บลูกค้าจริงควรใช้แผนที่ไม่หลับ** และแจ้งค่าใช้จ่ายลูกค้าตั้งแต่แรก
-> 🔐 rate limit (บทที่ 14) อ่าน IP จาก `X-Forwarded-For` ซึ่งในแบบ managed มีหลายชั้น proxy และ URL ของ Render เรียกตรงได้โดยไม่ผ่าน Vercel จึงกันได้หลวมกว่าบน VPS ระดับ STARTER ยอมรับได้ ถ้าต้องการเข้มขึ้นใช้ rate limit / WAF ของแพลตฟอร์มหรือ Cloudflare
+> ⚠️ **แผนฟรีของหลายบริการจะ "หลับ"** เมื่อไม่มีคนใช้สักพัก คนแรกที่เข้าหลังจากนั้นต้องรอหลายสิบวินาที ใช้โชว์งานได้ แต่ **เว็บลูกค้าจริงควรใช้แผนที่ไม่หลับ** และแจ้งลูกค้าเรื่องค่าใช้จ่ายตั้งแต่แรก
+> 🔐 ตัวจำกัดการส่งฟอร์ม (บทที่ 14) ดู IP จากข้อมูลที่ผ่านหลายทอดในแบบนี้ และลิงก์ของ Render เรียกตรงได้โดยไม่ผ่าน Vercel จึงกันได้หลวมกว่าบนเครื่องเช่า ระดับงานนี้ยอมรับได้ ถ้าต้องการเข้มขึ้นใช้ตัวกันของผู้ให้บริการหรือ Cloudflare
 
 ---
 
@@ -109,30 +112,31 @@
   ]
 }
 ```
-| rule | ทำอะไร |
+| กฎ | ทำอะไร |
 |---|---|
-| `/api/:path*` → Render | Vercel ส่ง request ต่อให้ API แล้วส่งคำตอบ (รวม `Set-Cookie`) กลับมาในนามของ `example.com` |
-| `/(.*)` → `/index.html` | SPA fallback แบบ `try_files` ในบทที่ 20 (Vercel ตรวจไฟล์จริงก่อนเสมอ ไฟล์ใน `/assets` จึงไม่โดน rewrite) |
+| `/api/:path*` → Render | Vercel ส่งคำขอต่อให้ API แล้วส่งคำตอบ (รวม cookie) กลับมาในนามของ `example.com` |
+| `/(.*)` → `/index.html` | ขอหน้าไหนก็ส่งหน้าหลักไป ให้ React เลือกหน้าเอง (แบบเดียวกับ `try_files` ในบทที่ 20) Vercel ดูไฟล์จริงก่อนเสมอ ไฟล์ใน `/assets` จึงไม่โดนกฎนี้ |
 
-1. vercel.com → **Add New → Project** → import repo
-2. **Root Directory** = `client` → Framework Preset ขึ้น **Vite** เอง (build `bun run build`, output `dist`)
-3. **Deploy** → ได้ `https://bit-cafe-xxxx.vercel.app`
-4. ทดสอบ: หน้าเว็บขึ้น, `/api/services` ได้ JSON, refresh `/about` ไม่ 404, login หลังบ้านได้
+1. vercel.com → **Add New → Project** → เลือกโปรเจกต์จาก GitHub
+2. **Root Directory** = `client` → Vercel รู้เองว่าเป็นเว็บ Vite (สั่ง `bun run build` แล้วเอาไฟล์จากโฟลเดอร์ `dist`)
+3. กด **Deploy** → ได้ลิงก์เช่น `https://bit-cafe-xxxx.vercel.app`
+4. ลอง: หน้าเว็บขึ้น, `/api/services` ได้ข้อมูล, รีเฟรช `/about` ไม่ 404, login หน้าจัดการร้านได้
 
-**ได้ฟรีทันที:** ทุก PR จะได้ **Preview URL** ของตัวเอง ส่งให้พี่เลี้ยง/ลูกค้าดูก่อน merge ได้
+**ของแถม:** ทุกคำขอรวมงาน (PR) จะได้ **เว็บทดลองแยก (Preview)** ส่งลิงก์ให้พี่เลี้ยงหรือลูกค้าดูก่อนรวมงานได้
 
-> ⚠️ Preview ทุกตัวชี้ไป API + DB **ตัวจริง** ตาม `vercel.json` ระวังการทดสอบที่แก้ข้อมูล ถ้าโปรเจกต์ใหญ่ขึ้นควรแยก API/DB สำหรับ preview
+> ⚠️ เว็บทดลองทุกตัวส่งคำขอไปที่ API และฐานข้อมูล **ตัวจริง** (ตามไฟล์ `vercel.json`) ระวังการทดสอบที่ไปแก้ข้อมูลจริง ถ้างานใหญ่ขึ้นควรแยก API + ฐานข้อมูลสำหรับทดลอง
 
 ---
 
-## 6. 🔧 ผูกโดเมน
+## 6. 🔧 ใส่ชื่อเว็บจริง
 
-**Vercel:** Project → Settings → **Domains** → Add `example.com` และ `www.example.com`
-Vercel จะแสดง record ที่ต้องเพิ่ม (ปกติเป็น **A** สำหรับ root และ **CNAME** สำหรับ `www`) → ใส่ใน Cloudflare (บทที่ 18) **ตามค่าที่หน้าจอ Vercel แสดง** แบบ DNS only → รอสถานะ Valid แล้ว HTTPS มาเอง
+**Vercel:** Project → Settings → **Domains** → เพิ่ม `example.com` และ `www.example.com`
+Vercel จะบอกว่าต้องเพิ่มบรรทัดไหนในสมุดชื่อเว็บ (ปกติเป็น **A** สำหรับชื่อหลัก และ **CNAME** สำหรับ `www`) → ไปเพิ่มใน Cloudflare (บทที่ 18) **ตามค่าที่หน้าจอ Vercel บอก** แบบเมฆสีเทา → รอขึ้นว่า Valid แล้ว HTTPS มาเอง
 
-**(ไม่บังคับ) โดเมนให้ API:** Render → Settings → Custom Domains → `api.example.com` → เพิ่ม CNAME ตามที่ Render บอก แล้วแก้ `destination` ใน `vercel.json` เป็น `https://api.example.com/api/:path*`
+**(ไม่บังคับ) ชื่อย่อยให้ API:** Render → Settings → Custom Domains → `api.example.com` → เพิ่ม CNAME ตามที่ Render บอก แล้วแก้ปลายทางใน `vercel.json` เป็น `https://api.example.com/api/:path*`
 
-ตรวจ:
+ตรวจ
+
 ```bash
 dig +short example.com
 curl -I https://example.com/about                   # 200
@@ -146,46 +150,46 @@ curl -s -o /dev/null -w "%{http_code}\n" https://example.com/api/admin/me   # 40
 
 | อาการ | สาเหตุ | วิธีแก้ |
 |---|---|---|
-| `/api/...` ได้หน้า HTML | ลำดับ rewrite ผิด (`/(.*)` อยู่ก่อน `/api`) | ให้ `/api/:path*` อยู่บนสุด |
-| refresh `/about` ได้ 404 | ไม่มี rewrite ไป `index.html` หรือ `vercel.json` ไม่อยู่ใน Root Directory | วาง `vercel.json` ใน `client/` |
-| API ตอบช้ามากครั้งแรก | free tier หลับ | แผนที่ไม่หลับ / แจ้งลูกค้า |
-| `self-signed certificate` / ต่อ DB ไม่ได้ | ไม่มี `sslmode=require` หรือก๊อป URL ไม่ครบ | ใช้ connection string จาก Neon ทั้งเส้น |
-| login ผ่านแต่ cookie ไม่ติด | เรียก API ตรงที่ `onrender.com` จากหน้าเว็บ | หน้าเว็บต้องเรียก `/api/...` (relative) เสมอ |
-| ZodError ตอน start บน Render | ขาด env | ใส่ให้ครบตามข้อ 4 |
+| เรียก `/api/...` แล้วได้หน้าเว็บแทนข้อมูล | กฎ `/(.*)` อยู่ก่อนกฎ `/api` | ให้กฎ `/api/:path*` อยู่บนสุด |
+| รีเฟรช `/about` แล้ว 404 | ไม่มีกฎส่งหน้าหลัก หรือวาง `vercel.json` ผิดโฟลเดอร์ | วาง `vercel.json` ใน `client/` |
+| เปิดครั้งแรกช้ามาก | แผนฟรีหลับอยู่ | ใช้แผนที่ไม่หลับ / แจ้งลูกค้า |
+| ต่อฐานข้อมูลไม่ได้ / ขึ้นเรื่อง certificate | ไม่มี `sslmode=require` หรือก๊อปที่อยู่ไม่ครบ | ก๊อปที่อยู่จาก Neon ให้ครบทั้งเส้น |
+| login ผ่าน แต่ cookie ไม่ติด | หน้าเว็บเรียก `onrender.com` ตรงๆ | หน้าเว็บต้องเรียก `/api/...` เสมอ |
+| Render ขึ้น error ตอนเปิด | ขาดค่าตั้งค่าตัวใดตัวหนึ่ง | ใส่ให้ครบตามข้อ 4 |
 
 ---
 
 ## 🧠 เช็คความเข้าใจ
 
-<details><summary>1. ทำไม rewrite <code>/api/*</code> ผ่าน Vercel ดีกว่าให้หน้าเว็บเรียก <code>onrender.com</code> ตรงๆ?</summary>
+<details><summary>1. ทำไมให้ Vercel ส่งต่อ <code>/api</code> ดีกว่าให้หน้าเว็บเรียก <code>onrender.com</code> ตรงๆ?</summary>
 
-browser จะเห็นแค่โดเมนเดียว cookie login เป็นของ `example.com` ใช้ `SameSite=Lax` ได้ ไม่ต้องตั้ง CORS และไม่ต้องใช้ `SameSite=None` ซึ่งเสี่ยงกว่า
+เบราว์เซอร์จะเห็นชื่อเว็บเดียว cookie login เป็นของ `example.com` ใช้แบบปลอดภัย (`SameSite=Lax`) ได้ ไม่ต้องตั้งค่าข้ามเว็บซึ่งยุ่งและเสี่ยงกว่า
 </details>
 
-<details><summary>2. ลูกค้ามีงบน้อย อยากได้เว็บเร็ว และไม่มีคนดูแล server ควรแนะนำแบบไหน? บอกข้อแลกเปลี่ยนด้วย</summary>
+<details><summary>2. ลูกค้างบน้อย อยากได้เว็บเร็ว และไม่มีคนดูแลเครื่อง ควรแนะนำแบบไหน? ข้อดีข้อเสียคืออะไร</summary>
 
-แบบ managed เหมาะกว่า: ไม่ต้องดูแล OS, deploy ง่าย แต่ต้องใช้แผนที่ไม่หลับสำหรับเว็บจริง ค่าใช้จ่ายขึ้นกับการใช้งาน และย้ายแพลตฟอร์มภายหลังต้องใช้แรง
+บริการสำเร็จรูปเหมาะกว่า: ไม่ต้องดูแลเครื่อง ขึ้นระบบง่าย แต่เว็บจริงต้องใช้แผนที่ไม่หลับ ค่าใช้จ่ายขึ้นกับการใช้งาน และย้ายไปที่อื่นทีหลังต้องใช้แรง
 </details>
 
-<details><summary>3. Preview URL มีประโยชน์และความเสี่ยงอะไร?</summary>
+<details><summary>3. เว็บทดลอง (Preview) มีประโยชน์และความเสี่ยงอะไร?</summary>
 
-ประโยชน์: ทุก PR มีเว็บให้ดูจริงก่อน merge / ความเสี่ยง: ถ้า preview ต่อ API และ DB ตัวจริง การทดสอบอาจแก้ข้อมูลจริงของลูกค้า
+ประโยชน์: ทุกคำขอรวมงานมีเว็บให้ดูของจริงก่อนรวม / ความเสี่ยง: ถ้าเว็บทดลองใช้ API และฐานข้อมูลตัวจริง การทดสอบอาจไปแก้ข้อมูลจริงของลูกค้า
 </details>
 
 ---
 
 ## ✏️ แบบฝึกหัด
 
-deploy Bit Café แบบ managed ครบ 3 ส่วน (Vercel + Render + Neon) เปิด PR แก้ข้อความ 1 จุดแล้วส่ง Preview URL ให้พี่เลี้ยง จากนั้นเขียนตารางเปรียบเทียบสั้นๆ ว่าถ้าเป็นลูกค้าจริง จะแนะนำ VPS หรือ managed เพราะอะไร
+ขึ้น Bit Café ด้วยบริการสำเร็จรูปครบ 3 ส่วน (Vercel + Render + Neon) เปิดคำขอรวมงานแก้ข้อความ 1 จุดแล้วส่งลิงก์เว็บทดลองให้พี่เลี้ยง จากนั้นเขียนตารางสั้นๆ ว่าถ้าเป็นลูกค้าจริง จะแนะนำเช่าเครื่องเองหรือบริการสำเร็จรูป เพราะอะไร
 
 ## ✅ ผ่านด่าน
 
-- [ ] อธิบายข้อแลกเปลี่ยน VPS vs managed ให้ลูกค้าเข้าใจได้
-- [ ] ตั้ง Postgres บน Neon และรัน migration/seed ได้
-- [ ] deploy API ด้วย Docker บน Render พร้อม env และ health check
-- [ ] ตั้ง `vercel.json` ให้ `/api` rewrite และ SPA fallback ถูก
-- [ ] ผูกโดเมนกับ Vercel และตรวจครบตามข้อ 6
+- [ ] อธิบายข้อดีข้อเสียของเช่าเครื่องเอง กับ บริการสำเร็จรูป ให้ลูกค้าเข้าใจได้
+- [ ] สร้างฐานข้อมูลบน Neon และสร้างตาราง + ข้อมูลตั้งต้นได้
+- [ ] ขึ้น API บน Render พร้อมค่าตั้งค่าและที่อยู่เช็คความปกติ
+- [ ] ตั้ง `vercel.json` ให้ส่งต่อ `/api` และรีเฟรชหน้าย่อยไม่ 404
+- [ ] ใส่ชื่อเว็บจริงให้ Vercel และตรวจครบตามข้อ 6
 
 ---
 
-[← บทที่ 21: CI/CD](./21-cicd.md) · [🏠 สารบัญ](./README.md) · [บทที่ 23: Go-live & ดูแลระบบ →](./23-go-live.md)
+[← บทที่ 21: ตรวจและขึ้นระบบอัตโนมัติ](./21-cicd.md) · [🏠 สารบัญ](./README.md) · [บทที่ 23: เปิดใช้งานจริงและดูแลระบบ →](./23-go-live.md)

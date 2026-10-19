@@ -1,45 +1,48 @@
-# บทที่ 14: Bun + Hono + Drizzle API 🔥
+# บทที่ 14: สร้าง API ด้วย Bun + Hono + Drizzle 🔥
 
-> ⏱ ประมาณ 5 ชั่วโมง · 🧩 ต้องผ่านก่อน: บทที่ 5, 8 และ 11 · 🛠 ใช้: Bun, Hono, Drizzle, Zod, PostgreSQL (Docker)
+> ⏱ ประมาณ 5 ชั่วโมง · 🧩 ต้องผ่านก่อน: บทที่ 5, 8 และ 11 · 🛠 ใช้: Bun, Hono, Drizzle, Zod, PostgreSQL (ในกล่อง Docker)
 
 > **⚡ สรุป 30 วินาที**
-> - **Bun** รัน TypeScript ได้ตรงๆ ไม่ต้อง build / **Hono** = web framework เบาและเร็ว คล้าย Express ที่เรียนในบทที่ 5
-> - วางโครง server ตาม STARTER: `routes/`, `db/`, `validators/`, `middleware/`
-> - ทุก response รูปแบบเดียวกัน `{ success, data }` / `{ success, error }` และ **error 500 ไม่หลุด stack trace**
-> - ต่อหน้าเว็บกับ API ด้วย **Vite proxy** ให้ทั้งคู่อยู่ origin เดียวกัน (สำคัญมากกับ cookie ในบทที่ 15)
+> - **Bun** รันไฟล์ TypeScript ได้เลยไม่ต้องแปลงก่อน / **Hono** = เครื่องมือสร้าง API ขนาดเล็ก เขียนคล้าย Express ที่เรียนในบทที่ 5
+> - จัดโฟลเดอร์ตามงาน STARTER: `routes/` (แยกตามเรื่อง), `db/` (ฐานข้อมูล), `validators/` (กฎตรวจข้อมูล), `middleware/` (ด่านตรวจ)
+> - ทุก API ตอบกลับหน้าตาเดียวกัน และถ้า server พัง **ไม่เผยรายละเอียดข้างในให้คนนอกเห็น**
+> - ให้ Vite **ส่งต่อคำขอ `/api`** ไปที่ API เพื่อให้หน้าเว็บกับ API ดูเหมือนอยู่เว็บเดียวกัน (สำคัญมากกับระบบ login ในบทที่ 15)
+
+> **📖 คำใหม่ในบทนี้**
+> [Schema](./glossary.md#schema) · [Migration](./glossary.md#migration) · [Seed](./glossary.md#seed) · [Endpoint](./glossary.md#endpoint) · [Zod](./glossary.md#zod) · [Middleware](./glossary.md#middleware) · [Rate limit](./glossary.md#rate-limit) · [Proxy (ตอนพัฒนา)](./glossary.md#proxy-dev)
 
 ---
 
 ## 📖 เรื่องเล่า
 
-หน้าเว็บ Bit Café สวยแล้ว แต่ยังอ่านข้อมูลจากไฟล์ mock 😅
+หน้าเว็บ Bit Café สวยแล้ว แต่ข้อมูลยังมาจากไฟล์ตัวอย่างที่เราเขียนเอง 😅
 ลูกค้าถามว่า *"ถ้าผมเพิ่มเมนูใหม่ ต้องโทรหาบิตใช่ไหม?"*
 
-พี่ไบต์: *"ถึงเวลาต่อของจริงแล้ว ฐานข้อมูล + API ที่หน้าเว็บกับหลังบ้านใช้ร่วมกัน"*
+พี่ไบต์: *"ถึงเวลาต่อของจริงแล้ว ฐานข้อมูล + API ที่ทั้งหน้าเว็บและหน้าจัดการร้านใช้ร่วมกัน"*
 
 ---
 
-## 1. ภาพรวมระบบ
+## 1. ภาพรวม
 
 ```
- Browser  ──>  Vite :5173  ──(/api/* proxy)──>  Hono API :3000  ──SQL──>  PostgreSQL :5432
-  (React)       (หน้าเว็บ)                        (Bun)                     (Docker)
+ เบราว์เซอร์ ──> Vite :5173 ──(ขอ /api/... ส่งต่อให้)──> Hono API :3000 ──> PostgreSQL :5432
+  (React)       (หน้าเว็บ)                              (Bun)              (ในกล่อง Docker)
 ```
 
-**Hono เทียบกับ Express (บทที่ 5)**
-| | Express | Hono |
+**Hono เทียบกับ Express (บทที่ 5)** เขียนต่างกันนิดเดียว
+| ทำอะไร | Express | Hono |
 |---|---|---|
-| ประกาศ route | `app.get("/x", (req, res) => res.json(...))` | `app.get("/x", (c) => c.json(...))` |
-| อ่าน body | `req.body` (ต้องมี `express.json()`) | `await c.req.json()` |
-| อ่าน query / param | `req.query.q` / `req.params.id` | `c.req.query("q")` / `c.req.param("id")` |
-| ตั้ง status | `res.status(201).json(x)` | `c.json(x, 201)` |
-| รันบน | Node | Bun, Node, Deno, Cloudflare Workers ฯลฯ |
+| ประกาศที่อยู่ API | `app.get("/x", (req, res) => res.json(...))` | `app.get("/x", (c) => c.json(...))` |
+| อ่านข้อมูลที่ส่งมา | `req.body` (ต้องมี `express.json()`) | `await c.req.json()` |
+| อ่านค่าในลิงก์ | `req.query.q` / `req.params.id` | `c.req.query("q")` / `c.req.param("id")` |
+| ตอบพร้อมตัวเลขบอกผล | `res.status(201).json(x)` | `c.json(x, 201)` |
+| รันบน | Node | Bun, Node และอื่นๆ อีกหลายที่ |
 
 ---
 
-## 2. 🔧 ตั้งโปรเจกต์
+## 2. 🔧 เริ่มโปรเจกต์
 
-**ฐานข้อมูล (dev)** สร้าง `bit-cafe/compose.yaml`
+**ฐานข้อมูลสำหรับตอนพัฒนา** สร้างไฟล์ `bit-cafe/compose.yaml`
 ```yaml
 services:
   db:
@@ -61,7 +64,7 @@ cd bit-cafe
 docker compose up -d
 ```
 
-**server**
+**ส่วน server**
 ```bash
 mkdir server && cd server
 bun init -y
@@ -70,14 +73,14 @@ bun add -d drizzle-kit @types/pg typescript
 mkdir -p src/routes src/db src/validators src/middleware src/http
 ```
 
-`server/.env` (อย่าลืม `.env` อยู่ใน `.gitignore`)
+`server/.env` (ไฟล์นี้ต้องอยู่ใน `.gitignore` ห้ามขึ้น Git)
 ```
 DATABASE_URL=postgres://app:secret@localhost:5432/bitcafe
 PORT=3000
 ```
-`server/.env.example` = ก๊อปเดียวกันแต่ใส่ค่าตัวอย่าง แล้ว commit ไฟล์นี้แทน ([บทที่ 10 ข้อ 1](./10-security.md#_1-ความลับ-secrets-และไฟล์-env))
+`server/.env.example` = หน้าตาเหมือนกันแต่ใส่ค่าตัวอย่าง แล้วเอาไฟล์นี้ขึ้น Git แทน ([บทที่ 10 ข้อ 1](./10-security.md#_1-ความลับ-secrets-และไฟล์-env))
 
-`server/package.json` เพิ่ม scripts:
+`server/package.json` เพิ่มคำสั่งลัด:
 ```json
 {
   "scripts": {
@@ -90,9 +93,9 @@ PORT=3000
   }
 }
 ```
-> 💡 Bun อ่านไฟล์ `.env` ให้เองตอน `bun run ...` ไม่ต้องติดตั้ง `dotenv`
+> 💡 Bun อ่านไฟล์ `.env` ให้เองตอนสั่ง `bun run ...` ไม่ต้องติดตั้งอะไรเพิ่ม
 
-`src/env.ts` ตรวจค่าตั้งค่าตอนเริ่มแอป ขาดตัวไหนหยุดทันที
+`src/env.ts` ตรวจค่าตั้งค่าตอนเปิดโปรแกรม ขาดตัวไหนหยุดทันที (ดีกว่าไปพังทีหลังแบบงงๆ)
 ```ts
 import { z } from "zod";
 
@@ -109,7 +112,7 @@ export const env = Env.parse(process.env);
 
 ## 3. 🔧 ฐานข้อมูลด้วย Drizzle
 
-`src/db/schema.ts` (ตัดมา 3 ตารางจาก [6 ตารางของ STARTER](./starter/database-api.md#_1-ฐานข้อมูลขั้นต่ํา))
+`src/db/schema.ts` แบบแปลนตาราง (หยิบมา 3 จาก [6 ตารางของงาน STARTER](./starter/database-api.md#_1-ตารางที่ต้องมี))
 ```ts
 import { pgTable, serial, text, integer, boolean, timestamp } from "drizzle-orm/pg-core";
 
@@ -157,7 +160,7 @@ export const contactMessages = pgTable("contact_messages", {
 });
 ```
 
-`drizzle.config.ts` (วางที่ `server/` นอก `src/`)
+`drizzle.config.ts` บอก Drizzle ว่าแบบแปลนอยู่ไหน และจะเก็บไฟล์อัปเดตตารางไว้ไหน (วางที่ `server/` นอก `src/`)
 ```ts
 import { defineConfig } from "drizzle-kit";
 
@@ -169,7 +172,7 @@ export default defineConfig({
 });
 ```
 
-`src/db/index.ts`
+`src/db/index.ts` ต่อฐานข้อมูล
 ```ts
 import { drizzle } from "drizzle-orm/node-postgres";
 import { env } from "../env";
@@ -178,7 +181,7 @@ import * as schema from "./schema";
 export const db = drizzle(env.DATABASE_URL, { schema });
 ```
 
-`src/db/migrate.ts` รัน migration จากโค้ด (ตอน deploy ใช้ตัวนี้ ไม่ต้องติดตั้ง drizzle-kit บน server)
+`src/db/migrate.ts` สั่งอัปเดตตารางจากโค้ด (ตอนขึ้นระบบจริงใช้ไฟล์นี้)
 ```ts
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { db } from "./index";
@@ -188,7 +191,7 @@ console.log("✅ migrate เสร็จ");
 process.exit(0);
 ```
 
-`src/db/seed.ts` รันซ้ำได้โดยไม่สร้างข้อมูลซ้ำ (สำคัญ เพราะจะใช้บน production ด้วย)
+`src/db/seed.ts` ใส่ข้อมูลตั้งต้น **รันซ้ำกี่ครั้งก็ไม่สร้างข้อมูลซ้ำ** (สำคัญ เพราะจะใช้กับระบบจริงด้วย)
 ```ts
 import { db } from "./index";
 import { categories, services } from "./schema";
@@ -221,13 +224,13 @@ bun run db:generate     # อ่าน schema → สร้างไฟล์ SQ
 bun run db:migrate      # สร้างตารางใน DB จริง
 bun run seed            # ใส่ข้อมูลตัวอย่าง
 ```
-เปิด pgAdmin (หรือ Adminer จากบทที่ 2) ต่อที่ `localhost:5432` user `app` / `secret` ควรเห็น 3 ตารางพร้อมข้อมูล 🎉
+เปิด pgAdmin (หรือ Adminer จากบทที่ 2) ต่อที่ `localhost:5432` ชื่อผู้ใช้ `app` รหัส `secret` ควรเห็น 3 ตารางพร้อมข้อมูล 🎉
 
 ---
 
-## 4. 🔧 รูปแบบ response และ error ที่เดียว
+## 4. 🔧 รูปแบบคำตอบ และการจัดการ error ที่เดียว
 
-`src/http/response.ts`
+`src/http/response.ts` ตัวช่วยสร้างคำตอบ + ตัวช่วยตรวจข้อมูล
 ```ts
 import type { Context } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
@@ -265,7 +268,7 @@ export function parse<T extends z.ZodType>(schema: T, input: unknown): z.infer<T
 }
 ```
 
-`src/index.ts`
+`src/index.ts` ไฟล์เริ่มต้น
 ```ts
 import { Hono } from "hono";
 import { logger } from "hono/logger";
@@ -296,13 +299,13 @@ app.onError((err, c) => {
 
 export default { port: env.PORT, fetch: app.fetch };
 ```
-> 🔐 `onError` ทำให้ requirement **"Error 500 ห้ามส่ง stack trace กลับไปให้ client"** เป็นจริงทุก endpoint โดยไม่ต้องเขียน try/catch ทุกที่
+> 🔐 `onError` คือ **ตาข่ายรองรับสุดท้าย** error ไหนที่เราไม่ได้ตั้งใจ จะถูกเปลี่ยนเป็นข้อความกลางๆ ก่อนส่งกลับ รายละเอียดจริงอยู่ในหน้าจอ server ของเราเท่านั้น ไม่ต้องเขียนดักทุกที่เอง
 
 ---
 
-## 5. 🔧 Public routes
+## 5. 🔧 API กลุ่มที่ใครก็เรียกได้
 
-`src/validators/public.ts`
+`src/validators/public.ts` กฎตรวจข้อมูล
 ```ts
 import { z } from "zod";
 
@@ -321,7 +324,7 @@ export const ContactInput = z.object({
 export type ContactInput = z.infer<typeof ContactInput>;   // หน้าเว็บ import type นี้ไปใช้ได้
 ```
 
-`src/middleware/rateLimit.ts`
+`src/middleware/rateLimit.ts` ด่านจำกัดจำนวนครั้ง (กันส่งฟอร์มรัวๆ)
 ```ts
 import { createMiddleware } from "hono/factory";
 import { getConnInfo } from "hono/bun";
@@ -402,7 +405,7 @@ publicRoutes.post("/contact", rateLimit({ limit: 5, windowMs: 10 * 60 * 1000 }),
 bun run dev
 ```
 
-### ทดสอบด้วยไฟล์ `.http` (เหมือนบทที่ 5)
+### ลองเรียกด้วยไฟล์ `.http` (เหมือนบทที่ 5)
 `server/requests.http`
 ```http
 ### บริการทั้งหมด
@@ -426,14 +429,14 @@ Content-Type: application/json
 ### ไม่มี endpoint นี้ (ควรได้ 404)
 GET http://localhost:3000/api/nope
 ```
-💥 **ลองพังมันดู:** ส่ง `/api/contact` 6 ครั้งติดกัน ครั้งที่ 6 ต้องได้ `429`
-💥 ปิด DB (`docker compose stop db`) แล้วเรียก `/api/services` ต้องได้ 500 พร้อมข้อความกลางๆ ส่วน stack trace อยู่ใน terminal ของ server เท่านั้น
+💥 **ลองพังมันดู:** ส่งฟอร์มติดต่อ 6 ครั้งติดกัน ครั้งที่ 6 ต้องได้ `429` (ถี่เกินไป)
+💥 ปิดฐานข้อมูล (`docker compose stop db`) แล้วเรียก `/api/services` ต้องได้ 500 พร้อมข้อความกลางๆ ส่วนรายละเอียด error อยู่ในหน้าจอ server เท่านั้น
 
 ---
 
-## 6. 🔧 ต่อหน้าเว็บกับ API
+## 6. 🔧 ต่อหน้าเว็บเข้ากับ API
 
-### Vite proxy
+### ให้ Vite ส่งต่อคำขอ `/api`
 `client/vite.config.ts`
 ```ts
 export default defineConfig({
@@ -445,11 +448,11 @@ export default defineConfig({
 ```
 ตอนนี้หน้าเว็บเรียก `fetch("/api/services")` ได้เลย ไม่ต้องใส่ `http://localhost:3000`
 
-> 💡 **ทำไมใช้ proxy แทนการเรียก `:3000` ตรงๆ?**
-> browser มองว่า `localhost:5173` กับ `localhost:3000` เป็นคนละ **origin** ต้องตั้ง CORS และ cookie login (บทที่ 15) จะยุ่งขึ้นมาก
-> proxy ทำให้ทุกอย่างอยู่ origin เดียว และตอน deploy เราจะทำแบบเดียวกันด้วย reverse proxy ([บทที่ 20](./20-deploy-vps.md))
+> 💡 **ทำไมไม่ให้หน้าเว็บเรียก `:3000` ตรงๆ?**
+> เบราว์เซอร์ถือว่า `localhost:5173` กับ `localhost:3000` เป็น **คนละเว็บ** ต้องตั้งค่าอนุญาตข้ามเว็บ (CORS) และระบบ login ด้วย cookie (บทที่ 15) จะยุ่งขึ้นมาก
+> ให้ Vite ส่งต่อแทน ทุกอย่างจะดูเหมือนอยู่เว็บเดียว และตอนขึ้นระบบจริงเราก็ใช้วิธีเดียวกันด้วย Caddy ([บทที่ 20](./20-deploy-vps.md))
 
-### ตัวกลางเรียก API ที่เดียว
+### ตัวกลางเรียก API อยู่ที่เดียว
 `client/src/api/client.ts`
 ```ts
 type ApiBody<T> =
@@ -487,7 +490,7 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 ```
 
-แก้ `useFetch` ในบทที่ 11 ให้เรียก `api<T>(url, { signal: controller.signal })` แทน `fetch` และเปลี่ยน URL จาก `/mock/services.json` เป็น `/api/services`
+แก้ `useFetch` ในบทที่ 11 ให้เรียก `api<T>(url, { signal: controller.signal })` แทน `fetch` และเปลี่ยนที่อยู่จาก `/mock/services.json` เป็น `/api/services`
 
 ส่งฟอร์มติดต่อของจริง (แทน `setTimeout` ในบทที่ 11):
 ```ts
@@ -513,52 +516,52 @@ try {
 
 | อาการ | สาเหตุ | วิธีแก้ |
 |---|---|---|
-| `ZodError ... DATABASE_URL` ตอนเริ่ม | ไม่มี `.env` หรือรันนอกโฟลเดอร์ `server/` | `cd server` แล้วรันด้วย `bun run dev` |
-| `ECONNREFUSED 127.0.0.1:5432` | DB ยังไม่เปิด | `docker compose up -d` แล้ว `docker compose ps` |
-| `relation "services" does not exist` | ยังไม่ migrate | `bun run db:generate` แล้ว `bun run db:migrate` |
-| หน้าเว็บได้ HTML แทน JSON | ไม่ได้ตั้ง proxy หรือ server ไม่ได้รัน | ตรวจ `vite.config.ts` แล้ว restart `bun run dev` ฝั่ง client |
-| ได้ 500 ทั้งที่ส่งข้อมูลผิด | เรียก `.parse()` ของ Zod ตรงๆ แทน helper `parse` | ใช้ `parse(schema, input)` ที่โยน `AppError(400)` |
-| แก้ schema แล้ว DB ไม่เปลี่ยน | ลืม generate ไฟล์ migration ใหม่ | `db:generate` → `db:migrate` ทุกครั้ง |
+| ขึ้น `ZodError ... DATABASE_URL` ตอนเปิด | ไม่มีไฟล์ `.env` หรือสั่งนอกโฟลเดอร์ `server/` | `cd server` แล้วสั่ง `bun run dev` |
+| ขึ้น `ECONNREFUSED 127.0.0.1:5432` | ฐานข้อมูลยังไม่เปิด | `docker compose up -d` แล้วดู `docker compose ps` |
+| ขึ้น `relation "services" does not exist` | ยังไม่ได้สร้างตาราง | `bun run db:generate` แล้ว `bun run db:migrate` |
+| หน้าเว็บได้หน้า HTML แทนข้อมูล | ไม่ได้ตั้งการส่งต่อใน Vite หรือ server ไม่ได้เปิด | ตรวจ `vite.config.ts` แล้วปิด-เปิด `bun run dev` ฝั่งหน้าเว็บใหม่ |
+| ส่งข้อมูลผิดแล้วได้ 500 แทน 400 | เรียก `.parse()` ของ Zod ตรงๆ | ใช้ตัวช่วย `parse(schema, input)` ที่เราเขียนไว้ |
+| แก้แบบแปลนแล้วตารางไม่เปลี่ยน | ลืมสร้างไฟล์อัปเดตตารางใหม่ | `db:generate` → `db:migrate` ทุกครั้งที่แก้แบบแปลน |
 
 ---
 
 ## 🧠 เช็คความเข้าใจ
 
-<details><summary>1. ทำไม seed ต้องรันซ้ำได้โดยไม่สร้างข้อมูลซ้ำ?</summary>
+<details><summary>1. ทำไมคำสั่งใส่ข้อมูลตั้งต้น (seed) ต้องรันซ้ำได้โดยข้อมูลไม่ซ้ำ?</summary>
 
-เพราะจะรันบน production ตอน deploy ด้วย ถ้ารันซ้ำแล้วข้อมูลซ้ำหรือถูกลบ ลูกค้าจะเสียข้อมูลจริง จึงใช้ `onConflictDoNothing` และเช็คก่อน insert
+เพราะจะใช้กับระบบจริงตอนขึ้นเว็บด้วย ถ้ารันซ้ำแล้วข้อมูลซ้ำหรือถูกลบ ลูกค้าจะเสียข้อมูลจริง จึงใช้ `onConflictDoNothing` และเช็คก่อนใส่
 </details>
 
-<details><summary>2. ทำไมใช้ <code>app.onError</code> ดีกว่าเขียน try/catch ทุก route?</summary>
+<details><summary>2. ทำไมใช้ <code>app.onError</code> ดีกว่าเขียนดัก error ทุกที่?</summary>
 
-รับประกันว่าทุก error ที่ไม่ได้ตั้งใจจะกลายเป็น 500 ข้อความกลางๆ เหมือนกันหมด ลืม try/catch สักที่ก็ไม่หลุด stack trace และโค้ดแต่ละ route สั้นลง
+มั่นใจได้ว่า error ทุกตัวที่ไม่ได้ตั้งใจ จะกลายเป็นข้อความกลางๆ แบบเดียวกันหมด ลืมดักสักที่ก็ไม่หลุดรายละเอียดออกไป และโค้ดแต่ละ API สั้นลง
 </details>
 
-<details><summary>3. Rate limit แบบเก็บใน memory มีข้อจำกัดอะไร?</summary>
+<details><summary>3. ตัวจำกัดจำนวนครั้งที่จำไว้ในหน่วยความจำ มีข้อจำกัดอะไร?</summary>
 
-restart server แล้วตัวนับหาย และถ้ามี server หลายตัว แต่ละตัวนับแยกกัน ระบบใหญ่จึงเก็บใน Redis แทน สำหรับ STARTER ที่มี server ตัวเดียวถือว่าพอ
+ปิด-เปิด server แล้วตัวนับหาย และถ้ามี server หลายเครื่อง แต่ละเครื่องนับแยกกัน ระบบใหญ่จึงเก็บตัวนับไว้ที่อื่น (เช่น Redis) แต่งาน STARTER มี server เครื่องเดียวถือว่าพอ
 </details>
 
 <details><summary>4. <code>onDelete: "restrict"</code> กับ <code>"cascade"</code> ต่างกันยังไง?</summary>
 
-restrict = ห้ามลบหมวดถ้ายังมีบริการอ้างถึง (DB ตอบ error) / cascade = ลบหมวดแล้วบริการในหมวดถูกลบตามไปด้วย STARTER ต้องการแบบแรก และ API ควรเช็คก่อนแล้วตอบ `409`
+restrict = ห้ามลบหมวดถ้ายังมีสินค้าอยู่ในหมวด / cascade = ลบหมวดแล้วสินค้าในหมวดหายไปด้วย งาน STARTER ต้องการแบบแรก และ API ควรเช็คก่อนแล้วตอบ `409`
 </details>
 
 ---
 
 ## ✏️ แบบฝึกหัด
 
-เพิ่ม `GET /api/settings` (ตาราง `site_settings` มีแถวเดียว) และ `GET /api/pages/:slug` (ตาราง `pages` มี `content` เป็น `jsonb`) ตามสเปก STARTER ถ้าไม่พบ slug ต้องได้ `404` รูปแบบ error เดียวกับข้อ 4 แล้วให้ Navbar/Footer ดึงข้อมูลร้านจาก `/api/settings`
+เพิ่ม `GET /api/settings` (ตาราง `site_settings` มีแถวเดียว) และ `GET /api/pages/:slug` (ตาราง `pages` มีช่อง `content` แบบ JSON) ตามงาน STARTER ถ้าหาหน้าไม่เจอต้องได้ `404` ในรูปแบบเดียวกับข้อ 4 แล้วให้เมนูบนกับส่วนท้ายหน้าดึงข้อมูลร้านจาก `/api/settings`
 
 ## ✅ ผ่านด่าน
 
-- [ ] ตั้งโปรเจกต์ Bun + Hono + Drizzle ตามโครงสร้าง STARTER ได้
-- [ ] สร้างตารางด้วย migration และ seed ที่รันซ้ำได้
-- [ ] ทุก response รูปแบบเดียวกัน และ 500 ไม่หลุด stack trace
-- [ ] ตรวจ input ด้วย Zod แล้วตอบ 400 พร้อมบอกช่องที่ผิด
-- [ ] rate limit ฟอร์มติดต่อ 5 ครั้ง / 10 นาที / IP
-- [ ] หน้าเว็บเรียก API ผ่าน Vite proxy ได้
+- [ ] เริ่มโปรเจกต์ Bun + Hono + Drizzle และจัดโฟลเดอร์ตามงาน STARTER ได้
+- [ ] สร้างตารางด้วยไฟล์อัปเดตตาราง และมีข้อมูลตั้งต้นที่รันซ้ำได้
+- [ ] ทุก API ตอบหน้าตาเดียวกัน และ server พังก็ไม่เผยรายละเอียดข้างใน
+- [ ] ตรวจข้อมูลด้วย Zod แล้วตอบ 400 พร้อมบอกว่าช่องไหนผิด
+- [ ] ฟอร์มติดต่อส่งได้ไม่เกิน 5 ครั้ง / 10 นาที / เครื่อง
+- [ ] หน้าเว็บเรียก API ผ่านการส่งต่อของ Vite ได้
 
 ---
 
-[← บทที่ 13: Router + SEO](./13-router-seo.md) · [🏠 สารบัญ](./README.md) · [บทที่ 15: Auth →](./15-auth.md)
+[← บทที่ 13: หลายหน้า + Google](./13-router-seo.md) · [🏠 สารบัญ](./README.md) · [บทที่ 15: ระบบ login →](./15-auth.md)

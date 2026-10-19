@@ -1,42 +1,45 @@
-# บทที่ 13: React Router + SEO 🧭
+# บทที่ 13: หลายหน้า + ให้ Google หาเจอ (React Router + SEO) 🧭
 
 > ⏱ ประมาณ 3 ชั่วโมง · 🧩 ต้องผ่านก่อน: บทที่ 11 และ 12 · 🛠 ใช้: React, React Router
 
 > **⚡ สรุป 30 วินาที**
-> - **React Router** ทำให้ SPA มีหลาย URL (`/`, `/about`, `/contact`) โดยไม่ต้องโหลดหน้าใหม่
-> - **Layout route** = Navbar/Footer เขียนครั้งเดียว ใช้ทุกหน้า
-> - **SEO** ขั้นต่ำ: `<title>`, meta description, OG tags ต่อหน้า, `h1` หน้าละตัว, `alt` ทุกรูป, `robots.txt`, `sitemap.xml`
-> - SPA มีข้อจำกัดเรื่อง SEO ต้อง **อธิบายได้ว่าทำไม และแก้ยังไง**
+> - **React Router** ทำให้เว็บ React มีหลายหน้า แต่ละหน้ามีลิงก์ของตัวเอง (`/`, `/about`, `/contact`) และสลับหน้าได้โดยไม่ต้องโหลดใหม่
+> - **โครงหน้าร่วม** = เมนูบนกับส่วนท้ายเขียนครั้งเดียว ใช้ได้ทุกหน้า
+> - **ให้ Google หาเจอ (SEO)** อย่างน้อยต้องมี: ชื่อหน้า, คำอธิบายสั้น, การ์ดตอนแชร์, หัวข้อใหญ่หน้าละ 1 อัน, คำอธิบายรูป, `robots.txt`, `sitemap.xml`
+> - เว็บแบบที่เราทำมีข้อจำกัดเรื่องนี้ ต้อง **อธิบายได้ว่าทำไม และแก้ยังไง**
+
+> **📖 คำใหม่ในบทนี้**
+> [Router / Route](./glossary.md#router) · [SPA](./glossary.md#spa) · [SEO](./glossary.md#seo) · [OG tags](./glossary.md#og) · [Component](./glossary.md#component) · [State](./glossary.md#state)
 
 ---
 
 ## 📖 เรื่องเล่า
 
-บิตทำหน้าเว็บเสร็จ 3 หน้า แต่ทุกหน้าอยู่ที่ URL เดียว `localhost:5173` 😵
-ลูกค้าส่งลิงก์หน้า "ติดต่อ" ให้เพื่อนไม่ได้ กด Back ของ browser แล้วหลุดออกจากเว็บ และแชร์ลง LINE แล้วขึ้นแค่คำว่า "Vite + React + TS"
+บิตทำหน้าเว็บเสร็จ 3 หน้า แต่ทุกหน้าใช้ลิงก์เดียวกันคือ `localhost:5173` 😵
+ลูกค้าส่งลิงก์หน้า "ติดต่อ" ให้เพื่อนไม่ได้, กดย้อนกลับในเบราว์เซอร์แล้วหลุดออกจากเว็บ, แชร์ลง LINE แล้วการ์ดขึ้นแค่คำว่า "Vite + React + TS"
 
-พี่ไบต์: *"เว็บที่ดีต้องมี URL ให้ทุกหน้า และบอก Google กับ LINE ได้ว่าหน้านี้คืออะไร"*
-
----
-
-## 1. Routing ใน SPA ทำงานยังไง
-
-```
- ผู้ใช้กด "ติดต่อ"
-      |
-      v
- React Router เปลี่ยน URL เป็น /contact  (ไม่ขอหน้าใหม่จาก server)
-      |
-      v
- หา Route ที่ตรงกับ /contact  -->  วาด <ContactPage />
-```
-
-> ⚠️ **ผลข้างเคียงสำคัญ:** ถ้าผู้ใช้เปิด `https://เว็บ/contact` ตรงๆ หรือกด refresh, server ต้องตอบ `index.html` กลับไปเสมอ (ไม่ใช่ 404) แล้วให้ React Router จัดการต่อ
-> ตอน dev Vite ทำให้อัตโนมัติ ตอน deploy ต้องตั้งเอง ([บทที่ 20](./20-deploy-vps.md) และ [บทที่ 22](./22-deploy-managed.md))
+พี่ไบต์: *"เว็บที่ดี ทุกหน้าต้องมีลิงก์ของตัวเอง และบอก Google กับ LINE ได้ว่าหน้านี้คืออะไร"*
 
 ---
 
-## 2. 🔧 ติดตั้งและตั้ง Route
+## 1. เว็บ React เปลี่ยนหน้ายังไง
+
+```
+ ผู้ใช้กดเมนู "ติดต่อ"
+      │
+      ▼
+ React Router เปลี่ยนลิงก์ด้านบนเป็น /contact  (ไม่ได้ขอหน้าใหม่จาก server)
+      │
+      ▼
+ ดูว่าลิงก์ /contact ตรงกับหน้าไหน  →  แสดงหน้าติดต่อ
+```
+
+> ⚠️ **ผลที่ต้องรู้:** ถ้าผู้ใช้พิมพ์ `https://เว็บ/contact` เข้ามาตรงๆ หรือกดรีเฟรช server ต้องส่งหน้าหลัก (`index.html`) กลับไปเสมอ (ไม่ใช่ตอบว่าไม่พบ) แล้วให้ React Router เลือกหน้าเอง
+> ตอนพัฒนาในเครื่อง Vite ทำให้เอง ตอนขึ้นระบบจริงต้องตั้งเอง ([บทที่ 20](./20-deploy-vps.md) และ [บทที่ 22](./22-deploy-managed.md))
+
+---
+
+## 2. 🔧 ติดตั้งและประกาศหน้า
 
 ```bash
 cd bit-cafe/client
@@ -60,7 +63,7 @@ createRoot(document.getElementById("root")!).render(
 );
 ```
 
-`src/App.tsx`
+`src/App.tsx` ประกาศว่าลิงก์ไหนแสดงหน้าไหน
 ```tsx
 import { Routes, Route } from "react-router";
 import PublicLayout from "./components/PublicLayout";
@@ -85,9 +88,9 @@ export default function App() {
 
 ---
 
-## 3. Layout + NavLink + Outlet
+## 3. โครงหน้าร่วม + เมนูที่รู้ว่าอยู่หน้าไหน
 
-`src/components/PublicLayout.tsx`
+`src/components/PublicLayout.tsx` โครงที่ทุกหน้าใช้ร่วมกัน (`Outlet` = ช่องที่เนื้อหาของแต่ละหน้าจะมาแสดง)
 ```tsx
 import { Outlet } from "react-router";
 import Navbar from "./Navbar";
@@ -108,7 +111,7 @@ export default function PublicLayout() {
 }
 ```
 
-แก้ Navbar จากบทที่ 12: เปลี่ยน `<a href>` เป็น **`NavLink`** จะได้ 2 อย่าง: ไม่โหลดหน้าใหม่ + รู้ว่าหน้าไหน active
+แก้เมนูจากบทที่ 12: เปลี่ยน `<a href>` เป็น **`NavLink`** จะได้ 2 อย่าง: เปลี่ยนหน้าโดยไม่โหลดใหม่ + รู้ว่าตอนนี้อยู่หน้าไหน (เอาไปทำให้เมนูนั้นเด่น)
 ```tsx
 import { NavLink } from "react-router";
 
@@ -123,10 +126,10 @@ import { NavLink } from "react-router";
   {l.label}
 </NavLink>
 ```
-> ⚠️ ลิงก์ภายในเว็บใช้ `<Link>` / `<NavLink>` เสมอ ถ้าใช้ `<a href>` browser จะโหลดใหม่ทั้งหน้า state หายหมด
-> ลิงก์ออกนอกเว็บ (LINE, Facebook) ใช้ `<a href target="_blank" rel="noopener noreferrer">` ได้ตามปกติ
+> ⚠️ ลิงก์ไปหน้าอื่นในเว็บเราเอง ใช้ `<Link>` / `<NavLink>` เสมอ ถ้าใช้ `<a href>` เบราว์เซอร์จะโหลดใหม่ทั้งหน้า ข้อมูลที่จำไว้หายหมด
+> ลิงก์ออกไปเว็บอื่น (LINE, Facebook) ใช้ `<a href target="_blank" rel="noopener noreferrer">` ได้ตามปกติ
 
-`src/pages/NotFoundPage.tsx`
+`src/pages/NotFoundPage.tsx` หน้า 404
 ```tsx
 import { Link } from "react-router";
 
@@ -144,9 +147,9 @@ export default function NotFoundPage() {
 
 ---
 
-## 4. 🔧 Filter ด้วย URL (useSearchParams)
+## 4. 🔧 เลือกดูทีละหมวด โดยจำไว้ในลิงก์
 
-หน้า About/Services ต้อง **กรองตามหมวดหมู่** เก็บหมวดที่เลือกไว้ใน URL (`/about?category=drinks`) ดีกว่าเก็บใน state เพราะ **ส่งลิงก์ต่อได้ และกด Back แล้วกลับไปหมวดเดิม**
+หน้าเกี่ยวกับร้าน/บริการต้อง **เลือกดูทีละหมวดได้** ให้จำหมวดที่เลือกไว้ในลิงก์ (`/about?category=drinks`) ดีกว่าจำไว้ในตัวแปร เพราะ **ส่งลิงก์ให้คนอื่นแล้วเห็นหมวดเดียวกัน และกดย้อนกลับแล้วกลับไปหมวดเดิม**
 
 ```tsx
 import { useSearchParams } from "react-router";
@@ -181,12 +184,12 @@ export default function ServiceList() {
   );
 }
 ```
-👀 url เปลี่ยน → `useFetch` รันใหม่เอง เพราะเราใส่ `[url]` ไว้ใน dependency (บทที่ 11 ข้อ 6)
-💡 endpoint `/api/...` จะมีจริงใน [บทที่ 14](./14-hono-api.md) ระหว่างนี้ชี้ไปที่ไฟล์ mock ใน `public/` แบบบทที่ 11 ไปก่อนได้
+👀 ลิงก์เปลี่ยน → `useFetch` ดึงข้อมูลใหม่เอง เพราะเราบอกไว้ในบทที่ 11 ข้อ 6 ว่าให้ทำใหม่เมื่อ `url` เปลี่ยน
+💡 ที่อยู่ `/api/...` จะมีจริงใน [บทที่ 14](./14-hono-api.md) ระหว่างนี้ชี้ไปที่ไฟล์ตัวอย่างใน `public/` แบบบทที่ 11 ไปก่อนได้
 
 ---
 
-## 5. หน้าหลังบ้าน: Route ซ้อน + Route ที่ต้อง login
+## 5. หน้าจัดการร้าน: หน้าซ้อนหน้า + หน้าที่ต้อง login
 
 เพิ่มใน `App.tsx`:
 ```tsx
@@ -197,23 +200,23 @@ export default function ServiceList() {
   <Route path="services" element={<ServicesPage />} />   {/* /admin/services */}
 </Route>
 ```
-`RequireAuth` จะเช็คกับ server ว่า login อยู่ไหม ถ้าไม่ → พาไป `/admin/login` (เขียนจริงใน [บทที่ 15](./15-auth.md))
+`RequireAuth` จะถาม server ว่า login อยู่ไหม ถ้าไม่ → พาไป `/admin/login` (เขียนจริงใน [บทที่ 15](./15-auth.md))
 
-> ⚠️ การซ่อนหน้า admin ฝั่ง React **ไม่ใช่ความปลอดภัย** ใครก็เปิด DevTools ข้ามได้ ตัวกันจริงคือ **API ต้องตอบ 401** ถ้าไม่ได้ login
+> ⚠️ การซ่อนหน้าจัดการร้านไว้ในหน้าเว็บ **ไม่ใช่ความปลอดภัย** ใครก็เปิด DevTools ข้ามได้ ตัวกันจริงคือ **server ต้องตอบ 401** ถ้ายังไม่ได้ login
 
 ---
 
-## 6. SEO: บอก Google และ LINE ว่าหน้านี้คืออะไร
+## 6. ให้ Google และ LINE รู้ว่าหน้านี้คืออะไร
 
-**SEO (Search Engine Optimization)** = ทำให้ search engine เข้าใจและแสดงเว็บเราได้ดี
-**OG tags (Open Graph)** = ข้อมูลที่ LINE / Facebook ใช้สร้างการ์ดตอนแชร์ลิงก์
+**SEO** = ทำให้ Google เข้าใจเนื้อหาและแสดงเว็บเราในผลค้นหา
+**OG tags** = ข้อมูลที่ LINE / Facebook ใช้ทำการ์ดตอนแชร์ลิงก์ (รูป หัวข้อ คำอธิบาย)
 
 ```
- แชร์ลิงก์ลง LINE  -->  bot ของ LINE เปิดหน้าเว็บ  -->  อ่าน <meta property="og:...">  -->  การ์ด: รูป + หัวข้อ + คำอธิบาย
+ แชร์ลิงก์ลง LINE ──> ระบบของ LINE แวะเปิดหน้าเว็บเรา ──> อ่านข้อมูล OG ──> ทำการ์ด: รูป + หัวข้อ + คำอธิบาย
 ```
 
-### 🔧 ตั้ง title / meta ต่อหน้า
-React 19 ให้เขียน `<title>` และ `<meta>` ที่ไหนก็ได้ใน component แล้วจะย้ายไปไว้ใน `<head>` ให้เอง
+### 🔧 ตั้งชื่อหน้าและคำอธิบายของแต่ละหน้า
+React 19 ให้เขียน `<title>` และ `<meta>` ไว้ในชิ้นส่วนไหนก็ได้ แล้วจะย้ายไปไว้ส่วนหัวของหน้าให้เอง
 
 `src/components/Seo.tsx`
 ```tsx
@@ -236,29 +239,29 @@ export default function Seo({ title, description, image }: Props) {
   );
 }
 ```
-ใช้ในหน้า โดยดึงค่าจาก API (`pages.seo_title` ฯลฯ ที่ admin แก้ได้):
+ใช้ในแต่ละหน้า โดยดึงค่าจาก API (ค่าที่เจ้าของร้านแก้ได้ในหน้าจัดการ):
 ```tsx
 const page = useFetch<PageData>("/api/pages/home");
 // ...
 {page.data && <Seo title={page.data.seoTitle} description={page.data.seoDescription} image={page.data.ogImageUrl} />}
 ```
 
-### กฎเนื้อหาที่ Google ชอบ
-- `h1` **หน้าละ 1 ตัว** = หัวข้อหลักของหน้า ที่เหลือใช้ `h2`, `h3` ตามลำดับ
-- รูปทุกรูปมี `alt` อธิบายรูป (ช่วยคนตาบอดที่ใช้โปรแกรมอ่านจอด้วย)
-- ข้อความลิงก์บอกปลายทาง: "ดูเมนูทั้งหมด" ✅ ไม่ใช่ "คลิกที่นี่" ❌
+### เขียนเนื้อหาให้ Google อ่านง่าย
+- หัวข้อใหญ่สุด (`h1`) **หน้าละ 1 อัน** หัวข้อรองใช้ `h2`, `h3` ตามลำดับ
+- รูปทุกรูปมีคำอธิบาย (`alt`) ช่วยทั้ง Google และคนตาบอดที่ใช้โปรแกรมอ่านจอ
+- คำบนลิงก์บอกปลายทาง: "ดูเมนูทั้งหมด" ✅ ไม่ใช่ "คลิกที่นี่" ❌
 
-### 🔧 robots.txt และ sitemap.xml
-ใส่ใน `client/public/` (มีแค่ 3 หน้า เขียนมือได้)
+### 🔧 `robots.txt` และ `sitemap.xml`
+วางไว้ใน `client/public/` (มีแค่ 3 หน้า เขียนเองได้เลย)
 
-`public/robots.txt`
+`public/robots.txt` บอกว่าหน้าไหนไม่ต้องเข้ามาดู
 ```
 User-agent: *
 Disallow: /admin
 Sitemap: https://example.com/sitemap.xml
 ```
 
-`public/sitemap.xml`
+`public/sitemap.xml` รายชื่อหน้าทั้งหมดของเว็บ
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -267,72 +270,72 @@ Sitemap: https://example.com/sitemap.xml
   <url><loc>https://example.com/contact</loc></url>
 </urlset>
 ```
-(เปลี่ยน `example.com` เป็นโดเมนจริงตอน deploy ใน [บทที่ 18](./18-domain-dns.md))
+(เปลี่ยน `example.com` เป็นชื่อเว็บจริงตอนขึ้นระบบใน [บทที่ 18](./18-domain-dns.md))
 
-> ⚠️ `Disallow: /admin` แค่ **ขอร้อง** bot ที่สุภาพไม่ให้เข้า ไม่ได้กันใคร ความปลอดภัยจริงอยู่ที่ API
+> ⚠️ `Disallow: /admin` แค่ **ขอร้อง** ระบบค้นหาที่สุภาพว่าไม่ต้องเข้า ไม่ได้กันใครจริง ความปลอดภัยจริงอยู่ที่ server
 
 ---
 
-## 7. 🤓 ข้อจำกัดของ SPA เรื่อง SEO (ต้องอธิบายใน README ได้)
+## 7. 🤓 ข้อจำกัดของเว็บแบบนี้ (ต้องอธิบายใน README ได้)
 
 ```
- Server ส่งให้ bot:   <div id="root"></div>  + ไฟล์ JS
-                              |
-          Google bot: รัน JS ได้ (แต่ช้ากว่า อาจเข้าคิว)     → เห็นเนื้อหา ✅
-          LINE / Facebook bot: ส่วนใหญ่ไม่รัน JS              → เห็นแค่ meta ใน index.html ❌
+ server ส่งให้ระบบที่มาอ่านเว็บ:  หน้าเปล่า <div id="root"></div> + ไฟล์โค้ด
+                                     │
+          Google: รันโค้ดได้ (แต่ช้ากว่า อาจต้องรอคิว)         → เห็นเนื้อหา ✅
+          LINE / Facebook: ส่วนใหญ่ไม่รันโค้ด                   → เห็นแค่ข้อมูลใน index.html ❌
 ```
 
-**ผลคือ:** แชร์ลง LINE แล้วการ์ดอาจไม่ขึ้นรูป/หัวข้อตามที่ admin ตั้ง เพราะ bot ไม่เคยเห็น `<Seo>` ที่ React สร้าง
+**ผลคือ:** แชร์ลง LINE แล้วการ์ดอาจไม่ขึ้นรูปหรือหัวข้อที่เจ้าของร้านตั้ง เพราะ LINE ไม่เคยเห็นสิ่งที่ `<Seo>` สร้างขึ้น
 
 **ทางแก้ (จากง่ายไปยาก)**
 | วิธี | ทำยังไง | เหมาะกับ |
 |---|---|---|
-| ใส่ meta ค่าเริ่มต้นใน `index.html` | เขียน `og:title`, `og:image` ของร้านไว้ตรงๆ | อย่างน้อยแชร์แล้วมีการ์ด (ทำได้เลยใน STARTER) |
-| **Prerender** | ตอน build ให้เครื่องมือเปิดแต่ละหน้าแล้วบันทึก HTML ที่มีเนื้อหาไว้ | เว็บไม่กี่หน้า เนื้อหาไม่เปลี่ยนบ่อย (Bonus ของ STARTER) |
-| **SSR** (Server-Side Rendering) | server สร้าง HTML ให้ทุก request (เช่น React Router framework mode, Next.js) | เว็บที่ SEO สำคัญมาก เนื้อหาเปลี่ยนบ่อย |
+| ใส่ข้อมูลการ์ดค่าเริ่มต้นไว้ใน `index.html` | เขียนรูปและหัวข้อของร้านไว้ตรงๆ | อย่างน้อยแชร์แล้วมีการ์ด (ทำได้เลยในงาน STARTER) |
+| **สร้างหน้าไว้ล่วงหน้า (prerender)** | ตอนแพ็กเว็บ ให้เครื่องมือเปิดแต่ละหน้าแล้วเก็บหน้าที่มีเนื้อหาไว้ | เว็บไม่กี่หน้า เนื้อหาไม่ค่อยเปลี่ยน (งานเสริมของ STARTER) |
+| **ให้ server สร้างหน้าให้ทุกครั้ง (SSR)** | server สร้างหน้าที่มีเนื้อหาครบส่งให้ทุกครั้งที่มีคนขอ | เว็บที่ต้องติด Google มาก และเนื้อหาเปลี่ยนบ่อย |
 
-> 💡 ระดับ STARTER ยอมรับข้อจำกัดนี้ได้ แต่ต้อง **เขียนอธิบายใน README** ว่าทำไม และถ้าจะแก้ต้องทำยังไง
+> 💡 งาน STARTER ยอมรับข้อจำกัดนี้ได้ แต่ต้อง **เขียนอธิบายใน README** ว่าเพราะอะไร และถ้าจะแก้ต้องทำยังไง
 
-**ทดสอบการ์ดตอนแชร์ (หลัง deploy):** [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/) และส่งลิงก์ให้ตัวเองใน LINE
+**ลองการ์ดตอนแชร์ (หลังขึ้นระบบจริง):** [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/) และส่งลิงก์ให้ตัวเองใน LINE
 
 ---
 
 ## 🧠 เช็คความเข้าใจ
 
-<details><summary>1. ทำไมลิงก์ภายในเว็บต้องใช้ <code>NavLink</code>/<code>Link</code> ไม่ใช่ <code>&lt;a href&gt;</code>?</summary>
+<details><summary>1. ทำไมลิงก์ในเว็บเราเองต้องใช้ <code>NavLink</code>/<code>Link</code> ไม่ใช่ <code>&lt;a href&gt;</code>?</summary>
 
-`<a>` ทำให้ browser โหลดหน้าใหม่ทั้งหมด React เริ่มต้นใหม่ state หาย และช้ากว่า ส่วน `Link` เปลี่ยน URL ในหน้าเดิม
+`<a>` ทำให้เบราว์เซอร์โหลดใหม่ทั้งหน้า ข้อมูลที่จำไว้หายและช้ากว่า ส่วน `Link` แค่เปลี่ยนลิงก์แล้วสลับเนื้อหาในหน้าเดิม
 </details>
 
-<details><summary>2. เปิด <code>/contact</code> ตรงๆ บน server จริงแล้วได้ 404 เพราะอะไร?</summary>
+<details><summary>2. บนระบบจริง พิมพ์ <code>/contact</code> เข้ามาตรงๆ แล้วได้ 404 เพราะอะไร?</summary>
 
-server หาไฟล์ชื่อ `contact` ไม่เจอ ต้องตั้งให้ server ตอบ `index.html` สำหรับทุก path ที่ไม่ใช่ไฟล์จริง แล้ว React Router จะวาดหน้าที่ถูกต้องเอง
+server หาไฟล์ชื่อ `contact` ไม่เจอ ต้องตั้งให้ server ส่งหน้าหลัก (`index.html`) กลับไปทุกครั้งที่ไม่มีไฟล์ตามที่ขอ แล้ว React Router จะเลือกหน้าที่ถูกเอง
 </details>
 
-<details><summary>3. ทำไมเก็บหมวดหมู่ที่เลือกใน URL ดีกว่าใน useState?</summary>
+<details><summary>3. ทำไมจำหมวดที่เลือกไว้ในลิงก์ ดีกว่าจำไว้ในตัวแปร?</summary>
 
-refresh แล้วไม่หาย, ส่งลิงก์ให้คนอื่นแล้วเห็นหมวดเดียวกัน, ปุ่ม Back ของ browser ทำงานถูก
+รีเฟรชแล้วไม่หาย, ส่งลิงก์ให้คนอื่นแล้วเห็นหมวดเดียวกัน, ปุ่มย้อนกลับของเบราว์เซอร์ทำงานถูก
 </details>
 
-<details><summary>4. แชร์ลิงก์ลง LINE แล้วไม่ขึ้นรูปตามที่ admin ตั้ง ทั้งที่ <code>&lt;Seo&gt;</code> ทำงานใน browser ปกติ เพราะอะไร?</summary>
+<details><summary>4. แชร์ลิงก์ลง LINE แล้วไม่ขึ้นรูปที่เจ้าของร้านตั้ง ทั้งที่เปิดในเบราว์เซอร์แล้วเห็นปกติ เพราะอะไร?</summary>
 
-bot ของ LINE ไม่รัน JavaScript จึงเห็นแค่ `index.html` เปล่าๆ แก้ได้ด้วย meta เริ่มต้นใน `index.html`, prerender หรือ SSR
+ระบบของ LINE ไม่รันโค้ดในหน้าเว็บ จึงเห็นแค่ `index.html` เปล่าๆ แก้ได้ด้วยการใส่ข้อมูลการ์ดค่าเริ่มต้นใน `index.html`, สร้างหน้าไว้ล่วงหน้า หรือให้ server สร้างหน้าให้
 </details>
 
 ---
 
 ## ✏️ แบบฝึกหัด
 
-ทำ Bit Café ให้มี 3 หน้า + 404 ผ่าน React Router, Navbar ไฮไลต์หน้าที่อยู่, หน้าบริการกรองหมวดด้วย `?category=`, ทุกหน้ามี `<Seo>` ต่างกัน และมี `robots.txt` / `sitemap.xml` ตรวจด้วย DevTools → Elements ว่า `<title>` เปลี่ยนเมื่อเปลี่ยนหน้า
+ทำ Bit Café ให้มี 3 หน้า + หน้า 404 ด้วย React Router, เมนูของหน้าที่อยู่ต้องเด่น, หน้าบริการเลือกหมวดด้วย `?category=`, ทุกหน้ามีชื่อหน้าและคำอธิบายต่างกัน และมี `robots.txt` / `sitemap.xml` แล้วเปิด DevTools → Elements ดูว่าชื่อหน้า (`<title>`) เปลี่ยนเมื่อเปลี่ยนหน้า
 
 ## ✅ ผ่านด่าน
 
-- [ ] ตั้ง Route, Layout + `Outlet` และหน้า 404 ได้
-- [ ] ใช้ `NavLink` ไฮไลต์หน้าที่อยู่ได้
-- [ ] เก็บ filter ใน URL ด้วย `useSearchParams` ได้
-- [ ] ตั้ง title / description / OG ต่อหน้าได้
-- [ ] อธิบายข้อจำกัด SEO ของ SPA และวิธีแก้ได้
+- [ ] ประกาศหลายหน้า, ทำโครงหน้าร่วม และหน้า 404 ได้
+- [ ] ใช้ `NavLink` ทำให้เมนูของหน้าที่อยู่เด่นได้
+- [ ] จำหมวดที่เลือกไว้ในลิงก์ด้วย `useSearchParams` ได้
+- [ ] ตั้งชื่อหน้า คำอธิบาย และการ์ดตอนแชร์ ของแต่ละหน้าได้
+- [ ] อธิบายข้อจำกัดเรื่อง Google/LINE ของเว็บแบบนี้ และวิธีแก้ได้
 
 ---
 
-[← บทที่ 12: Tailwind](./12-tailwind.md) · [🏠 สารบัญ](./README.md) · [บทที่ 14: Bun + Hono API →](./14-hono-api.md)
+[← บทที่ 12: ตกแต่งเว็บ](./12-tailwind.md) · [🏠 สารบัญ](./README.md) · [บทที่ 14: สร้าง API →](./14-hono-api.md)

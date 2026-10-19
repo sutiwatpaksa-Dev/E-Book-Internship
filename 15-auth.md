@@ -1,65 +1,71 @@
-# บทที่ 15: Login หลังบ้าน (JWT + httpOnly Cookie) 🔑
+# บทที่ 15: ระบบ login หน้าจัดการร้าน 🔑
 
 > ⏱ ประมาณ 4 ชั่วโมง · 🧩 ต้องผ่านก่อน: บทที่ 10, 13 และ 14 · 🛠 ใช้: Hono, `Bun.password`, React Router
 
 > **⚡ สรุป 30 วินาที**
-> - รหัสผ่านเก็บเป็น **hash** ด้วย `Bun.password` / login สำเร็จได้ **JWT** ใส่ใน **cookie `httpOnly`** อายุ 1 วัน
-> - **middleware** เช็ค cookie ทุก `/api/admin/*` ไม่มีหรือหมดอายุ → `401`
+> - เก็บรหัสผ่านแบบ **เข้ารหัสทางเดียว** (hash) ด้วย `Bun.password`
+> - login สำเร็จ → server ออก **บัตรผ่าน (JWT)** ใส่ไว้ใน **cookie แบบที่โค้ดในหน้าเว็บอ่านไม่ได้** (`httpOnly`) ใช้ได้ 1 วัน
+> - มี **ด่านตรวจ (middleware)** หน้าทุก `/api/admin/...` ไม่มีบัตรหรือบัตรหมดอายุ → ตอบ `401`
 > - login ผิดตอบข้อความเดียว **"อีเมลหรือรหัสผ่านไม่ถูกต้อง"** ห้ามบอกว่าผิดช่องไหน
-> - หน้าเว็บมี `RequireAuth` พาไปหน้า login แต่ **ตัวกันจริงคือ API**
+> - หน้าเว็บพาคนที่ยังไม่ login ไปหน้า login ก็จริง แต่ **ตัวกันจริงคือ server**
+
+> **📖 คำใหม่ในบทนี้**
+> [Hash](./glossary.md#hash) · [JWT](./glossary.md#jwt) · [Cookie](./glossary.md#cookie) · [HttpOnly](./glossary.md#httponly) · [Middleware](./glossary.md#middleware) · [401 / 403](./glossary.md#401) · [XSS](./glossary.md#xss) · [CORS](./glossary.md#cors)
 
 ---
 
 ## 📖 เรื่องเล่า
 
-บิตทำหน้า `/admin` เสร็จ ซ่อนปุ่มไว้อย่างดี พี่ไบต์เปิด terminal พิมพ์:
+บิตทำหน้า `/admin` เสร็จ ซ่อนปุ่มไว้อย่างดี พี่ไบต์เปิด Terminal แล้วพิมพ์:
 ```bash
 curl -X DELETE http://localhost:3000/api/admin/categories/1
 ```
 หมวดหายไปทั้งหมวด 😱 บิต: *"แต่พี่ยังไม่ได้ login เลยนะ!"*
 พี่ไบต์: *"server ไม่รู้หรอกว่าเราซ่อนปุ่มไว้ server ต้องถามเองทุกครั้งว่า 'คุณเป็นใคร'"*
 
-> ⚠️ นี่คือ 1 ใน 3 ข้อที่ทำให้ STARTER **ไม่ผ่านทันที**: *admin API เรียกได้โดยไม่ login*
+> ⚠️ นี่คือ 1 ใน 3 ข้อที่ทำให้งาน STARTER **ไม่ผ่านทันที**: *เรียก API หลังบ้านได้โดยไม่ต้อง login*
 
 ---
 
-## 1. ภาพรวมการ login
+## 1. login ทำงานยังไง
 
 ```
- 1. POST /api/admin/login { email, password }
-        |
-        v
- 2. server: หา admin จาก email → Bun.password.verify(password, hash)
-        |  ผิด → 401 "อีเมลหรือรหัสผ่านไม่ถูกต้อง"
-        v  ถูก
- 3. server: สร้าง JWT { sub: adminId, exp: +1 วัน } ลงลายเซ็นด้วย JWT_SECRET
-        |
-        v
- 4. ตอบกลับพร้อม  Set-Cookie: session=<JWT>; HttpOnly; SameSite=Lax; Path=/; Max-Age=86400
-        |
-        v
- 5. browser แนบ cookie ให้เองทุก request ไปที่เว็บเดียวกัน  →  middleware ตรวจลายเซ็น + วันหมดอายุ
+ 1. หน้าเว็บส่งอีเมล + รหัสผ่าน ไปที่ /api/admin/login
+        │
+        ▼
+ 2. server หาบัญชีจากอีเมล แล้วเทียบรหัสผ่านกับรหัสที่เข้ารหัสเก็บไว้
+        │   ไม่ตรง → ตอบ 401 "อีเมลหรือรหัสผ่านไม่ถูกต้อง"
+        ▼   ตรง
+ 3. server ออกบัตรผ่าน (JWT) เขียนว่า "บัญชีเลขนี้ ใช้ได้ถึงพรุ่งนี้" + เซ็นชื่อกันปลอม
+        │
+        ▼
+ 4. ส่งบัตรกลับไปเก็บใน cookie ของเบราว์เซอร์
+        │
+        ▼
+ 5. ครั้งต่อไปเบราว์เซอร์แนบบัตรมาให้เอง ด่านตรวจดูลายเซ็นกับวันหมดอายุ ผ่านแล้วค่อยทำงาน
 ```
 
-**ทำไม cookie `httpOnly` ไม่ใช่ `localStorage`** (ทบทวน [บทที่ 10](./10-security.md#_3-authentication-vs-authorization))
-| | localStorage | cookie `httpOnly` |
+> 💡 **นึกภาพ:** สายรัดข้อมือเข้างานคอนเสิร์ต 🎟️ ตรวจบัตรครั้งเดียวที่ประตู แล้วได้สายรัดข้อมือ เดินเข้าโซนไหนก็แค่โชว์สายรัด ไม่ต้องโชว์บัตรประชาชนทุกครั้ง
+
+**ทำไมเก็บบัตรใน cookie แบบ `httpOnly` ไม่ใช่ localStorage** (ทบทวน [บทที่ 10](./10-security.md#_3-authentication-vs-authorization))
+| | localStorage | cookie แบบ `httpOnly` |
 |---|---|---|
-| JavaScript อ่านได้ไหม | ✅ ได้ → ถ้ามี XSS หลุดมา token ถูกขโมยทันที | ❌ ไม่ได้ |
-| ต้องแนบเองทุก request | ต้องเขียนโค้ดแนบ header | browser แนบให้เอง |
-| ป้องกันเว็บอื่นส่ง request แทนเรา (CSRF) | ไม่เกี่ยว | ใช้ `SameSite=Lax` ช่วย |
+| โค้ดในหน้าเว็บอ่านได้ไหม | ✅ ได้ → ถ้าคนร้ายแอบใส่โค้ดลงหน้าเว็บได้ บัตรถูกขโมยทันที | ❌ ไม่ได้ |
+| ต้องแนบบัตรเองทุกครั้งไหม | ต้องเขียนโค้ดแนบเอง | เบราว์เซอร์แนบให้เอง |
+| กันเว็บอื่นแอบส่งคำขอแทนเรา | ไม่ช่วย | ตั้ง `SameSite=Lax` ช่วยกันได้ |
 
-**ความหมายของ flag แต่ละตัว**
-| flag | ทำอะไร |
+**ตั้งค่า cookie แต่ละตัวทำอะไร**
+| ตั้งค่า | ทำอะไร |
 |---|---|
-| `HttpOnly` | JavaScript ในหน้าเว็บอ่าน cookie นี้ไม่ได้ |
-| `SameSite=Lax` | เว็บอื่นส่ง `POST`/`fetch` มาที่เว็บเรา browser จะไม่แนบ cookie ไปด้วย |
-| `Secure` | ส่ง cookie เฉพาะ HTTPS (เปิดตอน production, ตอน dev ใช้ http จึงปิดไว้) |
-| `Max-Age=86400` | หมดอายุใน 1 วัน (requirement ของ STARTER) |
-| `Path=/` | ใช้ได้ทุก path ของเว็บ |
+| `HttpOnly` | โค้ดในหน้าเว็บอ่าน cookie นี้ไม่ได้ |
+| `SameSite=Lax` | ถ้าเว็บอื่นพยายามส่งคำขอมาที่เว็บเรา เบราว์เซอร์จะไม่แนบ cookie ไปให้ |
+| `Secure` | ส่ง cookie เฉพาะตอนเป็น `https://` (เปิดตอนขึ้นระบบจริง ตอนพัฒนาในเครื่องใช้ `http://` จึงปิดไว้) |
+| `Max-Age=86400` | หมดอายุใน 1 วัน (86,400 วินาที) ตามที่งาน STARTER กำหนด |
+| `Path=/` | ใช้ได้ทุกหน้าของเว็บ |
 
 ---
 
-## 2. 🔧 เตรียมตาราง admins และ secret
+## 2. 🔧 เตรียมตารางบัญชี และกุญแจลับ
 
 เพิ่มใน `src/db/schema.ts`
 ```ts
@@ -75,11 +81,11 @@ export const admins = pgTable("admins", {
 bun run db:generate && bun run db:migrate
 ```
 
-สร้าง secret สุ่มยาวๆ (Mac/Linux/Git Bash)
+สุ่มกุญแจลับยาวๆ ไว้เซ็นบัตรผ่าน (Mac/Linux/Git Bash)
 ```bash
 openssl rand -base64 48
 ```
-เพิ่มใน `server/.env` (และใส่ชื่อตัวแปรใน `.env.example` โดยไม่ใส่ค่าจริง)
+เพิ่มใน `server/.env` (และใส่แค่ชื่อไว้ใน `.env.example` ไม่ใส่ค่าจริง)
 ```
 JWT_SECRET=<ค่าที่สุ่มได้>
 ADMIN_EMAIL=admin@bitcafe.local
@@ -91,7 +97,7 @@ ADMIN_PASSWORD=<รหัสผ่านทดสอบ อย่างน้อ
   JWT_SECRET: z.string().min(32, "JWT_SECRET ต้องยาวอย่างน้อย 32 ตัวอักษร"),
 ```
 
-เพิ่มท้าย `src/db/seed.ts` (ก่อน `process.exit`) สร้าง admin คนแรก
+เพิ่มท้ายไฟล์ `src/db/seed.ts` (ก่อนบรรทัด `process.exit`) เพื่อสร้างบัญชีเจ้าของร้านคนแรก
 ```ts
 import { admins } from "./schema";   // ย้ายไปไว้บนสุดของไฟล์
 
@@ -108,14 +114,14 @@ if (email && password) {
 ```bash
 bun run seed
 ```
-เปิด pgAdmin ดูคอลัมน์ `password_hash` จะเห็นประมาณ `$argon2id$v=19$m=65536,t=2,p=1$...` ไม่ใช่รหัสผ่านจริง ✅
-(`Bun.password.hash` ใช้ **argon2id** เป็นค่าเริ่มต้น มี salt ในตัว เลือกความช้าให้เอง)
+เปิด pgAdmin ดูช่อง `password_hash` จะเห็นประมาณ `$argon2id$v=19$m=65536,t=2,p=1$...` ไม่ใช่รหัสผ่านจริง ✅
+(`Bun.password.hash` ใช้วิธีเข้ารหัสที่ปลอดภัย และตั้งใจให้ช้า คนร้ายจะเดาทีละล้านรหัสไม่ไหว)
 
 ---
 
-## 3. 🔧 Token + Cookie + Middleware
+## 3. 🔧 ออกบัตร + ตรวจบัตร
 
-`src/auth/session.ts`
+`src/auth/session.ts` ออกบัตรผ่าน และอ่านบัตรผ่าน
 ```ts
 import { sign, verify } from "hono/jwt";
 import { env } from "../env";
@@ -147,7 +153,7 @@ export async function readSessionToken(token: string): Promise<number | null> {
 }
 ```
 
-`src/middleware/requireAdmin.ts`
+`src/middleware/requireAdmin.ts` ด่านตรวจหน้า API หลังบ้าน
 ```ts
 import { createMiddleware } from "hono/factory";
 import { getCookie } from "hono/cookie";
@@ -168,9 +174,9 @@ export const requireAdmin = createMiddleware<AdminEnv>(async (c, next) => {
 
 ---
 
-## 4. 🔧 Login / Logout / Me
+## 4. 🔧 เข้าระบบ / ออกจากระบบ / ถามว่าเป็นใคร
 
-`src/routes/auth.ts` (2 endpoint นี้ **ไม่ต้อง** login)
+`src/routes/auth.ts` (2 ที่อยู่นี้ **ไม่ต้อง** login ก่อน)
 ```ts
 import { Hono } from "hono";
 import { deleteCookie, setCookie } from "hono/cookie";
@@ -208,7 +214,7 @@ authRoutes.post("/logout", (c) => {
 });
 ```
 
-`src/routes/admin.ts` (ทุก endpoint ต้อง login)
+`src/routes/admin.ts` (ทุกที่อยู่ในไฟล์นี้ต้อง login ก่อน)
 ```ts
 import { Hono } from "hono";
 import { count, desc, eq } from "drizzle-orm";
@@ -261,7 +267,7 @@ adminRoutes.delete("/categories/:id", async (c) => {
 });
 ```
 
-`src/index.ts` ต่อเข้าด้วยกัน
+`src/index.ts` ประกอบเข้าด้วยกัน
 ```ts
 import { authRoutes } from "./routes/auth";
 import { adminRoutes } from "./routes/admin";
@@ -272,9 +278,9 @@ app.route("/api/admin", authRoutes);         // ① login / logout ประก�
 app.use("/api/admin/*", requireAdmin);       // ② ทุก /api/admin/* ที่ประกาศหลังบรรทัดนี้ต้องผ่าน middleware
 app.route("/api/admin", adminRoutes);        // ③ endpoint ที่ต้อง login
 ```
-> ⚠️ **ลำดับสำคัญ:** Hono ทำงานตามลำดับที่ประกาศ `/api/admin/login` เจอ handler ① ก่อนและตอบกลับเลย จึงไม่ติด middleware ② ถ้าสลับลำดับ จะไม่มีใคร login ได้เลย
+> ⚠️ **ลำดับบรรทัดสำคัญมาก:** Hono ทำงานตามลำดับที่เขียน คำขอ `/api/admin/login` เจอบรรทัด ① ก่อนและตอบกลับเลย จึงไม่ต้องผ่านด่านตรวจ ② ถ้าสลับลำดับ จะไม่มีใคร login ได้เลย
 
-### 🔧 ทดสอบด้วย curl
+### 🔧 ลองด้วยคำสั่ง curl
 ```bash
 # ① ไม่ login → ต้องได้ 401
 curl -i http://localhost:3000/api/admin/me
@@ -295,7 +301,7 @@ curl -i -b cookies.txt http://localhost:3000/api/admin/me
 # ⑤ ลบหมวดที่ยังมีบริการ → 409
 curl -i -b cookies.txt -X DELETE http://localhost:3000/api/admin/categories/1
 ```
-👀 ดูบรรทัด `Set-Cookie` ใน ③ ต้องมี `HttpOnly` และ `SameSite=Lax`
+👀 ดูบรรทัด `Set-Cookie` ในข้อ ③ ต้องมีคำว่า `HttpOnly` และ `SameSite=Lax`
 
 ---
 
@@ -316,9 +322,9 @@ export const login = (email: string, password: string) =>
 export const logout = () => api<null>("/api/admin/logout", { method: "POST" });
 export const getMe = () => api<Admin>("/api/admin/me");
 ```
-👀 ไม่ต้องแนบ token เอง หน้าเว็บกับ API อยู่ origin เดียวกัน (Vite proxy) browser แนบ cookie ให้อัตโนมัติ
+👀 ไม่ต้องแนบบัตรเอง หน้าเว็บกับ API ดูเหมือนอยู่เว็บเดียวกัน (Vite ส่งต่อให้: บทที่ 14) เบราว์เซอร์จึงแนบ cookie ให้เอง
 
-### RequireAuth: ยังไม่ login → เด้งไปหน้า login
+### ยังไม่ login → พาไปหน้า login
 `client/src/components/RequireAuth.tsx`
 ```tsx
 import { useEffect, useState, type ReactNode } from "react";
@@ -342,7 +348,7 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
 }
 ```
 
-### หน้า Login
+### หน้า login
 `client/src/pages/admin/LoginPage.tsx`
 ```tsx
 import { useState, type FormEvent } from "react";
@@ -390,7 +396,7 @@ export default function LoginPage() {
 }
 ```
 
-### ปุ่ม Logout (ใน AdminLayout)
+### ปุ่มออกจากระบบ (ในโครงหน้าหลังบ้าน)
 ```tsx
 const navigate = useNavigate();
 <button onClick={async () => { await logout(); navigate("/admin/login", { replace: true }); }}>
@@ -398,8 +404,8 @@ const navigate = useNavigate();
 </button>
 ```
 
-### session หมดอายุกลางทาง
-เพิ่มใน `api()` ของ `client/src/api/client.ts` ก่อนบรรทัด `throw` ตัวสุดท้าย:
+### บัตรหมดอายุระหว่างใช้งาน
+เพิ่มใน `api()` ของไฟล์ `client/src/api/client.ts` ก่อนบรรทัด `throw` ตัวสุดท้าย:
 ```ts
 if (res.status === 401 && path.startsWith("/api/admin") && path !== "/api/admin/login") {
   window.location.assign("/admin/login");     // หมดอายุ → ส่งกลับไป login
@@ -408,57 +414,57 @@ if (res.status === 401 && path.startsWith("/api/admin") && path !== "/api/admin/
 
 ---
 
-## 6. 🛡️ Checklist ความปลอดภัยของ Auth
+## 6. 🛡️ เช็คความปลอดภัยของระบบ login
 
-- [ ] ในตาราง `admins` ไม่มีรหัสผ่านจริง มีแต่ `password_hash`
-- [ ] `JWT_SECRET` ยาว ≥ 32 ตัว สุ่มจริง อยู่ใน `.env` เท่านั้น (ไม่อยู่ใน Git)
-- [ ] เรียก `/api/admin/*` ทุกตัวโดยไม่มี cookie ได้ `401` (ลองให้ครบทุก endpoint)
-- [ ] login ผิดได้ข้อความเดียวกันทั้งอีเมลผิดและรหัสผิด
-- [ ] login ถูก rate limit
-- [ ] cookie มี `HttpOnly`, `SameSite=Lax` และ production มี `Secure`
-- [ ] ไม่มีโค้ดไหนเก็บ token ใน `localStorage`
-- [ ] logout แล้วเรียก `/api/admin/me` ได้ `401`
+- [ ] ตาราง `admins` ไม่มีรหัสผ่านจริง มีแต่ `password_hash`
+- [ ] กุญแจลับ `JWT_SECRET` ยาว 32 ตัวขึ้นไป สุ่มจริง อยู่ในไฟล์ `.env` เท่านั้น (ไม่ขึ้น Git)
+- [ ] เรียก `/api/admin/...` ทุกตัวโดยไม่มี cookie ได้ `401` (ลองให้ครบทุกตัว)
+- [ ] login ผิดได้ข้อความเดียวกัน ไม่ว่าอีเมลผิดหรือรหัสผิด
+- [ ] หน้า login จำกัดจำนวนครั้งที่ลองได้
+- [ ] cookie มี `HttpOnly`, `SameSite=Lax` และตอนขึ้นระบบจริงมี `Secure`
+- [ ] ไม่มีโค้ดไหนเก็บบัตรผ่านไว้ใน localStorage
+- [ ] ออกจากระบบแล้ว เรียก `/api/admin/me` ได้ `401`
 
-> 🤓 **ข้อจำกัดของ JWT:** logout ลบ cookie ในเครื่องเรา แต่ถ้ามีคนก๊อป token ไปก่อน token นั้นยังใช้ได้จนหมดอายุ (1 วัน) ระบบที่ต้องเตะผู้ใช้ออกทันทีจะใช้ session ใน DB/Redis แทน หรือเก็บ blacklist ([บทที่ 10: Session vs JWT](./10-security.md#login-แล้ว-server-จําเราได้ยังไง-session-vs-jwt))
+> 🤓 **ข้อจำกัดของบัตรผ่านแบบนี้:** ออกจากระบบ = ลบ cookie ในเครื่องเรา แต่ถ้ามีคนก๊อปบัตรไปก่อน บัตรนั้นยังใช้ได้จนหมดอายุ (1 วัน) ระบบที่ต้องเตะผู้ใช้ออกทันที จะเก็บรายการคนที่ login อยู่ไว้ที่ server แทน ([บทที่ 10](./10-security.md#login-แล้ว-server-จําเราได้ยังไง-session-vs-jwt))
 
 ---
 
 ## 🧠 เช็คความเข้าใจ
 
-<details><summary>1. ทำไมเช็คสิทธิ์ใน React (RequireAuth) อย่างเดียวไม่พอ?</summary>
+<details><summary>1. ทำไมกันคนไม่ได้ login ที่หน้าเว็บอย่างเดียวไม่พอ?</summary>
 
-โค้ดหน้าเว็บอยู่ในเครื่องผู้ใช้ แก้หรือข้ามได้ และใครก็ยิง API ตรงด้วย curl ได้ ตัวตัดสินจริงต้องเป็น middleware ที่ server
+โค้ดหน้าเว็บอยู่ในเครื่องของผู้ใช้ แก้หรือข้ามได้ และใครก็ส่งคำขอตรงไปที่ API ด้วย curl ได้ ตัวตัดสินจริงต้องเป็นด่านตรวจที่ server
 </details>
 
-<details><summary>2. ทำไมตอนไม่พบอีเมลยังต้องเรียก <code>Bun.password.verify</code> กับ hash หลอก?</summary>
+<details><summary>2. ทำไมตอนหาอีเมลไม่เจอ ยังต้องเทียบรหัสผ่านกับรหัสหลอกอีก?</summary>
 
-verify ใช้เวลานาน (ตั้งใจให้ช้า) ถ้าไม่พบอีเมลแล้วตอบทันที คนร้ายจับเวลาได้ว่าอีเมลไหนมีบัญชีจริง การ verify hash หลอกทำให้เวลาตอบใกล้เคียงกันทุกกรณี
+การเทียบรหัสผ่านใช้เวลานาน (ตั้งใจให้ช้า) ถ้าหาอีเมลไม่เจอแล้วตอบทันที คนร้ายจับเวลาได้ว่าอีเมลไหนมีบัญชีจริง การเทียบกับรหัสหลอกทำให้ทุกกรณีใช้เวลาพอๆ กัน
 </details>
 
-<details><summary>3. JWT ถูกเข้ารหัสไหม ใส่อะไรลงไปได้บ้าง?</summary>
+<details><summary>3. บัตรผ่าน (JWT) ถูกเข้ารหัสไหม ใส่อะไรลงไปได้บ้าง?</summary>
 
-ไม่ได้เข้ารหัส แค่ลงลายเซ็นกันแก้ ใครก็ถอดอ่านได้ ใส่แค่ข้อมูลที่ไม่ลับ เช่น id ของ admin และเวลาหมดอายุ
+ไม่ได้เข้ารหัส แค่เซ็นชื่อกันแก้ ใครก็อ่านข้างในได้ จึงใส่ได้แค่ข้อมูลที่ไม่ลับ เช่น เลขบัญชีกับเวลาหมดอายุ
 </details>
 
 <details><summary>4. ถ้าหน้าเว็บอยู่ <code>shop.com</code> แต่ API อยู่ <code>api-shop.com</code> จะเกิดอะไรกับ cookie?</summary>
 
-เป็นคนละเว็บ (cross-site) cookie `SameSite=Lax` จะไม่ถูกส่งไปกับ `fetch` ต้องตั้ง CORS + `credentials` + `SameSite=None; Secure` ซึ่งยุ่งและเสี่ยงกว่า จึงควรให้ API อยู่ใต้โดเมนเดียวกันที่ `/api` ด้วย reverse proxy ([บทที่ 20](./20-deploy-vps.md), [บทที่ 22](./22-deploy-managed.md))
+เบราว์เซอร์ถือว่าเป็นคนละเว็บ cookie แบบ `SameSite=Lax` จะไม่ถูกแนบไป ต้องตั้งค่าข้ามเว็บเพิ่มหลายอย่าง ซึ่งยุ่งและเสี่ยงกว่า จึงควรให้ API อยู่ชื่อเว็บเดียวกันที่ `/api` ([บทที่ 20](./20-deploy-vps.md), [บทที่ 22](./22-deploy-managed.md))
 </details>
 
 ---
 
 ## ✏️ แบบฝึกหัด
 
-ทำหลังบ้าน Bit Café: หน้า login, Dashboard (ตัวเลขยังไม่อ่าน + ข้อความล่าสุด 5 รายการ), หน้าข้อความ (ตัวที่ยังไม่อ่านเป็นตัวหนา, กดแล้วเป็นอ่านแล้ว) และปุ่ม logout จากนั้นเขียนไฟล์ `.http` ที่ยิงทุก endpoint admin โดยไม่ login แล้วได้ `401` ครบทุกตัว
+ทำหน้าจัดการร้านของ Bit Café: หน้า login, หน้าสรุป (จำนวนข้อความที่ยังไม่อ่าน + ข้อความล่าสุด 5 ข้อความ), หน้าข้อความ (ที่ยังไม่อ่านเป็นตัวหนา กดแล้วเป็นอ่านแล้ว) และปุ่มออกจากระบบ จากนั้นเขียนไฟล์ `.http` ที่เรียก API หลังบ้านทุกตัวโดยไม่ login แล้วได้ `401` ครบทุกตัว
 
 ## ✅ ผ่านด่าน
 
-- [ ] hash รหัสผ่านด้วย `Bun.password` และสร้าง admin คนแรกจาก seed ได้
-- [ ] login แล้วได้ JWT ใน cookie `httpOnly` อายุ 1 วัน
-- [ ] middleware ป้องกันทุก `/api/admin/*` และเข้าใจเรื่องลำดับการประกาศ
-- [ ] หน้าเว็บมี login, RequireAuth, logout และจัดการ session หมดอายุ
-- [ ] ผ่าน Checklist ความปลอดภัยข้อ 6 ครบ
+- [ ] เข้ารหัสรหัสผ่านด้วย `Bun.password` และสร้างบัญชีเจ้าของร้านคนแรกจาก seed ได้
+- [ ] login แล้วได้บัตรผ่านใน cookie แบบ `httpOnly` อายุ 1 วัน
+- [ ] มีด่านตรวจหน้าทุก `/api/admin/...` และเข้าใจว่าทำไมลำดับบรรทัดสำคัญ
+- [ ] หน้าเว็บมีหน้า login, พาคนไม่ได้ login ไปหน้า login, ปุ่มออกจากระบบ และรับมือบัตรหมดอายุ
+- [ ] ผ่านรายการเช็คความปลอดภัยข้อ 6 ครบ
 
 ---
 
-[← บทที่ 14: Bun + Hono API](./14-hono-api.md) · [🏠 สารบัญ](./README.md) · [บทที่ 16: ทำงานคู่กับ AI →](./16-ai-pairing.md)
+[← บทที่ 14: สร้าง API](./14-hono-api.md) · [🏠 สารบัญ](./README.md) · [บทที่ 16: ทำงานคู่กับ AI →](./16-ai-pairing.md)
