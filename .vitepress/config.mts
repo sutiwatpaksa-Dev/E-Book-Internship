@@ -12,7 +12,28 @@ const chapters = [
   { text: "08 · Drizzle vs Prisma vs Sequelize", link: "/08-orm" },
   { text: "09 · Debugging", link: "/09-debugging" },
   { text: "10 · Security พื้นฐาน", link: "/10-security" },
-  { text: "11 · Mini Project", link: "/11-mini-project" },
+  { text: "11 · React + Vite", link: "/11-react" },
+  { text: "12 · Tailwind + Responsive", link: "/12-tailwind" },
+  { text: "13 · React Router + SEO", link: "/13-router-seo" },
+  { text: "14 · Bun + Hono + Drizzle API", link: "/14-hono-api" },
+  { text: "15 · Login (JWT + Cookie)", link: "/15-auth" },
+  { text: "16 · ทำงานคู่กับ AI", link: "/16-ai-pairing" },
+  { text: "17 · Network พื้นฐาน", link: "/17-network" },
+  { text: "18 · Domain & DNS", link: "/18-domain-dns" },
+  { text: "19 · Server (VPS) + SSH", link: "/19-server" },
+  { text: "20 · Deploy บน VPS", link: "/20-deploy-vps" },
+  { text: "21 · CI/CD", link: "/21-cicd" },
+  { text: "22 · Deploy แบบ Managed", link: "/22-deploy-managed" },
+  { text: "23 · Go-live & ดูแลระบบ", link: "/23-go-live" },
+];
+
+const starter = [
+  { text: "Requirement + Brief", link: "/starter/" },
+  { text: "หน้าบ้าน + หลังบ้าน", link: "/starter/requirements" },
+  { text: "ฐานข้อมูล + API Spec", link: "/starter/database-api" },
+  { text: "Non-functional", link: "/starter/quality" },
+  { text: "Timeline 10 วัน", link: "/starter/timeline" },
+  { text: "ส่งงาน + เกณฑ์ประเมิน", link: "/starter/submission" },
 ];
 
 export default defineConfig({
@@ -46,6 +67,8 @@ export default defineConfig({
     siteTitle: "คู่มือฝึกงาน",
     nav: [
       { text: "เริ่มอ่าน", link: "/00-start" },
+      { text: "Mini Project", link: "/starter/" },
+      { text: "Deploy", link: "/17-network" },
       { text: "Cheat Sheet", link: "/cheat-sheet" },
     ],
     sidebar: [
@@ -53,7 +76,10 @@ export default defineConfig({
       { text: "ด่าน 1 · เตรียมตัว", items: chapters.slice(0, 3) },
       { text: "ด่าน 2 · ภาษาและ API", items: chapters.slice(3, 6) },
       { text: "ด่าน 3 · ข้อมูล", items: chapters.slice(6, 9) },
-      { text: "ด่าน 4 · มืออาชีพ", items: chapters.slice(9, 12) },
+      { text: "ด่าน 4 · มืออาชีพ", items: chapters.slice(9, 11) },
+      { text: "ด่าน 5 · สร้างเว็บ Fullstack", items: chapters.slice(11, 17) },
+      { text: "ด่าน 6 · Mini Project: เว็บไซต์ STARTER", items: starter },
+      { text: "ด่าน 7 · Deploy & Network", items: chapters.slice(17, 24) },
       { text: "📋 Cheat Sheet", link: "/cheat-sheet" },
     ],
     outline: { level: [2, 3], label: "ในบทนี้" },

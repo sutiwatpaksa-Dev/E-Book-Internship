@@ -101,9 +101,56 @@ npx prisma studio
 
 ## Security
 - ความลับ → `.env` (ห้ามเข้า Git) + `.env.example`
-- รหัสผ่าน → `bcrypt.hash(pw, 12)` / `bcrypt.compare(pw, hash)`
+- รหัสผ่าน → `bcrypt.hash(pw, 12)` / `bcrypt.compare(pw, hash)` · Bun: `Bun.password.hash(pw)` / `Bun.password.verify(pw, hash)`
 - input → Zod ทุก endpoint · SQL → ORM หรือ `$1`
 - หลุด → เปลี่ยน key ทันที + แจ้งพี่
+
+## Frontend (React + Tailwind + Router)
+```bash
+bun create vite client --template react-ts
+bun add tailwindcss @tailwindcss/vite react-router
+bun run dev / bun run build
+```
+- state: `const [x, setX] = useState(..)` · ห้ามแก้ตรง ใช้ `[...arr]` / `{...obj}`
+- fetch: `useEffect(() => {...; return () => controller.abort()}, [url])` · ทุกหน้ามี loading / error
+- responsive: ไม่มี prefix = มือถือ · `md:` ≥768 · `xl:` ≥1280
+- ลิงก์ภายใน `<NavLink>` / `<Link>` · filter เก็บใน `useSearchParams`
+
+## Backend (Bun + Hono + Drizzle)
+```bash
+bun run dev                     # bun --watch src/index.ts
+bun run db:generate             # schema → ไฟล์ migration
+bun run db:migrate              # รัน migration
+bun run seed                    # ข้อมูลตั้งต้น (รันซ้ำได้)
+bun test                        # test
+```
+- response: `{ success, data }` / `{ success: false, error: { code, message, details } }`
+- status: 200 · 201 สร้าง · 400 validate · 401 ไม่ login · 404 · 409 ซ้ำ/ขัดสถานะ · 429 ถี่ไป · 500
+- `/api/admin/*` ต้องผ่าน `requireAdmin` · cookie `HttpOnly; SameSite=Lax; Secure`
+
+## Network / DNS
+```bash
+dig +short example.com          # ชื่อ → IP
+dig @1.1.1.1 +short example.com # ข้าม cache
+curl -v https://example.com     # ดูทุกชั้น DNS → TCP → TLS → HTTP
+sudo ss -tlnp                   # port ที่เปิดอยู่ (Linux)
+```
+refused = ไม่มีใครฟัง port · timeout = firewall/IP ผิด · 502 = proxy ต่อ app ไม่ได้
+
+## Server + Deploy
+```bash
+ssh bitcafe                                         # ~/.ssh/config
+sudo ufw status verbose                             # เปิดแค่ 22/80/443
+DC="docker compose -f compose.prod.yaml"
+$DC build && $DC run --rm server bun run db:migrate && $DC up -d
+$DC ps · $DC logs -f server · $DC logs -f web
+./deploy/backup.sh                                  # backup DB
+```
+⚠️ production ห้าม `down -v` · db/server ห้ามมี `ports:` · migration เพิ่มอย่างเดียว (expand-only)
+
+## ทำงานคู่กับ AI
+เข้าใจโจทย์ → ถามกลับ → ออกแบบ → แตกงาน → ทำทีละชิ้น + ตรวจ
+prompt = บริบท + เป้าหมาย + ข้อจำกัด + รูปแบบคำตอบ + เกณฑ์ว่าเสร็จ · อธิบายได้ทุกบรรทัดก่อน commit
 
 ---
 
@@ -129,7 +176,16 @@ npx prisma studio
 | Node.js | https://nodejs.org/en/learn |
 | Bun | https://bun.sh/docs |
 | OWASP Top 10 (ช่องโหว่ยอดฮิต) | https://owasp.org/www-project-top-ten/ |
+| React | https://react.dev/learn |
+| Tailwind CSS | https://tailwindcss.com/docs |
+| React Router | https://reactrouter.com |
+| Hono | https://hono.dev/docs/ |
+| Caddy | https://caddyserver.com/docs/ |
+| Let's Encrypt (HTTPS ทำงานยังไง) | https://letsencrypt.org/how-it-works/ |
+| Cloudflare DNS | https://developers.cloudflare.com/dns/ |
+| GitHub Actions | https://docs.github.com/actions |
+| Vercel | https://vercel.com/docs |
 
 ---
 
-[← บทที่ 11: Mini Project](./11-mini-project.md) · [🏠 สารบัญ](./README.md)
+[← บทที่ 23: Go-live](./23-go-live.md) · [🏠 สารบัญ](./README.md)

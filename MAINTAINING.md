@@ -10,7 +10,7 @@ npm run dev        # เปิด http://localhost:5173 แก้ไฟล์ .m
 npm run build      # ตรวจว่า build ผ่าน (ลิงก์เสียจะทำให้ build ไม่ผ่าน)
 ```
 
-- เนื้อหาแต่ละบทคือไฟล์ `00-start.md` ถึง `11-mini-project.md` และ `cheat-sheet.md`
+- เนื้อหาแต่ละบทคือไฟล์ `00-start.md` ถึง `23-go-live.md`, Mini Project อยู่ในโฟลเดอร์ `starter/` และ `cheat-sheet.md`
 - `README.md` คือหน้าแรกของ e-book
 - เพิ่มบทใหม่: สร้างไฟล์ `.md` แล้วเพิ่มชื่อใน `chapters` ที่ `.vitepress/config.mts`
 - สีและฟอนต์อยู่ที่ `.vitepress/theme/custom.css`

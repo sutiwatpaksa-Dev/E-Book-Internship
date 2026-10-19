@@ -2,3 +2,6 @@ node_modules/
 .vitepress/dist/
 .vitepress/cache/
 .DS_Store
+
+# เอกสารต้นฉบับ (เนื้อหาอยู่ในหน้าเว็บแล้ว ไม่เผยแพร่ใน repo สาธารณะ)
+*.pdf

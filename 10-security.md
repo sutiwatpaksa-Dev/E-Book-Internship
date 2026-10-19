@@ -219,4 +219,4 @@ hash ย้อนกลับไม่ได้ ถึง DB หลุดก็�
 
 ---
 
-[← บทที่ 9: Debugging](./09-debugging.md) · [🏠 สารบัญ](./README.md) · [บทที่ 11: Mini Project →](./11-mini-project.md)
+[← บทที่ 9: Debugging](./09-debugging.md) · [🏠 สารบัญ](./README.md) · [บทที่ 11: React →](./11-react.md)
