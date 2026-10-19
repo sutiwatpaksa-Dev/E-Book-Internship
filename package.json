@@ -11,6 +11,10 @@
     "node": ">=20"
   },
   "devDependencies": {
+    "@types/three": "^0.186.0",
     "vitepress": "^1.6.3"
+  },
+  "dependencies": {
+    "three": "^0.186.1"
   }
 }
