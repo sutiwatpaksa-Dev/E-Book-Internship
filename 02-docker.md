@@ -365,4 +365,4 @@ container ใช้ kernel ร่วมกับ host (บน Mac คือ Linu
 
 ---
 
-[← บทที่ 1: Git](./01-git.md) · [🏠 สารบัญ](./README.md) · [บทที่ 3: Node vs Yarn vs Bun →](./03-node-yarn-bun.md)
+[← บทที่ 1: Git](./01-git.md) · [🏠 สารบัญ](/) · [บทที่ 3: Node vs Yarn vs Bun →](./03-node-yarn-bun.md)

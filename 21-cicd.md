@@ -55,7 +55,7 @@ import server from "./index";
 const adminEndpoints = [
   ["GET", "/api/admin/me"],
   ["GET", "/api/admin/dashboard"],
-  ["GET", "/api/admin/messages/1"],
+  ["PATCH", "/api/admin/messages/1"],
   ["DELETE", "/api/admin/categories/1"],
 ] as const;
 
@@ -315,4 +315,4 @@ CI = ตรวจงานอัตโนมัติทุกครั้งท
 
 ---
 
-[← บทที่ 20: ขึ้นเว็บบนเครื่องเช่า](./20-deploy-vps.md) · [🏠 สารบัญ](./README.md) · [บทที่ 22: ใช้บริการสำเร็จรูป →](./22-deploy-managed.md)
+[← บทที่ 20: ขึ้นเว็บบนเครื่องเช่า](./20-deploy-vps.md) · [🏠 สารบัญ](/) · [บทที่ 22: ใช้บริการสำเร็จรูป →](./22-deploy-managed.md)

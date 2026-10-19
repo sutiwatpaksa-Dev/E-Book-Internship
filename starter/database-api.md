@@ -17,7 +17,7 @@
 
 | ตาราง | เก็บอะไร | ช่องที่ต้องมี | ข้อควรรู้ |
 |---|---|---|---|
-| `admins` | บัญชีเจ้าของร้าน | `email` (ห้ามซ้ำ), `password_hash`, `name` | ห้ามเก็บรหัสผ่านจริง เก็บแบบเข้ารหัสทางเดียวเท่านั้น ([บทที่ 10 ข้อ 2](../10-security.md#_2-เก็บรหัสผ่านผู้ใช้-hash-ไม่ใช่-encrypt)) |
+| `admins` | บัญชีเจ้าของร้าน | `email` (ห้ามซ้ำ), `password_hash`, `name` | ห้ามเก็บรหัสผ่านจริง และห้ามเก็บแบบเข้ารหัสที่ถอดกลับได้ ต้อง hash ด้วย bcrypt/argon2 (`Bun.password`) เท่านั้น ([บทที่ 10 ข้อ 2](../10-security.md#_2-เก็บรหัสผ่านผู้ใช้-hash-ไม่ใช่-encrypt)) |
 | `site_settings` | ข้อมูลร้าน | `shop_name`, `logo_url`, `phone`, `email`, `address`, `opening_hours`, `line_url`, `facebook_url`, `instagram_url`, `map_url` | ทั้งระบบมีแค่แถวเดียว |
 | `pages` | ข้อความของแต่ละหน้า | `slug` (ชื่อหน้า: home/about/contact ห้ามซ้ำ), `seo_title`, `seo_description`, `og_image_url`, `content` | `content` เก็บข้อความภาพใหญ่ จุดเด่น เรื่องราวร้าน |
 | `categories` | หมวดสินค้า | `name`, `slug` (ห้ามซ้ำ), `sort_order` | |
@@ -75,7 +75,10 @@ admins / site_settings / pages / contact_messages     ← อยู่เดี�
 | `GET` / `POST` | `/api/admin/services?q=&category=&page=` | ดู (ค้นหาได้ แบ่งหน้าได้) / เพิ่มสินค้า |
 | `PATCH` / `DELETE` | `/api/admin/services/:id` | แก้ / ลบสินค้า |
 | `GET` | `/api/admin/messages` | รายการข้อความ |
-| `GET` / `DELETE` | `/api/admin/messages/:id` | เปิดอ่าน (กลายเป็นอ่านแล้ว) / ลบ |
+| `GET` / `DELETE` | `/api/admin/messages/:id` | ดูข้อความ / ลบ |
+| `PATCH` | `/api/admin/messages/:id` | เปลี่ยนสถานะอ่านแล้ว ส่ง `{ "isRead": true }` |
+
+> 💡 เอกสาร requirement ต้นฉบับให้ `GET` เปลี่ยนสถานะเป็นอ่านแล้วเอง คู่มือนี้เปลี่ยนเป็น `PATCH` เพราะ `GET` ต้องไม่เปลี่ยนข้อมูล ([บทที่ 5](../05-http-api.md), [บทที่ 15](../15-auth.md))
 
 ### ทุก API ต้องตอบกลับหน้าตาเดียวกัน
 
@@ -116,4 +119,4 @@ admins / site_settings / pages / contact_messages     ← อยู่เดี�
 
 ---
 
-[← หน้าเว็บ + หน้าจัดการร้าน](./requirements.md) · [🏠 สารบัญ](../README.md) · [คุณภาพที่ต้องได้ →](./quality.md)
+[← หน้าเว็บ + หน้าจัดการร้าน](./requirements.md) · [🏠 สารบัญ](/) · [คุณภาพที่ต้องได้ →](./quality.md)

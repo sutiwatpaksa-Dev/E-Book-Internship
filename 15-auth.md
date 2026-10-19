@@ -3,7 +3,7 @@
 > ⏱ ประมาณ 4 ชั่วโมง · 🧩 ต้องผ่านก่อน: บทที่ 10, 13 และ 14 · 🛠 ใช้: Hono, `Bun.password`, React Router
 
 > **⚡ สรุป 30 วินาที**
-> - เก็บรหัสผ่านแบบ **เข้ารหัสทางเดียว** (hash) ด้วย `Bun.password`
+> - เก็บรหัสผ่านแบบ **hash** (แปลงทางเดียว ย้อนกลับไม่ได้ ไม่ใช่การเข้ารหัส) ด้วย `Bun.password`
 > - login สำเร็จ → server ออก **บัตรผ่าน (JWT)** ใส่ไว้ใน **cookie แบบที่โค้ดในหน้าเว็บอ่านไม่ได้** (`httpOnly`) ใช้ได้ 1 วัน
 > - มี **ด่านตรวจ (middleware)** หน้าทุก `/api/admin/...` ไม่มีบัตรหรือบัตรหมดอายุ → ตอบ `401`
 > - login ผิดตอบข้อความเดียว **"อีเมลหรือรหัสผ่านไม่ถูกต้อง"** ห้ามบอกว่าผิดช่องไหน
@@ -33,7 +33,7 @@ curl -X DELETE http://localhost:3000/api/admin/categories/1
  1. หน้าเว็บส่งอีเมล + รหัสผ่าน ไปที่ /api/admin/login
         │
         ▼
- 2. server หาบัญชีจากอีเมล แล้วเทียบรหัสผ่านกับรหัสที่เข้ารหัสเก็บไว้
+ 2. server หาบัญชีจากอีเมล แล้วเทียบรหัสผ่านกับค่า hash ที่เก็บไว้
         │   ไม่ตรง → ตอบ 401 "อีเมลหรือรหัสผ่านไม่ถูกต้อง"
         ▼   ตรง
  3. server ออกบัตรผ่าน (JWT) เขียนว่า "บัญชีเลขนี้ ใช้ได้ถึงพรุ่งนี้" + เซ็นชื่อกันปลอม
@@ -115,7 +115,7 @@ if (email && password) {
 bun run seed
 ```
 เปิด pgAdmin ดูช่อง `password_hash` จะเห็นประมาณ `$argon2id$v=19$m=65536,t=2,p=1$...` ไม่ใช่รหัสผ่านจริง ✅
-(`Bun.password.hash` ใช้วิธีเข้ารหัสที่ปลอดภัย และตั้งใจให้ช้า คนร้ายจะเดาทีละล้านรหัสไม่ไหว)
+(`Bun.password.hash` ใช้ argon2id ซึ่งเป็น hash สำหรับรหัสผ่านโดยเฉพาะ ตั้งใจให้ช้า คนร้ายจะเดาทีละล้านรหัสไม่ไหว และย้อนกลับเป็นรหัสจริงไม่ได้ ต่างจากการเข้ารหัสที่ถอดกลับได้ถ้ามีกุญแจ: [บทที่ 10 ข้อ 2](./10-security.md#_2-เก็บรหัสผ่านผู้ใช้-hash-ไม่ใช่-encrypt))
 
 ---
 
@@ -225,6 +225,7 @@ import { AppError, ok, parse } from "../http/response";
 import type { AdminEnv } from "../middleware/requireAdmin";
 
 const IdParam = z.object({ id: z.coerce.number().int().positive() });
+const MessageUpdate = z.object({ isRead: z.boolean() });
 
 export const adminRoutes = new Hono<AdminEnv>();
 
@@ -244,11 +245,13 @@ adminRoutes.get("/dashboard", async (c) => {
   return ok(c, { unread, totalServices, latest });
 });
 
-adminRoutes.get("/messages/:id", async (c) => {
+// เปลี่ยนสถานะอ่านแล้ว/ยังไม่อ่าน ใช้ PATCH ไม่ใช่ GET เพราะ GET ต้องไม่เปลี่ยนข้อมูล (บทที่ 5)
+adminRoutes.patch("/messages/:id", async (c) => {
   const { id } = parse(IdParam, c.req.param());
+  const body = parse(MessageUpdate, await c.req.json().catch(() => null));
   const [message] = await db
     .update(contactMessages)
-    .set({ isRead: true })                       // เปิดอ่าน = อ่านแล้วอัตโนมัติ
+    .set({ isRead: body.isRead })
     .where(eq(contactMessages.id, id))
     .returning();
   if (!message) throw new AppError(404, "NOT_FOUND", "ไม่พบข้อความนี้");
@@ -329,16 +332,15 @@ export const getMe = () => api<Admin>("/api/admin/me");
 ```tsx
 import { useEffect, useState, type ReactNode } from "react";
 import { Navigate, useLocation } from "react-router";
-import { getMe, type Admin } from "../api/auth";
+import { getMe } from "../api/auth";
 
 export default function RequireAuth({ children }: { children: ReactNode }) {
   const location = useLocation();
   const [state, setState] = useState<"checking" | "in" | "out">("checking");
-  const [, setAdmin] = useState<Admin | null>(null);
 
   useEffect(() => {
     getMe()
-      .then((a) => { setAdmin(a); setState("in"); })
+      .then(() => setState("in"))
       .catch(() => setState("out"));
   }, [location.pathname]);                       // เช็คใหม่ทุกครั้งที่เปลี่ยนหน้า (session อาจหมดอายุ)
 
@@ -404,6 +406,13 @@ const navigate = useNavigate();
 </button>
 ```
 
+### เปิดอ่านข้อความแล้วเปลี่ยนเป็น "อ่านแล้ว"
+ในหน้าข้อความ ตอนเจ้าของร้านกดเปิดข้อความไหน ให้หน้าเว็บส่ง `PATCH` ไปบอก server
+```ts
+await api(`/api/admin/messages/${id}`, { method: "PATCH", body: JSON.stringify({ isRead: true }) });
+```
+💡 ทำไมไม่ให้ `GET` เปลี่ยนสถานะให้เองเลย? เพราะ `GET` ต้องเป็นการดูอย่างเดียว (บทที่ 5) ระบบอื่นอาจเรียก `GET` เองโดยไม่มีใครตั้งใจ เช่น ตัวโหลดหน้าล่วงหน้าของเบราว์เซอร์ แล้วข้อความจะกลายเป็นอ่านแล้วทั้งที่เจ้าของร้านยังไม่เห็น
+
 ### บัตรหมดอายุระหว่างใช้งาน
 เพิ่มใน `api()` ของไฟล์ `client/src/api/client.ts` ก่อนบรรทัด `throw` ตัวสุดท้าย:
 ```ts
@@ -455,11 +464,11 @@ if (res.status === 401 && path.startsWith("/api/admin") && path !== "/api/admin/
 
 ## ✏️ แบบฝึกหัด
 
-ทำหน้าจัดการร้านของ Bit Café: หน้า login, หน้าสรุป (จำนวนข้อความที่ยังไม่อ่าน + ข้อความล่าสุด 5 ข้อความ), หน้าข้อความ (ที่ยังไม่อ่านเป็นตัวหนา กดแล้วเป็นอ่านแล้ว) และปุ่มออกจากระบบ จากนั้นเขียนไฟล์ `.http` ที่เรียก API หลังบ้านทุกตัวโดยไม่ login แล้วได้ `401` ครบทุกตัว
+ทำหน้าจัดการร้านของ Bit Café: หน้า login, หน้าสรุป (จำนวนข้อความที่ยังไม่อ่าน + ข้อความล่าสุด 5 ข้อความ), หน้าข้อความ (ที่ยังไม่อ่านเป็นตัวหนา กดเปิดแล้วส่ง `PATCH` ให้เป็นอ่านแล้ว) และปุ่มออกจากระบบ จากนั้นเขียนไฟล์ `.http` ที่เรียก API หลังบ้านทุกตัวโดยไม่ login แล้วได้ `401` ครบทุกตัว
 
 ## ✅ ผ่านด่าน
 
-- [ ] เข้ารหัสรหัสผ่านด้วย `Bun.password` และสร้างบัญชีเจ้าของร้านคนแรกจาก seed ได้
+- [ ] hash รหัสผ่านด้วย `Bun.password` และสร้างบัญชีเจ้าของร้านคนแรกจาก seed ได้
 - [ ] login แล้วได้บัตรผ่านใน cookie แบบ `httpOnly` อายุ 1 วัน
 - [ ] มีด่านตรวจหน้าทุก `/api/admin/...` และเข้าใจว่าทำไมลำดับบรรทัดสำคัญ
 - [ ] หน้าเว็บมีหน้า login, พาคนไม่ได้ login ไปหน้า login, ปุ่มออกจากระบบ และรับมือบัตรหมดอายุ
@@ -467,4 +476,4 @@ if (res.status === 401 && path.startsWith("/api/admin") && path !== "/api/admin/
 
 ---
 
-[← บทที่ 14: สร้าง API](./14-hono-api.md) · [🏠 สารบัญ](./README.md) · [บทที่ 16: ทำงานคู่กับ AI →](./16-ai-pairing.md)
+[← บทที่ 14: สร้าง API](./14-hono-api.md) · [🏠 สารบัญ](/) · [บทที่ 16: ทำงานคู่กับ AI →](./16-ai-pairing.md)

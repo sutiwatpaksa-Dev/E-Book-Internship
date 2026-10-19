@@ -163,7 +163,7 @@ WHERE r.id IS NULL;                -- ได้ "มานี"
 SELECT c.name, COUNT(r.id) AS total_rentals, SUM(r.price_per_month) AS total_price
 FROM customers c
 LEFT JOIN rentals r ON r.customer_id = c.id
-GROUP BY c.name;
+GROUP BY c.id, c.name;     -- ใส่ id ด้วย เพราะลูกค้าชื่อซ้ำกันได้ (สมชาย 2 คน ต้องไม่ถูกรวมเป็นคนเดียว)
 ```
 
 > 🎮 อยากฝึกเพิ่มแบบเกม? ลอง **[SQLBolt](https://sqlbolt.com)** (ฝึกในเว็บทีละด่าน) หรือ **[SQL Murder Mystery](https://mystery.knightlab.com)** (ใช้ SQL สืบหาฆาตกร 🕵️)
@@ -176,14 +176,33 @@ GROUP BY c.name;
 1. สร้างรายการเช่า
 2. เปลี่ยนสถานะเครื่องเป็น "ถูกเช่า"
 
-ถ้าทำข้อ 1 แล้ว **ไฟดับก่อนข้อ 2** → เครื่องยังโชว์ว่าว่าง → ถูกปล่อยเช่าซ้ำ (เหมือนเรื่องเล่า!)
+ถ้าทำข้อ 1 แล้ว **ไฟดับก่อนข้อ 2** → มีรายการเช่า แต่เครื่องยังโชว์ว่าว่าง → ข้อมูลขัดกันเอง
+
+เพิ่มตารางเครื่องก่อน (ตัวอย่างนี้ใช้ต่อจากตารางในข้อ 3)
+```sql
+CREATE TABLE laptops (
+  serial TEXT PRIMARY KEY,
+  model  TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'available' CHECK (status IN ('available', 'rented'))
+);
+INSERT INTO laptops (serial, model) VALUES ('AS-01', 'Asus'), ('LN-01', 'Lenovo T14');
+```
 
 **Transaction** = มัดหลายคำสั่งเป็นก้อนเดียว **"สำเร็จทั้งหมด หรือไม่เกิดอะไรเลย"**
 ```sql
 BEGIN;
-  INSERT INTO rentals (customer_id, laptop, price_per_month) VALUES (3, 'Asus', 1100);
+  INSERT INTO rentals (customer_id, laptop, price_per_month) VALUES (3, 'AS-01', 1100);
   UPDATE laptops SET status = 'rented' WHERE serial = 'AS-01';
 COMMIT;       -- ยืนยัน (มีอะไรผิดพลาด → ROLLBACK ยกเลิกทั้งหมด)
+```
+
+💥 **ลองพังมันดู:** ให้ขั้นที่ 2 ผิดกฎ แล้วดูว่าขั้นที่ 1 หายไปด้วยไหม
+```sql
+BEGIN;
+  INSERT INTO rentals (customer_id, laptop, price_per_month) VALUES (1, 'LN-01', 1500);
+  UPDATE laptops SET status = 'broken' WHERE serial = 'LN-01';   -- ERROR: violates check constraint
+COMMIT;                                                          -- ได้ ROLLBACK แทน
+SELECT count(*) FROM rentals WHERE laptop = 'LN-01';             -- 0: รายการเช่าก็ไม่ถูกบันทึก ✅
 ```
 
 | | ชื่อ | ความหมาย | 💸 ตัวอย่างโอนเงิน A → B 500 บาท |
@@ -192,6 +211,34 @@ COMMIT;       -- ยืนยัน (มีอะไรผิดพลาด →
 | **C** | Consistency | ข้อมูลถูกกฎเสมอ | ยอดเงินห้ามติดลบ ผิดกฎ = ยกเลิก |
 | **I** | Isolation | ทำพร้อมกันไม่ชน | กดโอน 2 เครื่องพร้อมกัน ต้องไม่หักซ้อน |
 | **D** | Durability | บันทึกแล้วไม่หาย | COMMIT แล้วไฟดับ ข้อมูลยังอยู่ |
+
+### ⚠️ 2 คนกดพร้อมกัน: transaction อย่างเดียวไม่พอ
+
+ปัญหาในเรื่องเล่า (พนักงาน 2 คนปล่อยเช่าเครื่องเดียวกัน) **ไม่ใช่เรื่องไฟดับ** แต่เป็นเรื่อง **ทำพร้อมกัน**
+```
+ เวลา   พนักงาน A                          พนักงาน B
+ 10:00  ดู: AS-01 ว่าง ✅                    ดู: AS-01 ว่าง ✅
+ 10:01  เช่าให้ลูกค้า 1 (transaction ผ่าน)    เช่าให้ลูกค้า 2 (transaction ผ่าน)  😱
+```
+ทั้งสองคน "ดูแล้วว่าง" ก่อนอีกคนจะเปลี่ยนสถานะ แต่ละ transaction ถูกต้องในตัวเอง แต่ผลรวมผิด ต้องเพิ่มอย่างใดอย่างหนึ่ง:
+
+**วิธีที่ 1: เปลี่ยนสถานะแบบมีเงื่อนไข** (ง่ายที่สุด แนะนำ)
+```sql
+UPDATE laptops SET status = 'rented' WHERE serial = 'AS-01' AND status = 'available';
+-- UPDATE 1 = เราได้เครื่อง ทำขั้นต่อไป / UPDATE 0 = มีคนเช่าไปก่อนแล้ว → ROLLBACK แล้วบอกผู้ใช้
+```
+ฐานข้อมูลรับประกันว่าคำสั่งนี้ทำทีละคน คนที่สองจะได้ `UPDATE 0` เสมอ
+
+**วิธีที่ 2: ล็อกแถวไว้ก่อน (`SELECT ... FOR UPDATE`)**
+```sql
+BEGIN;
+  SELECT status FROM laptops WHERE serial = 'AS-01' FOR UPDATE;  -- คนที่สองต้องรอตรงนี้จนคนแรกเสร็จ
+  -- ถ้าเป็น 'available' ค่อย INSERT rentals + UPDATE laptops
+COMMIT;
+```
+🧪 ลองเปิด psql 2 หน้าต่าง พิมพ์ `BEGIN;` + `SELECT ... FOR UPDATE` ทั้งคู่ จะเห็นหน้าต่างที่สองค้างรอจนหน้าต่างแรก `COMMIT`
+
+> 💡 **สรุป:** transaction กัน "ทำไม่ครบ" / เงื่อนไขหรือการล็อกกัน "ทำซ้อนกัน" ระบบจริงต้องใช้ทั้งสองอย่าง (บทที่ 8 ข้อ 6 ทำ transaction เดียวกันนี้ผ่าน Drizzle)
 
 ---
 
@@ -295,4 +342,4 @@ Key-Value อย่าง Redis ต้องการความเร็ว �
 
 ---
 
-[← บทที่ 5: HTTP & API](./05-http-api.md) · [🏠 สารบัญ](./README.md) · [บทที่ 7: MySQL vs PostgreSQL →](./07-mysql-postgres.md)
+[← บทที่ 5: HTTP & API](./05-http-api.md) · [🏠 สารบัญ](/) · [บทที่ 7: MySQL vs PostgreSQL →](./07-mysql-postgres.md)

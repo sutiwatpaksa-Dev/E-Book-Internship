@@ -324,4 +324,4 @@ AI ช่วยให้เร็วขึ้นมาก แต่ทุกข�
 
 ---
 
-[← บทที่ 15: Auth](./15-auth.md) · [🏠 สารบัญ](./README.md) · [🏪 Mini Project: STARTER →](./starter/index.md)
+[← บทที่ 15: Auth](./15-auth.md) · [🏠 สารบัญ](/) · [🏪 Mini Project: STARTER →](./starter/index.md)

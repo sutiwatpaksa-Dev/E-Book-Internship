@@ -34,7 +34,7 @@
 |---|---|---|
 | **Node.js** | Runtime | มาตรฐานของวงการ ใช้ engine V8 |
 | **npm** | Package manager | **ติดมากับ Node อัตโนมัติ** |
-| **Yarn** | Package manager | ทางเลือกแทน npm โดย Meta **ต้องใช้คู่กับ Node** |
+| **Yarn** | Package manager | ทางเลือกแทน npm เริ่มโดย Facebook ปัจจุบันชุมชนดูแลต่อ **ต้องใช้คู่กับ Node** |
 | **pnpm** | Package manager | ประหยัดพื้นที่ดิสก์ (รู้จักไว้) |
 | **Bun** | **Runtime + Package manager** + bundler + test runner | ครบในตัวเดียว ใช้ engine JavaScriptCore (ของ Safari) |
 | **Deno** | Runtime | สร้างโดยคนที่สร้าง Node (รู้จักไว้) |
@@ -173,11 +173,44 @@ node hello.mjs
 | รัน script | `npm run dev` | `yarn dev` | `bun run dev` |
 | ความเร็ว | มาตรฐาน | เร็วกว่าเล็กน้อย | เร็วมาก ⚡ |
 
-> **แนวทางของทีม:** งานลูกค้าใช้ **Node + npm** เป็นค่าเริ่มต้น เพราะเสถียรและเข้ากันได้ทุกอย่าง ใช้ Bun ได้กับ script/เครื่องมือภายใน หรือเมื่อทีมตกลงกันแล้ว
+> **แนวทางของทีม Blicktech**
+> - **งานใหม่ใช้ Bun** (ทั้งตัวรันและตัวติดตั้ง package) คู่กับ **Hono** เป็นค่าเริ่มต้น ตรงกับด่าน 5–7 และงาน Mini Project STARTER
+> - **โปรเจกต์เดิมที่ใช้ Node + npm อยู่แล้ว** ให้ใช้ตามเดิม ดูจาก lock file (`package-lock.json` = npm, `bun.lock` = Bun) ห้ามผสมสองตัว
+> - **ทำไมบทที่ 5–10 สอน Node + Express ก่อน?** Express มีตัวอย่างและคำตอบในเน็ตมากที่สุด เหมาะกับการเรียนหลักการ (route, middleware, status code) หลักการเดียวกันใช้กับ Hono ได้ทั้งหมด บทที่ 14 มีตารางเทียบให้ทีละบรรทัด
 
 ---
 
-## 7. 🔧 แข่งความเร็ว 🏁
+## 7. 🔧 เริ่มโปรเจกต์ด้วย Bun (ใช้ตั้งแต่บทที่ 11 และงาน STARTER)
+
+ติดตั้ง Bun (ข้อ 8 มีคำสั่งเดียวกัน)
+```bash
+# Mac / Linux
+curl -fsSL https://bun.sh/install | bash
+# Windows (PowerShell)
+powershell -c "irm bun.sh/install.ps1 | iex"
+```
+
+```bash
+mkdir hello-bun && cd hello-bun
+bun init -y                    # สร้าง package.json, tsconfig.json, index.ts ให้
+bun add zod                    # เพิ่ม package ที่ใช้ตอนรัน
+bun add -d typescript          # เพิ่ม package ที่ใช้แค่ตอนพัฒนา
+bun index.ts                   # รันไฟล์ TypeScript ได้เลย ไม่ต้องแปลงก่อน
+bun --watch index.ts           # รันใหม่เองทุกครั้งที่เซฟไฟล์
+```
+เพิ่ม `"dev": "bun --watch index.ts"` ใน `scripts` ของ `package.json` แล้วสั่ง `bun run dev` ได้เหมือน `npm run dev`
+
+| ไฟล์ | คืออะไร |
+|---|---|
+| `bun.lock` | lock file ของ Bun (ขึ้น Git เสมอ) |
+| `bun install --frozen-lockfile` | ติดตั้งตาม lock file เป๊ะ แบบเดียวกับ `npm ci` (ใช้ใน Docker และ CI) |
+
+> 💡 Bun อ่านไฟล์ `.env` ให้เองตอนสั่ง `bun run ...` ไม่ต้องติดตั้ง `dotenv`
+> ⚠️ Bun รัน TypeScript ได้ แต่ **ไม่ได้ตรวจ type** ยังต้องสั่ง `bunx tsc --noEmit` เหมือนเดิม
+
+---
+
+## 8. 🔧 แข่งความเร็ว 🏁
 
 ติดตั้ง Yarn และ Bun:
 ```bash
@@ -232,4 +265,4 @@ devDependencies เพราะใช้แค่ตอนแปลงโค้�
 
 ---
 
-[← บทที่ 2: Docker](./02-docker.md) · [🏠 สารบัญ](./README.md) · [บทที่ 4: TypeScript →](./04-typescript.md)
+[← บทที่ 2: Docker](./02-docker.md) · [🏠 สารบัญ](/) · [บทที่ 4: TypeScript →](./04-typescript.md)

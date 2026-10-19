@@ -206,18 +206,47 @@ export default function Navbar({ shopName, logoUrl }: { shopName: string; logoUr
 ```
 
 ### ปุ่ม LINE ลอยมุมขวาล่าง
+`src/components/LineButton.tsx`
 ```tsx
-<a
-  href={settings.lineUrl}
-  target="_blank"
-  rel="noopener noreferrer"
-  className="fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#06C755] text-white shadow-lg hover:scale-105"
-  aria-label="แชท LINE"
->
-  LINE
-</a>
+export default function LineButton({ lineUrl }: { lineUrl: string }) {
+  return (
+    <a
+      href={lineUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#06C755] text-white shadow-lg hover:scale-105"
+      aria-label="แชท LINE"
+    >
+      LINE
+    </a>
+  );
+}
 ```
 👀 `bg-[#06C755]` = ใส่ค่าเองในวงเล็บเหลี่ยม ใช้กับค่าที่ไม่ได้ตั้งไว้ (นี่คือสีเขียวของ LINE)
+
+### ส่วนท้ายหน้า (Footer)
+`src/components/Footer.tsx`
+```tsx
+interface Props {
+  address: string;
+  phone: string;
+  openingHours: string;
+}
+
+export default function Footer({ address, phone, openingHours }: Props) {
+  return (
+    <footer className="bg-brand text-white">
+      <div className="mx-auto grid max-w-6xl gap-4 px-4 py-8 md:grid-cols-3">
+        <p>📍 {address}</p>
+        <p>
+          📞 <a href={`tel:${phone}`} className="underline">{phone}</a>
+        </p>
+        <p>🕘 {openingHours}</p>
+      </div>
+    </footer>
+  );
+}
+```
 
 ### ตารางในหน้าจัดการร้านบนมือถือ
 ```tsx
@@ -300,4 +329,4 @@ export default function Navbar({ shopName, logoUrl }: { shopName: string; logoUr
 
 ---
 
-[← บทที่ 11: React](./11-react.md) · [🏠 สารบัญ](./README.md) · [บทที่ 13: หลายหน้า + Google →](./13-router-seo.md)
+[← บทที่ 11: React](./11-react.md) · [🏠 สารบัญ](/) · [บทที่ 13: หลายหน้า + Google →](./13-router-seo.md)

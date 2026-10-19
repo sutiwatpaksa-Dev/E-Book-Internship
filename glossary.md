@@ -137,4 +137,4 @@
 
 ---
 
-[🏠 สารบัญ](./README.md) · [📋 Cheat Sheet](./cheat-sheet.md)
+[🏠 สารบัญ](/) · [📋 Cheat Sheet](./cheat-sheet.md)

@@ -259,4 +259,4 @@ app.get("/api/health", async (c) => {
 
 ---
 
-[← บทที่ 22: บริการสำเร็จรูป](./22-deploy-managed.md) · [🏠 สารบัญ](./README.md) · [📖 ศัพท์ที่ต้องรู้ →](./glossary.md)
+[← บทที่ 22: บริการสำเร็จรูป](./22-deploy-managed.md) · [🏠 สารบัญ](/) · [📖 ศัพท์ที่ต้องรู้ →](./glossary.md)

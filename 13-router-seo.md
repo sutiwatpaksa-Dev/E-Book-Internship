@@ -97,15 +97,25 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import LineButton from "./LineButton";
 
+// ข้อมูลร้านชั่วคราว: แบบฝึกหัดบทที่ 14 จะเปลี่ยนเป็นดึงจาก /api/settings
+const shop = {
+  shopName: "Bit Café",
+  logoUrl: "/logo.png",
+  address: "123 ถ.สุขุมวิท กรุงเทพฯ",
+  phone: "0812345678",
+  openingHours: "ทุกวัน 08:00–18:00",
+  lineUrl: "https://line.me/",
+};
+
 export default function PublicLayout() {
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar />
+      <Navbar shopName={shop.shopName} logoUrl={shop.logoUrl} />
       <main className="flex-1">
         <Outlet />        {/* 👈 หน้าลูก (Home/About/Contact) มาวาดตรงนี้ */}
       </main>
-      <Footer />
-      <LineButton />
+      <Footer address={shop.address} phone={shop.phone} openingHours={shop.openingHours} />
+      <LineButton lineUrl={shop.lineUrl} />
     </div>
   );
 }
@@ -338,4 +348,4 @@ server หาไฟล์ชื่อ `contact` ไม่เจอ ต้อง�
 
 ---
 
-[← บทที่ 12: ตกแต่งเว็บ](./12-tailwind.md) · [🏠 สารบัญ](./README.md) · [บทที่ 14: สร้าง API →](./14-hono-api.md)
+[← บทที่ 12: ตกแต่งเว็บ](./12-tailwind.md) · [🏠 สารบัญ](/) · [บทที่ 14: สร้าง API →](./14-hono-api.md)

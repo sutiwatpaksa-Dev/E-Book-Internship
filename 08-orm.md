@@ -355,4 +355,4 @@ N+1 แก้ด้วย `with` (Drizzle) / `include` (Prisma, Sequelize)
 
 ---
 
-[← บทที่ 7: MySQL vs PostgreSQL](./07-mysql-postgres.md) · [🏠 สารบัญ](./README.md) · [บทที่ 9: Debugging →](./09-debugging.md)
+[← บทที่ 7: MySQL vs PostgreSQL](./07-mysql-postgres.md) · [🏠 สารบัญ](/) · [บทที่ 9: Debugging →](./09-debugging.md)

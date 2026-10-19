@@ -103,6 +103,8 @@ const Env = z.object({
   DATABASE_URL: z.string().min(1),
   PORT: z.coerce.number().default(3000),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),   // bun test ตั้ง "test" ให้เอง
+  // "true" เฉพาะเมื่อมี proxy ที่เราไว้ใจอยู่ข้างหน้า (Caddy ในบทที่ 20) ดูข้อ 5
+  TRUST_PROXY: z.enum(["true", "false"]).default("false").transform((v) => v === "true"),
 });
 
 export const env = Env.parse(process.env);
@@ -326,17 +328,30 @@ export type ContactInput = z.infer<typeof ContactInput>;   // หน้าเว
 
 `src/middleware/rateLimit.ts` ด่านจำกัดจำนวนครั้ง (กันส่งฟอร์มรัวๆ)
 ```ts
+import type { Context } from "hono";
 import { createMiddleware } from "hono/factory";
 import { getConnInfo } from "hono/bun";
+import { env } from "../env";
 import { AppError } from "../http/response";
+
+// IP ของคนที่ส่งมา
+// - ไม่มี proxy (ตอนพัฒนา): ใช้ IP ของคนที่ต่อเข้ามาตรงๆ header ใดๆ ที่ client ส่งมาเองห้ามเชื่อ
+// - มี proxy ที่ไว้ใจอยู่ข้างหน้า (TRUST_PROXY=true): ใช้ค่า "ท้ายสุด" ของ X-Forwarded-For
+//   เพราะเป็นค่าที่ proxy ของเราเติมเอง ค่าก่อนหน้านั้น client พิมพ์ปลอมมาได้
+function clientIp(c: Context): string {
+  if (env.TRUST_PROXY) {
+    const last = c.req.header("x-forwarded-for")?.split(",").at(-1)?.trim();
+    if (last) return last;
+  }
+  return getConnInfo(c).remote.address ?? "unknown";
+}
 
 // จำ IP ไว้ใน memory: พอสำหรับ server ตัวเดียว (restart แล้วนับใหม่)
 export function rateLimit({ limit, windowMs }: { limit: number; windowMs: number }) {
   const hits = new Map<string, number[]>();
 
   return createMiddleware(async (c, next) => {
-    // หลัง reverse proxy (บทที่ 20) IP จริงอยู่ใน X-Forwarded-For
-    const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ?? getConnInfo(c).remote.address ?? "unknown";
+    const ip = clientIp(c);
     const now = Date.now();
     const recent = (hits.get(ip) ?? []).filter((t) => now - t < windowMs);
 
@@ -492,7 +507,13 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
 
 แก้ `useFetch` ในบทที่ 11 ให้เรียก `api<T>(url, { signal: controller.signal })` แทน `fetch` และเปลี่ยนที่อยู่จาก `/mock/services.json` เป็น `/api/services`
 
-ส่งฟอร์มติดต่อของจริง (แทน `setTimeout` ในบทที่ 11):
+ส่งฟอร์มติดต่อของจริง (แทน `setTimeout` ในบทที่ 11) เพิ่ม state ไว้เก็บ error จาก server ในฟอร์มก่อน:
+```tsx
+const [serverError, setServerError] = useState<string | null>(null);
+// ...แล้วแสดงไว้เหนือปุ่มส่ง
+{serverError && <p className="error">{serverError}</p>}
+```
+จากนั้นแทนที่ส่วน `try` ใน `onSubmit`:
 ```ts
 import { api, ApiError } from "../api/client";
 
@@ -564,4 +585,4 @@ restrict = ห้ามลบหมวดถ้ายังมีสินค้
 
 ---
 
-[← บทที่ 13: หลายหน้า + Google](./13-router-seo.md) · [🏠 สารบัญ](./README.md) · [บทที่ 15: ระบบ login →](./15-auth.md)
+[← บทที่ 13: หลายหน้า + Google](./13-router-seo.md) · [🏠 สารบัญ](/) · [บทที่ 15: ระบบ login →](./15-auth.md)

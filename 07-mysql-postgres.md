@@ -162,4 +162,4 @@ PostgreSQL มีชนิดข้อมูลช่วงเวลา (range) 
 
 ---
 
-[← บทที่ 6: SQL vs NoSQL](./06-sql-nosql.md) · [🏠 สารบัญ](./README.md) · [บทที่ 8: ORM →](./08-orm.md)
+[← บทที่ 6: SQL vs NoSQL](./06-sql-nosql.md) · [🏠 สารบัญ](/) · [บทที่ 8: ORM →](./08-orm.md)

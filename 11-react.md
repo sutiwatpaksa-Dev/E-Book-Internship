@@ -216,7 +216,11 @@ export function useFetch<T>(url: string) {
 
     fetch(url, { signal: controller.signal })
       .then(async (res) => {
-        const body = (await res.json()) as ApiResponse<T>;
+        if (!res.ok) throw new Error(`โหลดไม่สำเร็จ (รหัส ${res.status})`);
+        // ไฟล์ที่ไม่มีอยู่ Vite จะส่งหน้า HTML กลับมาแทน (รหัส 200) แปลงเป็น JSON ไม่ได้ ให้บอกเป็นภาษาคน
+        const body = (await res.json().catch(() => {
+          throw new Error("ข้อมูลที่ได้กลับมาไม่ใช่ JSON (ที่อยู่ผิดหรือเปล่า?)");
+        })) as ApiResponse<T>;
         if (!body.success) throw new Error(body.error.message);
         setData(body.data);
       })
@@ -255,7 +259,7 @@ export default function App() {
   );
 }
 ```
-💥 **ลองพังมันดู:** เปลี่ยนที่อยู่เป็น `/mock/nope.json` ต้องเห็นข้อความบอกว่าโหลดไม่สำเร็จ ไม่ใช่หน้าขาว
+💥 **ลองพังมันดู:** เปลี่ยนที่อยู่เป็น `/mock/nope.json` ต้องเห็นข้อความ "ข้อมูลที่ได้กลับมาไม่ใช่ JSON" ไม่ใช่หน้าขาว (Vite ตอบไฟล์ที่ไม่มีด้วยหน้า HTML ของเว็บ เราจึงต้องดักตอนแปลง JSON ด้วย ไม่ใช่เช็คแค่ `res.ok`)
 💥 เปิด DevTools → Network → เลือก **Slow 4G** แล้วรีเฟรช จะเห็นข้อความกำลังโหลด
 
 > ⚠️ **กับดักของ useEffect**
@@ -408,4 +412,4 @@ props = ข้อมูลที่ **ชิ้นส่วนแม่ส่ง
 
 ---
 
-[← บทที่ 10: Security](./10-security.md) · [🏠 สารบัญ](./README.md) · [บทที่ 12: ตกแต่งเว็บ (Tailwind) →](./12-tailwind.md)
+[← บทที่ 10: Security](./10-security.md) · [🏠 สารบัญ](/) · [บทที่ 12: ตกแต่งเว็บ (Tailwind) →](./12-tailwind.md)

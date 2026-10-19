@@ -319,4 +319,4 @@ GET ควรเป็นการดูอย่างเดียว browser, 
 
 ---
 
-[← บทที่ 4: TypeScript](./04-typescript.md) · [🏠 สารบัญ](./README.md) · [บทที่ 6: SQL vs NoSQL →](./06-sql-nosql.md)
+[← บทที่ 4: TypeScript](./04-typescript.md) · [🏠 สารบัญ](/) · [บทที่ 6: SQL vs NoSQL →](./06-sql-nosql.md)

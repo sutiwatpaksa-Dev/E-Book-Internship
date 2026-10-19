@@ -220,4 +220,4 @@ console.log(laptops);                                                   // ข�
 
 ---
 
-[← บทที่ 8: ORM](./08-orm.md) · [🏠 สารบัญ](./README.md) · [บทที่ 10: Security →](./10-security.md)
+[← บทที่ 8: ORM](./08-orm.md) · [🏠 สารบัญ](/) · [บทที่ 10: Security →](./10-security.md)
