@@ -43,7 +43,7 @@ export default defineConfig({
   // Vercel เสิร์ฟที่ root ถ้าย้ายไปอยู่ใต้ path ย่อย ให้ตั้ง BASE_PATH เช่น /handbook/
   base: process.env.BASE_PATH ?? "/",
   rewrites: { "README.md": "index.md" },
-  srcExclude: ["node_modules/**", "MAINTAINING.md"],
+  srcExclude: ["node_modules/**", "MAINTAINING.md", "Handoff.md"],
   // ลิงก์ localhost ในบทเรียนตั้งใจให้เปิดบนเครื่องน้องเอง
   ignoreDeadLinks: "localhostLinks",
   cleanUrls: true,
