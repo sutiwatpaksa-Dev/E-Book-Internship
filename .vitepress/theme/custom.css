@@ -1,0 +1,65 @@
+/* โทนสีเดียวกับเอกสารบริษัท (navy 072A6B / 0B3C91) */
+:root {
+  --vp-font-family-base: "IBM Plex Sans Thai", "Sarabun", system-ui, sans-serif;
+  --vp-c-brand-1: #0b3c91;
+  --vp-c-brand-2: #1a4fb0;
+  --vp-c-brand-3: #072a6b;
+  --vp-c-brand-soft: rgba(11, 60, 145, 0.12);
+}
+
+.dark {
+  --vp-c-brand-1: #7aa7ff;
+  --vp-c-brand-2: #5b8ef0;
+  --vp-c-brand-3: #3f73d6;
+  --vp-c-brand-soft: rgba(122, 167, 255, 0.16);
+}
+
+/* ภาษาไทยอ่านสบายขึ้นเมื่อบรรทัดห่างกว่าค่าเริ่มต้น */
+.vp-doc p,
+.vp-doc li {
+  line-height: 1.85;
+}
+
+/* กล่อง "สรุป 30 วินาที" และ blockquote อื่นๆ ให้เด่นแบบการ์ด */
+.vp-doc blockquote {
+  border-left: 4px solid var(--vp-c-brand-1);
+  background: var(--vp-c-brand-soft);
+  border-radius: 0 8px 8px 0;
+  padding: 10px 16px;
+  color: var(--vp-c-text-1);
+}
+.vp-doc blockquote > p {
+  color: var(--vp-c-text-1);
+}
+
+/* เฉลยแบบกดเปิด */
+.vp-doc details {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  padding: 8px 14px;
+  margin: 10px 0;
+  background: var(--vp-c-bg-soft);
+}
+.vp-doc details summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.vp-doc details[open] summary {
+  margin-bottom: 8px;
+}
+
+/* checklist "ผ่านด่าน" */
+.vp-doc li:has(> input[type="checkbox"]) {
+  list-style: none;
+  margin-left: -1.2em;
+}
+
+/* ภาพ ASCII ไม่ตัดบรรทัด */
+.vp-doc div[class*="language-"] pre {
+  white-space: pre;
+}
+
+/* หัวข้อ h2 ของ theme มีเส้นคั่นอยู่แล้ว ซ่อน --- ในไฟล์ไม่ให้เป็นเส้นซ้อน */
+.vp-doc hr {
+  display: none;
+}

@@ -1,0 +1,82 @@
+import { defineConfig } from "vitepress";
+
+const chapters = [
+  { text: "00 · ก่อนเริ่ม", link: "/00-start" },
+  { text: "01 · Git", link: "/01-git" },
+  { text: "02 · Docker vs VM", link: "/02-docker" },
+  { text: "03 · Node vs Yarn vs Bun", link: "/03-node-yarn-bun" },
+  { text: "04 · JavaScript vs TypeScript", link: "/04-typescript" },
+  { text: "05 · HTTP & REST API", link: "/05-http-api" },
+  { text: "06 · SQL vs NoSQL", link: "/06-sql-nosql" },
+  { text: "07 · MySQL vs PostgreSQL", link: "/07-mysql-postgres" },
+  { text: "08 · Drizzle vs Prisma vs Sequelize", link: "/08-orm" },
+  { text: "09 · Debugging", link: "/09-debugging" },
+  { text: "10 · Security พื้นฐาน", link: "/10-security" },
+  { text: "11 · Mini Project", link: "/11-mini-project" },
+];
+
+export default defineConfig({
+  lang: "th-TH",
+  title: "คู่มือฝึกงาน Blicktech",
+  description: "Basic Dev Fundamentals สำหรับน้องฝึกงาน บริษัท บลิคซ์เทค คอนซัลแทนท์ จำกัด",
+  // Vercel เสิร์ฟที่ root ถ้าย้ายไปอยู่ใต้ path ย่อย ให้ตั้ง BASE_PATH เช่น /handbook/
+  base: process.env.BASE_PATH ?? "/",
+  rewrites: { "README.md": "index.md" },
+  srcExclude: ["node_modules/**", "MAINTAINING.md"],
+  // ลิงก์ localhost ในบทเรียนตั้งใจให้เปิดบนเครื่องน้องเอง
+  ignoreDeadLinks: "localhostLinks",
+  cleanUrls: true,
+  // ขึ้นบรรทัดใหม่ในไฟล์ = ขึ้นบรรทัดใหม่บนหน้าเว็บ (บทสนทนาและกล่องข้อความเขียนไว้ทีละบรรทัด)
+  markdown: { breaks: true },
+  lastUpdated: true,
+  head: [
+    ["link", { rel: "icon", href: `${process.env.BASE_PATH ?? "/"}logo.png` }],
+    ["link", { rel: "preconnect", href: "https://fonts.googleapis.com" }],
+    ["link", { rel: "preconnect", href: "https://fonts.gstatic.com", crossorigin: "" }],
+    [
+      "link",
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap",
+      },
+    ],
+  ],
+  themeConfig: {
+    logo: "/logo.png",
+    siteTitle: "คู่มือฝึกงาน",
+    nav: [
+      { text: "เริ่มอ่าน", link: "/00-start" },
+      { text: "Cheat Sheet", link: "/cheat-sheet" },
+    ],
+    sidebar: [
+      { text: "🏠 หน้าแรก", link: "/" },
+      { text: "ด่าน 1 · เตรียมตัว", items: chapters.slice(0, 3) },
+      { text: "ด่าน 2 · ภาษาและ API", items: chapters.slice(3, 6) },
+      { text: "ด่าน 3 · ข้อมูล", items: chapters.slice(6, 9) },
+      { text: "ด่าน 4 · มืออาชีพ", items: chapters.slice(9, 12) },
+      { text: "📋 Cheat Sheet", link: "/cheat-sheet" },
+    ],
+    outline: { level: [2, 3], label: "ในบทนี้" },
+    docFooter: { prev: "บทก่อนหน้า", next: "บทถัดไป" },
+    lastUpdated: { text: "อัปเดตล่าสุด" },
+    darkModeSwitchLabel: "ธีม",
+    sidebarMenuLabel: "สารบัญ",
+    returnToTopLabel: "กลับขึ้นด้านบน",
+    search: {
+      provider: "local",
+      options: {
+        translations: {
+          button: { buttonText: "ค้นหา", buttonAriaLabel: "ค้นหา" },
+          modal: {
+            noResultsText: "ไม่พบผลลัพธ์",
+            resetButtonTitle: "ล้าง",
+            footer: { selectText: "เลือก", navigateText: "เลื่อน", closeText: "ปิด" },
+          },
+        },
+      },
+    },
+    footer: {
+      message: "สำหรับน้องฝึกงาน บริษัท บลิคซ์เทค คอนซัลแทนท์ จำกัด",
+    },
+  },
+});
