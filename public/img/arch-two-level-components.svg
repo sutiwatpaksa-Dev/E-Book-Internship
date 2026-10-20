@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 420" role="img" aria-label="Component 2 ระดับ">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker>
+<marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker></defs>
+<rect x="1" y="1" width="798" height="418" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="32" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="18" font-weight="700" fill="#0b3c91" text-anchor="middle">Component 2 ระดับ และทิศทางที่ import ได้</text>
+<rect x="40" y="64" width="720" height="70" rx="8" fill="#e2e8f0" stroke="#64748b" stroke-width="1.5" />
+<text x="400" y="92" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="16" font-weight="700" fill="#0f172a" text-anchor="middle">pages/  ประกอบหน้า (เรียก feature component + shared component มาวาง)</text>
+<text x="400" y="118" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="400" fill="#334155" text-anchor="middle">ไม่มีกฎธุรกิจเอง เช่น laptops-page.tsx</text>
+<rect x="40" y="180" width="330" height="150" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5" />
+<text x="205" y="208" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="15" font-weight="700" fill="#0f172a" text-anchor="middle">ระดับ 2: features/xxx/components/</text>
+<text x="205" y="236" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="400" fill="#334155" text-anchor="middle">รู้จักธุรกิจของฟีเจอร์นั้น</text>
+<text x="205" y="262" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="400" fill="#334155" text-anchor="middle">เช่น laptop-card, rent-form</text>
+<text x="205" y="288" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="600" fill="#dc2626" text-anchor="middle">ใช้ได้เฉพาะในฟีเจอร์ตัวเอง</text>
+<rect x="430" y="180" width="330" height="150" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5" />
+<text x="595" y="208" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="15" font-weight="700" fill="#0f172a" text-anchor="middle">ระดับ 1: components/ (shared)</text>
+<text x="595" y="236" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="400" fill="#334155" text-anchor="middle">ไม่รู้จักธุรกิจเลย ใช้ได้ทุกที่</text>
+<text x="595" y="262" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="400" fill="#334155" text-anchor="middle">เช่น button, input, modal, spinner</text>
+<text x="595" y="288" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="600" fill="#16a34a" text-anchor="middle">รับทุกอย่างผ่าน props</text>
+<line x1="205" y1="138" x2="205" y2="176" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#a)"/>
+<line x1="595" y1="138" x2="595" y2="176" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#a)"/>
+<line x1="374" y1="255" x2="426" y2="255" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#a)"/>
+<text x="400" y="368" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="15" font-weight="600" fill="#0f172a" text-anchor="middle">ลูกศร = "ใช้ / import"   ระดับ 2 ใช้ระดับ 1 ได้   แต่ระดับ 1 ห้ามใช้ระดับ 2</text>
+<text x="400" y="396" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="400" fill="#dc2626" text-anchor="middle">ฟีเจอร์หนึ่งห้าม import component ของอีกฟีเจอร์ ถ้าจะใช้ร่วมกัน ให้ยกขึ้นเป็นระดับ 1</text>
+</svg>

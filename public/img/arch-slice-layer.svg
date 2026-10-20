@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 380" role="img" aria-label="แบ่งตามชั้น (Layered): ตัดแนวนอน">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker>
+<marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker></defs>
+<rect x="1" y="1" width="798" height="378" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="32" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="18" font-weight="700" fill="#0b3c91" text-anchor="middle">แบ่งตามชั้น (Layered): ตัดแนวนอน</text>
+<text x="261.0" y="78" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="16" font-weight="700" fill="#0f172a" text-anchor="middle">laptops</text>
+<text x="411.0" y="78" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="16" font-weight="700" fill="#0f172a" text-anchor="middle">customers</text>
+<text x="561.0" y="78" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="16" font-weight="700" fill="#0f172a" text-anchor="middle">rentals</text>
+<text x="170" y="125.0" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="15" font-weight="600" fill="#334155" text-anchor="end">routes</text>
+<rect x="190" y="92" width="142" height="48" rx="8" fill="#dbeafe" stroke="#94a3b8" stroke-width="1.5" />
+<rect x="340" y="92" width="142" height="48" rx="8" fill="#dbeafe" stroke="#94a3b8" stroke-width="1.5" />
+<rect x="490" y="92" width="142" height="48" rx="8" fill="#dbeafe" stroke="#94a3b8" stroke-width="1.5" />
+<text x="170" y="181.0" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="15" font-weight="600" fill="#334155" text-anchor="end">services</text>
+<rect x="190" y="148" width="142" height="48" rx="8" fill="#fef3c7" stroke="#94a3b8" stroke-width="1.5" />
+<rect x="340" y="148" width="142" height="48" rx="8" fill="#fef3c7" stroke="#94a3b8" stroke-width="1.5" />
+<rect x="490" y="148" width="142" height="48" rx="8" fill="#fef3c7" stroke="#94a3b8" stroke-width="1.5" />
+<text x="170" y="237.0" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="15" font-weight="600" fill="#334155" text-anchor="end">repositories</text>
+<rect x="190" y="204" width="142" height="48" rx="8" fill="#dcfce7" stroke="#94a3b8" stroke-width="1.5" />
+<rect x="340" y="204" width="142" height="48" rx="8" fill="#dcfce7" stroke="#94a3b8" stroke-width="1.5" />
+<rect x="490" y="204" width="142" height="48" rx="8" fill="#dcfce7" stroke="#94a3b8" stroke-width="1.5" />
+<rect x="186" y="88" width="450" height="56" rx="10" fill="none" stroke="#1a4fb0" stroke-width="1.5" stroke-dasharray="6 4"/>
+<rect x="186" y="144" width="450" height="56" rx="10" fill="none" stroke="#1a4fb0" stroke-width="1.5" stroke-dasharray="6 4"/>
+<rect x="186" y="200" width="450" height="56" rx="10" fill="none" stroke="#1a4fb0" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="400" y="290" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="15" font-weight="600" fill="#1a4fb0" text-anchor="middle">ทุกฟีเจอร์ของชั้นเดียวกันอยู่รวมกัน</text>
+<text x="400" y="316" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="400" fill="#334155" text-anchor="middle">เปิด services/ เจอกฎธุรกิจของ laptops + customers + rentals ปนกัน</text>
+</svg>
