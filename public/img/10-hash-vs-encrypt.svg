@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 440" role="img" aria-label="Hash กับ Encrypt ต่างกัน" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="16">
+<title>Hash กับ Encrypt ต่างกัน</title>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#0b3c91"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#dc2626"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f59e0b"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="438" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="28" font-size="20" text-anchor="middle" fill="#0b3c91" font-weight="bold">Encrypt ย้อนกลับได้ · Hash ย้อนกลับไม่ได้</text>
+<rect x="16" y="44" width="768" height="170" rx="10" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+<text x="32" y="72" font-size="17" text-anchor="start" fill="#dc2626" font-weight="bold">Encrypt (เข้ารหัส): มีกุญแจ ก็ถอดกลับได้</text>
+<rect x="32" y="92" width="150" height="56" rx="10" fill="#fff" stroke="#dc2626" stroke-width="2"/>
+<text x="107.0" y="125.25" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">somchai1234</text>
+<line x1="184" y1="112" x2="258" y2="112" stroke="#dc2626" stroke-width="2.5" marker-end="url(#ar)"/>
+<text x="221" y="102" font-size="15" text-anchor="middle" fill="#dc2626" font-weight="normal">ล็อก</text>
+<rect x="260" y="92" width="200" height="56" rx="10" fill="#0f172a" stroke="#0f172a" stroke-width="2"/>
+<text x="360.0" y="125.25" font-size="15" text-anchor="middle" fill="#fca5a5" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">k8#Zq0...(ล็อกแล้ว)</text>
+<line x1="262" y1="134" x2="184" y2="134" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="7 5" marker-end="url(#ar)"/>
+<text x="221" y="160" font-size="15" text-anchor="middle" fill="#dc2626" font-weight="normal">ใช้กุญแจถอด</text>
+<rect x="490" y="88" width="282" height="80" rx="10" fill="#fff" stroke="#dc2626" stroke-width="2"/>
+<text x="631.0" y="122.75" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">กุญแจหลุด หรือ DB กับกุญแจ</text>
+<text x="631.0" y="143.75" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">อยู่ที่เดียวกัน = ได้รหัสจริงครบ</text>
+<text x="400" y="198" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">เหมาะกับข้อมูลที่ต้องอ่านกลับ (เช่นไฟล์) ไม่เหมาะกับรหัสผ่าน</text>
+<rect x="16" y="230" width="768" height="196" rx="10" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+<text x="32" y="258" font-size="17" text-anchor="start" fill="#16a34a" font-weight="bold">Hash (bcrypt / argon2): ปั่นทางเดียว ไม่มีทางถอด</text>
+<text x="32" y="284" font-size="15" text-anchor="start" fill="#0f172a" font-weight="bold">สมัคร:</text>
+<rect x="100" y="266" width="130" height="34" rx="10" fill="#fff" stroke="#16a34a" stroke-width="2"/>
+<text x="165.0" y="288.25" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">somchai1234</text>
+<line x1="232" y1="283" x2="290" y2="283" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
+<text x="262" y="274" font-size="14" text-anchor="middle" fill="#16a34a" font-weight="normal">hash</text>
+<rect x="292" y="266" width="300" height="34" rx="10" fill="#0f172a" stroke="#0f172a" stroke-width="2"/>
+<text x="442.0" y="288.25" font-size="15" text-anchor="middle" fill="#bbf7d0" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">$argon2id$v=19$m=65536...</text>
+<text x="604" y="288" font-size="15" text-anchor="start" fill="#0f172a" font-weight="bold">เก็บใน DB</text>
+<text x="32" y="340" font-size="15" text-anchor="start" fill="#0f172a" font-weight="bold">login:</text>
+<rect x="100" y="322" width="130" height="34" rx="10" fill="#fff" stroke="#16a34a" stroke-width="2"/>
+<text x="165.0" y="344.25" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">somchai1234</text>
+<line x1="232" y1="339" x2="290" y2="339" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
+<text x="262" y="330" font-size="14" text-anchor="middle" fill="#16a34a" font-weight="normal">verify</text>
+<rect x="292" y="322" width="300" height="34" rx="10" fill="#e8effc" stroke="#1a4fb0" stroke-width="2"/>
+<text x="442.0" y="344.25" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">เทียบกับ hash ใน DB: ตรง?</text>
+<text x="604" y="344" font-size="15" text-anchor="start" fill="#16a34a" font-weight="bold">ตรง = เข้าได้</text>
+<text x="400" y="386" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">hash ที่รั่วไป ถอดกลับเป็นรหัสไม่ได้ ได้แต่ลองเดา (ซึ่งช้าโดยตั้งใจ)</text>
+<text x="400" y="410" font-size="15" text-anchor="middle" fill="#64748b" font-weight="normal">รหัสเดียวกัน hash สองครั้งได้ค่าต่างกัน เพราะ salt สุ่ม แต่ verify ได้ถูก</text>
+</svg>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 485" role="img" aria-label="พิมพ์ URL แล้วเกิดอะไรขึ้น" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
+<title>พิมพ์ URL แล้วเกิดอะไรขึ้น</title><desc>แผนภาพลำดับ เบราว์เซอร์ถาม DNS หา IP ต่อสาย TCP แล้วส่ง HTTP request และรับ response</desc>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="483" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="19" text-anchor="middle" fill="#0b3c91" font-weight="bold">พิมพ์ URL แล้วกด Enter: 3 ขั้นหลัก</text>
+<rect x="35" y="46" width="170" height="40" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="120.0" y="71.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">เบราว์เซอร์</text>
+<line x1="120" y1="88" x2="120" y2="410" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 5"/>
+<rect x="315" y="46" width="170" height="40" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="400.0" y="71.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">DNS (สมุดโทรศัพท์)</text>
+<line x1="400" y1="88" x2="400" y2="410" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 5"/>
+<rect x="595" y="46" width="170" height="40" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="680.0" y="71.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">เว็บเซิร์ฟเวอร์</text>
+<line x1="680" y1="88" x2="680" y2="410" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 5"/>
+<line x1="120" y1="125" x2="398" y2="125" stroke="#d97706" stroke-width="2.5" marker-end="url(#ao)"/>
+<text x="259.0" y="117" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">1 api.shop.test คือ IP อะไร?</text>
+<line x1="398" y1="170" x2="122" y2="170" stroke="#d97706" stroke-width="2.5" marker-end="url(#ao)"/>
+<text x="260.0" y="162" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">203.0.113.10</text>
+<line x1="120" y1="225" x2="678" y2="225" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
+<text x="399.0" y="217" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">2 ขอต่อสาย (TCP + TLS ถ้า https)</text>
+<line x1="678" y1="270" x2="122" y2="270" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
+<text x="400.0" y="262" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ต่อสายแล้ว พร้อมคุย</text>
+<line x1="120" y1="325" x2="678" y2="325" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<text x="399.0" y="317" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">3 GET /laptops HTTP/1.1</text>
+<line x1="678" y1="370" x2="122" y2="370" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<text x="400.0" y="362" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">200 OK + JSON</text>
+<rect x="20" y="424" width="760" height="40" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="400.0" y="448.9" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ขั้น 1 ถูกข้ามถ้าพิมพ์ IP หรือ localhost · เรื่องลึกอยู่ในบทที่ 17 (เน็ตเวิร์ก) และ 18 (DNS)</text>
+</svg>

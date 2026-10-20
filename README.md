@@ -32,17 +32,17 @@
 
 | # | บท | จะทำอะไรได้หลังจบบท | ⏱ เวลาโดยประมาณ | ผ่านแล้ว |
 |---|---|---|---|---|
-| 00 | [ก่อนเริ่ม](./00-start.md) | ติดตั้งเครื่องมือครบ ใช้ Terminal เบื้องต้นได้ | 1 ชม. | ☐ |
-| 01 | [Git](./01-git.md) | บันทึกงาน แตก branch แก้ conflict ส่งงานแบบทีมได้ | 2 ชม. | ☐ |
-| 02 | [Docker vs VM](./02-docker.md) | รันโปรแกรม/ฐานข้อมูลใน container ได้เอง | 3 ชม. | ☐ |
-| 03 | [Node vs Yarn vs Bun](./03-node-yarn-bun.md) | เข้าใจ runtime, package, lock file | 1.5 ชม. | ☐ |
-| 04 | [JavaScript vs TypeScript](./04-typescript.md) | ตั้งโปรเจกต์ TS และเขียน type เป็น | 3 ชม. | ☐ |
-| 05 | [HTTP & REST API](./05-http-api.md) | สร้าง API ด้วย TS และแพ็กใส่ Docker ได้ | 3 ชม. | ☐ |
-| 06 | [SQL vs NoSQL](./06-sql-nosql.md) | เขียน SQL พื้นฐาน เข้าใจ transaction | 3 ชม. | ☐ |
-| 07 | [MySQL vs PostgreSQL](./07-mysql-postgres.md) | เห็นความต่างจริงของทั้งสองตัว | 1.5 ชม. | ☐ |
-| 08 | [Drizzle vs Prisma vs Sequelize](./08-orm.md) | ต่อ DB จากโค้ดด้วย ORM และใช้ migration | 3 ชม. | ☐ |
-| 09 | [Debugging](./09-debugging.md) | หาบั๊กเองเป็นระบบ ใช้ debugger ได้ | 1.5 ชม. | ☐ |
-| 10 | [Security พื้นฐาน](./10-security.md) | เก็บรหัสผ่าน/ความลับถูกวิธี รู้จักช่องโหว่ที่เจอบ่อย | 2 ชม. | ☐ |
+| 00 | [ก่อนเริ่ม](./00-start.md) | ติดตั้งเครื่องมือครบ ใช้ Terminal เบื้องต้นได้ | 2-3 ชม. | ☐ |
+| 01 | [Git](./01-git.md) | บันทึกงาน แตก branch แก้ conflict ส่งงานแบบทีมได้ | 5-6 ชม. | ☐ |
+| 02 | [Docker vs VM](./02-docker.md) | รันโปรแกรม/ฐานข้อมูลใน container ได้เอง | 5 ชม. | ☐ |
+| 03 | [Node vs Yarn vs Bun](./03-node-yarn-bun.md) | เข้าใจ runtime, package, lock file | 4 ชม. | ☐ |
+| 04 | [JavaScript vs TypeScript](./04-typescript.md) | ตั้งโปรเจกต์ TS และเขียน type เป็น | 5 ชม. | ☐ |
+| 05 | [HTTP & REST API](./05-http-api.md) | สร้าง API ด้วย TS และแพ็กใส่ Docker ได้ | 5 ชม. | ☐ |
+| 06 | [SQL vs NoSQL](./06-sql-nosql.md) | เขียน SQL พื้นฐาน เข้าใจ transaction | 4.5 ชม. | ☐ |
+| 07 | [MySQL vs PostgreSQL](./07-mysql-postgres.md) | เห็นความต่างจริงของทั้งสองตัว | 3 ชม. | ☐ |
+| 08 | [Drizzle vs Prisma vs Sequelize](./08-orm.md) | ต่อ DB จากโค้ดด้วย ORM และใช้ migration | 5 ชม. | ☐ |
+| 09 | [Debugging](./09-debugging.md) | หาบั๊กเองเป็นระบบ ใช้ debugger ได้ | 3 ชม. | ☐ |
+| 10 | [Security พื้นฐาน](./10-security.md) | เก็บรหัสผ่าน/ความลับถูกวิธี รู้จักช่องโหว่ที่เจอบ่อย | 4 ชม. | ☐ |
 | 11 | [สร้างหน้าเว็บด้วย React](./11-react.md) | สร้างหน้าเว็บจากชิ้นส่วนเล็กๆ ดึงข้อมูล ทำฟอร์ม | 4 ชม. | ☐ |
 | 12 | [ตกแต่งเว็บทุกขนาดจอ (Tailwind)](./12-tailwind.md) | แต่งเว็บตามสีร้าน ใช้ได้ทุกขนาดจอ | 3 ชม. | ☐ |
 | 13 | [หลายหน้า + Google หาเจอ](./13-router-seo.md) | หลายหน้า, หน้า 404, เลือกหมวด, การ์ดตอนแชร์ | 3 ชม. | ☐ |

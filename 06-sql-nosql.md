@@ -1,11 +1,12 @@
 # บทที่ 6: SQL vs NoSQL 🗄️
 
-> ⏱ ประมาณ 3 ชั่วโมง · 🧩 ต้องผ่านก่อน: บทที่ 2 · 🛠 ใช้: Docker, PostgreSQL, MongoDB
+> ⏱ ประมาณ 4.5 ชั่วโมง · 🧩 ต้องผ่านก่อน: บทที่ 2 · 🛠 ใช้: Docker, PostgreSQL, MongoDB
 
 > **⚡ สรุป 30 วินาที**
 > - **SQL** เก็บเป็นตารางที่เชื่อมกันด้วย key มีกฎเข้ม ไว้ใจได้เรื่องเงิน (ACID)
 > - **NoSQL** ไม่ใช่ตาราง มีหลายแบบ (document, key-value ฯลฯ) ยืดหยุ่นและขยายง่าย
 > - คำสั่ง SQL หลัก: `SELECT` `INSERT` `UPDATE` `DELETE` `JOIN` `GROUP BY`
+> - ค้นเร็วด้วย **index** · ข้อมูลว่างคือ **NULL** (เทียบด้วย `IS NULL` ไม่ใช่ `= NULL`)
 > - งานหลายขั้นที่ต้องสำเร็จพร้อมกัน ใช้ **transaction**
 > - ไม่แน่ใจ → **เริ่มที่ SQL (PostgreSQL)**
 
@@ -31,11 +32,16 @@
 
 นี่คืองานของ **Database** ซึ่งมี 2 ตระกูลใหญ่: **SQL** และ **NoSQL**
 
+> 💡 **ฐานข้อมูลคือโปรแกรมที่รันอยู่ตลอดเวลา** (เรียกว่า **database server**) คล้ายร้านอาหารที่เปิดรอลูกค้า
+> โค้ดของเรา (หรือเครื่องมืออย่าง `psql`) เป็น "ลูกค้า" ที่ **ส่งคำสั่ง** ไปหาแล้วรอคำตอบ
+> ส่วนข้อมูลจริงถูกเก็บเป็นไฟล์ของ server ในเครื่อง/ใน Docker volume ไม่ได้อยู่ในโค้ดเรา
+
 ---
 
 ## 2. SQL (Relational Database)
 
 เก็บเป็น **ตาราง** คล้าย Excel แต่ **มีกฎเข้มงวด** และ **ตารางเชื่อมกันได้**
+**SQL** (อ่านว่า "เอส-คิว-แอล" หรือ "ซีควล") คือ **ภาษา** ที่ใช้สั่งฐานข้อมูลแบบตาราง ทั้งสร้าง เพิ่ม ค้น แก้ ลบ
 
 | คำ | ความหมาย | 💡 เทียบ Excel |
 |---|---|---|
@@ -45,6 +51,9 @@
 | **Schema** | โครงสร้าง: ตารางอะไร คอลัมน์อะไร ชนิดอะไร | หัวตารางที่ล็อกไว้ |
 | **Primary Key (PK)** | คอลัมน์ระบุแถวแบบไม่ซ้ำ | เลขบัตรประชาชน 🪪 |
 | **Foreign Key (FK)** | คอลัมน์ที่ชี้ไป PK ของอีกตาราง | การอ้างอิงเลขบัตรของคนอื่น |
+
+![ภาพโครงสร้างตาราง customers แสดง column, row, cell และคอลัมน์ id ที่เป็น primary key](/img/06-table-anatomy.svg)
+*ตาราง 1 ตาราง = หลายคอลัมน์ (แนวตั้ง) x หลายแถว (แนวนอน) · แต่ละคอลัมน์มีชนิดข้อมูลและกฎของตัวเอง*
 
 **ตัวอย่าง: ร้านเช่าโน้ตบุ๊ค**
 
@@ -68,23 +77,70 @@
 > เพราะพอเปลี่ยนเบอร์ต้องตามแก้ทุกแถว (ปัญหาในเรื่องเล่า!) การเก็บแต่ละเรื่องไว้ **ที่เดียว** แล้วอ้างอิงกัน เรียกว่า **Normalization**
 > และ FK ยังกันไม่ให้สร้าง rental ของลูกค้า id 99 ที่ไม่มีจริง
 
-**ความสัมพันธ์ 3 แบบ**
-| แบบ | ตัวอย่าง |
-|---|---|
-| **1 : 1** | คน 1 คน ↔ บัตรประชาชน 1 ใบ |
-| **1 : N** ⭐ เจอบ่อยสุด | ลูกค้า 1 คน → หลาย rental |
-| **N : M** | ออเดอร์มีหลายสินค้า สินค้าอยู่ในหลายออเดอร์ → ต้องมีตารางกลาง `order_items` |
+### Primary Key และ Foreign Key ต่างกันยังไง
+
+| | Primary Key (PK) | Foreign Key (FK) |
+|---|---|---|
+| หน้าที่ | บอกว่า "แถวนี้คือใคร" | บอกว่า "แถวนี้เกี่ยวกับแถวไหนของอีกตาราง" |
+| ซ้ำได้ไหม | **ไม่ได้** และห้ามว่าง | ซ้ำได้ (สมชายมีหลาย rental → `customer_id = 1` ซ้ำหลายแถว) |
+| มีกี่ตัวต่อตาราง | 1 ตัว | กี่ตัวก็ได้ |
+| ตัวอย่าง | `customers.id` | `rentals.customer_id` |
+
+เคล็ดลับเลือก PK: ใช้ **เลขรันอัตโนมัติ** (`id`) ที่ไม่มีความหมายทางธุรกิจ ไม่ควรใช้เบอร์โทรหรืออีเมลเป็น PK เพราะคนเปลี่ยนเบอร์/อีเมลได้
+
+### ความสัมพันธ์ 3 แบบ (ER Diagram)
+
+| แบบ | ตัวอย่าง | ทำยังไงในตาราง |
+|---|---|---|
+| **1 : 1** | คน 1 คน ↔ บัตรประชาชน 1 ใบ | ใส่ FK ที่ฝั่งใดฝั่งหนึ่ง และสั่ง `UNIQUE` กันซ้ำ |
+| **1 : N** (เจอบ่อยสุด) | ลูกค้า 1 คน → หลาย rental | ใส่ FK ที่ฝั่ง "N" (ตาราง rentals) |
+| **N : M** | ออเดอร์มีหลายสินค้า สินค้าอยู่ในหลายออเดอร์ | ต้องมีตารางกลาง `order_items` ที่มี FK 2 ตัว |
+
+![ER diagram แสดงความสัมพันธ์ 1:1, 1:N และ N:M พร้อมตารางกลาง](/img/06-er-diagram.svg)
+*อ่านแผนภาพ ER: ขีดตั้ง | คือฝั่ง "1", ขา 3 แฉกคือฝั่ง "N (หลายแถว)" · N:M แตกเป็น 1:N สองเส้นผ่านตารางกลาง*
+
+### Normalization ในภาษาคน
+
+Normalization ไม่ได้ซับซ้อน มีหลักจำง่ายๆ 3 ข้อ:
+
+1. **1 ช่องใส่ 1 ค่า** ห้ามยัดหลายค่าในช่องเดียว เช่น `laptop = 'T14, Dell, HP'` (ค้นและนับไม่ได้) → แยกเป็นหลายแถว
+2. **1 เรื่อง 1 ตาราง** ข้อมูลของลูกค้าอยู่ใน `customers` ที่เดียว ที่อื่นอ้างด้วย `customer_id`
+3. **ข้อมูลที่ซ้ำให้แยกตารางออกไป** ถ้าเห็นค่าเดิมๆ ซ้ำเต็มคอลัมน์ (ชื่อ/เบอร์ลูกค้าซ้ำในทุกแถว rental) แปลว่าควรแยก
+
+```text
+❌ ก่อน (ซ้ำ)                                  ✅ หลัง (แยกตาราง)
+rentals                                        customers            rentals
+id | customer_name | phone  | laptop          id | name | phone    id | customer_id | laptop
+1  | สมชาย         | 081... | T14             1  | สมชาย | 081...  1  | 1           | T14
+2  | สมชาย         | 081... | Dell                                 2  | 1           | Dell
+(สมชายเปลี่ยนเบอร์ = ต้องแก้ทุกแถว)             (เปลี่ยนเบอร์ = แก้ที่เดียว)
+```
+
+> 💡 **ไม่ต้องจำชื่อ "รูปแบบปกติที่ 1/2/3 (1NF/2NF/3NF)"** ถ้ารักษา 3 ข้อข้างบนก็ถือว่า normalize พอใช้แล้ว
+> บางกรณีเขาตั้งใจ **ซ้ำข้อมูลเพื่อความเร็ว** (denormalize) เช่น เก็บ `total` ของบิตไว้ในบิลเลย แต่ทำเมื่อรู้ว่าทำไมเท่านั้น
 
 ---
 
 ## 3. 🔧 ลงมือ: SQL พื้นฐาน
 
+> 💡 SQL แบ่งเป็น 2 กลุ่มคำสั่ง: **สร้างโครงสร้าง** (`CREATE TABLE`, `ALTER TABLE`, `DROP TABLE`) กับ **จัดการข้อมูล** (`INSERT`, `SELECT`, `UPDATE`, `DELETE`) ชื่อคำสั่งพิมพ์ตัวเล็ก/ใหญ่ก็ได้ ทีมเรานิยมพิมพ์ตัวใหญ่เพื่ออ่านง่าย และต้องจบทุกคำสั่งด้วย `;`
+
+### ขั้นที่ 0: เปิดฐานข้อมูล
+
 ```bash
 docker run -d --name pg -e POSTGRES_PASSWORD=secret -p 5432:5432 postgres:17
 docker exec -it pg psql -U postgres
 ```
+ควรเห็น prompt ของ psql
+```text
+psql (17.x)
+Type "help" for help.
+
+postgres=#
+```
 (คำสั่ง psql: `\dt` ดูตาราง · `\d ชื่อตาราง` ดูโครงสร้าง · `\q` ออก)
-> 💡 ไม่ถนัด Terminal? ใช้ Adminer จาก [บทที่ 2](./02-docker.md) หรือโปรแกรม **DBeaver** ได้
+> 💡 ไม่ถนัด Terminal? ใช้ Adminer จาก [บทที่ 2](./02-docker.md) หรือโปรแกรม **DBeaver** ได้ (เรื่องต่อ DB ด้วย GUI ดู [บทที่ 7](./07-mysql-postgres.md))
+> ⚠️ ถ้า `docker run` แล้วขึ้น `port is already allocated` แปลว่ามีโปรแกรมใช้ port 5432 อยู่แล้ว ดูวิธีแก้ในบทที่ 7
 
 ### CREATE: สร้างตาราง
 ```sql
@@ -101,6 +157,25 @@ CREATE TABLE rentals (
   price_per_month INT NOT NULL CHECK (price_per_month > 0) -- กฎเพิ่มเติม
 );
 ```
+ควรเห็น
+```text
+CREATE TABLE
+CREATE TABLE
+```
+ตรวจโครงสร้างด้วย `\d rentals` จะเห็น FK ที่เราตั้งไว้ในหัวข้อ `Foreign-key constraints`
+
+ชนิดข้อมูลที่เจอบ่อย:
+
+| ชนิด | เก็บอะไร | ตัวอย่าง |
+|---|---|---|
+| `INT` / `SERIAL` | จำนวนเต็ม / จำนวนเต็มรันเลขเอง | `1500` |
+| `NUMERIC(10,2)` | ทศนิยมที่ต้องแม่น (เงิน) | `99.50` |
+| `TEXT` | ข้อความยาวเท่าไรก็ได้ | `'สมชาย'` |
+| `BOOLEAN` | จริง/เท็จ | `true` |
+| `TIMESTAMPTZ` | วันเวลา (มี time zone) | `'2026-10-20 09:00+07'` |
+| `DATE` | วันที่ | `'2026-10-20'` |
+
+> ⚠️ **ห้ามเก็บเงินเป็น `FLOAT`** ทศนิยมแบบ float คลาดเคลื่อนได้ (0.1 + 0.2 ≠ 0.3) ใช้ `INT` (เก็บเป็นสตางค์) หรือ `NUMERIC`
 
 ### INSERT: เพิ่มข้อมูล
 ```sql
@@ -110,15 +185,27 @@ INSERT INTO customers (name, phone) VALUES
 INSERT INTO rentals (customer_id, laptop, price_per_month) VALUES
   (1, 'Lenovo T14', 1500), (1, 'Dell 5420', 1200), (2, 'HP 840', 1300);
 ```
+ควรเห็น (เลข = จำนวนแถวที่เพิ่ม)
+```text
+INSERT 0 3
+INSERT 0 3
+```
 
-**ลองทำผิดกฎ** 💥
+💥 **ลองพังมันดู: ทำผิดกฎ**
 ```sql
 INSERT INTO rentals (customer_id, laptop, price_per_month) VALUES (99, 'Mac', 2000);
--- ERROR: ... violates foreign key constraint
 INSERT INTO rentals (customer_id, laptop, price_per_month) VALUES (1, 'Mac', -5);
--- ERROR: ... violates check constraint
+```
+ควรเห็น
+```text
+ERROR:  insert or update on table "rentals" violates foreign key constraint "rentals_customer_id_fkey"
+DETAIL:  Key (customer_id)=(99) is not present in table "customers".
+
+ERROR:  new row for relation "rentals" violates check constraint "rentals_price_per_month_check"
+DETAIL:  Failing row contains (5, 1, Mac, -5).
 ```
 ฐานข้อมูล **ปฏิเสธข้อมูลผิดให้เอง** 🛡️ นี่คือจุดแข็งใหญ่ของ SQL
+(สังเกต: `Failing row contains (5, ...)` แปลว่า id ถูกจองไปแล้ว 4 ตัว ทั้งที่แถวนั้นไม่ถูกบันทึก เลข `SERIAL` จึงอาจ "ข้าม" ได้ ไม่ใช่บั๊ก)
 
 ### SELECT: ดึงข้อมูล
 ```sql
@@ -127,29 +214,124 @@ SELECT name, phone FROM customers WHERE id = 1;
 SELECT * FROM rentals WHERE price_per_month >= 1300 ORDER BY price_per_month DESC;
 SELECT * FROM customers WHERE name LIKE 'สม%';      -- ขึ้นต้นด้วย "สม"
 ```
+ควรเห็น (คำสั่งแรกกับคำสั่งที่ 3)
+```text
+ id |  name  |    phone
+----+--------+--------------
+  1 | สมชาย  | 081-111-1111
+  2 | สมหญิง | 082-222-2222
+  3 | มานี   | 083-333-3333
+(3 rows)
+
+ id | customer_id |   laptop   | price_per_month
+----+-------------+------------+-----------------
+  1 |           1 | Lenovo T14 |            1500
+  3 |           2 | HP 840     |            1300
+(2 rows)
+```
+
+**ตัวกรองและการเรียงที่ใช้บ่อย**
+
+| คำสั่ง | ทำอะไร | ตัวอย่าง |
+|---|---|---|
+| `WHERE` | กรองแถว | `WHERE price_per_month >= 1300` |
+| `AND` / `OR` | รวมเงื่อนไข | `WHERE price_per_month > 1000 AND customer_id = 1` |
+| `IN (...)` | ตรงกับค่าใดค่าหนึ่ง | `WHERE customer_id IN (1, 2)` |
+| `BETWEEN a AND b` | อยู่ในช่วง (รวมปลายทั้งสอง) | `WHERE price_per_month BETWEEN 1200 AND 1400` |
+| `LIKE` | ค้นด้วยแพตเทิร์น `%` = กี่ตัวอักษรก็ได้ | `WHERE name LIKE 'สม%'` |
+| `ORDER BY ... ASC/DESC` | เรียง น้อย→มาก / มาก→น้อย | `ORDER BY price_per_month DESC` |
+| `LIMIT n` | เอาแค่ n แถวแรก | `LIMIT 2` |
+| `OFFSET n` | ข้าม n แถวแรก (ใช้ทำแบ่งหน้า) | `LIMIT 10 OFFSET 20` |
+
+```sql
+-- 2 เครื่องที่ค่าเช่าแพงสุด
+SELECT * FROM rentals ORDER BY price_per_month DESC LIMIT 2;
+```
+```text
+ id | customer_id |   laptop   | price_per_month
+----+-------------+------------+-----------------
+  1 |           1 | Lenovo T14 |            1500
+  3 |           2 | HP 840     |            1300
+(2 rows)
+```
+> 💡 `LIMIT` ที่ไม่มี `ORDER BY` ลำดับไม่รับประกัน ถ้าจะ "เอา 3 อันดับแรก" ต้องมี `ORDER BY` เสมอ
 
 ### UPDATE / DELETE
 ```sql
 UPDATE customers SET phone = '089-999-9999' WHERE id = 1;
-DELETE FROM rentals WHERE id = 2;
+
+-- ลองลบ: เพิ่มแถวทดลองก่อน แล้วลบเฉพาะแถวนั้น (ข้อมูลหลักของเราจะได้ไม่หาย)
+INSERT INTO rentals (customer_id, laptop, price_per_month) VALUES (3, 'Temp', 999);
+DELETE FROM rentals WHERE laptop = 'Temp';
 ```
+ควรเห็น
+```text
+UPDATE 1
+INSERT 0 1
+DELETE 1
+```
+ตัวเลขหลัง `UPDATE`/`DELETE` คือ **จำนวนแถวที่โดนแก้/ลบ** ถ้าคาดว่า 1 แต่ได้ 500 แปลว่า WHERE กว้างเกินไป (ถ้ายังอยู่ใน transaction สั่ง `ROLLBACK` ทัน)
+
 > ⚠️ **ห้ามลืม `WHERE`!** ไม่มี WHERE = **แก้/ลบทุกแถว** มีคนทำ production พังด้วยเรื่องนี้มานับไม่ถ้วน 💀
 > 💡 ทริค: เขียน `SELECT * FROM ... WHERE ...` ดูก่อนว่าได้แถวที่ต้องการ แล้วค่อยเปลี่ยนเป็น UPDATE/DELETE
 
+💥 **ลองพังมันดู: ลบลูกค้าที่ยังมี rental อยู่**
+```sql
+DELETE FROM customers WHERE id = 1;
+```
+```text
+ERROR:  update or delete on table "customers" violates foreign key constraint "rentals_customer_id_fkey" on table "rentals"
+DETAIL:  Key (id)=(1) is still referenced from table "rentals".
+```
+FK กันไม่ให้ลบลูกค้าที่ยังมีรายการเช่าค้างอยู่ (ไม่งั้นจะเหลือ rental ที่ชี้ไปหาคนที่ไม่มีแล้ว)
+
 ### JOIN: รวมหลายตาราง
+
+ข้อมูลที่แยกตารางไว้ (normalize) ต้องเอามา "ต่อกัน" ตอนดึง นั่นคือ `JOIN` โดยบอกว่าจับคู่ด้วยคอลัมน์ไหน (`ON`)
 ```sql
 SELECT c.name, r.laptop, r.price_per_month
 FROM rentals r
 JOIN customers c ON c.id = r.customer_id;
 ```
-| name | laptop | price_per_month |
-|---|---|---|
-| สมชาย | Lenovo T14 | 1500 |
-| สมหญิง | HP 840 | 1300 |
+(`r` และ `c` คือ **นามแฝง (alias)** ของตาราง พิมพ์สั้นลง)
 
-- `JOIN` = เอาเฉพาะแถวที่จับคู่ได้
-- `LEFT JOIN` = เอาทุกแถวจากตารางซ้าย แม้ไม่มีคู่
+ควรเห็น (มานีไม่โผล่ เพราะยังไม่มี rental ให้จับคู่)
+```text
+  name  |   laptop   | price_per_month
+--------+------------+-----------------
+ สมชาย  | Lenovo T14 |            1500
+ สมชาย  | Dell 5420  |            1200
+ สมหญิง | HP 840     |            1300
+(3 rows)
+```
 
+![แผนภาพวงกลม Venn ของ INNER, LEFT, RIGHT และ FULL JOIN](/img/06-join-types.svg)
+*JOIN 4 แบบ: ส่วนสีเขียวคือแถวที่ได้ในผลลัพธ์ · ที่ใช้บ่อยสุดคือ INNER (พิมพ์แค่ `JOIN`) และ LEFT*
+
+- `JOIN` (= `INNER JOIN`) = เอาเฉพาะแถวที่จับคู่ได้
+- `LEFT JOIN` = เอาทุกแถวจากตารางซ้าย แม้ไม่มีคู่ (ฝั่งขวาเป็น `NULL`)
+- `RIGHT JOIN` = กลับด้านกับ LEFT (เอาทุกแถวจากตารางขวา) ในทางปฏิบัติสลับตำแหน่งตารางแล้วใช้ LEFT แทนได้ จึงเจอน้อย
+- `FULL JOIN` = เอาทุกแถวทั้งสองฝั่ง
+
+![การจับคู่แถวระหว่างตาราง a (id 1,2,3) กับตาราง b (id 2,3,4) และผลของ INNER, LEFT, FULL JOIN](/img/06-join-rows.svg)
+*ลองมองเป็นการลากเส้นจับคู่แถวที่ `id` เท่ากัน: แถวที่ไม่มีเส้นโยงคือแถวที่ INNER ตัดทิ้ง แต่ LEFT/FULL เก็บไว้และเติม NULL*
+
+```sql
+SELECT c.name, r.laptop
+FROM customers c
+LEFT JOIN rentals r ON r.customer_id = c.id
+ORDER BY c.id, r.id;
+```
+```text
+  name  |   laptop
+--------+------------
+ สมชาย  | Lenovo T14
+ สมชาย  | Dell 5420
+ สมหญิง | HP 840
+ มานี   |
+(4 rows)
+```
+สังเกต: "มานี" ยังอยู่ แต่ `laptop` ว่าง (เป็น NULL) นี่คือต่างจาก INNER JOIN ที่มานีหายไป เราใช้ความต่างนี้หาคนที่ "ยังไม่เคย..." ได้
 ```sql
 -- ลูกค้าที่ยังไม่เคยเช่า
 SELECT c.name
@@ -157,14 +339,190 @@ FROM customers c
 LEFT JOIN rentals r ON r.customer_id = c.id
 WHERE r.id IS NULL;                -- ได้ "มานี"
 ```
+```text
+ name
+------
+ มานี
+(1 row)
+```
 
 ### GROUP BY: สรุปผล
+
+**Aggregate function** = ฟังก์ชันที่ยุบหลายแถวเหลือค่าเดียว: `COUNT` (นับ) `SUM` (รวม) `AVG` (เฉลี่ย) `MIN` `MAX`
+`GROUP BY` = จัดแถวเป็นกลุ่มก่อน แล้วคำนวณทีละกลุ่ม
 ```sql
 SELECT c.name, COUNT(r.id) AS total_rentals, SUM(r.price_per_month) AS total_price
 FROM customers c
 LEFT JOIN rentals r ON r.customer_id = c.id
 GROUP BY c.id, c.name;     -- ใส่ id ด้วย เพราะลูกค้าชื่อซ้ำกันได้ (สมชาย 2 คน ต้องไม่ถูกรวมเป็นคนเดียว)
 ```
+```text
+  name  | total_rentals | total_price
+--------+---------------+-------------
+ สมชาย  |             2 |        2700
+ สมหญิง |             1 |        1300
+ มานี   |             0 |
+(3 rows)
+```
+(ลำดับแถวอาจต่างจากนี้ ถ้าอยากให้เรียงแน่นอนให้ใส่ `ORDER BY`)
+
+สังเกต: มานี `COUNT` ได้ 0 แต่ `SUM` ได้ว่าง (NULL) ไม่ใช่ 0 (ดูเรื่อง NULL ด้านล่าง)
+
+**`WHERE` กรองก่อนจัดกลุ่ม, `HAVING` กรองหลังจัดกลุ่ม**
+```sql
+-- ลูกค้าที่ค่าเช่ารวมเกิน 1300
+SELECT c.name, SUM(r.price_per_month) AS total
+FROM customers c
+JOIN rentals r ON r.customer_id = c.id
+GROUP BY c.id, c.name
+HAVING SUM(r.price_per_month) > 1300;
+```
+```text
+  name  | total
+--------+-------
+ สมชาย  |  2700
+(1 row)
+```
+> 💡 จำง่ายๆ: เงื่อนไขของ "แถว" ใช้ `WHERE` · เงื่อนไขของ "ผลสรุป (SUM/COUNT)" ใช้ `HAVING`
+
+### 🔧 Index: ทำให้ค้นเร็ว
+
+ฐานข้อมูลที่ไม่มี index เวลา `WHERE email = '...'` ต้อง **ไล่อ่านทุกแถว** (เรียก *sequential scan*) เหมือนหาชื่อในสมุดที่ไม่เรียงตัวอักษร
+**Index** คือ **สารบัญ** ที่ฐานข้อมูลเรียงไว้ให้ (โครงสร้างหลักเรียกว่า **B-tree**) ทำให้กระโดดไปถึงแถวที่ต้องการได้ในไม่กี่ก้าว
+
+![เปรียบเทียบการไล่อ่านทุกแถว (seq scan) กับการค้นผ่าน index แบบ B-tree พร้อมเวลาที่วัดได้จริง](/img/06-index-lookup.svg)
+*ซ้าย: ไม่มี index ต้องอ่านครบทุกแถว · ขวา: มี index ตัดตัวเลือกทิ้งทีละครึ่ง · ตัวเลขเวลาวัดจากเครื่องผู้เขียน ของเราอาจต่างกันแต่ "ลำดับความเร็ว" จะคล้ายกัน*
+
+ลองวัดเองด้วยตาราง 200,000 แถว (ใช้ `generate_series` สร้างข้อมูลปลอมให้)
+```sql
+CREATE TABLE big (id SERIAL PRIMARY KEY, email TEXT NOT NULL);
+INSERT INTO big (email) SELECT 'user' || g || '@mail.com' FROM generate_series(1, 200000) g;
+ANALYZE big;
+
+EXPLAIN ANALYZE SELECT * FROM big WHERE email = 'user150000@mail.com';
+```
+ควรเห็น (สังเกต `Seq Scan` และ `Rows Removed by Filter`)
+```text
+ Seq Scan on big  (cost=0.00..3774.00 rows=1 width=23) (actual time=6.865..9.526 rows=1 loops=1)
+   Filter: (email = 'user150000@mail.com'::text)
+   Rows Removed by Filter: 199999
+ Planning Time: 0.084 ms
+ Execution Time: 9.539 ms
+```
+ทีนี้สร้าง index แล้วลองใหม่
+```sql
+CREATE INDEX idx_big_email ON big (email);
+ANALYZE big;
+EXPLAIN ANALYZE SELECT * FROM big WHERE email = 'user150000@mail.com';
+```
+ควรเห็น
+```text
+ Index Scan using idx_big_email on big  (cost=0.42..8.44 rows=1 width=23) (actual time=0.025..0.026 rows=1 loops=1)
+   Index Cond: (email = 'user150000@mail.com'::text)
+ Planning Time: 0.091 ms
+ Execution Time: 0.035 ms
+```
+เร็วขึ้นราว 270 เท่า (ตารางยิ่งใหญ่ ยิ่งต่างมาก) เก็บกวาดด้วย `DROP TABLE big;`
+
+**กฎการใช้ index**
+
+| | |
+|---|---|
+| ✅ ควรสร้าง | คอลัมน์ที่ใช้ใน `WHERE`, `JOIN ... ON`, `ORDER BY` บ่อยๆ เช่น `customer_id` (FK) หรือ `email` |
+| ✅ ได้มาให้แล้ว | `PRIMARY KEY` และ `UNIQUE` สร้าง index ให้อัตโนมัติ |
+| ❌ ไม่ใช่ยาวิเศษ | index **ทำให้ INSERT/UPDATE ช้าลงนิดหน่อย** และกินพื้นที่ จึงไม่ควรสร้างทุกคอลัมน์ |
+| ⚠️ PostgreSQL ไม่สร้าง index ให้ FK | ต้องสร้างเองถ้าจะ `JOIN`/ค้นด้วยคอลัมน์ FK บ่อย (MySQL InnoDB สร้างให้) |
+
+> 💡 ไม่แน่ใจว่า query ช้าเพราะอะไร ให้ใส่ `EXPLAIN ANALYZE` นำหน้า query แล้วดูว่าเป็น `Seq Scan` (ไล่ทั้งตาราง) หรือ `Index Scan`
+
+### NULL: "ไม่มีค่า" ไม่เท่ากับ 0 หรือข้อความว่าง
+
+`NULL` = **ไม่ทราบ / ไม่มีค่า** (เหมือนช่องที่ยังไม่ได้กรอกในฟอร์ม) ไม่ใช่ 0 และไม่ใช่ `''` เพราะ "ไม่ทราบ" เทียบกับอะไรก็ได้ผล "ไม่ทราบ" ตามไปด้วย จึงมีกับดัก:
+
+```sql
+SELECT NULL = NULL AS eq, NULL IS NULL AS isnull, 1 + NULL AS plus;
+```
+```text
+ eq | isnull | plus
+----+--------+------
+    | t      |
+```
+- `NULL = NULL` ไม่ใช่ true (ได้ NULL) → ต้องใช้ **`IS NULL`** / **`IS NOT NULL`**
+- เอา NULL ไปบวกลบ ได้ NULL
+
+```sql
+CREATE TABLE n (id INT, note TEXT);
+INSERT INTO n VALUES (1, 'x'), (2, NULL), (3, 'y');
+
+SELECT * FROM n WHERE note <> 'x';        -- กับดัก! แถวที่ note เป็น NULL หายไปด้วย
+SELECT * FROM n WHERE note IS NULL;
+SELECT COUNT(*) AS rows_, COUNT(note) AS notes FROM n;   -- COUNT(คอลัมน์) ไม่นับ NULL
+SELECT COALESCE(note, '-') FROM n ORDER BY id;           -- COALESCE = ถ้า NULL ให้ใช้ค่าสำรอง
+```
+```text
+ id | note
+----+------
+  3 | y
+(1 row)
+
+ id | note
+----+------
+  2 |
+(1 row)
+
+ rows_ | notes
+-------+-------
+     3 |     2
+(1 row)
+
+ coalesce
+----------
+ x
+ -
+ y
+(3 rows)
+```
+**สรุปกับดัก NULL:** `= NULL` ใช้ไม่ได้ · `<> 'x'` ไม่รวมแถว NULL · `COUNT(*)` นับทุกแถว แต่ `COUNT(คอลัมน์)` ข้าม NULL · `SUM` ของแถวที่ว่างทั้งหมดได้ NULL ไม่ใช่ 0 (ใช้ `COALESCE(SUM(x), 0)`)
+เก็บกวาด: `DROP TABLE n;`
+
+### 🔧 ตารางกลางสำหรับ N : M
+
+```sql
+CREATE TABLE products (id SERIAL PRIMARY KEY, name TEXT NOT NULL);
+CREATE TABLE orders   (id SERIAL PRIMARY KEY, customer TEXT NOT NULL);
+CREATE TABLE order_items (
+  order_id   INT NOT NULL REFERENCES orders(id),
+  product_id INT NOT NULL REFERENCES products(id),
+  qty        INT NOT NULL CHECK (qty > 0),
+  PRIMARY KEY (order_id, product_id)          -- PK คู่: สินค้าเดิมในออเดอร์เดิมซ้ำไม่ได้
+);
+INSERT INTO products (name) VALUES ('กาแฟ'), ('ขนมปัง'), ('นม');
+INSERT INTO orders (customer) VALUES ('บิต'), ('พี่ไบต์');
+INSERT INTO order_items VALUES (1, 1, 2), (1, 2, 1), (2, 1, 1);
+
+SELECT o.customer, p.name AS product, i.qty
+FROM order_items i
+JOIN orders   o ON o.id = i.order_id
+JOIN products p ON p.id = i.product_id
+ORDER BY o.id, p.id;
+```
+ควรเห็น
+```text
+ customer | product | qty
+----------+---------+-----
+ บิต      | กาแฟ    |   2
+ บิต      | ขนมปัง  |   1
+ พี่ไบต์   | กาแฟ    |   1
+(3 rows)
+```
+JOIN ต่อกันได้หลายตาราง (3 ตารางข้างบน) 💥 ลองใส่ `INSERT INTO order_items VALUES (1, 1, 5);` จะได้ `duplicate key value violates unique constraint "order_items_pkey"` เพราะ PK คู่กันซ้ำ
+เก็บกวาด: `DROP TABLE order_items, orders, products;`
+
+### ⚠️ ทีเซอร์: SQL Injection
+
+พอเราเริ่มเขียน SQL ในโค้ด จะมีโอกาส **เอาข้อความที่ผู้ใช้พิมพ์มาต่อเป็นคำสั่ง** เช่น `"SELECT * FROM customers WHERE name = '" + input + "'"`
+ถ้าผู้ใช้พิมพ์ `' OR '1'='1` เงื่อนไขจะเป็นจริงเสมอ ได้ข้อมูลทุกแถว นี่คือ **SQL Injection** ช่องโหว่ที่เจอบ่อยที่สุดตัวหนึ่ง
+วิธีกัน: **ห้ามต่อข้อความ ให้ส่งค่าเป็น parameter แยกจากคำสั่งเสมอ** (ORM ในบทที่ 8 ทำให้อัตโนมัติ) รายละเอียดอยู่ใน [บทที่ 10 ข้อ 4](./10-security.md)
 
 > 🎮 อยากฝึกเพิ่มแบบเกม? ลอง **[SQLBolt](https://sqlbolt.com)** (ฝึกในเว็บทีละด่าน) หรือ **[SQL Murder Mystery](https://mystery.knightlab.com)** (ใช้ SQL สืบหาฆาตกร 🕵️)
 
@@ -196,6 +554,9 @@ BEGIN;
 COMMIT;       -- ยืนยัน (มีอะไรผิดพลาด → ROLLBACK ยกเลิกทั้งหมด)
 ```
 
+![ผังการทำงานของ transaction: BEGIN, INSERT, UPDATE แล้ว COMMIT หรือ ROLLBACK เมื่อเกิด error](/img/06-transaction-flow.svg)
+*ทุกคำสั่งระหว่าง BEGIN ถึง COMMIT เป็นก้อนเดียวกัน พังที่ขั้นไหนก็ย้อนกลับทั้งก้อน*
+
 💥 **ลองพังมันดู:** ให้ขั้นที่ 2 ผิดกฎ แล้วดูว่าขั้นที่ 1 หายไปด้วยไหม
 ```sql
 BEGIN;
@@ -203,6 +564,17 @@ BEGIN;
   UPDATE laptops SET status = 'broken' WHERE serial = 'LN-01';   -- ERROR: violates check constraint
 COMMIT;                                                          -- ได้ ROLLBACK แทน
 SELECT count(*) FROM rentals WHERE laptop = 'LN-01';             -- 0: รายการเช่าก็ไม่ถูกบันทึก ✅
+```
+ควรเห็น
+```text
+BEGIN
+INSERT 0 1
+ERROR:  new row for relation "laptops" violates check constraint "laptops_status_check"
+DETAIL:  Failing row contains (LN-01, Lenovo T14, broken).
+ROLLBACK
+ count
+-------
+     0
 ```
 
 | | ชื่อ | ความหมาย | 💸 ตัวอย่างโอนเงิน A → B 500 บาท |
@@ -221,6 +593,9 @@ SELECT count(*) FROM rentals WHERE laptop = 'LN-01';             -- 0: ราย
  10:01  เช่าให้ลูกค้า 1 (transaction ผ่าน)    เช่าให้ลูกค้า 2 (transaction ผ่าน)  😱
 ```
 ทั้งสองคน "ดูแล้วว่าง" ก่อนอีกคนจะเปลี่ยนสถานะ แต่ละ transaction ถูกต้องในตัวเอง แต่ผลรวมผิด ต้องเพิ่มอย่างใดอย่างหนึ่ง:
+
+![เส้นเวลาเปรียบเทียบพนักงาน A และ B เช่าเครื่องเดียวกันพร้อมกัน ก่อนและหลังแก้ด้วยเงื่อนไข status = available](/img/06-race-condition.svg)
+*ครึ่งบน: ไม่ป้องกัน ได้ผลผิด · ครึ่งล่าง: ใส่เงื่อนไขในคำสั่ง UPDATE คนที่สองจะได้ 0 แถว*
 
 **วิธีที่ 1: เปลี่ยนสถานะแบบมีเงื่อนไข** (ง่ายที่สุด แนะนำ)
 ```sql
@@ -245,6 +620,9 @@ COMMIT;
 ## 5. NoSQL
 
 **NoSQL** ("Not only SQL") = ฐานข้อมูลที่ **ไม่ได้เก็บเป็นตาราง** เกิดมาเพื่องานที่ตารางไม่ถนัด
+
+![NoSQL 4 ประเภท ได้แก่ Document, Key-Value, Wide-Column และ Graph พร้อมตัวอย่างและงานที่เหมาะ](/img/06-nosql-types.svg)
+*NoSQL เป็นชื่อเรียกรวม ไม่ใช่ผลิตภัณฑ์เดียว แต่ละประเภทแก้โจทย์คนละแบบ*
 
 | ประเภท | เก็บแบบไหน | 💡 เปรียบเทียบ | ตัวอย่าง | ใช้กับ |
 |---|---|---|---|---|
@@ -271,6 +649,12 @@ rental **ฝังอยู่ในเอกสารลูกค้าเล�
 > - **Embed:** ข้อมูลที่อ่านพร้อมกันเสมอและไม่โตไม่จำกัด เช่น ที่อยู่ลูกค้า
 > - **Reference (เก็บแค่ id):** ข้อมูลที่ใช้หลายที่ หรือโตเรื่อยๆ เช่น ประวัติสั่งซื้อหลายพันรายการ
 
+**ตัวอย่าง Key-Value (Redis)** คือ "ตั้งค่า / อ่านค่า" ตามชื่อกุญแจ ไม่มีตาราง ไม่มี JOIN
+```text
+SET session:abc123 "user-1" EX 3600     # เก็บ session 1 ชั่วโมงแล้วหายเอง
+GET session:abc123                       # ได้ "user-1" ทันที (เร็วมาก เพราะอยู่ใน RAM)
+```
+
 ### 🔧 ลองเล่น MongoDB
 ```bash
 docker run -d --name mongo -p 27017:27017 mongo:8
@@ -287,6 +671,15 @@ db.customers.find({ "rentals.laptop": "Lenovo T14" })
 
 สังเกต: "มานี" มี `vip` แต่ไม่มี `rentals` MongoDB ก็ยอม = **ยืดหยุ่น** 🤸
 แต่ก็แปลว่า **พิมพ์ชื่อ field ผิดก็ยอมเหมือนกัน** 😬 ต้องตรวจข้อมูลเองในโค้ด (Zod!)
+
+### เลือกอะไรดี: คำถาม 4 ข้อ
+
+1. ข้อมูลเกี่ยวกับ **เงิน / สต็อก / การจอง** ที่ผิดไม่ได้ไหม? → **SQL**
+2. ข้อมูลมี **ความสัมพันธ์ซับซ้อน** (ลูกค้า-ออเดอร์-สินค้า-ใบแจ้งหนี้) และต้อง JOIN/สรุปผลบ่อยไหม? → **SQL**
+3. ต้องการแค่ **เก็บ-อ่านตามกุญแจเร็วๆ** และข้อมูลหายก็ไม่ร้ายแรง (cache, session, rate limit)? → **Key-Value (Redis)**
+4. ข้อมูลรูปร่างต่างกันมาก เปลี่ยนบ่อย และอ่านเป็นก้อนเดียว (เช่น เนื้อหา CMS, log เหตุการณ์)? → **Document** ก็เหมาะ
+
+ถ้าข้อ 1 หรือ 2 ใช่ ไม่ต้องคิดมาก ใช้ SQL
 
 ---
 
@@ -324,6 +717,26 @@ Key-Value อย่าง Redis ต้องการความเร็ว �
 ลบทั้งตาราง 💀
 </details>
 
+<details><summary>4. ทำไม <code>WHERE note = NULL</code> ไม่เจอแถวที่ note ว่าง? ต้องเขียนยังไง?</summary>
+
+เพราะ `NULL` แปลว่า "ไม่ทราบ" การเทียบ `= NULL` ได้ผลเป็น "ไม่ทราบ" ไม่ใช่ true ต้องเขียน `WHERE note IS NULL`
+</details>
+
+<details><summary>5. อยากได้รายชื่อลูกค้า "ทุกคน" พร้อมจำนวน rental (คนที่ไม่เคยเช่าก็ต้องโชว์ว่า 0) ควรใช้ JOIN แบบไหน?</summary>
+
+`LEFT JOIN` จาก customers ไป rentals แล้ว `COUNT(r.id)` (ไม่ใช่ `COUNT(*)` เพราะจะนับแถว NULL เป็น 1) ถ้าใช้ INNER JOIN คนที่ไม่เคยเช่าจะหายไป
+</details>
+
+<details><summary>6. ตารางมี 5 ล้านแถว <code>WHERE email = ...</code> ช้า ควรทำอะไรก่อน?</summary>
+
+ใส่ `EXPLAIN ANALYZE` ดูว่าเป็น Seq Scan ไหม ถ้าใช่ สร้าง index ที่คอลัมน์ `email` (`CREATE INDEX ... ON users (email)`) แล้ววัดใหม่
+</details>
+
+<details><summary>7. สินค้ากับออเดอร์ความสัมพันธ์แบบ N:M ต้องออกแบบตารางยังไง?</summary>
+
+ต้องมีตารางกลาง (เช่น `order_items`) ที่มี FK ชี้ไป orders และ products อย่างละตัว (และเก็บ `qty` ได้) ไม่สามารถใส่ FK ตัวเดียวในตารางใดตารางหนึ่งได้
+</details>
+
 ---
 
 ## ✏️ แบบฝึกหัด
@@ -333,10 +746,16 @@ Key-Value อย่าง Redis ต้องการความเร็ว �
 2. ลูกค้าที่ยังไม่เคยเช่า
 3. เครื่องที่ค่าเช่าแพงที่สุด 3 อันดับ
 
+โจทย์เสริม (ถ้ามีเวลา):
+4. สร้าง index ที่ `rentals(customer_id)` แล้วอธิบายว่าทำไม JOIN ถึงได้ประโยชน์
+5. หาลูกค้าที่ค่าเช่ารวมเกิน 2000 (ใช้ `HAVING`)
+
 ## ✅ ผ่านด่าน
 
-- [ ] อธิบาย PK / FK และความสัมพันธ์ 1:N ได้
+- [ ] อธิบาย PK / FK และความสัมพันธ์ 1:1, 1:N, N:M ได้
 - [ ] เขียน SELECT, INSERT, UPDATE, DELETE, JOIN, GROUP BY ได้
+- [ ] อธิบายว่า index คืออะไร และใช้ `EXPLAIN ANALYZE` ดูได้
+- [ ] รู้กับดักของ NULL (`IS NULL`, `COUNT`)
 - [ ] อธิบาย transaction และ ACID ด้วยตัวอย่างได้
 - [ ] เลือก SQL หรือ NoSQL ให้เหมาะกับงานได้
 

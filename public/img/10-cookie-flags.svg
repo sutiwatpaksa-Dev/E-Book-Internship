@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" role="img" aria-label="แฟลกของ cookie" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="16">
+<title>แฟลกของ cookie</title>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#0b3c91"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#dc2626"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f59e0b"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="398" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="20" text-anchor="middle" fill="#0b3c91" font-weight="bold">Cookie เซสชันที่ปลอดภัย: 4 แฟลกสำคัญ</text>
+<rect x="24" y="48" width="752" height="76" rx="10" fill="#0f172a" stroke="#0f172a" stroke-width="2"/>
+<text x="40" y="80" font-size="16" text-anchor="start" fill="#e2e8f0" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">Set-Cookie: session=abc123;</text>
+<text x="40" y="108" font-size="16" text-anchor="start" fill="#fde68a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">HttpOnly;  Secure;  SameSite=Lax;  Max-Age=3600</text>
+<rect x="16" y="148" width="184" height="150" rx="10" fill="#fff" stroke="#dc2626" stroke-width="3"/>
+<text x="108" y="180" font-size="18" text-anchor="middle" fill="#dc2626" font-weight="bold">HttpOnly</text>
+<text x="108" y="214" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">JavaScript อ่านไม่ได้</text>
+<text x="108" y="238" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">กัน XSS ขโมย cookie</text>
+<rect x="210" y="148" width="184" height="150" rx="10" fill="#fff" stroke="#1a4fb0" stroke-width="3"/>
+<text x="302" y="180" font-size="18" text-anchor="middle" fill="#1a4fb0" font-weight="bold">Secure</text>
+<text x="302" y="214" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ส่งเฉพาะบน HTTPS</text>
+<text x="302" y="238" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">กันดักอ่านระหว่างทาง</text>
+<rect x="404" y="148" width="184" height="150" rx="10" fill="#fff" stroke="#16a34a" stroke-width="3"/>
+<text x="496" y="180" font-size="18" text-anchor="middle" fill="#16a34a" font-weight="bold">SameSite</text>
+<text x="496" y="214" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">กัน CSRF: ไม่แนบ cookie</text>
+<text x="496" y="238" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">คำสั่งมาจากเว็บอื่น</text>
+<rect x="598" y="148" width="184" height="150" rx="10" fill="#fff" stroke="#f59e0b" stroke-width="3"/>
+<text x="690" y="180" font-size="18" text-anchor="middle" fill="#b45309" font-weight="bold">Max-Age</text>
+<text x="690" y="214" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">หมดอายุเอง</text>
+<text x="690" y="238" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ถูกขโมยก็ใช้ได้ไม่นาน</text>
+<text x="400" y="332" font-size="15" text-anchor="middle" fill="#64748b" font-weight="normal">server ตั้ง cookie แบบนี้ให้ตอน login สำเร็จ</text>
+<text x="400" y="362" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">ทดสอบเอง: curl -i ที่ /login แล้วดูบรรทัด set-cookie</text>
+<text x="400" y="386" font-size="15" text-anchor="middle" fill="#dc2626" font-weight="normal">ถ้าไม่มี HttpOnly หรือ Secure ถือว่ายังไม่พร้อมขึ้นระบบจริง</text>
+</svg>

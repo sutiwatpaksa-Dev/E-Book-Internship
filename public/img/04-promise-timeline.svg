@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" role="img" aria-label="Promise และ async/await" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
+<title>Promise และ async/await</title><desc>สถานะของ Promise และเส้นเวลาของฟังก์ชันที่ใช้ await</desc>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="398" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="32" font-size="17" text-anchor="middle" fill="#0b3c91" font-weight="bold">Promise = ใบรับของ: ตอนนี้ยังไม่ได้ของ แต่สัญญาว่าจะได้ (หรือแจ้งว่าพัง)</text>
+<rect x="30" y="60" width="190" height="70" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="125.0" y="88.3" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">pending</text>
+<text x="125.0" y="112.3" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="normal">กำลังรอ</text>
+<rect x="330" y="60" width="200" height="56" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="430.0" y="81.3" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">fulfilled</text>
+<text x="430.0" y="105.3" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="normal">สำเร็จ ได้ค่า</text>
+<rect x="330" y="134" width="200" height="56" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+<text x="430.0" y="155.3" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">rejected</text>
+<text x="430.0" y="179.3" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="normal">พัง ได้ error</text>
+<line x1="222" y1="88" x2="328" y2="88" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
+<line x1="222" y1="110" x2="328" y2="162" stroke="#dc2626" stroke-width="2.5" marker-end="url(#ar)"/>
+<text x="280" y="76" font-size="14" text-anchor="middle" fill="#16a34a" font-weight="normal">resolve</text>
+<text x="262" y="158" font-size="14" text-anchor="middle" fill="#dc2626" font-weight="normal">reject</text>
+<rect x="580" y="60" width="195" height="56" rx="10" fill="#ffffff" stroke="#16a34a" stroke-width="2"/>
+<text x="677.5" y="93.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">await → ได้ค่าไปใช้ต่อ</text>
+<rect x="580" y="134" width="195" height="56" rx="10" fill="#ffffff" stroke="#dc2626" stroke-width="2"/>
+<text x="677.5" y="166.9" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">catch → จัดการ error</text>
+<line x1="532" y1="88" x2="578" y2="88" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
+<line x1="532" y1="162" x2="578" y2="162" stroke="#dc2626" stroke-width="2.5" marker-end="url(#ar)"/>
+<text x="30" y="232" font-size="16" text-anchor="start" fill="#0b3c91" font-weight="bold">เส้นเวลาของ main() ที่มี await</text>
+<text x="30" y="272" font-size="15" text-anchor="start" fill="#0f172a" font-weight="bold">โค้ดเรา</text>
+<text x="30" y="322" font-size="15" text-anchor="start" fill="#0f172a" font-weight="bold">ระบบ (timer/เน็ต)</text>
+<rect x="190" y="252" width="110" height="30" rx="6" fill="#dbeafe" stroke="#1a4fb0"/>
+<text x="245" y="273" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">พิมพ์ "เริ่ม"</text>
+<rect x="300" y="252" width="300" height="30" rx="6" fill="#e2e8f0" stroke="#94a3b8" stroke-dasharray="5 4"/>
+<text x="450" y="273" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">หยุดรอตรงนี้ (โค้ดอื่นยังทำงานต่อได้)</text>
+<rect x="600" y="252" width="175" height="30" rx="6" fill="#dbeafe" stroke="#1a4fb0"/>
+<text x="687" y="273" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">พิมพ์ผลที่ได้</text>
+<rect x="300" y="302" width="300" height="30" rx="6" fill="#fef3c7" stroke="#d97706"/>
+<text x="450" y="323" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">wait(300) นับเวลา 300 ms</text>
+<line x1="300" y1="284" x2="300" y2="300" stroke="#d97706" stroke-width="2.5" marker-end="url(#ao)"/>
+<line x1="600" y1="300" x2="600" y2="284" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
+<text x="400" y="372" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">await = รอให้ Promise เสร็จก่อนไปบรรทัดถัดไป แต่ "ไม่ทำให้ทั้งโปรแกรมค้าง"</text>
+</svg>

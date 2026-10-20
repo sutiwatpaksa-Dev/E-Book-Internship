@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 405" role="img" aria-label="ส่วนประกอบของ URL" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
+<title>ส่วนประกอบของ URL</title><desc>URL ประกอบด้วย โปรโตคอล โดเมน port path และ query</desc>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="403" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="19" text-anchor="middle" fill="#0b3c91" font-weight="bold">URL แยกเป็นส่วนๆ</text>
+<rect x="80" y="70" width="66.5" height="38" rx="6" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+<text x="82" y="96" font-size="17" text-anchor="start" fill="#0f172a" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">https</text>
+<text x="144.5" y="96" font-size="17" text-anchor="start" fill="#0f172a" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">://</text>
+<rect x="180.0" y="70" width="116.5" height="38" rx="6" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
+<text x="182.0" y="96" font-size="17" text-anchor="start" fill="#0f172a" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">shop.test</text>
+<rect x="292.5" y="70" width="66.5" height="38" rx="6" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+<text x="294.5" y="96" font-size="17" text-anchor="start" fill="#0f172a" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">:3000</text>
+<rect x="355.0" y="70" width="129.0" height="38" rx="6" fill="#fce7f3" stroke="#be185d" stroke-width="1.5"/>
+<text x="357.0" y="96" font-size="17" text-anchor="start" fill="#0f172a" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">/laptops/5</text>
+<rect x="480.0" y="70" width="266.5" height="38" rx="6" fill="#ede9fe" stroke="#6d28d9" stroke-width="1.5"/>
+<text x="482.0" y="96" font-size="17" text-anchor="start" fill="#0f172a" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">?status=rented&amp;page=2</text>
+<line x1="113.25" y1="110" x2="113.25" y2="130" stroke="#16a34a" stroke-width="2"/>
+<text x="113.25" y="150" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">โปรโตคอล</text>
+<text x="113.25" y="172" font-size="14" text-anchor="middle" fill="#64748b" font-weight="normal">(https = เข้ารหัส)</text>
+<line x1="238.25" y1="110" x2="238.25" y2="185" stroke="#1a4fb0" stroke-width="2"/>
+<text x="238.25" y="205" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">โดเมน (ชื่อเครื่อง)</text>
+<line x1="325.75" y1="110" x2="325.75" y2="130" stroke="#d97706" stroke-width="2"/>
+<text x="325.75" y="150" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">port</text>
+<text x="325.75" y="172" font-size="14" text-anchor="middle" fill="#64748b" font-weight="normal">(ประตูของโปรแกรม)</text>
+<line x1="419.5" y1="110" x2="419.5" y2="185" stroke="#be185d" stroke-width="2"/>
+<text x="419.5" y="205" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">path</text>
+<text x="419.5" y="227" font-size="14" text-anchor="middle" fill="#64748b" font-weight="normal">(ของที่ขอ)</text>
+<line x1="613.25" y1="110" x2="613.25" y2="130" stroke="#6d28d9" stroke-width="2"/>
+<text x="613.25" y="150" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">query</text>
+<text x="613.25" y="172" font-size="14" text-anchor="middle" fill="#64748b" font-weight="normal">(ตัวเลือก หลัง ?)</text>
+<rect x="20" y="262" width="370" height="92" rx="8" fill="#fce7f3" stroke="#be185d" stroke-width="2"/>
+<text x="205.0" y="290.4" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">path param</text>
+<text x="205.0" y="312.9" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ค่าที่ฝังอยู่ในเส้นทาง</text>
+<text x="205.0" y="335.4" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">/laptops/5 → เครื่องหมายเลข 5</text>
+<rect x="410" y="262" width="370" height="92" rx="8" fill="#ede9fe" stroke="#6d28d9" stroke-width="2"/>
+<text x="595.0" y="290.4" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">query param</text>
+<text x="595.0" y="312.9" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ตัวกรอง/ตัวเลือก เป็นคู่ ชื่อ=ค่า</text>
+<text x="595.0" y="335.4" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">คั่นด้วย &amp; → status=rented และ page=2</text>
+<text x="400" y="382" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">จำง่ายๆ: path = "อะไร" (ตัวไหน) · query = "แบบไหน" (กรอง เรียง แบ่งหน้า)</text>
+</svg>

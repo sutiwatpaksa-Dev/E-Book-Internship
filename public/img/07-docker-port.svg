@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 368" role="img" aria-label="Docker port mapping: port ของเครื่องเรากับ port ในคอนเทนเนอร์">
+<title>Docker port mapping: port ของเครื่องเรากับ port ในคอนเทนเนอร์</title>
+<defs><marker id="arn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="aro" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="ars" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a4fb0"/></marker></defs>
+<rect x="1" y="1" width="798" height="366" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+<rect x="20" y="50" width="250" height="270" rx="12" fill="#f1f5f9" stroke="#0b3c91" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="145" y="40" font-size="17" fill="#0b3c91" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">เครื่องเรา (host)</text>
+<rect x="450" y="50" width="330" height="270" rx="12" fill="#f1f5f9" stroke="#0b3c91" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="615" y="40" font-size="17" fill="#0b3c91" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">Docker</text>
+<rect x="50" y="80" width="190" height="44" rx="8" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="145" y="108" font-size="16" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="ui-monospace, Menlo, Consolas, monospace">port 5432</text>
+<rect x="50" y="160" width="190" height="44" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+<text x="145" y="188" font-size="16" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="ui-monospace, Menlo, Consolas, monospace">port 5433</text>
+<rect x="50" y="250" width="190" height="44" rx="8" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="145" y="278" font-size="16" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="ui-monospace, Menlo, Consolas, monospace">port 3306</text>
+<rect x="480" y="80" width="270" height="84" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="615" y="108" font-size="16" fill="#0f172a" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">postgres (คอนเทนเนอร์)</text>
+<text x="615" y="140" font-size="16" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="ui-monospace, Menlo, Consolas, monospace">ฟังที่ port 5432</text>
+<rect x="480" y="230" width="270" height="84" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="615" y="258" font-size="16" fill="#0f172a" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">mysql (คอนเทนเนอร์)</text>
+<text x="615" y="290" font-size="16" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="ui-monospace, Menlo, Consolas, monospace">ฟังที่ port 3306</text>
+<line x1="240" y1="102" x2="480" y2="112" stroke="#1a4fb0" stroke-width="3" marker-end="url(#arb)"/>
+<text x="360" y="92" font-size="15" fill="#1a4fb0" text-anchor="middle" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace">-p 5432:5432</text>
+<line x1="240" y1="182" x2="480" y2="142" stroke="#f59e0b" stroke-width="3" stroke-dasharray="7 5" marker-end="url(#aro)"/>
+<text x="362" y="190" font-size="15" fill="#b45309" text-anchor="middle" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace">-p 5433:5432</text>
+<text x="362" y="212" font-size="15" fill="#b45309" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">(เมื่อ 5432 มีคนใช้แล้ว)</text>
+<line x1="240" y1="272" x2="480" y2="272" stroke="#1a4fb0" stroke-width="3" marker-end="url(#arb)"/>
+<text x="360" y="262" font-size="15" fill="#1a4fb0" text-anchor="middle" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace">-p 3306:3306</text>
+<text x="400" y="342" font-size="15" fill="#64748b" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">รูปแบบ -p  port_ฝั่งเรา : port_ในคอนเทนเนอร์   (เปลี่ยนได้แค่ฝั่งซ้าย)</text>
+</svg>

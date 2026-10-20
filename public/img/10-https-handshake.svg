@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="HTTPS แบบย่อ" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="16">
+<title>HTTPS แบบย่อ</title>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#0b3c91"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#dc2626"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f59e0b"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="498" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="28" font-size="20" text-anchor="middle" fill="#0b3c91" font-weight="bold">HTTPS: ทักทาย ตรวจบัตร ตกลงกุญแจ แล้วคุยแบบลับ</text>
+<rect x="60" y="48" width="170" height="44" rx="10" fill="#e8effc" stroke="#0b3c91" stroke-width="2"/>
+<text x="145.0" y="75.6" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">Browser (เรา)</text>
+<rect x="570" y="48" width="170" height="44" rx="10" fill="#e8effc" stroke="#0b3c91" stroke-width="2"/>
+<text x="655.0" y="75.6" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">Server (เว็บ)</text>
+<line x1="145" y1="92" x2="145" y2="380" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5 5"/>
+<line x1="655" y1="92" x2="655" y2="380" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5 5"/>
+<line x1="149" y1="130" x2="651" y2="130" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<text x="400" y="116" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">1 ทักทาย: ฉันรองรับวิธีเข้ารหัสแบบนี้</text>
+<line x1="651" y1="174" x2="149" y2="174" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<text x="400" y="160" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">2 server ส่ง &#x27;ใบรับรอง&#x27; พิสูจน์ว่าเป็นเว็บนี้จริง</text>
+<rect x="160" y="194" width="330" height="36" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+<text x="325.0" y="217.25" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">3 browser เช็คใบรับรองกับ CA ที่เชื่อถือ</text>
+<line x1="149" y1="270" x2="651" y2="270" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
+<text x="400" y="256" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">4 สองฝั่งตกลงกุญแจลับร่วมกัน (ไม่ส่งตรงๆ)</text>
+<line x1="149" y1="318" x2="651" y2="318" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
+<text x="400" y="304" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">5 จากนี้ข้อมูลทั้งหมดถูกเข้ารหัสด้วยกุญแจนั้น</text>
+<rect x="16" y="396" width="368" height="92" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+<text x="200.0" y="436.75" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">http:// (ไม่เข้ารหัส)</text>
+<text x="200.0" y="457.75" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">คนกลางในไวไฟ/เครือข่ายอ่านรหัสผ่านได้</text>
+<rect x="416" y="396" width="368" height="92" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="600.0" y="436.75" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">https:// (เข้ารหัส)</text>
+<text x="600.0" y="457.75" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">คนกลางเห็นแค่ข้อมูลสับสน ปลอมเว็บก็ไม่ผ่าน</text>
+<text x="400" y="386" font-size="15" text-anchor="middle" fill="#64748b" font-weight="normal">เทียบกัน</text>
+</svg>

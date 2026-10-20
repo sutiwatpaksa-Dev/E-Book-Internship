@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" role="img" aria-label="Connection pool: แอปยืม connection จากสระ ถ้าหมดต้องรอ">
+<title>Connection pool: แอปยืม connection จากสระ ถ้าหมดต้องรอ</title>
+<defs><marker id="arn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="aro" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="ars" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a4fb0"/></marker></defs>
+<rect x="1" y="1" width="798" height="358" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+<text x="110" y="34" font-size="16" fill="#0b3c91" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">คำขอจากผู้ใช้</text>
+<rect x="20" y="52" width="180" height="38" rx="8" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="110" y="77" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">คำขอ 1: query</text>
+<rect x="20" y="100" width="180" height="38" rx="8" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="110" y="125" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">คำขอ 2: query</text>
+<rect x="20" y="148" width="180" height="38" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+<text x="110" y="173" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">คำขอ 3: query</text>
+<rect x="20" y="196" width="180" height="38" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+<text x="110" y="221" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">คำขอ 4: query</text>
+<rect x="20" y="244" width="180" height="38" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+<text x="110" y="269" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">คำขอ 5: query</text>
+<rect x="290" y="44" width="210" height="230" rx="12" fill="#f1f5f9" stroke="#0b3c91" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="395" y="34" font-size="16" fill="#0b3c91" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">Pool (max = 2)</text>
+<rect x="310" y="64" width="170" height="48" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+<text x="395" y="94" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">connection 1  ใช้อยู่</text>
+<rect x="310" y="126" width="170" height="48" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+<text x="395" y="156" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">connection 2  ใช้อยู่</text>
+<text x="395" y="206" font-size="15" fill="#b45309" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">คำขอ 3, 4, 5 ต้องรอ</text>
+<text x="395" y="230" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ว่างเมื่อมีคนคืน connection</text>
+<rect x="590" y="64" width="190" height="110" rx="12" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="685" y="104" font-size="16" fill="#0f172a" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">PostgreSQL</text>
+<text x="685" y="132" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">max_connections</text>
+<text x="685" y="154" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">= 100 (ค่าตั้งต้น)</text>
+<line x1="200" y1="70" x2="290" y2="88" stroke="#0b3c91" stroke-width="2" marker-end="url(#arn)"/>
+<line x1="200" y1="118" x2="290" y2="150" stroke="#0b3c91" stroke-width="2" marker-end="url(#arn)"/>
+<line x1="480" y1="88" x2="590" y2="100" stroke="#0b3c91" stroke-width="2" marker-end="url(#arn)"/>
+<line x1="480" y1="150" x2="590" y2="140" stroke="#0b3c91" stroke-width="2" marker-end="url(#arn)"/>
+<rect x="20" y="290" width="760" height="56" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+<text x="400" y="314" font-size="15" fill="#dc2626" text-anchor="middle" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace">ถ้ารอนานเกินกำหนด → error:  timeout exceeded when trying to connect</text>
+<text x="400" y="336" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ต้นเหตุทั่วไป: ยืม connection ไปแล้วไม่คืน (client.release()) หรือ query ช้า/ค้าง</text>
+</svg>

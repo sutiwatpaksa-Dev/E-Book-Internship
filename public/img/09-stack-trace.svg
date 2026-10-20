@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 440" role="img" aria-label="โครงสร้าง stack trace" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="16">
+<title>โครงสร้าง stack trace</title>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#0b3c91"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#dc2626"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f59e0b"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="438" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="32" font-size="20" text-anchor="middle" fill="#0b3c91" font-weight="bold">อ่าน stack trace: จากบนลงล่าง</text>
+<rect x="24" y="52" width="752" height="170" rx="10" fill="#0f172a"/>
+<text x="40" y="84" font-size="15" text-anchor="start" fill="#fca5a5" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">TypeError: Cannot read properties of undefined (reading &#x27;brand&#x27;)</text>
+<text x="40" y="114" font-size="15" text-anchor="start" fill="#fde68a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">    at formatLaptop (/app/src/format.ts:3:22)</text>
+<text x="40" y="144" font-size="15" text-anchor="start" fill="#e2e8f0" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">    at /app/src/routes/laptops.ts:15:18</text>
+<text x="40" y="174" font-size="15" text-anchor="start" fill="#94a3b8" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">    at Layer.handle (/app/node_modules/express/lib/router/layer.js:95:5)</text>
+<text x="40" y="204" font-size="15" text-anchor="start" fill="#94a3b8" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">    at next (/app/node_modules/express/lib/router/route.js:149:13)</text>
+<circle cx="758" cy="79" r="11" fill="#dc2626"/>
+<text x="758" y="83.9" font-size="14" text-anchor="middle" fill="#fff" font-weight="bold">1</text>
+<circle cx="758" cy="109" r="11" fill="#f59e0b"/>
+<text x="758" y="113.9" font-size="14" text-anchor="middle" fill="#fff" font-weight="bold">2</text>
+<circle cx="758" cy="139" r="11" fill="#1a4fb0"/>
+<text x="758" y="143.9" font-size="14" text-anchor="middle" fill="#fff" font-weight="bold">3</text>
+<circle cx="758" cy="169" r="11" fill="#64748b"/>
+<text x="758" y="173.9" font-size="14" text-anchor="middle" fill="#fff" font-weight="bold">4</text>
+<circle cx="758" cy="199" r="11" fill="#64748b"/>
+<text x="758" y="203.9" font-size="14" text-anchor="middle" fill="#fff" font-weight="bold">4</text>
+<rect x="24" y="52" width="6" height="30" fill="#dc2626"/><rect x="24" y="82" width="6" height="30" fill="#f59e0b"/>
+<circle cx="44" cy="251" r="12" fill="#dc2626"/>
+<text x="44" y="255.9" font-size="14" text-anchor="middle" fill="#fff" font-weight="bold">1</text>
+<text x="66" y="256" font-size="16" text-anchor="start" fill="#0f172a" font-weight="bold">บรรทัดแรก = ชนิด + เกิดอะไร</text>
+<text x="66" y="275" font-size="15" text-anchor="start" fill="#64748b" font-weight="normal">อ่านข้อความให้จบก่อนทำอย่างอื่น</text>
+<circle cx="44" cy="295" r="12" fill="#f59e0b"/>
+<text x="44" y="299.9" font-size="14" text-anchor="middle" fill="#fff" font-weight="bold">2</text>
+<text x="66" y="300" font-size="16" text-anchor="start" fill="#0f172a" font-weight="bold">บรรทัดแรกที่เป็นไฟล์ของเรา = จุดเริ่มสืบ</text>
+<text x="66" y="319" font-size="15" text-anchor="start" fill="#64748b" font-weight="normal">ไฟล์ format.ts บรรทัด 3 ตัวอักษรที่ 22</text>
+<circle cx="44" cy="339" r="12" fill="#1a4fb0"/>
+<text x="44" y="343.9" font-size="14" text-anchor="middle" fill="#fff" font-weight="bold">3</text>
+<text x="66" y="344" font-size="16" text-anchor="start" fill="#0f172a" font-weight="bold">ใครเรียกมา</text>
+<text x="66" y="363" font-size="15" text-anchor="start" fill="#64748b" font-weight="normal">ไล่ดูว่าส่งค่าอะไรเข้ามา (บรรทัด 15)</text>
+<circle cx="44" cy="383" r="12" fill="#64748b"/>
+<text x="44" y="387.9" font-size="14" text-anchor="middle" fill="#fff" font-weight="bold">4</text>
+<text x="66" y="388" font-size="16" text-anchor="start" fill="#0f172a" font-weight="bold">โค้ดของ library (node_modules)</text>
+<text x="66" y="407" font-size="15" text-anchor="start" fill="#64748b" font-weight="normal">ข้ามไปก่อน ไม่ใช่ที่ที่บั๊กอยู่</text>
+</svg>

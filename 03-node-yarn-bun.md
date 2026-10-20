@@ -1,12 +1,13 @@
 # บทที่ 3: Node vs Yarn vs Bun 📦
 
-> ⏱ ประมาณ 1.5 ชั่วโมง · 🧩 ต้องผ่านก่อน: บทที่ 0 · 🛠 ใช้: Node.js, Terminal
+> ⏱ ประมาณ 4 ชั่วโมง · 🧩 ต้องผ่านก่อน: บทที่ 0 · 🛠 ใช้: Node.js, Terminal
 
 > **⚡ สรุป 30 วินาที**
 > - **Runtime** = ตัวรันโค้ด (Node, Bun) / **Package manager** = ตัวติดตั้ง package (npm, Yarn, pnpm, Bun)
 > - Yarn **ไม่ใช่** runtime ส่วน Bun เป็น **ทั้งสองอย่าง**
 > - `package.json` = รายการ package · `node_modules` = ตัว package จริง (ห้าม commit) · lock file = เวอร์ชันเป๊ะ (ต้อง commit)
 > - 1 โปรเจกต์ใช้ package manager **ตัวเดียว**
+> - ติดตั้ง package = เอาโค้ดของคนแปลกหน้ามารันในเครื่องเรา เลือกให้ดีและอ่าน error ให้เป็น
 
 ---
 
@@ -23,12 +24,17 @@
 ## 1. ของ 2 ประเภทที่คนชอบสับสน
 
 **Runtime = ตัวรันโค้ด**
+- โค้ดที่เราเขียน (ไฟล์ `.js` / `.ts`) เป็นแค่ **ข้อความ** คอมพิวเตอร์ยังไม่รู้จะทำอะไร ต้องมีโปรแกรมที่ "อ่านแล้วลงมือทำตาม" โปรแกรมนั้นคือ **runtime**
 - เดิม JavaScript รันได้แค่ใน browser ปี 2009 มีคนนำ engine ของ Chrome (ชื่อ **V8**) ออกมาให้รันนอก browser ได้ เกิดเป็น **Node.js** ทำให้ใช้ JS เขียน server ได้
 - 💡 runtime = **เครื่องเล่นเพลง** 🎧 โค้ด = **แผ่นเพลง** มีแผ่นอย่างเดียวฟังไม่ได้
 
 **Package manager = ตัวติดตั้ง package**
+- **Package** คือโค้ดที่คนอื่นเขียนไว้แล้ว แพ็กเป็นก้อนให้เรานำไปใช้ซ้ำ เช่น package จัดการวันที่ ตรวจสอบข้อมูล ทำเว็บเซิร์ฟเวอร์ (ไม่ต้องเขียนเองทุกอย่าง)
 - package ทั้งโลกอยู่ในคลังกลางชื่อ **npm registry** (npmjs.com) มีหลายล้าน package
 - 💡 package manager = **แอปสโตร์** 📲 ช่วยค้น ติดตั้ง อัปเดต
+
+![runtime รันโค้ด ส่วน package manager ติดตั้ง package จาก registry](/img/03-runtime-vs-pm.svg)
+*แถวบน = runtime อ่านโค้ดแล้วทำงาน / แถวล่าง = package manager ไปขนของจาก registry มาวางใน `node_modules` ให้ runtime ใช้*
 
 | ชื่อ | ประเภท | อธิบาย |
 |---|---|---|
@@ -55,17 +61,34 @@ Bun      ->   bun                     bun install (ในตัว)
 
 ## 2. 🔧 ลงมือ: โปรเจกต์แรก
 
+**ขั้นที่ 0: ตรวจเครื่องมือก่อน** (ติดตั้งไว้แล้วในบทที่ 0)
+```bash
+node -v
+npm -v
+```
+ควรเห็น: เลขเวอร์ชัน 2 บรรทัด เช่น `v24.x.x` และ `11.x.x` (เลขของคุณอาจต่างไป ไม่เป็นไร) ถ้าขึ้น `command not found` แปลว่ายังไม่ได้ติดตั้ง Node ให้กลับไปทำบทที่ 0 ก่อน
+
+**ขั้นที่ 1: สร้างโปรเจกต์และติดตั้ง package**
 ```bash
 mkdir pkg-demo && cd pkg-demo
 npm init -y                  # สร้าง package.json
+```
+ควรเห็น: ข้อความขึ้นต้น `Wrote to .../pkg-demo/package.json:` ตามด้วยเนื้อไฟล์ `package.json` ที่มี `"name": "pkg-demo"` และ `"version": "1.0.0"`
+```bash
 npm install dayjs            # ติดตั้ง package จัดการวันที่
+```
+ควรเห็น:
+```
+added 1 package, and audited 2 packages in 1s
+
+found 0 vulnerabilities
 ```
 สังเกตว่าเกิด 3 อย่าง:
 1. `package.json` มี `dependencies` เพิ่มขึ้น
 2. โฟลเดอร์ `node_modules/` (ลองเปิดดู มีไฟล์เยอะมาก)
 3. ไฟล์ `package-lock.json`
 
-ลองใช้ package: สร้างไฟล์ `hello.mjs`
+**ขั้นที่ 2: ใช้ package** สร้างไฟล์ `hello.mjs`
 ```js
 import dayjs from "dayjs";
 console.log("วันนี้:", dayjs().format("DD/MM/YYYY"));
@@ -73,6 +96,8 @@ console.log("วันนี้:", dayjs().format("DD/MM/YYYY"));
 ```bash
 node hello.mjs
 ```
+ควรเห็น: วันที่ของวันนี้ เช่น `วันนี้: 20/10/2026`
+
 (ไฟล์ `.mjs` นี้แค่ทดลองให้เห็นภาพ ตั้งแต่บทที่ 4 เป็นต้นไปเราเขียน TypeScript เท่านั้น)
 
 ---
@@ -101,19 +126,42 @@ node hello.mjs
 ```
 (เลขเวอร์ชันเป็นตัวอย่าง ของจริงจะเป็นเวอร์ชันล่าสุดตอนติดตั้ง)
 
+![ส่วนประกอบของ package.json: name, type, scripts, dependencies, devDependencies](/img/03-package-json.svg)
+*package.json คือไฟล์ JSON ธรรมดา แต่ละหัวข้อมีหน้าที่ต่างกัน*
+
 | ส่วน | ความหมาย |
 |---|---|
+| `name` | ชื่อโปรเจกต์ ตัวพิมพ์เล็ก ไม่มีเว้นวรรค |
+| `version` | เลขเวอร์ชันของโปรเจกต์เราเอง |
 | `scripts` | คำสั่งลัด เรียกด้วย `npm run dev` |
-| `type: "module"` | ใช้ `import/export` แบบใหม่ (ESM) |
+| `type: "module"` | ใช้ `import/export` แบบใหม่ (ESM) ดูข้อ 10 |
 | `dependencies` | package ที่ **ต้องใช้ตอนโปรแกรมทำงานจริง** |
 | `devDependencies` | package ที่ **ใช้แค่ตอนพัฒนา** เช่น TypeScript (ติดตั้งด้วย `-D`) |
+| `private: true` | (บางโปรเจกต์มี) กันเผลอเอาโปรเจกต์เราไปเผยแพร่ขึ้น npm |
+| `engines` | (บางโปรเจกต์มี) บอกว่าต้องใช้ Node เวอร์ชันไหนขึ้นไป |
 
 > 💡 เปรียบเทียบร้านอาหาร: `dependencies` = **วัตถุดิบ** ต้องอยู่ในจานที่เสิร์ฟ / `devDependencies` = **มีดและเขียง** ใช้ในครัว ไม่ต้องเสิร์ฟให้ลูกค้า
+
+### `scripts` ทำงานยังไง
+
+`scripts` คือการตั้งชื่อเล่นให้คำสั่งยาวๆ เช่น `"dev": "tsx watch src/index.ts"` แปลว่า พอพิมพ์ `npm run dev` ก็เหมือนพิมพ์ `tsx watch src/index.ts` เอง
+- ดูรายการ script ทั้งหมดของโปรเจกต์: `npm run` (เฉยๆ)
+- ชื่อพิเศษ `start` และ `test` พิมพ์ย่อได้ `npm start`, `npm test` ส่วนชื่ออื่นต้องมี `run`
+- ใน `scripts` เรียกโปรแกรมที่ติดตั้งในโปรเจกต์ได้เลย (เช่น `tsx`, `tsc`) โดยไม่ต้องติดตั้งแบบ global
+
+### `node_modules/` และ dependency tree
 
 **`node_modules/`** = ตัว package จริง ใหญ่ได้หลายร้อย MB
 ⚠️ **ห้าม commit** (ใส่ `.gitignore`) เพราะสร้างใหม่ได้เสมอด้วย `npm install`
 
+ทำไมถึงใหญ่ขนาดนั้น? เพราะ package ที่เราเลือกใช้ **ก็ใช้ package อื่นต่ออีกเป็นทอดๆ** เราเขียนใน `package.json` แค่ไม่กี่ตัว แต่ที่ติดตั้งจริงอาจเป็นร้อยตัว
+
+![แอปของเราพึ่ง package A B C ซึ่งพึ่ง package ย่อยต่อกันเป็นต้นไม้](/img/03-dependency-tree.svg)
+*ที่เราเลือกเองเรียกว่า dependency ตรง ส่วนที่ถูกลากตามมาเรียกว่า dependency ย่อย (transitive) ทั้งหมดอยู่ใน `node_modules/`*
+
 > 🤓 **เกร็ด:** มีมีมดังว่า `node_modules` คือ **วัตถุที่หนักที่สุดในจักรวาล** หนักกว่าหลุมดำ 🕳️
+
+> 💡 **ไม่ต้องแก้อะไรใน `node_modules`** ถ้ามันพัง ลบทิ้งแล้วติดตั้งใหม่ ได้ผลเหมือนเดิม (ลองจริงในข้อ 12)
 
 ---
 
@@ -127,9 +175,14 @@ node hello.mjs
 | **MINOR** (1) | เพิ่มฟีเจอร์ | ✅ ใช้ได้ |
 | **PATCH** (2) | แก้บั๊ก | ✅ ใช้ได้ |
 
+![เลข MAJOR.MINOR.PATCH และช่วงที่ ^ กับ ~ รับได้](/img/03-semver.svg)
+*แถบยาวแปลว่าช่วงที่ยอมรับกว้าง ยิ่งกว้างยิ่งได้ของใหม่เร็ว แต่ก็เสี่ยงที่ของจะเปลี่ยนโดยเราไม่รู้ตัว*
+
 - `^4.1.2` = รับอัปเดตได้ถึง `4.x.x` (ไม่ข้าม major)
 - `~4.1.2` = รับได้ถึง `4.1.x` (แค่ patch)
 - `4.1.2` = เวอร์ชันนี้เท่านั้น
+
+> 💡 เวลาติดตั้ง package ใหม่ npm และ Bun ใส่ `^` นำหน้าให้เอง (ค่าเริ่มต้น) จึงเห็น `"dayjs": "^1.11.0"` ใน `package.json` โดยไม่ต้องพิมพ์
 
 ---
 
@@ -138,6 +191,9 @@ node hello.mjs
 `package.json` บอกแค่ **ช่วง** (`^4.1.2`) วันนี้บิตติดตั้งได้ `4.1.2` เดือนหน้าเพื่อนติดตั้งได้ `4.3.0` → **เครื่องไม่เหมือนกันอีกแล้ว** (ปัญหาเดียวกับบท Docker!)
 
 **Lock file** = บันทึก **เวอร์ชันที่ติดตั้งจริงแบบเป๊ะๆ** ของทุก package รวม package ย่อยที่ซ่อนอยู่ข้างใน
+
+![ไม่มี lock file แต่ละคนอาจได้เวอร์ชันต่างกัน มี lock file ทุกคนได้เหมือนกัน](/img/03-lockfile.svg)
+*lock file คือใบเสร็จของการติดตั้ง ใครติดตั้งตามใบเสร็จก็ได้ของเหมือนกันทุกชิ้น*
 
 | Package manager | Lock file |
 |---|---|
@@ -150,6 +206,30 @@ node hello.mjs
 - `npm install` = ติดตั้ง และอาจอัปเดต lock file
 - `npm ci` = ติดตั้ง **ตาม lock file เป๊ะ** (ใช้ใน Docker และ CI)
 - ⚠️ **1 โปรเจกต์ = package manager ตัวเดียว** เห็น `package-lock.json` อยู่แล้ว ห้ามไปรัน `yarn` เพิ่มจนมี lock file 2 ตัว
+- ⚠️ **อย่าแก้ lock file ด้วยมือ** ให้ package manager สร้างให้เสมอ
+
+### `npm install` ทำอะไรเบื้องหลัง
+
+![ขั้นตอน npm install ตั้งแต่อ่าน package.json จนวางไฟล์ใน node_modules และเขียน lock file](/img/03-install-flow.svg)
+*ถ้ามี lock file จะใช้เวอร์ชันที่จดไว้ ถ้าไม่มีจะเลือกเวอร์ชันใหม่สุดที่อยู่ในช่วง ส่วน `npm ci` ข้ามการเลือกไปเลย จึงได้ผลเหมือนกันทุกครั้ง*
+
+### 🔧 ลงมือ: ดู lock file ทำงาน
+
+ในโฟลเดอร์ `pkg-demo`:
+```bash
+npm ls
+```
+ควรเห็น: ต้นไม้ package ที่ติดตั้งอยู่
+```
+pkg-demo@1.0.0 /.../pkg-demo
+└── dayjs@1.11.x
+```
+จากนั้นจำลองว่าเรา clone โปรเจกต์มาใหม่ (มีแต่ `package.json` กับ lock file ไม่มี `node_modules`):
+```bash
+rm -rf node_modules          # Windows PowerShell: Remove-Item -Recurse -Force node_modules
+npm ci
+```
+ควรเห็น: `added 1 package, and audited 2 packages ...` และโฟลเดอร์ `node_modules/` กลับมาพร้อมเวอร์ชันเดิมเป๊ะ
 
 ---
 
@@ -182,13 +262,18 @@ node hello.mjs
 
 ## 7. 🔧 เริ่มโปรเจกต์ด้วย Bun (ใช้ตั้งแต่บทที่ 11 และงาน STARTER)
 
-ติดตั้ง Bun (ข้อ 8 มีคำสั่งเดียวกัน)
+ติดตั้ง Bun (ข้อ 13 มีคำสั่งเดียวกัน)
 ```bash
 # Mac / Linux
 curl -fsSL https://bun.sh/install | bash
 # Windows (PowerShell)
 powershell -c "irm bun.sh/install.ps1 | iex"
 ```
+ปิดแล้วเปิด Terminal ใหม่ แล้วเช็ค:
+```bash
+bun --version
+```
+ควรเห็น: เลขเวอร์ชัน เช่น `1.x.x`
 
 ```bash
 mkdir hello-bun && cd hello-bun
@@ -198,6 +283,8 @@ bun add -d typescript          # เพิ่ม package ที่ใช้แ�
 bun index.ts                   # รันไฟล์ TypeScript ได้เลย ไม่ต้องแปลงก่อน
 bun --watch index.ts           # รันใหม่เองทุกครั้งที่เซฟไฟล์
 ```
+ควรเห็น: `bun add zod` จบด้วยข้อความทำนอง `installed zod@4.x.x` และ `1 package installed` ส่วน `bun index.ts` พิมพ์ `Hello via Bun!` (ข้อความจากไฟล์ที่ `bun init` สร้างให้) และมีไฟล์ `bun.lock` เพิ่มขึ้นมา
+
 เพิ่ม `"dev": "bun --watch index.ts"` ใน `scripts` ของ `package.json` แล้วสั่ง `bun run dev` ได้เหมือน `npm run dev`
 
 | ไฟล์ | คืออะไร |
@@ -210,7 +297,216 @@ bun --watch index.ts           # รันใหม่เองทุกคร�
 
 ---
 
-## 8. 🔧 แข่งความเร็ว 🏁
+## 8. 🔧 เพิ่ม ลบ อัปเดต package และรันเครื่องมือ
+
+### สูตรลัดคำสั่งที่ใช้ทุกวัน
+
+| ต้องการ | npm | Yarn | Bun |
+|---|---|---|---|
+| ติดตั้งตามที่ `package.json` ระบุ | `npm install` | `yarn` | `bun install` |
+| ติดตั้งตาม lock เป๊ะ (CI/Docker) | `npm ci` | `yarn install --immutable` | `bun install --frozen-lockfile` |
+| เพิ่ม package | `npm install zod` | `yarn add zod` | `bun add zod` |
+| เพิ่มแบบ dev | `npm install -D tsx` | `yarn add -D tsx` | `bun add -d tsx` |
+| เพิ่มเวอร์ชันที่ระบุ | `npm install zod@4.1.0` | `yarn add zod@4.1.0` | `bun add zod@4.1.0` |
+| ลบ package | `npm uninstall zod` | `yarn remove zod` | `bun remove zod` |
+| ดู package ที่ติดตั้ง | `npm ls` | ต่างกันตามรุ่น ดูเอกสาร Yarn | `bun pm ls` |
+| ดูตัวที่มีเวอร์ชันใหม่กว่า | `npm outdated` | ต่างกันตามรุ่น ดูเอกสาร Yarn | `bun outdated` |
+| อัปเดตตามช่วงใน `package.json` | `npm update` | ต่างกันตามรุ่น ดูเอกสาร Yarn | `bun update` |
+| รันโปรแกรมใน package โดยไม่ติดตั้งถาวร | `npx ชื่อ` | ต่างกันตามรุ่น ดูเอกสาร Yarn | `bunx ชื่อ` |
+
+> ⚠️ ตาราง Yarn ด้านบนเป็นของ Yarn รุ่นใหม่ (v2 ขึ้นไป) ที่คำสั่งบางตัวต่างจากรุ่นเก่า ถ้าโปรเจกต์ไหนใช้ Yarn ให้ดูเวอร์ชันด้วย `yarn --version` และอ่านเอกสารของ Yarn ประกอบ
+
+### 🔧 ลงมือ: เพิ่ม → ดู → ลบ
+
+ในโฟลเดอร์ `pkg-demo`:
+```bash
+npm install -D typescript        # เพิ่มแบบ dev
+npm ls
+```
+ควรเห็น: ทั้ง `dayjs` และ `typescript` อยู่ในต้นไม้ และใน `package.json` มี `devDependencies` เพิ่มขึ้นมา
+```bash
+npm uninstall typescript         # ลบออก
+```
+ควรเห็น: `removed 1 package` (หรือมากกว่านั้น) และ `devDependencies` หายไปจาก `package.json`
+
+### 🔧 ลงมือ: ดูว่ามีอะไรล้าสมัย
+
+```bash
+npm install dayjs@1.11.0         # ถอยไปเวอร์ชันเก่าเพื่อทดลอง
+npm outdated
+```
+ควรเห็น: ตารางบอกว่าเรามีเวอร์ชันไหน และมีใหม่กว่าอะไร
+```
+Package  Current   Wanted   Latest  Location            Depended by
+dayjs     1.11.0  1.11.x    1.11.x  node_modules/dayjs  pkg-demo
+```
+- **Current** = ที่ติดตั้งอยู่ / **Wanted** = เวอร์ชันสูงสุดที่ `package.json` (ช่วง `^`) ยอมให้ / **Latest** = เวอร์ชันล่าสุดบนโลก (อาจเป็น major ใหม่ที่ข้ามช่วง)
+
+```bash
+npm update                       # อัปเดตเท่าที่ช่วงใน package.json อนุญาต
+```
+เพื่ออัปเดตข้าม major (เช่น 4 → 5) ต้องสั่งระบุเอง เช่น `npm install zod@latest` และ **ต้องอ่านบันทึกการเปลี่ยนแปลง (changelog) และทดสอบก่อนเสมอ** เพราะ major อาจทำให้โค้ดเดิมพัง
+
+> 💡 **แนวปฏิบัติตอนอัปเดต:** อัปเดตทีละน้อย → รันเทสต์/เปิดแอปดู → ผ่านแล้ว commit ทั้ง `package.json` และ lock file ไปด้วยกัน จะย้อนกลับได้ง่าย
+
+### `npx` / `bunx`: รันเครื่องมือโดยไม่ต้องติดตั้งถาวร
+
+**`npx ชื่อโปรแกรม`** (ของ Bun คือ `bunx`) = ดาวน์โหลด package นั้นมารันครั้งเดียว (หรือใช้ตัวที่ติดตั้งในโปรเจกต์อยู่แล้ว) เหมาะกับเครื่องมือที่ใช้นานๆ ครั้ง เช่น ตัวสร้างโปรเจกต์
+```bash
+npx tsc --version        # ใช้ typescript ที่ติดตั้งในโปรเจกต์ (ถ้ามี)
+bunx tsc --noEmit        # ตรวจ type ด้วย Bun
+```
+> ⚠️ `npx` จะรันโค้ดของ package นั้นทันที ตรวจชื่อให้ถูก (พิมพ์ผิดอาจไปรันของแอบแฝง ดูข้อ 11) และถ้าไม่ได้ติดตั้ง package ไว้ npm จะถามว่าจะติดตั้งไหม อ่านชื่อให้ดีก่อนตอบ `y`
+
+---
+
+## 9. 🔧 จัดการเวอร์ชันของ Node (nvm)
+
+ปัญหาคลาสสิก: โปรเจกต์ A ต้องการ Node รุ่นเก่า โปรเจกต์ B ต้องการรุ่นใหม่ ติดตั้งทับกันไปมาไม่ไหว → ใช้ **ตัวจัดการเวอร์ชัน** ให้สลับได้ในคำสั่งเดียว
+
+| เครื่อง | เครื่องมือ | ที่มา |
+|---|---|---|
+| Mac / Linux | **nvm** | github.com/nvm-sh/nvm (ทำตามขั้นตอนติดตั้งในหน้านั้น) |
+| Windows | **nvm-windows** (คนละโปรแกรมกับ nvm ข้างบน แต่ใช้คำสั่งคล้ายกัน) | github.com/coreybutler/nvm-windows |
+| ทุกระบบ | **fnm** (ทางเลือกที่เร็ว) | github.com/Schniz/fnm |
+
+คำสั่งพื้นฐานของ nvm:
+```bash
+nvm install --lts      # ติดตั้ง Node รุ่น LTS ล่าสุด
+nvm ls                 # ดูว่าในเครื่องมีรุ่นไหนบ้าง
+nvm install 22         # (ถ้ายังไม่มีรุ่น 22 ในเครื่อง)
+nvm use 22             # สลับไปใช้ Node 22 ใน Terminal นี้
+node -v                # เช็คว่าสลับแล้ว
+```
+ควรเห็น: หลัง `nvm use 22` สั่ง `node -v` ได้ `v22.x.x`
+
+**บอกเวอร์ชันที่โปรเจกต์ต้องการ** ให้ทีมเห็นตรงกัน:
+- สร้างไฟล์ `.nvmrc` ในโปรเจกต์ ข้างในมีบรรทัดเดียว เช่น `22` แล้วใครเข้าโฟลเดอร์มาสั่ง `nvm use` ก็ได้เวอร์ชันที่ถูกเอง
+- หรือใส่ใน `package.json`: `"engines": { "node": ">=22" }` (npm จะเตือนถ้าเวอร์ชันไม่ตรง)
+
+**สำหรับ Bun:** ตัว Bun อัปเดตตัวเองด้วย `bun upgrade` ส่วนเวอร์ชันที่ทีมใช้ดูได้จาก `bun --version` (ถ้าโปรเจกต์ใดกำหนดเวอร์ชันไว้ ให้ถามพี่ไบต์)
+
+> 💡 **ทำไมต้องใช้ LTS?** LTS (Long-Term Support) คือรุ่นที่ได้รับการดูแลนานและเสถียร เหมาะกับงานจริง (ตามที่บทที่ 0 แนะนำ)
+
+---
+
+## 10. ESM vs CommonJS: `import` กับ `require` ต่างกันยังไง
+
+JavaScript มีวิธี "แบ่งไฟล์และเรียกใช้ของจากไฟล์อื่น" 2 แบบ ที่เกิดต่างยุคกัน
+
+![เปรียบเทียบ CommonJS (require) กับ ESM (import)](/img/03-esm-cjs.svg)
+*ESM คือมาตรฐานปัจจุบันของ JavaScript ตัวที่เราใช้ในคู่มือนี้ CommonJS เป็นของเก่าที่ยังเจอในโค้ดเก่าและตัวอย่างในเน็ต*
+
+| | **CommonJS (CJS)** | **ESM** |
+|---|---|---|
+| นำเข้า | `const x = require("x")` | `import x from "x"` |
+| ส่งออก | `module.exports = ...` | `export ...` |
+| ยุค | เก่า (ตั้งแต่ Node เริ่มต้น) | ใหม่ (มาตรฐานของภาษา) |
+| TypeScript ที่เราเขียน | ไม่ใช้ | ✅ ใช้ `import/export` |
+
+**Node รู้ได้ยังไงว่าไฟล์ไหนเป็นแบบไหน?**
+- ไฟล์ `.mjs` = ESM เสมอ / `.cjs` = CommonJS เสมอ
+- ไฟล์ `.js` = ดูจาก `"type"` ใน `package.json` ใกล้ที่สุด: `"type": "module"` = ESM, ไม่ใส่หรือ `"commonjs"` = CommonJS
+- `npm init -y` รุ่นใหม่ใส่ `"type": "commonjs"` ให้ จึงเป็นเหตุที่ข้อ 2 เราใช้ไฟล์ `.mjs` เพื่อให้ใช้ `import` ได้ทันที
+- Bun อ่านได้ทั้งสองแบบ
+
+**อาการที่เจอบ่อย** เมื่อใช้ผิดแบบ:
+| ข้อความ | แปลว่า | แก้ |
+|---|---|---|
+| `Cannot use import statement outside a module` | ใช้ `import` ในไฟล์ที่ Node มองเป็น CommonJS | ใส่ `"type": "module"` ใน `package.json` หรือเปลี่ยนนามสกุลเป็น `.mjs` |
+| `require is not defined in ES module scope` | ใช้ `require` ในไฟล์ที่เป็น ESM | เปลี่ยนเป็น `import` |
+
+---
+
+## 11. 🔍 อ่าน error ตอนติดตั้งให้เป็น และความปลอดภัยของ package
+
+### วิธีอ่าน error ของ npm
+
+error ของ npm ยาวและดูน่ากลัว แต่มีโครงที่อ่านได้ ใช้ 4 ขั้น:
+1. **หาบรรทัด `npm error code ...`** มักเป็นรหัสสั้นๆ เช่น `E404`, `EACCES`, `ERESOLVE` บอกประเภทปัญหา
+2. **อ่านบรรทัดที่ขึ้นต้นด้วยชื่อรหัสนั้น** มักบอกสาเหตุเป็นภาษาอังกฤษง่ายๆ
+3. **ข้ามบรรทัดยาวๆ ที่เป็น path** (เช่น ไฟล์ log ท้ายสุด) ไปก่อน เปิดอ่านเมื่อจำเป็นเท่านั้น
+4. **เอา "รหัส + ข้อความบรรทัดหลัก" ไปค้นหา** หรือถามพี่ไบต์ แนบข้อความเต็มด้วย อย่าส่งแค่ภาพที่ตัดมาครึ่งเดียว
+
+ตัวอย่างของจริง: ติดตั้ง package ที่ไม่มีอยู่ (ลองทำดูได้ ปลอดภัย)
+```bash
+npm install this-pkg-does-not-exist-zzz-123
+```
+ควรเห็น:
+```
+npm error code E404
+npm error 404 Not Found - GET https://registry.npmjs.org/this-pkg-does-not-exist-zzz-123 - Not found
+npm error 404  The requested resource 'this-pkg-does-not-exist-zzz-123@*' could not be found or you do not have permission to access it.
+```
+อ่านว่า: `E404` = ไม่พบ → ที่คลังหาชื่อนี้ไม่เจอ → **พิมพ์ชื่อผิดหรือเปล่า?**
+
+error ที่พบบ่อยอื่นๆ ดูตารางข้อ 14
+
+### ความปลอดภัยเบื้องต้นเวลาติดตั้ง package
+
+**ใครก็ลง package ขึ้น npm ได้** ตอน `npm install` เราเอาโค้ดของคนแปลกหน้ามารันในเครื่อง (และบน server) ของเรา ส่วนมากปลอดภัย แต่มีคนไม่หวังดีอยู่บ้าง ติดนิสัยเหล่านี้ไว้:
+
+| ภัย | เกิดยังไง | วิธีป้องกัน |
+|---|---|---|
+| **พิมพ์ชื่อผิดแล้วได้ของปลอม** (typosquatting) | คนร้ายตั้งชื่อเกือบเหมือน เช่น `dayj` แทน `dayjs` | **พิมพ์ชื่อทีละตัวอักษร** ตรวจกับหน้า package จริง ห้ามก๊อปจากแหล่งไม่น่าเชื่อถือ |
+| **package ถูกยึด/ปล่อยเวอร์ชันมีมัลแวร์** | เจ้าของบัญชีถูกแฮก | ใช้ lock file (ล็อกเวอร์ชันที่ตรวจแล้ว) และอัปเดตแบบมีสติ ไม่ใช่กดอัปเดตทุกอย่างพร้อมกัน |
+| **สคริปต์ที่รันตอนติดตั้ง** | บาง package มี install script รันทันทีที่ติดตั้ง | ติดตั้งเฉพาะที่จำเป็น ถ้าไม่แน่ใจใช้ `npm install --ignore-scripts` (Bun ไม่รันสคริปต์ของ package ย่อยให้เอง ยกเว้นที่เราอนุญาต) |
+| **ช่องโหว่ในโค้ดที่ใช้** | package มีบั๊กความปลอดภัยที่ถูกค้นพบภายหลัง | รัน `npm audit` เป็นระยะ แล้วอัปเดตตามคำแนะนำ |
+
+**เช็กลิสต์ก่อนเพิ่ม package ใหม่** (ใช้เวลา 1 นาที):
+- 🔎 มีคนใช้เยอะไหม (ดูจำนวนดาวน์โหลดรายสัปดาห์ในหน้า npmjs.com)
+- 🔎 ยังมีคนดูแลไหม (อัปเดตล่าสุดเมื่อไหร่ มี repo บน GitHub ไหม)
+- 🔎 ชื่อตรงกับที่ต้องการจริงไหม (ระวังชื่อเกือบเหมือน)
+- 🔎 จำเป็นจริงไหม ถ้าเขียนเองได้ใน 5 บรรทัด ไม่ต้องลงทั้ง package
+
+ตรวจช่องโหว่ในโปรเจกต์:
+```bash
+npm audit
+```
+ควรเห็น: ถ้าโปรเจกต์สะอาดจะได้ `found 0 vulnerabilities` ถ้ามีจะแสดงรายการระดับความรุนแรง และคำแนะนำ เช่น `npm audit fix` (แก้ให้ในช่วงเวอร์ชันที่ปลอดภัย) ⚠️ **อย่าใช้ `npm audit fix --force`** โดยไม่อ่านก่อน เพราะอาจอัปเดตข้าม major จนโค้ดพัง
+
+**กฎเหล็กอีกข้อ:** เวลาเว็บไหนบอกให้ก๊อปคำสั่งแบบ `curl ... | bash` ไปวางใน Terminal นั่นคือการสั่งให้ **รันสคริปต์จากเน็ตทันที** วิธีติดตั้ง Bun ในคู่มือนี้เป็นของทางการ (bun.sh) จึงใช้ได้ แต่กับแหล่งอื่น ให้ตรวจที่มาก่อนทุกครั้ง
+
+> ⚠️ **ห้ามเด็ดขาด:** เอาไฟล์ `.env`, รหัสผ่าน หรือ token ไปไว้ในโฟลเดอร์ที่จะถูกเผยแพร่เป็น package และอย่า commit ขึ้น Git (บทที่ 1)
+
+---
+
+## 12. 💥 ลองพังมันดู
+
+**พังที่ 1: ลบ `node_modules` แล้วรันโค้ด**
+ในโฟลเดอร์ `pkg-demo`:
+```bash
+rm -rf node_modules
+node hello.mjs
+```
+ควรเห็น:
+```
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'dayjs' imported from .../pkg-demo/hello.mjs
+```
+อ่านว่า: หา package `dayjs` ไม่เจอ เพราะตัวจริงไม่อยู่ในเครื่อง
+แก้: `npm install` (หรือ `npm ci`) แล้วรันใหม่ → กลับมาทำงาน นี่คือสิ่งที่ต้องทำทุกครั้งหลัง clone โปรเจกต์มาใหม่ ✅
+
+**พังที่ 2: เรียก script ที่ไม่มี**
+```bash
+npm run nope
+```
+ควรเห็น:
+```
+npm error Missing script: "nope"
+npm error To see a list of scripts, run:
+npm error   npm run
+```
+แก้: พิมพ์ `npm run` ดูรายชื่อ script ที่มีจริง (ของ Bun: `bun run nope` ได้ `error: Script not found "nope"`)
+
+**พังที่ 3: พิมพ์ชื่อ package ผิด**
+ใช้คำสั่งในข้อ 11 (ชื่อที่ไม่มีอยู่) จะได้ `E404` ให้ฝึกอ่านตามขั้นตอนที่บอกไว้
+
+**พังที่ 4: มี lock file สองตัว** (เพื่อเห็นปัญหาแล้วลบทิ้ง ในโฟลเดอร์ทดลองเท่านั้น)
+สร้างโฟลเดอร์ทดลองที่มี `package-lock.json` แล้วลองรัน `bun install` ในนั้น Bun จะสร้าง `bun.lock` เพิ่มขึ้นมา → ตอนนี้โปรเจกต์มี lock file 2 ตัว ไม่มีใครรู้ว่าตัวไหนเป็นของจริง ทีมจะได้เวอร์ชันไม่ตรงกัน **ห้ามทำในโปรเจกต์จริง** (ดูวิธีเลือกตัวที่ถูกในกฎของทีมข้อ 6)
+
+---
+
+## 13. 🔧 แข่งความเร็ว 🏁
 
 ติดตั้ง Yarn และ Bun:
 ```bash
@@ -222,6 +518,8 @@ powershell -c "irm bun.sh/install.ps1 | iex"
 ```
 ปิดเปิด Terminal ใหม่ เช็ค `yarn --version`, `bun --version`
 
+(ถ้า `npm install -g yarn` ขึ้น `EACCES` ดูวิธีแก้ในตารางข้อ 14 ห้ามใช้ `sudo`)
+
 สร้าง 3 โฟลเดอร์ `race-npm`, `race-yarn`, `race-bun` แต่ละโฟลเดอร์รัน `npm init -y` แล้วจับเวลา:
 ```bash
 cd race-npm  && time npm install express zod dayjs drizzle-orm pg
@@ -230,7 +528,28 @@ cd ../race-bun  && time bun add express zod dayjs drizzle-orm pg
 ```
 (PowerShell ใช้ `Measure-Command { npm install ... }` แทน `time`)
 
+ควรเห็น: แต่ละคำสั่งจบด้วยบรรทัดเวลา เช่น `real 0m3.2s` (ตัวเลขขึ้นกับเน็ตและเครื่อง) ให้จดเวลารอบแรกของแต่ละตัว
+
 ลองรันซ้ำรอบที่ 2 หลังลบ `node_modules` (ตอนนี้มี cache แล้ว) แล้วเทียบกัน
+
+---
+
+## 14. ⚠️ ปัญหาที่เจอบ่อย (อาการ → สาเหตุ → วิธีแก้)
+
+| อาการ | สาเหตุ | วิธีแก้ |
+|---|---|---|
+| `EACCES: permission denied` ตอน `npm install -g ...` | พยายามเขียนลงโฟลเดอร์ระบบที่ user ธรรมดาไม่มีสิทธิ์ | **ไม่ต้องใช้ `sudo`** ติดตั้ง Node ผ่าน nvm (ข้อ 9) ซึ่งเก็บทุกอย่างในโฟลเดอร์ของเราเอง หรือเลี่ยง global โดยใช้ `npx` แทน |
+| `EACCES` ในโฟลเดอร์โปรเจกต์ | เคยรัน `sudo npm install` ทำให้ไฟล์เป็นของ root | อยู่ในโฟลเดอร์โปรเจกต์ แล้วสั่ง `sudo chown -R $(whoami) .` ครั้งเดียว จากนั้นลบ `node_modules` ติดตั้งใหม่ (ระวัง: สั่งเฉพาะในโฟลเดอร์โปรเจกต์ ห้ามสั่งที่ `/` หรือโฟลเดอร์ระบบ) |
+| `ERESOLVE could not resolve` / `peer dependency` | package สองตัวต้องการเวอร์ชันของ package ที่สามไม่ตรงกัน | อ่านบรรทัด `Found:` และ `peer ...` ว่าใครต้องการอะไร แล้วอัปเดตหรือปรับเวอร์ชันให้เข้ากัน วิธีหลบสุดท้ายคือ `npm install --legacy-peer-deps` (ใช้เมื่อเข้าใจแล้วว่ากำลังข้ามอะไร) |
+| `Cannot find module 'xxx'` / `ERR_MODULE_NOT_FOUND` | ยังไม่ได้ติดตั้ง (เช่น เพิ่ง clone) หรือพิมพ์ชื่อ/ที่อยู่ไฟล์ผิด หรืออยู่ผิดโฟลเดอร์ | `npm install` (หรือตาม lock file ของโปรเจกต์) เช็คว่าอยู่โฟลเดอร์ที่มี `package.json` (`pwd`) และเช็คตัวสะกด |
+| `SyntaxError` แปลกๆ หรือ `Unexpected token` หรือ package ฟ้องว่าต้อง Node เวอร์ชันสูงกว่า | ใช้ Node เวอร์ชันเก่าเกินไป | `node -v` เทียบกับที่โปรเจกต์ต้องการ (`.nvmrc` / `engines`) แล้ว `nvm use` |
+| `The module was compiled against a different Node.js version` | package ที่คอมไพล์ไว้กับ Node รุ่นหนึ่ง แต่ตอนนี้รันด้วยอีกรุ่น | ลบ `node_modules` แล้วติดตั้งใหม่ด้วย Node รุ่นที่ใช้อยู่ (หรือ `npm rebuild`) |
+| ติดตั้งแล้ว lock file เปลี่ยนเยอะ / ทีมเห็นไฟล์ lock ต่างกัน | ใช้ package manager คนละตัว หรือรุ่นของ npm/Bun ต่างกัน | ตกลงใช้ตัวเดียวตามกฎทีม (ข้อ 6) ลบ lock file ที่ไม่ใช่ของโปรเจกต์ |
+| Git ฟ้อง conflict ในไฟล์ lock หลัง merge | สองคนเพิ่ม package ต่างกันบนคนละ branch | **ห้ามแก้ไฟล์ lock ด้วยมือ** แก้ conflict ใน `package.json` ก่อน แล้วเลือกไฟล์ lock ฝั่งใดฝั่งหนึ่ง จากนั้นรัน `npm install` (หรือ `bun install`) ให้มันสร้างใหม่ให้ตรงกับ `package.json` แล้ว commit |
+| `EADDRINUSE: address already in use :::3000` | มีโปรแกรมอื่นจอง port 3000 อยู่ (เช่น เปิดเซิร์ฟเวอร์ค้างไว้อีกหน้าต่าง) | ปิดหน้าต่างเก่า หรือหาตัวที่จอง: `lsof -i :3000` (Mac/Linux) / `netstat -ano \| findstr :3000` (Windows) แล้วปิดโปรเซสนั้น หรือเปลี่ยนเลข port ในแอป |
+| `npm install` ช้ามากหรือค้าง | เน็ตช้า / registry ติดขัด | รอสักครู่ ลองใหม่ ถ้าซ้ำให้ดูไฟล์ log ที่ npm บอก path ไว้ท้าย error |
+| `command not found: node` (หรือ `bun`) หลังติดตั้ง | Terminal เก่ายังไม่รู้จักโปรแกรมที่เพิ่งติดตั้ง | ปิดแล้วเปิด Terminal ใหม่ ถ้ายังไม่ได้ ให้ติดตั้งใหม่ตามบทที่ 0 |
+| มี `package-lock.json` แต่ใช้ `bun install` (หรือกลับกัน) | ใช้ package manager ผิดตัว | ดูกฎข้อ 6 ว่าใช้ตามไฟล์ lock ที่มีอยู่ ลบไฟล์ lock ของอีกตัวที่เผลอสร้างออก |
 
 ---
 
@@ -251,17 +570,54 @@ devDependencies เพราะใช้แค่ตอนแปลงโค้�
 รัน `npm install` (หรือ package manager ตาม lock file ของโปรเจกต์) เพราะ `node_modules` ไม่ได้อยู่ใน Git
 </details>
 
+<details><summary>4. <code>"^4.1.2"</code> กับ <code>"~4.1.2"</code> ต่างกันยังไง?</summary>
+
+`^4.1.2` รับได้ถึง `4.x.x` (ไม่ข้าม major) ส่วน `~4.1.2` รับได้แค่ `4.1.x` (เฉพาะ patch) `^` ยืดหยุ่นกว่า
+</details>
+
+<details><summary>5. ทำไมต้อง commit lock file แต่ห้าม commit <code>node_modules</code>?</summary>
+
+lock file จดเวอร์ชันเป๊ะที่ใช้อยู่ ทำให้ทุกคนและ server ได้ของเหมือนกัน และไฟล์เล็ก ส่วน `node_modules` ใหญ่มากและสร้างใหม่ได้เสมอจาก `package.json` + lock file
+</details>
+
+<details><summary>6. <code>npm install</code> กับ <code>npm ci</code> ต่างกันยังไง ใช้ตอนไหน?</summary>
+
+`npm install` อาจเลือกเวอร์ชันใหม่และอัปเดต lock file (ใช้ตอนพัฒนา/เพิ่ม package) ส่วน `npm ci` ติดตั้งตาม lock file เป๊ะๆ และไม่แก้ lock (ใช้ใน Docker และ CI เพื่อให้ได้ผลเหมือนกันทุกครั้ง)
+</details>
+
+<details><summary>7. ไฟล์ <code>.js</code> ที่ใช้ <code>import</code> แล้วขึ้น "Cannot use import statement outside a module" ต้องแก้ยังไง?</summary>
+
+Node มองไฟล์เป็น CommonJS ให้ใส่ `"type": "module"` ใน `package.json` หรือเปลี่ยนนามสกุลไฟล์เป็น `.mjs`
+</details>
+
+<details><summary>8. ก่อนติดตั้ง package ที่ไม่เคยใช้ ควรตรวจอะไรบ้าง?</summary>
+
+ชื่อสะกดถูกไหม (กันของปลอม), มีคนใช้เยอะและยังมีคนดูแลไหม (ดาวน์โหลดรายสัปดาห์ วันที่อัปเดตล่าสุด), จำเป็นจริงไหม และหลังติดตั้งรัน `npm audit` ตรวจช่องโหว่
+</details>
+
 ---
 
 ## ✏️ แบบฝึกหัด
 
-ทำข้อ 7 แล้วสรุปเวลาเป็นตารางใน README (รอบแรก / รอบมี cache) ของทั้ง 3 ตัว
+ทำข้อ 13 แล้วสรุปเวลาเป็นตารางใน README (รอบแรก / รอบมี cache) ของทั้ง 3 ตัว
+
+**ข้อเพิ่มเติม (ทำถ้ามีเวลา)**
+1. ในโฟลเดอร์ `pkg-demo` ติดตั้ง `typescript` แบบ dev แล้วแสดงผล `npm ls` กับ `package.json` ส่วน `devDependencies` เป็น screenshot จากนั้นลบออกด้วย `npm uninstall`
+2. ลบ `node_modules` แล้วกู้คืนด้วย `npm ci` อธิบายว่าทำไมได้เวอร์ชันเดิมเป๊ะ
+3. ติดตั้ง nvm (หรือ nvm-windows) แล้วสลับ Node 2 เวอร์ชัน แสดง `node -v` ก่อนและหลัง
+4. ใช้ `bun init -y` สร้างโปรเจกต์ แล้วเปิด `package.json` อธิบายให้พี่ไบต์ฟังว่าแต่ละหัวข้อคืออะไร
 
 ## ✅ ผ่านด่าน
 
 - [ ] แยก runtime กับ package manager ได้
 - [ ] อธิบาย `package.json`, `node_modules`, lock file ได้
+- [ ] แยก `dependencies` กับ `devDependencies` ได้
 - [ ] รู้ว่า `^` และ `~` ต่างกันยังไง
+- [ ] เพิ่ม ลบ และอัปเดต package ได้ ทั้งด้วย npm และ Bun
+- [ ] รู้ว่า `npm ci` / `bun install --frozen-lockfile` ใช้ตอนไหน
+- [ ] อธิบายได้ว่า ESM กับ CommonJS ต่างกันยังไง
+- [ ] อ่านโครงของ error ตอนติดตั้ง (รหัส + บรรทัดหลัก) และรู้ว่าจะค้นหาอะไร
+- [ ] รู้ข้อควรระวังด้านความปลอดภัยเวลาติดตั้ง package
 
 ---
 

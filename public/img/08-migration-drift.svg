@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 405" role="img" aria-label="Migration drift: โครงสร้างฐานข้อมูลจริงไม่ตรงกับประวัติ migration">
+<title>Migration drift: โครงสร้างฐานข้อมูลจริงไม่ตรงกับประวัติ migration</title>
+<defs><marker id="arn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="aro" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="ars" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a4fb0"/></marker></defs>
+<rect x="1" y="1" width="798" height="403" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+<rect x="20" y="50" width="340" height="150" rx="12" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="190" y="80" font-size="16" fill="#0b3c91" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ประวัติ migration (ใน Git)</text>
+<text x="44" y="112" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">0000  สร้าง customers, rentals</text>
+<text x="44" y="140" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">0001  เพิ่มคอลัมน์ email</text>
+<text x="44" y="168" font-size="15" fill="#64748b" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">(เพิ่งสร้างใหม่ ยังไม่ได้รัน)</text>
+<rect x="440" y="50" width="340" height="150" rx="12" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+<text x="610" y="80" font-size="16" fill="#b45309" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ฐานข้อมูลจริง (เครื่องเพื่อน)</text>
+<text x="464" y="112" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">มี customers, rentals</text>
+<text x="464" y="140" font-size="15" fill="#dc2626" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">มีคอลัมน์ email แล้ว</text>
+<text x="464" y="168" font-size="15" fill="#64748b" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">(เพราะแก้ด้วยมือ ไม่ผ่าน migration)</text>
+<text x="400" y="128" font-size="44" fill="#dc2626" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">≠</text>
+<rect x="20" y="222" width="760" height="56" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+<text x="400" y="246" font-size="15" fill="#dc2626" text-anchor="middle" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace">รัน migrate  →  ERROR:  column "email" of relation "customers" already exists</text>
+<text x="400" y="268" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">(ฐานข้อมูลไม่ยอมเพิ่มคอลัมน์ซ้ำ)</text>
+<text x="30" y="310" font-size="16" fill="#16a34a" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ทางแก้ (ทำใน DB ทดลอง/dev):</text>
+<text x="30" y="336" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">1. ลบ DB dev แล้วรัน migrate ใหม่ทั้งหมดให้ตรงกับประวัติ</text>
+<text x="30" y="360" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">2. หรือย้อนการแก้มือ (DROP COLUMN) แล้วค่อย migrate</text>
+<text x="30" y="384" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">3. production: ห้ามแก้มือ ถ้าเกิดแล้วต้องทำ migration แก้ให้ตรงกับของจริงอย่างระวัง</text>
+</svg>

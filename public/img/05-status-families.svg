@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 430" role="img" aria-label="กลุ่มของ HTTP status code" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
+<title>กลุ่มของ HTTP status code</title><desc>2xx สำเร็จ 3xx ย้ายที่ 4xx client ผิด 5xx server พัง พร้อมตัวอย่างเลขที่ใช้บ่อย</desc>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="428" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="19" text-anchor="middle" fill="#0b3c91" font-weight="bold">Status code 4 กลุ่ม: ดูแค่เลขหลักแรกก็รู้เรื่อง</text>
+<rect x="20" y="52" width="760" height="80" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<rect x="20" y="52" width="110" height="80" rx="10" fill="#16a34a"/>
+<text x="75" y="103" font-size="30" text-anchor="middle" fill="#ffffff" font-weight="bold">2xx</text>
+<text x="150" y="84" font-size="18" text-anchor="start" fill="#0f172a" font-weight="bold">สำเร็จ</text>
+<text x="150" y="112" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">200 ดู/แก้ได้ · 201 สร้างแล้ว · 204 ลบแล้ว (ไม่มี body)</text>
+<rect x="20" y="144" width="760" height="80" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="20" y="144" width="110" height="80" rx="10" fill="#1a4fb0"/>
+<text x="75" y="195" font-size="30" text-anchor="middle" fill="#ffffff" font-weight="bold">3xx</text>
+<text x="150" y="176" font-size="18" text-anchor="start" fill="#0f172a" font-weight="bold">ย้ายที่ (redirect)</text>
+<text x="150" y="204" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">301 ย้ายถาวร · 302 ย้ายชั่วคราว · 304 ใช้ของเดิมได้</text>
+<rect x="20" y="236" width="760" height="80" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<rect x="20" y="236" width="110" height="80" rx="10" fill="#d97706"/>
+<text x="75" y="287" font-size="30" text-anchor="middle" fill="#ffffff" font-weight="bold">4xx</text>
+<text x="150" y="268" font-size="18" text-anchor="start" fill="#0f172a" font-weight="bold">client ผิด (แก้ที่คนเรียก)</text>
+<text x="150" y="296" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">400 ข้อมูลผิด · 401 ยังไม่ login · 403 ไม่มีสิทธิ์ · 404 ไม่พบ · 409 ขัดกัน</text>
+<rect x="20" y="328" width="760" height="80" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+<rect x="20" y="328" width="110" height="80" rx="10" fill="#dc2626"/>
+<text x="75" y="379" font-size="30" text-anchor="middle" fill="#ffffff" font-weight="bold">5xx</text>
+<text x="150" y="360" font-size="18" text-anchor="start" fill="#0f172a" font-weight="bold">server พัง (แก้ที่โค้ดเรา)</text>
+<text x="150" y="388" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">500 โค้ดพัง · 502/503 ครัวปิด/ล้น · ห้ามโทษ client</text>
+</svg>

@@ -63,3 +63,20 @@
 .vp-doc hr {
   display: none;
 }
+
+/* รูปประกอบ (SVG แผนภาพ) */
+.vp-doc img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 16px auto 4px;
+  border-radius: 10px;
+  border: 1px solid var(--vp-c-divider);
+}
+.vp-doc img + em {
+  display: block;
+  text-align: center;
+  font-size: 0.85em;
+  color: var(--vp-c-text-2);
+  margin-bottom: 16px;
+}

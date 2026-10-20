@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 490" role="img" aria-label="หน้าตา DevTools แท็บ Network" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="16">
+<title>หน้าตา DevTools แท็บ Network</title>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#0b3c91"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#dc2626"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f59e0b"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="488" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="20" text-anchor="middle" fill="#0b3c91" font-weight="bold">DevTools &gt; Network: อ่านคำขอที่ล้มเหลว</text>
+<rect x="24" y="46" width="752" height="300" rx="8" fill="#fff" stroke="#94a3b8" stroke-width="2"/>
+<text x="78.0" y="73" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">Elements</text>
+<text x="167.5" y="73" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">Console</text>
+<text x="252.5" y="73" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">Sources</text>
+<rect x="298" y="52" width="79" height="30" rx="5" fill="#1a4fb0"/>
+<text x="337.5" y="73" font-size="15" text-anchor="middle" fill="#fff" font-weight="bold">Network</text>
+<text x="439.0" y="73" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">Application</text>
+<line x1="24" y1="88" x2="776" y2="88" stroke="#cbd5e1"/>
+<text x="34" y="112" font-size="15" text-anchor="start" fill="#64748b" font-weight="normal">[ ] Preserve log    [ ] Disable cache    ตัวกรอง: Fetch/XHR</text>
+<rect x="24" y="124" width="752" height="28" fill="#e2e8f0"/>
+<text x="36" y="144" font-size="15" text-anchor="start" fill="#0f172a" font-weight="bold">Name</text>
+<text x="300" y="144" font-size="15" text-anchor="start" fill="#0f172a" font-weight="bold">Status</text>
+<text x="390" y="144" font-size="15" text-anchor="start" fill="#0f172a" font-weight="bold">Type</text>
+<text x="520" y="144" font-size="15" text-anchor="start" fill="#0f172a" font-weight="bold">Time</text>
+<text x="36" y="176" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">laptops</text>
+<text x="300" y="176" font-size="15" text-anchor="start" fill="#16a34a" font-weight="bold">200</text>
+<text x="390" y="176" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">fetch</text>
+<text x="520" y="176" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">42 ms</text>
+<rect x="24" y="186" width="752" height="28" fill="#fee2e2"/>
+<text x="36" y="206" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">rentals</text>
+<text x="300" y="206" font-size="15" text-anchor="start" fill="#dc2626" font-weight="bold">400</text>
+<text x="390" y="206" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">fetch</text>
+<text x="520" y="206" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">18 ms</text>
+<text x="36" y="236" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">logo.png</text>
+<text x="300" y="236" font-size="15" text-anchor="start" fill="#dc2626" font-weight="bold">404</text>
+<text x="390" y="236" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">png</text>
+<text x="520" y="236" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">9 ms</text>
+<text x="36" y="266" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">login</text>
+<text x="300" y="266" font-size="15" text-anchor="start" fill="#16a34a" font-weight="bold">200</text>
+<text x="390" y="266" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">fetch</text>
+<text x="520" y="266" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">120 ms</text>
+<rect x="560" y="164" width="200" height="24" rx="10" fill="none" stroke="none" stroke-width="2"/>
+<rect x="28" y="186" width="744" height="22" rx="4" fill="none" stroke="#f59e0b" stroke-width="2.5"/>
+<line x1="24" y1="282" x2="776" y2="282" stroke="#cbd5e1"/>
+<text x="72.5" y="306" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">Headers</text>
+<text x="157.5" y="306" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">Payload</text>
+<text x="242.5" y="306" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">Preview</text>
+<rect x="289" y="288" width="86" height="26" rx="5" fill="#f59e0b"/>
+<text x="332.0" y="306" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">Response</text>
+<text x="417.5" y="306" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">Timing</text>
+<text x="34" y="334" font-size="15" text-anchor="start" fill="#dc2626" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">{ &quot;error&quot;: &quot;laptopId is required&quot; }</text>
+<text x="400" y="368" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">คลิกแถวที่ล้ม (สีแดง) แล้วดูแท็บย่อยด้านล่าง</text>
+<circle cx="44" cy="391" r="8" fill="#16a34a"/>
+<text x="62" y="396" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">Status: 2xx สำเร็จ · 4xx เราส่งผิด · 5xx server พัง</text>
+<circle cx="44" cy="417" r="8" fill="#f59e0b"/>
+<text x="62" y="422" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">Payload: สิ่งที่เราส่งไปจริงๆ ตรงกับที่คิดไหม</text>
+<circle cx="44" cy="443" r="8" fill="#1a4fb0"/>
+<text x="62" y="448" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">Response: สิ่งที่ server ตอบกลับมา มักบอกสาเหตุ</text>
+<text x="400" y="482" font-size="14" text-anchor="middle" fill="#64748b" font-weight="normal">ชื่อเมนูอาจต่างเล็กน้อยตาม browser และเวอร์ชัน แต่หลักการเหมือนกัน</text>
+</svg>
