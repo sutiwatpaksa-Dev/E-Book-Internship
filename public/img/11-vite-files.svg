@@ -12,7 +12,7 @@
 <text x="390.0" y="115.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">สั่ง React วาด</text>
 <text x="390.0" y="137.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">&lt;App /&gt; ลงใน root</text>
 <rect x="550" y="60" width="200" height="100" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
-<text x="650.0" y="93.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">src/App.tsx</text>
+<text x="650.0" y="93.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">src/app.tsx</text>
 <text x="650.0" y="115.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ชิ้นส่วนแรกของเรา</text>
 <text x="650.0" y="137.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">(แก้ที่นี่)</text>
 <line x1="232" y1="110" x2="288" y2="110" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>

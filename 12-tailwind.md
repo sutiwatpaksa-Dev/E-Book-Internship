@@ -138,7 +138,7 @@ Tailwind มี **จุดเปลี่ยน (breakpoint)** = ความ�
 ## 5. 🔧 ลงมือ: ชิ้นส่วนที่งาน STARTER ต้องมี
 
 ### เมนูบน + ปุ่ม ☰ บนมือถือ
-`src/components/Navbar.tsx`
+`src/components/navbar.tsx`
 ```tsx
 import { useState } from "react";
 
@@ -224,7 +224,7 @@ export default function Navbar({ shopName, logoUrl }: { shopName: string; logoUr
 ```
 
 ### ปุ่ม LINE ลอยมุมขวาล่าง
-`src/components/LineButton.tsx`
+`src/components/line-button.tsx`
 ```tsx
 export default function LineButton({ lineUrl }: { lineUrl: string }) {
   return (
@@ -243,7 +243,7 @@ export default function LineButton({ lineUrl }: { lineUrl: string }) {
 👀 `bg-[#06C755]` = ใส่ค่าเองในวงเล็บเหลี่ยม ใช้กับค่าที่ไม่ได้ตั้งไว้ (นี่คือสีเขียวของ LINE)
 
 ### ส่วนท้ายหน้า (Footer)
-`src/components/Footer.tsx`
+`src/components/footer.tsx`
 ```tsx
 interface Props {
   address: string;

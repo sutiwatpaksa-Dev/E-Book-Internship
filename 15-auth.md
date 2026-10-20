@@ -333,7 +333,7 @@ export const getMe = () => api<Admin>("/api/admin/me");
 ![RequireAuth มี 3 สถานะ: checking, in, out ถ้าได้ 401 พาไปหน้า login แล้วกลับมาหน้าเดิม](/img/15-require-auth.svg)
 *RequireAuth เช็คกับ server ว่ายัง login อยู่ไหม แล้วแสดงหน้าหรือพาไปหน้า login*
 
-`client/src/components/RequireAuth.tsx`
+`client/src/components/require-auth.tsx`
 ```tsx
 import { useEffect, useState, type ReactNode } from "react";
 import { Navigate, useLocation } from "react-router";
@@ -356,7 +356,7 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
 ```
 
 ### หน้า login
-`client/src/pages/admin/LoginPage.tsx`
+`client/src/pages/admin/login-page.tsx`
 ```tsx
 import { useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router";

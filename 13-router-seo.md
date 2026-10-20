@@ -47,7 +47,7 @@ bun add react-router
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router";
-import App from "./App";
+import App from "./app";
 import "./index.css";
 
 createRoot(document.getElementById("root")!).render(
@@ -59,14 +59,14 @@ createRoot(document.getElementById("root")!).render(
 );
 ```
 
-`src/App.tsx` ประกาศว่าลิงก์ไหนแสดงหน้าไหน
+`src/app.tsx` ประกาศว่าลิงก์ไหนแสดงหน้าไหน
 ```tsx
 import { Routes, Route } from "react-router";
-import PublicLayout from "./components/PublicLayout";
-import HomePage from "./pages/HomePage";
-import AboutPage from "./pages/AboutPage";
-import ContactPage from "./pages/ContactPage";
-import NotFoundPage from "./pages/NotFoundPage";
+import PublicLayout from "./components/public-layout";
+import HomePage from "./pages/home-page";
+import AboutPage from "./pages/about-page";
+import ContactPage from "./pages/contact-page";
+import NotFoundPage from "./pages/not-found-page";
 
 export default function App() {
   return (
@@ -89,12 +89,12 @@ export default function App() {
 
 ## 3. โครงหน้าร่วม + เมนูที่รู้ว่าอยู่หน้าไหน
 
-`src/components/PublicLayout.tsx` โครงที่ทุกหน้าใช้ร่วมกัน (`Outlet` = ช่องที่เนื้อหาของแต่ละหน้าจะมาแสดง)
+`src/components/public-layout.tsx` โครงที่ทุกหน้าใช้ร่วมกัน (`Outlet` = ช่องที่เนื้อหาของแต่ละหน้าจะมาแสดง)
 ```tsx
 import { Outlet } from "react-router";
-import Navbar from "./Navbar";
-import Footer from "./Footer";
-import LineButton from "./LineButton";
+import Navbar from "./navbar";
+import Footer from "./footer";
+import LineButton from "./line-button";
 
 // ข้อมูลร้านชั่วคราว: แบบฝึกหัดบทที่ 14 จะเปลี่ยนเป็นดึงจาก /api/settings
 const shop = {
@@ -141,7 +141,7 @@ import { NavLink } from "react-router";
 > ⚠️ ลิงก์ไปหน้าอื่นในเว็บเราเอง ใช้ `<Link>` / `<NavLink>` เสมอ ถ้าใช้ `<a href>` เบราว์เซอร์จะโหลดใหม่ทั้งหน้า ข้อมูลที่จำไว้หายหมด
 > ลิงก์ออกไปเว็บอื่น (LINE, Facebook) ใช้ `<a href target="_blank" rel="noopener noreferrer">` ได้ตามปกติ
 
-`src/pages/NotFoundPage.tsx` หน้า 404
+`src/pages/not-found-page.tsx` หน้า 404
 ```tsx
 import { Link } from "react-router";
 
@@ -169,7 +169,7 @@ export default function NotFoundPage() {
 ```tsx
 import { useSearchParams } from "react-router";
 import { useFetch } from "../api/useFetch";
-import ServiceCard from "./ServiceCard";
+import ServiceCard from "./service-card";
 import type { Category, Service } from "../types/service";
 
 export default function ServiceList() {
@@ -206,7 +206,7 @@ export default function ServiceList() {
 
 ## 5. หน้าจัดการร้าน: หน้าซ้อนหน้า + หน้าที่ต้อง login
 
-เพิ่มใน `App.tsx`:
+เพิ่มใน `app.tsx`:
 ```tsx
 <Route path="admin/login" element={<LoginPage />} />
 <Route path="admin" element={<RequireAuth><AdminLayout /></RequireAuth>}>
@@ -235,7 +235,7 @@ export default function ServiceList() {
 ### 🔧 ตั้งชื่อหน้าและคำอธิบายของแต่ละหน้า
 React 19 ให้เขียน `<title>` และ `<meta>` ไว้ในชิ้นส่วนไหนก็ได้ แล้วจะย้ายไปไว้ส่วนหัวของหน้าให้เอง
 
-`src/components/Seo.tsx`
+`src/components/seo.tsx`
 ```tsx
 interface Props {
   title: string;

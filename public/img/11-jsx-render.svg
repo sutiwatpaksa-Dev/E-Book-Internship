@@ -4,7 +4,7 @@
 <rect x="1" y="1" width="798" height="358" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
 <text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">JSX: เขียนในโค้ด → เบราว์เซอร์เห็นเป็นหน้าเว็บ</text>
 <rect x="30" y="55" width="300" height="150" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
-<text x="180.0" y="92.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold">App.tsx (JSX)</text>
+<text x="180.0" y="92.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold">app.tsx (JSX)</text>
 <text x="180.0" y="113.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">const shopName = "Bit Café";</text>
 <text x="180.0" y="134.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">&lt;h1&gt;{shopName}&lt;/h1&gt;</text>
 <text x="180.0" y="155.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">&lt;p&gt;{isOpen ? "เปิดอยู่ 🟢"</text>

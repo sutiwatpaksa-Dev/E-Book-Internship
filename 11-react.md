@@ -55,13 +55,13 @@ bun run dev
 |---|---|
 | `index.html` | หน้า HTML หน้าเดียวของทั้งเว็บ มีกล่อง `<div id="root">` ให้ React วาดลงไป |
 | `src/main.tsx` | จุดเริ่ม: สั่งให้ React วาด `<App />` ลงในกล่องนั้น |
-| `src/App.tsx` | ชิ้นส่วนแรก เราจะแก้ที่นี่ |
+| `src/app.tsx` | ชิ้นส่วนแรก เราจะแก้ที่นี่ |
 | `vite.config.ts` | ตั้งค่า Vite (บทที่ 12 และ 14 จะมาแก้) |
 
-![ลำดับการทำงานของ index.html, main.tsx และ App.tsx](/img/11-vite-files.svg)
+![ลำดับการทำงานของ index.html, main.tsx และ app.tsx](/img/11-vite-files.svg)
 *index.html มีกล่อง root ว่างๆ แล้ว main.tsx สั่งให้ React เอา App ไปวาดลงกล่องนั้น*
 
-ลบของเดิมใน `src/App.tsx` แล้วใส่:
+ลบของเดิมใน `src/app.tsx` แล้วใส่:
 ```tsx
 export default function App() {
   return <h1>Bit Café ☕</h1>;
@@ -129,7 +129,7 @@ export interface Category {  // ใช้ในบทที่ 13
 }
 ```
 
-`src/components/ServiceCard.tsx` การ์ดสินค้า 1 ใบ
+`src/components/service-card.tsx` การ์ดสินค้า 1 ใบ
 ```tsx
 import type { Service } from "../types/service";
 
@@ -248,9 +248,9 @@ export function useFetch<T>(url: string) {
 }
 ```
 
-**ใช้งาน** `src/App.tsx`
+**ใช้งาน** `src/app.tsx`
 ```tsx
-import ServiceCard from "./components/ServiceCard";
+import ServiceCard from "./components/service-card";
 import { useFetch } from "./api/useFetch";
 import type { Service } from "./types/service";
 
@@ -287,7 +287,7 @@ export default function App() {
 ![พิมพ์ในช่องกรอก onChange อัปเดต state แล้วช่องกรอกวาดใหม่](/img/11-form-flow.svg)
 *ช่องกรอกอ่านค่าจาก state และทุกตัวอักษรที่พิมพ์จะอัปเดต state กลับ*
 
-`src/components/ContactForm.tsx`
+`src/components/contact-form.tsx`
 ```tsx
 import { useState, type FormEvent } from "react";
 
@@ -366,11 +366,11 @@ export default function ContactForm() {
 
 ```
 client/src/
-├─ pages/        # 1 ไฟล์ = 1 หน้า (HomePage.tsx, AboutPage.tsx, ...)
-├─ components/   # ชิ้นส่วนที่ใช้ซ้ำ (Navbar, ServiceCard, ...)
+├─ pages/        # 1 ไฟล์ = 1 หน้า (home-page.tsx, about-page.tsx, ...)
+├─ components/   # ชิ้นส่วนที่ใช้ซ้ำ (navbar, service-card, ...)
 ├─ api/          # ทุกการเรียก backend อยู่ที่นี่ที่เดียว
 ├─ types/        # interface ของข้อมูล
-├─ App.tsx
+├─ app.tsx
 └─ main.tsx
 ```
 > 💡 กฎง่ายๆ: **ชิ้นส่วนไม่เรียก API เอง** ให้เรียกผ่านไฟล์ในโฟลเดอร์ `api/` วันที่ที่อยู่หรือหน้าตาข้อมูลเปลี่ยน จะได้แก้ที่เดียว

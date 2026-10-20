@@ -2,6 +2,10 @@
 
 บันทึกการเปลี่ยนแปลงของคู่มือในแต่ละเวอร์ชัน เวอร์ชันล่าสุดอยู่บนสุด
 
+## v1.5.1 · 20 ต.ค. 2569
+
+- **ชื่อไฟล์ component เป็นตัวพิมพ์เล็กทั้งหมด (kebab-case)** ในบท 11–15 และรูปประกอบ เช่น `service-card.tsx`, `home-page.tsx`, `public-layout.tsx`, `app.tsx` ตรงกับกฎในบทเสริมจัดโครงสร้างโปรเจกต์ (ชื่อ component ในโค้ดยังเป็นตัวพิมพ์ใหญ่ตัวแรกเหมือนเดิม)
+
 ## v1.5.0 · 20 ต.ค. 2569
 
 - **รูปประกอบบท 11–15 และ Mini Project:** เพิ่ม SVG 43 รูป ได้แก่ React (component/props/state/fetch/ฟอร์ม), Tailwind (breakpoint, flex/grid, สีธีม), Router และ SEO (การ์ดตอนแชร์, crawler), Hono API (เส้นทางคำขอ, envelope, ตัวจัดการ error, `TRUST_PROXY`), Auth (ลำดับ login, JWT, cookie, ด่านตรวจ) และหน้า STARTER (แผนผังเว็บ, ER, แผนที่ API, ไทม์ไลน์ 10 วัน, เกณฑ์คะแนน)
