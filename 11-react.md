@@ -50,6 +50,15 @@ bun run dev
 ```
 เปิด http://localhost:5173 ควรเห็นหน้าตัวอย่างของ Vite + React พร้อมปุ่มนับเลข 🎉
 
+> ⚠️ **เปลี่ยนชื่อไฟล์ก่อนเขียนโค้ด:** Vite สร้างไฟล์ชื่อ `src/App.tsx` (A ตัวใหญ่) แต่หนังสือเล่มนี้ตั้งชื่อไฟล์เป็นตัวพิมพ์เล็กทั้งหมด (`app.tsx`) กด `Ctrl + C` หยุดเซิร์ฟเวอร์ แล้วรัน
+> ```bash
+> git mv src/App.tsx src/tmp.tsx
+> git mv src/tmp.tsx src/app.tsx
+> ```
+> (ถ้ายังไม่ได้ `git init` ให้ใช้ `mv` สองครั้งแบบเดียวกัน) ที่ต้องเปลี่ยนสองต่อ เพราะ `mv src/App.tsx src/app.tsx` ตรงๆ บน Mac/Windows จะเปลี่ยนชื่อในเครื่อง แต่ Git ยังจำชื่อเดิม `App.tsx` ทำให้ตอน build บน Linux หาไฟล์ไม่เจอ (ดูวิธีเดียวกันในบทเสริมจัดโครงสร้างโปรเจกต์)
+> จากนั้นเปิด `src/main.tsx` แก้บรรทัด `import App from './App.tsx'` เป็น `import App from './app.tsx'` แล้วรัน `bun run dev` ใหม่
+> ห้ามข้ามขั้นนี้ เพราะบน Mac/Windows จะดูเหมือนใช้ได้ (ระบบไฟล์ไม่แยกตัวเล็กตัวใหญ่) แต่บน Linux และตอน build บนเซิร์ฟเวอร์ (บทที่ 21–22) จะ error เช่น `Cannot find module './app'` หรือ `differs from already included file name only in casing`
+
 **ไฟล์ที่ต้องรู้จัก**
 | ไฟล์ | หน้าที่ |
 |---|---|
@@ -260,6 +269,7 @@ export default function OrderDemo() {
 3 cleanup A      ← เก็บกวาดของรอบเก่าก่อน
 2 effect B       ← แล้วค่อยทำรอบใหม่
 ```
+> 💡 โปรเจกต์ Vite ห่อแอปด้วย `<StrictMode>` (ดูข้อ 6.6) ตอน `bun run dev` จึงเห็นบรรทัด `1 render ...` **ซ้ำเป็น 2 บรรทัด** ทุกครั้ง (React เรียกฟังก์ชันชิ้นส่วน 2 รอบ) และตอนเปิดหน้าครั้งแรกจะมี `3 cleanup A` กับ `2 effect A` ตามมาอีกชุด เป็นเรื่องปกติ ลำดับ render → cleanup → effect ที่อธิบายข้างบนยังเหมือนเดิม
 สังเกตว่า **render มาก่อนเสมอ** แล้ว cleanup ของรอบเก่า แล้วจึง effect ของรอบใหม่
 
 ### 6.3 Dependency array: บอกว่า effect จะรันเมื่อไหร่

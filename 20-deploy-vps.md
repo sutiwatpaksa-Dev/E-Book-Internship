@@ -69,7 +69,8 @@ RUN bun install --frozen-lockfile --production   # เฉพาะ dependencies 
 
 COPY . .
 ENV NODE_ENV=production
-USER bun                                         # ไม่รันด้วย root
+# ไม่รันด้วย root
+USER bun
 EXPOSE 3000
 CMD ["bun", "src/index.ts"]
 ```

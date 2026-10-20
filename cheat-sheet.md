@@ -51,7 +51,7 @@ port: `-p เครื่องเรา:ในกล่อง` · ในกล�
 ```bash
 npm install -D typescript tsx @types/node
 npx tsx watch src/index.ts          # dev
-npx tsc --noEmit                    # ตรวจ type ✅ ก่อน commit
+npx tsc --noEmit                    # ตรวจ type ✅ ก่อน commit (ฝั่ง server; ฝั่ง client ใช้ bun run build ซึ่งรัน tsc -b)
 npx tsc                             # build
 ```
 ```ts
@@ -108,6 +108,7 @@ npx prisma studio
 ## Frontend (React + Tailwind + Router)
 ```bash
 bun create vite client --template react-ts
+# ⚠️ ใน client/ เปลี่ยน src/App.tsx เป็น src/app.tsx แล้วแก้ import ใน main.tsx (ดูบทที่ 11 ข้อ 2)
 bun add tailwindcss @tailwindcss/vite react-router
 bun run dev / bun run build
 ```

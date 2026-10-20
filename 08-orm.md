@@ -566,7 +566,7 @@ console.log(rows);
 [
   { name: 'สมชาย', laptop: 'Lenovo T14' },
   { name: 'สมชาย', laptop: 'Dell 5420' },
-  { name: 'สมหญิง', laptop: null },
+  { name: 'สมหญิง', laptop: 'HP 840' },
   { name: 'มานี', laptop: null }
 ]
 ```

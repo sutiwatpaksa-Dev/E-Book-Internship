@@ -69,7 +69,7 @@
 `.env.example`
 ```
 DATABASE_URL=postgres://user:password@localhost:5432/dbname
-JWT_SECRET=change-me
+JWT_SECRET=ใส่ค่าสุ่มยาวอย่างน้อย-32-ตัวอักษร-ห้ามใช้ค่านี้จริง
 ```
 อ่านค่าในโค้ด และ **ตรวจด้วย Zod ตอนเริ่มแอป** ขาดตัวไหนให้หยุดทันทีพร้อมบอกชัดๆ
 ```ts
@@ -77,7 +77,7 @@ import "dotenv/config";
 import { z } from "zod";
 
 const Env = z.object({
-  DATABASE_URL: z.string().url(),
+  DATABASE_URL: z.url(),
   JWT_SECRET: z.string().min(32),
   PORT: z.coerce.number().default(3000),
 });
@@ -480,7 +480,7 @@ SQL ที่ส่งไป: SELECT * FROM users WHERE email = 'x' OR '1'='1'
 
 ```ts
 import { z } from "zod";
-const Register = z.object({ email: z.string().email(), password: z.string().min(8) });
+const Register = z.object({ email: z.email(), password: z.string().min(8) });
 
 const r = Register.safeParse({ email: "abc", password: "123" });
 console.log(r.success);

@@ -66,7 +66,9 @@ BACKUP_DIR="$HOME/backups"
 FILE="$BACKUP_DIR/db-$(date +%F-%H%M).sql.gz"
 mkdir -p "$BACKUP_DIR"
 
-docker compose -f compose.prod.yaml exec -T db pg_dump -U app -d app | gzip > "$FILE"
+# เขียนลงไฟล์ชั่วคราวก่อน สำเร็จแล้วค่อยเปลี่ยนชื่อ (ถ้า pg_dump พังจะไม่เหลือไฟล์เปล่าให้กู้คืนผิดไฟล์)
+docker compose -f compose.prod.yaml exec -T db pg_dump -U app -d app | gzip > "$FILE.tmp"
+mv "$FILE.tmp" "$FILE"
 find "$BACKUP_DIR" -name 'db-*.sql.gz' -mtime +14 -delete     # เก็บย้อนหลัง 14 วัน
 echo "✅ $(date '+%F %T') $FILE ($(du -h "$FILE" | cut -f1))"
 ```

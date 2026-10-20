@@ -6,6 +6,12 @@
 
 - **บทที่ 11 ข้อ 6 ขยายเรื่อง `useEffect`:** อธิบายตั้งแต่ใช้ทำไม ลำดับ render → effect, dependency array 3 แบบ, cleanup, ตัวอย่าง (ชื่อแท็บ, นาฬิกา, ขนาดหน้าจอ), Strict Mode รัน 2 รอบ, เมื่อไหร่ไม่ต้องใช้ พร้อมตารางแก้ปัญหา คำถามเช็คความเข้าใจ และรูป 4 รูป (ตัวอย่างทดสอบด้วย React 19 จริง) เลขข้อ 7–9 เหมือนเดิม
 - **บทเสริมใหม่: ภาษาและคำสั่งที่ใช้เขียน React:** ไวยากรณ์ JS/TS ทีละตัว (arrow function, destructuring, spread, `map`/`filter`, `?.`, `??`, `async/await`, type ของ props), กฎ JSX, ตาราง hook และอธิบาย `useState`, `useEffect`, `useRef`, `useMemo`, `useCallback`, `useContext`, hook ของ Router, กฎของ hook, ตัวจัดการ event และตารางข้อความ error ที่เจอบ่อย 18 แถว พร้อมรูป 7 รูป
+- **แก้ข้อผิดพลาดที่เจอจากการทำตามบทจริงทั้งเล่ม:**
+  - บท 11: Vite สร้าง `App.tsx` แต่บทใช้ `app.tsx` เพิ่มขั้นตอนเปลี่ยนชื่อด้วย `git mv` (ถ้าใช้ `mv` ตรงๆ Git จะจำชื่อเดิม แล้ว build บน Linux/Vercel พัง) และเพิ่มหมายเหตุ Strict Mode ในผล log
+  - บท 20: `Dockerfile` มีคอมเมนต์ต่อท้าย `USER bun` ทำให้ container ไม่ขึ้น ย้ายคอมเมนต์ไปบรรทัดแยก
+  - บท 8: ผลลัพธ์ตัวอย่าง `leftJoin` ของสมหญิงต้องเป็น `HP 840` ไม่ใช่ `null`
+  - บท 10: ค่าตัวอย่าง `JWT_SECRET` ใน `.env.example` สั้นเกินกว่า Zod ที่ตั้งไว้ (32 ตัว) และเปลี่ยนมาใช้ `z.url()` / `z.email()`
+  - บท 22: คำสั่ง migrate ต้องมี `JWT_SECRET` ด้วย · บท 23: `backup.sh` ไม่ทิ้งไฟล์เปล่าเมื่อ `pg_dump` พัง · บท 13: แก้ `<title>` กับ `lang` ใน `index.html` · บท 2, README, `starter/index.md`, `cheat-sheet.md`: แก้ข้อความที่ไม่ตรงกัน
 
 ## v1.5.1 · 20 ต.ค. 2569
 

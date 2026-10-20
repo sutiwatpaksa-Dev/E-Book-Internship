@@ -64,7 +64,7 @@
 3. สร้างตาราง + ข้อมูลตั้งต้น **จากเครื่องเรา** (ทำครั้งแรกครั้งเดียว)
    ```bash
    cd server
-   DATABASE_URL='postgresql://...neon.tech/...?sslmode=require' bun run db:migrate
+   DATABASE_URL='postgresql://...neon.tech/...?sslmode=require' JWT_SECRET='<สุ่ม 32 ตัวขึ้นไป>' bun run db:migrate
    DATABASE_URL='postgresql://...' JWT_SECRET='<สุ่ม>' ADMIN_EMAIL='owner@example.com' ADMIN_PASSWORD='<รหัส>' bun run seed
    ```
    ⚠️ คำสั่งที่มีรหัสผ่านจะค้างอยู่ในประวัติคำสั่งของ Terminal ให้ลบทิ้ง (`history -d`) หรือพิมพ์ช่องว่างนำหน้าคำสั่ง (ถ้าตั้งค่าให้ไม่จำคำสั่งที่ขึ้นต้นด้วยช่องว่างไว้)
