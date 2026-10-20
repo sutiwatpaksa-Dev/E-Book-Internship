@@ -188,7 +188,252 @@ export default function MenuToggle() {
 
 ---
 
-## 6. 🔧 ดึงข้อมูลจาก API
+## 6. useEffect และการดึงข้อมูลจาก API
+
+ข้อนี้มี 2 ตอน: **6.1–6.8 เรียนรู้ useEffect ทีละขั้น** (ฝึกกับตัวอย่างเล็กๆ ก่อน) แล้วค่อย **6.9 ลงมือดึงข้อมูลจริง** ซึ่งใช้ useEffect เต็มรูปแบบ อ่านครบจะเข้าใจว่าทำไมโค้ดใน `useFetch` ถึงเขียนแบบนั้น
+
+### 6.1 useEffect คืออะไร ทำไมต้องมี
+
+ชิ้นส่วน React มีหน้าที่หลักข้อเดียว: **รับ props กับ state แล้วบอกว่าหน้าตาควรเป็นยังไง** เรียกส่วนนี้ว่า **render** กฎเหล็กคือ render ต้อง **ไม่มีผลข้างเคียง** (คำนวณหน้าตาอย่างเดียว ห้ามไปยุ่งกับโลกข้างนอก) เพราะ React จะเรียกฟังก์ชันชิ้นส่วนซ้ำกี่รอบก็ได้ตามที่เห็นสมควร
+
+แต่เว็บจริงต้องทำงานอื่นด้วย เรียกรวมว่า **side effect** = งานที่อยู่ *นอกการวาดหน้าจอ*:
+
+- ดึงข้อมูลจาก API
+- ตั้งชื่อแท็บเบราว์เซอร์ (`document.title`)
+- ตั้ง timer (`setInterval`, `setTimeout`)
+- ฟังเหตุการณ์ของหน้าต่าง (`addEventListener`)
+
+`useEffect` คือ **ช่องที่ React เตรียมไว้ให้ใส่งานพวกนี้** React จะรันให้ *หลังวาดหน้าจอเสร็จ* ไม่ใช่ระหว่างวาด
+
+> 💡 **นึกภาพ:** ชิ้นส่วน = **พนักงานจัดหน้าร้าน** หน้าที่คือจัดของบนชั้นตามใบสั่งให้สวย (render) ส่วนงานอย่าง "โทรสั่งของ" "ตั้งนาฬิกาปลุก" ไม่ใช่งานจัดชั้น ต้องทำ *หลังจัดเสร็จ* ในช่องงานพิเศษ (useEffect) ถ้าไปโทรศัพท์ระหว่างจัดชั้น งานจะเละและโทรซ้ำทุกครั้งที่จัดใหม่
+
+```tsx
+// ❌ ห้าม: ยุ่งกับโลกข้างนอกใน render โดยตรง
+export default function Bad() {
+  document.title = "เมนู";          // ทำทุกครั้งที่ React เรียกฟังก์ชันนี้
+  return <h1>เมนู</h1>;
+}
+
+// ✅ ใส่ใน useEffect
+import { useEffect } from "react";
+export default function Good() {
+  useEffect(() => {
+    document.title = "เมนู";
+  }, []);
+  return <h1>เมนู</h1>;
+}
+```
+
+### 6.2 ลำดับเวลา: render → วาดลงจอ → effect
+
+![ลำดับ render วาดลงจอ effect และ cleanup ของ useEffect](/img/11-useeffect-timeline.svg)
+*useEffect ทำงานหลังผู้ใช้เห็นหน้าจอแล้ว ถ้ามี cleanup มันจะรันก่อน effect รอบถัดไป หรือตอนชิ้นส่วนหายไป*
+
+ลองดูลำดับจริงด้วย `console.log` ที่ `src/components/order-demo.tsx`
+
+```tsx
+import { useEffect, useState } from "react";
+
+export default function OrderDemo() {
+  const [name, setName] = useState("A");
+  console.log("1 render", name);
+
+  useEffect(() => {
+    console.log("2 effect", name);
+    return () => console.log("3 cleanup", name);
+  }, [name]);
+
+  return <button onClick={() => setName(name === "A" ? "B" : "A")}>ตอนนี้คือ {name}</button>;
+}
+```
+
+เอาไปใส่ใน `App` (`<OrderDemo />`) แล้วเปิด Console (F12)
+
+**ควรเห็น** (ตอนเปิดหน้าครั้งแรก ดูเรื่อง 2 รอบใน 6.6 ประกอบ)
+```text
+1 render A
+2 effect A
+```
+กดปุ่ม 1 ครั้ง:
+```text
+1 render B
+3 cleanup A      ← เก็บกวาดของรอบเก่าก่อน
+2 effect B       ← แล้วค่อยทำรอบใหม่
+```
+สังเกตว่า **render มาก่อนเสมอ** แล้ว cleanup ของรอบเก่า แล้วจึง effect ของรอบใหม่
+
+### 6.3 Dependency array: บอกว่า effect จะรันเมื่อไหร่
+
+วงเล็บเหลี่ยมท้าย `useEffect` เรียกว่า **dependency array** (รายการค่าที่ effect "พึ่งพา") React จะเทียบค่าในรายการนี้ทุกรอบที่วาดใหม่ ถ้า *เปลี่ยนจากรอบก่อน* ถึงจะรัน effect อีกครั้ง
+
+![เปรียบเทียบ dependency array 3 แบบ: ไม่ใส่ ใส่ [] และใส่ [x]](/img/11-useeffect-deps.svg)
+*ไม่ใส่ = รันทุกรอบ, `[]` = รอบแรกรอบเดียว, `[x]` = รอบแรกและเมื่อ x เปลี่ยน*
+
+| เขียนแบบไหน | รันเมื่อไหร่ | ใช้กับอะไร |
+|---|---|---|
+| `useEffect(() => {...})` ไม่ใส่ array | **ทุกครั้ง** ที่ชิ้นส่วนวาดใหม่ | แทบไม่ได้ใช้ ระวังวนไม่หยุด |
+| `useEffect(() => {...}, [])` array ว่าง | **รอบแรกรอบเดียว** ตอนชิ้นส่วนโผล่ขึ้นจอ | ตั้ง timer, ฟัง event, ดึงข้อมูลครั้งเดียว |
+| `useEffect(() => {...}, [x])` | รอบแรก **และทุกครั้งที่ `x` เปลี่ยน** | ดึงข้อมูลตาม url / id, อัปเดต title ตามชื่อ |
+
+> 💡 **นึกภาพ:** dependency array = **ลิสต์ของที่ต้องเฝ้าดู** ไม่ใส่ = ทำงานทุกครั้งที่มีอะไรขยับ / `[]` = ทำครั้งเดียวตอนเริ่มกะ / `[x]` = ทำใหม่เมื่อ x เปลี่ยนเท่านั้น
+
+> ⚠️ **กับดัก: วนไม่หยุด (infinite loop)** ถ้า `setState` อยู่ใน effect ที่ไม่มี array: เปลี่ยน state → วาดใหม่ → effect รันอีก → เปลี่ยน state อีก → ... ไม่จบ
+> ```tsx
+> // ❌ อย่าเอาไปใส่โปรเจกต์จริง
+> const [n, setN] = useState(0);
+> useEffect(() => {
+>   setN(n + 1);          // ไม่มี [...] ท้าย → วนไม่หยุด
+> });
+> ```
+> **ควรเห็น:** ตัวเลข `n` พุ่งขึ้นเรื่อยๆ และ Console แดงเตือน `Maximum update depth exceeded` (ถ้าไม่ปิดแท็บ หน้าอาจหน่วงมาก) วิธีแก้คือใส่ `[]` (ถ้าต้องการทำครั้งเดียว) หรือใส่ค่าที่ต้องการเฝ้าดู หรือคิดใหม่ว่าต้องใช้ effect จริงไหม (ดูข้อ 6.7)
+
+![เปรียบเทียบ effect ที่วนไม่หยุดกับแบบแก้แล้ว](/img/11-useeffect-loop.svg)
+*ซ้าย: ไม่มี array ทำให้วาดใหม่ → effect → วาดใหม่ วนไม่จบ ขวา: ใส่ `[]` effect รันครั้งเดียวแล้วหยุด*
+
+### 6.4 Cleanup function: เก็บกวาดหลังใช้งาน
+
+ถ้า effect ตั้งอะไรไว้ (timer, listener, request) แล้วไม่เก็บ ของพวกนั้นจะค้างอยู่แม้ชิ้นส่วนหายไปแล้ว วิธีเก็บคือ **return ฟังก์ชันออกมาจาก effect** React จะเรียกฟังก์ชันนั้นให้ใน 2 จังหวะ:
+
+1. **ก่อนรัน effect รอบใหม่** (เมื่อ dependency เปลี่ยน)
+2. **ตอนชิ้นส่วนหายไปจากจอ** (unmount)
+
+![cleanup ทำงานเมื่อ dependency เปลี่ยน และเมื่อชิ้นส่วนหายไป](/img/11-useeffect-cleanup.svg)
+*ทุกอย่างที่ effect "ตั้ง" ต้องมี cleanup ที่ "เก็บ" คู่กัน*
+
+> 💡 **นึกภาพ:** เปิดน้ำ → ต้องปิดน้ำ ตั้งนาฬิกาปลุก → ต้องยกเลิกก่อนไปตั้งใหม่ ไม่งั้นนาฬิกาปลุกหลายเรือนดังพร้อมกัน
+
+| effect ตั้งอะไร | cleanup เก็บด้วย |
+|---|---|
+| `setInterval` / `setTimeout` | `clearInterval(id)` / `clearTimeout(id)` |
+| `addEventListener("resize", fn)` | `removeEventListener("resize", fn)` (ต้องเป็นฟังก์ชัน `fn` ตัวเดียวกัน) |
+| `fetch(url, { signal })` | `controller.abort()` ดูตัวอย่างจริงใน `useFetch` ข้อ 6.9 ด้านล่าง |
+
+ตัวอย่างเต็มของ timer และ resize อยู่ในข้อ 6.5
+
+### 6.5 ตัวอย่างเล็กๆ 3 อัน
+
+**(1) ตั้งชื่อแท็บ** `src/components/page-title.tsx`
+```tsx
+import { useEffect } from "react";
+
+export default function PageTitle({ name }: { name: string }) {
+  useEffect(() => {
+    document.title = `${name} | Bit Café`;
+  }, [name]);                                  // name เปลี่ยน → ตั้งใหม่
+
+  return <h1>{name}</h1>;
+}
+```
+ใช้งาน: `<PageTitle name="เมนู" />` ตัวนี้ไม่ต้อง cleanup เพราะแค่เขียนทับค่าเดิม
+**ควรเห็น:** ชื่อแท็บเบราว์เซอร์เป็น `เมนู | Bit Café` พอเปลี่ยนเป็น `<PageTitle name="ติดต่อ" />` แท็บเปลี่ยนเป็น `ติดต่อ | Bit Café`
+
+**(2) นับเวลา** `src/components/clock.tsx`
+```tsx
+import { useEffect, useState } from "react";
+
+export default function Clock() {
+  const [seconds, setSeconds] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setSeconds((s) => s + 1), 1000);
+    return () => clearInterval(id);            // cleanup: เลิกนับตอนชิ้นส่วนหายไป
+  }, []);                                      // ตั้ง timer ครั้งเดียว
+
+  return <p>ผ่านไป {seconds} วินาที</p>;
+}
+```
+**ควรเห็น:** ข้อความ `ผ่านไป 0 วินาที` แล้วเลขเพิ่มทีละ 1 ทุกวินาที ลองครอบด้วยปุ่มซ่อน/แสดง (`{show && <Clock />}`) ซ่อนแล้วแสดงใหม่ เลขจะเริ่มนับจาก 0 ใหม่ และไม่มี timer เก่าเดินซ้อน
+
+> 💡 สังเกต `setSeconds((s) => s + 1)` ที่ส่ง **ฟังก์ชัน** เข้าไป ไม่ใช่ `setSeconds(seconds + 1)` เพราะ effect นี้รันแค่ครั้งเดียว ค่า `seconds` ที่มันจำไว้จะค้างเป็น 0 ตลอด (ดูตาราง 6.8 แถว "ค่าค้าง") การส่งฟังก์ชันคือการบอกว่า *"เอาค่าล่าสุดมาบวก 1"*
+
+**(3) ฟังขนาดหน้าจอ** `src/components/window-size.tsx`
+```tsx
+import { useEffect, useState } from "react";
+
+export default function WindowSize() {
+  const [width, setWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const onResize = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);   // cleanup
+  }, []);
+
+  return <p>หน้าจอกว้าง {width} px</p>;
+}
+```
+**ควรเห็น:** ข้อความ `หน้าจอกว้าง 1280 px` (เลขตามหน้าต่างของคุณ) ลากขอบหน้าต่างเบราว์เซอร์ เลขเปลี่ยนตามทันที
+
+### 6.6 StrictMode: ทำไมตอนพัฒนา effect รัน 2 รอบ
+
+เปิด `src/main.tsx` จะเห็นว่าโปรเจกต์ Vite ห่อ `<App />` ด้วย `<StrictMode>` ไว้ ตัวนี้มีผลเฉพาะตอน **พัฒนา (`bun run dev`)** ไม่มีผลกับเว็บที่ build ขึ้นจริง
+
+มันจงใจ **รัน effect → cleanup → effect อีกรอบ** ตอนชิ้นส่วนโผล่ขึ้นจอครั้งแรก (และเรียกฟังก์ชันชิ้นส่วนซ้ำ 2 รอบด้วย) ไว้ทดสอบว่า cleanup ของเรา *เก็บกวาดครบจริงไหม* ถ้า effect กับ cleanup เขียนคู่กันถูก รันกี่รอบผลก็เหมือนกัน แต่ถ้าลืมเก็บ ปัญหา (เช่น timer ซ้อน) จะโผล่ให้เห็นทันทีตั้งแต่ตอนพัฒนา
+
+**ควรเห็น** ถ้าหุ้ม `OrderDemo` ด้วย `<StrictMode>` ตอนเปิดหน้า:
+```text
+1 render A
+1 render A        ← ฟังก์ชันชิ้นส่วนถูกเรียก 2 รอบ
+2 effect A
+3 cleanup A       ← React จำลองการ "หายไป"
+2 effect A        ← แล้ว "โผล่" ใหม่
+```
+> ⚠️ **วิธีอ่าน:** เห็นซ้ำเฉพาะตอนเปิดหน้ารอบแรกของ dev เป็นเรื่องปกติ **ไม่ใช่บั๊ก ห้ามลบ `<StrictMode>` ทิ้งเพื่อให้หายซ้ำ** ถ้าซ้ำแล้วเกิดปัญหา (เช่น `Clock` เดิน 2 เท่า) แปลว่า cleanup ยังเขียนไม่ครบ ให้ไปแก้ที่ cleanup
+> ส่วนคำขอที่ซ้ำ 2 ครั้งในแท็บ Network ตอน dev ก็มาจากเรื่องนี้ (ข้อ 6.9)
+
+### 6.7 ไม่ต้องใช้ useEffect เมื่อไหร่
+
+มือใหม่มักใส่ useEffect เยอะเกินไป จำ 2 ข้อ:
+
+1. **ค่าที่คำนวณจาก state/props ได้เลย** → คำนวณตรงๆ ในชิ้นส่วน ไม่ต้องเก็บเป็น state เพิ่ม
+2. **งานที่เกิดเพราะผู้ใช้กดปุ่ม** → ทำใน event handler (`onClick`, `onSubmit`) ไม่ต้องรอ effect
+
+> 💡 effect มีไว้ **ซิงก์กับโลกข้างนอก** (API, เบราว์เซอร์, timer) ถ้าไม่ได้คุยกับโลกข้างนอก มักไม่ต้องใช้
+
+```tsx
+// ❌ ไม่ดี: เก็บค่าที่คำนวณได้เองไว้ใน state แล้วใช้ effect ตามอัปเดต
+function PriceBad({ price, qty }: { price: number; qty: number }) {
+  const [total, setTotal] = useState(0);
+  useEffect(() => {
+    setTotal(price * qty);              // วาดผิดไป 1 รอบ แล้ววาดซ้ำอีกรอบ
+  }, [price, qty]);
+  return <p>รวม {total} บาท</p>;
+}
+
+// ✅ ดี: คำนวณตรงๆ ตอน render
+function PriceGood({ price, qty }: { price: number; qty: number }) {
+  const total = price * qty;
+  return <p>รวม {total} บาท</p>;
+}
+```
+```tsx
+// ❌ ไม่ดี: กดปุ่ม → ตั้ง state ธง → ให้ effect ส่งข้อมูล
+const [clicked, setClicked] = useState(false);
+useEffect(() => {
+  if (clicked) save();
+}, [clicked]);
+<button onClick={() => setClicked(true)}>บันทึก</button>
+
+// ✅ ดี: ทำใน event handler เลย
+<button onClick={() => save()}>บันทึก</button>
+```
+**ควรเห็น:** `PriceGood` แสดงยอดรวมถูกต้องตั้งแต่วาดครั้งแรก ส่วน `PriceBad` วาดค่า `0` ก่อนแล้วจึงอัปเดตตามมา (ผู้ใช้อาจเห็นกระพริบ) ผลลัพธ์สุดท้ายเหมือนกัน แต่แบบดีสั้นกว่าและไม่มีรอบเกินมา
+
+> 🔑 **ข้อสังเกตว่าควรใช้ effect:** "โค้ดนี้ต้องทำ *เพราะชิ้นส่วนโผล่ขึ้นจอ/ค่าเปลี่ยน*" → effect (เช่น ดึงข้อมูลตอนเปิดหน้า) / "โค้ดนี้ต้องทำ *เพราะผู้ใช้ทำอะไรสักอย่าง*" → event handler
+
+### 6.8 ปัญหาที่เจอบ่อยกับ useEffect
+
+| อาการ | สาเหตุ | วิธีแก้ |
+|---|---|---|
+| ตัวเลข/คำขอพุ่งไม่หยุด Console เตือน `Maximum update depth exceeded` | `setState` ใน effect ที่ **ไม่มี `[...]`** (หรือ array มีค่าที่ effect เปลี่ยนเองทุกรอบ) | ใส่ array ที่ถูกต้อง หรือเปลี่ยนไปคำนวณตรงๆ (ข้อ 6.7) |
+| ค่าค้างเป็นค่าเก่า (เช่น timer นับแค่ถึง 1 แล้วหยุด) | ใช้ `setCount(count + 1)` ใน effect ที่ `[]` ทำให้ `count` ที่จำไว้เป็น 0 ตลอด | ส่งฟังก์ชัน `setCount((c) => c + 1)` หรือใส่ `count` ใน `[...]` |
+| `Can't perform a React state update on an unmounted component` (พบในบทความ/React เวอร์ชันเก่า) | request/timer เสร็จหลังชิ้นส่วนหายไปแล้ว แล้วยังไป `setState` | ทำ cleanup (`abort()` / `clearInterval`) ให้ครบ เหมือน `useFetch` (React 18 ขึ้นไปเลิกแสดงข้อความนี้แล้ว แต่การเก็บกวาดยังจำเป็น) |
+| effect ไม่รัน / ไม่รันใหม่ตอนที่คิดว่าต้องรัน | ค่าใน `[...]` ไม่ได้เปลี่ยนจริง, ใส่ `[]` แต่ต้องการให้รันตาม `x`, หรือแก้ state ตรงๆ (ดูข้อ 5) ทำให้ React ไม่รู้ว่าเปลี่ยน | ใส่ตัวแปรที่ effect ใช้ลงใน `[...]` และสร้างค่าใหม่เสมอเมื่ออัปเดต state |
+| effect รันถี่เกินจำเป็น | ใส่ object/array/ฟังก์ชันที่สร้างใหม่ทุกรอบ (เช่น `[{ id }]`) ใน `[...]` ทำให้ React ถือว่า "เปลี่ยน" ทุกรอบ | ใส่เฉพาะค่าพื้นฐาน (`id`, `url`) ลงใน `[...]` |
+| ESLint เตือน `React Hook useEffect has a missing dependency: 'x'. Either include it or remove the dependency array` (กฎ `react-hooks/exhaustive-deps`) | ใน effect ใช้ตัวแปร `x` จากชิ้นส่วน แต่ไม่ได้ใส่ใน `[...]` | ใส่ `x` ลงใน `[...]` อย่าแก้ด้วยการปิด warning ถ้าใส่แล้ววนไม่หยุด แปลว่าควรคิดโครงสร้างใหม่ (ข้อ 6.7) |
+| ซ้ำ 2 รอบตอนเปิดหน้าใน dev | `<StrictMode>` (ข้อ 6.6) | ปกติ ไม่ต้องแก้ ตรวจว่า cleanup ครบ |
+
+### 6.9 🔧 ลงมือ: ดึงข้อมูลจาก API
 
 ตอนนี้ยังไม่มี API จริง (จะสร้างในบทที่ 14) ใช้ไฟล์ข้อมูลตัวอย่างไปก่อน ไฟล์ในโฟลเดอร์ `public/` เปิดได้ตรงๆ ที่ `/ชื่อไฟล์`
 
@@ -277,6 +522,7 @@ export default function App() {
 > ⚠️ **กับดักของ useEffect**
 > - ลืมใส่ `[url]` ท้าย useEffect → โค้ดดึงข้อมูลทำงานทุกครั้งที่หน้าจอวาดใหม่ → ดึงไม่หยุด 🔁
 > - ตอนพัฒนา React จงใจรันโค้ดใน useEffect **2 รอบ** เพื่อช่วยจับบั๊ก ถ้าเห็นคำขอซ้ำในแท็บ Network ไม่ต้องตกใจ ตอนขึ้นระบบจริงไม่เป็นแบบนี้
+> - รายละเอียดทั้งหมดอยู่ในข้อ 6.3 (dependency array), 6.4 (cleanup) และ 6.6 (StrictMode)
 
 ---
 
@@ -375,6 +621,8 @@ client/src/
 ```
 > 💡 กฎง่ายๆ: **ชิ้นส่วนไม่เรียก API เอง** ให้เรียกผ่านไฟล์ในโฟลเดอร์ `api/` วันที่ที่อยู่หรือหน้าตาข้อมูลเปลี่ยน จะได้แก้ที่เดียว
 
+> 📖 ไวยากรณ์ JavaScript/TypeScript และ hook ทีละตัว (`map`, destructuring, `?.`, `useRef`, `useNavigate` ฯลฯ) ดู [บทเสริม: ภาษาและคำสั่งที่ใช้เขียน React](./react-language.md)
+
 > 📚 เว็บที่โตขึ้นควรจัดแบบแบ่งตามฟีเจอร์ และแยก Component เป็น 2 ระดับ (shared กับของฟีเจอร์) ดู [บทเสริม: จัดโครงสร้างโปรเจกต์](./project-structure.md)
 
 ---
@@ -386,6 +634,10 @@ client/src/
 | Console เตือน `Each child in a list should have a unique "key"` | ใช้ `map` แต่ไม่ใส่ `key` | ใส่ `key={item.id}` |
 | กดแล้วหน้าจอไม่เปลี่ยน | แก้ state ตรงๆ (`push`, `obj.x =`) | สร้างค่าใหม่ด้วย `[...]` / `{...}` |
 | ดึงข้อมูลรัวไม่หยุด | useEffect ไม่มี `[...]` ต่อท้าย | ใส่ `[]` หรือ `[url]` |
+| ตัวเลขใน effect พุ่งไม่หยุด Console เตือน `Maximum update depth exceeded` | `setState` ใน useEffect ที่ไม่มี `[...]` | ใส่ array ให้ถูก หรือคำนวณตรงๆ แทนการใช้ effect (ข้อ 6.3, 6.7) |
+| timer นับแค่ 1 แล้วหยุด / ได้ค่าเก่า | effect ที่ `[]` จำค่า state ตอนเริ่มไว้ (stale value) | `setCount((c) => c + 1)` หรือใส่ค่านั้นใน `[...]` (ข้อ 6.8) |
+| useEffect ทำงาน 2 รอบตอนเปิดหน้า | `<StrictMode>` ตอนพัฒนา (ปกติ ไม่ใช่บั๊ก) | ไม่ต้องลบ StrictMode แค่ตรวจว่ามี cleanup ครบ (ข้อ 6.6) |
+| ESLint เตือน `react-hooks/exhaustive-deps` | ใช้ตัวแปรใน effect แต่ไม่ได้ใส่ใน `[...]` | ใส่ตัวแปรนั้นลงใน `[...]` อย่าปิด warning ทิ้ง (ข้อ 6.8) |
 | `Cannot read properties of null` | ใช้ข้อมูลก่อนโหลดเสร็จ | เช็คว่ากำลังโหลดอยู่ไหมก่อน หรือใช้ `data?.` |
 | หน้าขาวทั้งหน้า | มี error ในชิ้นส่วน | เปิด Console อ่าน error บรรทัดแรก ([บทที่ 9](./09-debugging.md)) |
 
@@ -413,6 +665,26 @@ props = ข้อมูลที่ **ชิ้นส่วนแม่ส่ง
 ใครก็ส่งข้อมูลตรงไปที่ API ได้โดยไม่ผ่านหน้าเว็บ (curl, Postman, โปรแกรมอื่น) การตรวจที่หน้าเว็บจึงข้ามได้ ที่เชื่อได้คือการตรวจที่ server เท่านั้น
 </details>
 
+<details><summary>5. <code>useEffect(() =&gt; {...})</code> ที่ไม่มี array, ที่เป็น <code>[]</code> และที่เป็น <code>[x]</code> รันเมื่อไหร่ต่างกันยังไง?</summary>
+
+ไม่มี array = รันทุกครั้งที่วาดใหม่ / `[]` = รันรอบแรกรอบเดียว / `[x]` = รันรอบแรก และรันใหม่ทุกครั้งที่ `x` เปลี่ยน
+</details>
+
+<details><summary>6. ถ้าไม่ใส่ cleanup ให้ <code>setInterval</code> ใน effect จะเกิดอะไรขึ้น?</summary>
+
+ตอนชิ้นส่วนหายไป timer ยังเดินต่อและยังพยายามเปลี่ยน state ของชิ้นส่วนที่ไม่อยู่แล้ว และถ้า effect รันใหม่ (เช่น dependency เปลี่ยน หรือ StrictMode ตอน dev) จะมี timer ซ้อนกันหลายตัว ต้อง `return () => clearInterval(id)` เสมอ
+</details>
+
+<details><summary>7. เปิดหน้าแล้ว useEffect รัน 2 รอบใน <code>bun run dev</code> เป็นบั๊กไหม ต้องแก้ยังไง?</summary>
+
+ไม่ใช่บั๊ก เป็น `<StrictMode>` ที่จงใจรัน effect → cleanup → effect ตอนพัฒนาเพื่อทดสอบว่า cleanup ครบ ตอน build ขึ้นจริงไม่เป็นแบบนี้ ไม่ต้องลบ StrictMode ถ้ารัน 2 รอบแล้วเกิดปัญหา ให้ไปแก้ cleanup
+</details>
+
+<details><summary>8. <code>const total = price * qty</code> กับการใช้ <code>useEffect</code> + <code>setTotal</code> แบบไหนดีกว่า ทำไม?</summary>
+
+แบบคำนวณตรงๆ ดีกว่า เพราะค่าที่คำนวณจาก state/props ได้เลยไม่ต้องเก็บเป็น state เพิ่ม ถ้าใช้ effect จะวาดไป 1 รอบด้วยค่าเก่าก่อน แล้ววาดซ้ำอีกรอบ useEffect มีไว้ซิงก์กับโลกข้างนอก (API, timer, event ของเบราว์เซอร์) ไม่ใช่คำนวณค่า
+</details>
+
 ---
 
 ## ✏️ แบบฝึกหัด
@@ -425,6 +697,7 @@ props = ข้อมูลที่ **ชิ้นส่วนแม่ส่ง
 - [ ] เขียนชิ้นส่วนที่รับข้อมูล (props) แบบมีชนิดข้อมูลได้
 - [ ] ใช้ `useState` และรู้ว่าทำไมห้ามแก้ state ตรงๆ
 - [ ] ดึงข้อมูลด้วย `useEffect` พร้อมข้อความตอนโหลดและตอนพัง
+- [ ] อธิบายได้ว่า dependency array 3 แบบต่างกันยังไง และเขียน cleanup ให้ timer / event listener ได้
 - [ ] ทำฟอร์มที่ตรวจก่อนส่ง, กันกดซ้ำ และล้างฟอร์มหลังส่งเสร็จได้
 
 ---

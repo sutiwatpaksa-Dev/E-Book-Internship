@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 350" role="img" aria-label="?? กับ || ต่างกันตรงค่า 0 และ &quot;&quot;" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
+<title>?? กับ || ต่างกันตรงค่า 0 และ &quot;&quot;</title><desc>|| ถือว่า 0 ค่าว่าง false เป็นค่าไม่มี ส่วน ?? ถือว่าเฉพาะ null และ undefined เป็นค่าไม่มี</desc>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="348" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">?? กับ || ต่างกันตรงค่า 0 และ &quot;&quot;</text>
+<text x="400" y="62" font-size="15" text-anchor="middle" fill="#64748b" font-weight="normal">ค่าด้านซ้ายคือ 0 (ส่วนลด 0 บาท ตั้งใจจริงๆ) ค่าสำรองคือ 5</text>
+<rect x="30" y="84" width="340" height="48" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+<text x="200.0" y="113.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">discount || 5</text>
+<line x1="200" y1="134" x2="200" y2="170" stroke="#dc2626" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="30" y="172" width="340" height="64" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+<text x="200.0" y="198.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">ได้ 5 ❌</text>
+<text x="200.0" y="220.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">0 ถูกมองว่า &quot;ไม่มีค่า&quot;</text>
+<rect x="430" y="84" width="340" height="48" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="600.0" y="113.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">discount ?? 5</text>
+<line x1="600" y1="134" x2="600" y2="170" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
+<rect x="430" y="172" width="340" height="64" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="600.0" y="198.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">ได้ 0 ✅</text>
+<text x="600.0" y="220.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">เฉพาะ null / undefined ถึงใช้ค่าสำรอง</text>
+<text x="400" y="272" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">|| ถือว่า &quot;ไม่มีค่า&quot;: 0  &quot;&quot;  false  null  undefined  NaN</text>
+<text x="400" y="300" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">?? ถือว่า &quot;ไม่มีค่า&quot;: null  undefined  เท่านั้น</text>
+<text x="400" y="332" font-size="15" text-anchor="middle" fill="#0b3c91" font-weight="bold">ค่า 0 หรือ &quot;&quot; ก็มีความหมาย (ราคา จำนวน) ใช้ ?? ปลอดภัยกว่า</text>
+</svg>

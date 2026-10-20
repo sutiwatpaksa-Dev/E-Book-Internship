@@ -84,7 +84,7 @@ export default defineConfig({
       { text: "ด่าน 4 · มืออาชีพ", items: chapters.slice(9, 11) },
       {
         text: "ด่าน 5 · สร้างเว็บ Fullstack",
-        items: [...chapters.slice(11, 17), { text: "บทเสริม · จัดโครงสร้างโปรเจกต์", link: "/project-structure" }],
+        items: [...chapters.slice(11, 17), { text: "บทเสริม · ภาษาและคำสั่งที่ใช้เขียน React", link: "/react-language" }, { text: "บทเสริม · จัดโครงสร้างโปรเจกต์", link: "/project-structure" }],
       },
       { text: "ด่าน 6 · Mini Project: เว็บไซต์ STARTER", items: starter },
       { text: "ด่าน 7 · ขึ้นเว็บจริง", items: chapters.slice(17, 24) },

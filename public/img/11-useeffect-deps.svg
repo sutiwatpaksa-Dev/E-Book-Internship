@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 420" role="img" aria-label="Dependency array 3 แบบ: effect รันเมื่อไหร่" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
+<title>Dependency array 3 แบบ: effect รันเมื่อไหร่</title><desc>ไม่ใส่ รันทุกรอบ, [] รันรอบแรกรอบเดียว, [x] รันรอบแรกและเมื่อ x เปลี่ยน</desc>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="418" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">Dependency array 3 แบบ: effect รันเมื่อไหร่</text>
+<rect x="20" y="55" width="235" height="335" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+<text x="137.5" y="85" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">ไม่ใส่ array</text>
+<rect x="35" y="100" width="205" height="82" rx="8" fill="#0f172a"/>
+<text x="45" y="126" font-size="15" fill="#f8fafc" font-family="monospace" xml:space="preserve">useEffect(() =&gt; {</text>
+<text x="45" y="148" font-size="15" fill="#f8fafc" font-family="monospace" xml:space="preserve">  ...</text>
+<text x="45" y="170" font-size="15" fill="#f8fafc" font-family="monospace" xml:space="preserve">});</text>
+<text x="137.5" y="215" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">รอบที่วาดหน้าจอ</text>
+<rect x="35" y="228" width="62" height="34" rx="6" fill="#ffffff" stroke="#64748b"/>
+<text x="66" y="251" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">รอบ 1</text>
+<rect x="35" y="270" width="62" height="34" rx="6" fill="#f59e0b" stroke="#d97706"/>
+<text x="66" y="293" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">รัน</text>
+<rect x="107" y="228" width="62" height="34" rx="6" fill="#ffffff" stroke="#64748b"/>
+<text x="138" y="251" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">รอบ 2</text>
+<rect x="107" y="270" width="62" height="34" rx="6" fill="#f59e0b" stroke="#d97706"/>
+<text x="138" y="293" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">รัน</text>
+<rect x="179" y="228" width="62" height="34" rx="6" fill="#ffffff" stroke="#64748b"/>
+<text x="210" y="251" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">รอบ 3</text>
+<rect x="179" y="270" width="62" height="34" rx="6" fill="#f59e0b" stroke="#d97706"/>
+<text x="210" y="293" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">รัน</text>
+<text x="137.5" y="335" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">รันทุกครั้งที่วาดใหม่</text>
+<text x="137.5" y="362" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ระวัง: วนไม่หยุดถ้ามี setState</text>
+<rect x="282" y="55" width="235" height="335" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="399.5" y="85" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">ใส่ [] ว่าง</text>
+<rect x="297" y="100" width="205" height="82" rx="8" fill="#0f172a"/>
+<text x="307" y="126" font-size="15" fill="#f8fafc" font-family="monospace" xml:space="preserve">useEffect(() =&gt; {</text>
+<text x="307" y="148" font-size="15" fill="#f8fafc" font-family="monospace" xml:space="preserve">  ...</text>
+<text x="307" y="170" font-size="15" fill="#f8fafc" font-family="monospace" xml:space="preserve">}, []);</text>
+<text x="399.5" y="215" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">รอบที่วาดหน้าจอ</text>
+<rect x="297" y="228" width="62" height="34" rx="6" fill="#ffffff" stroke="#64748b"/>
+<text x="328" y="251" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">รอบ 1</text>
+<rect x="297" y="270" width="62" height="34" rx="6" fill="#f59e0b" stroke="#d97706"/>
+<text x="328" y="293" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">รัน</text>
+<rect x="369" y="228" width="62" height="34" rx="6" fill="#ffffff" stroke="#64748b"/>
+<text x="400" y="251" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">รอบ 2</text>
+<text x="400" y="293" font-size="15" text-anchor="middle" fill="#64748b" font-weight="normal">ข้าม</text>
+<rect x="441" y="228" width="62" height="34" rx="6" fill="#ffffff" stroke="#64748b"/>
+<text x="472" y="251" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">รอบ 3</text>
+<text x="472" y="293" font-size="15" text-anchor="middle" fill="#64748b" font-weight="normal">ข้าม</text>
+<text x="399.5" y="335" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">รันรอบแรกรอบเดียว</text>
+<text x="399.5" y="362" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">เหมาะกับ timer, listener</text>
+<rect x="545" y="55" width="235" height="335" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="662.5" y="85" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">ใส่ [x]</text>
+<rect x="560" y="100" width="205" height="82" rx="8" fill="#0f172a"/>
+<text x="570" y="126" font-size="15" fill="#f8fafc" font-family="monospace" xml:space="preserve">useEffect(() =&gt; {</text>
+<text x="570" y="148" font-size="15" fill="#f8fafc" font-family="monospace" xml:space="preserve">  ...</text>
+<text x="570" y="170" font-size="15" fill="#f8fafc" font-family="monospace" xml:space="preserve">}, [x]);</text>
+<text x="662.5" y="215" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">รอบที่วาดหน้าจอ</text>
+<rect x="560" y="228" width="62" height="34" rx="6" fill="#ffffff" stroke="#64748b"/>
+<text x="591" y="251" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">รอบ 1</text>
+<rect x="560" y="270" width="62" height="34" rx="6" fill="#f59e0b" stroke="#d97706"/>
+<text x="591" y="293" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">รัน</text>
+<rect x="632" y="228" width="62" height="34" rx="6" fill="#ffffff" stroke="#64748b"/>
+<text x="663" y="251" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">รอบ 2</text>
+<text x="663" y="293" font-size="15" text-anchor="middle" fill="#64748b" font-weight="normal">ข้าม</text>
+<rect x="704" y="228" width="62" height="34" rx="6" fill="#ffffff" stroke="#64748b"/>
+<text x="735" y="251" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">รอบ 3</text>
+<rect x="704" y="270" width="62" height="34" rx="6" fill="#f59e0b" stroke="#d97706"/>
+<text x="735" y="293" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">รัน</text>
+<text x="662.5" y="335" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">รันรอบแรก + เมื่อ x เปลี่ยน</text>
+<text x="662.5" y="362" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">เหมาะกับ fetch ตาม url</text>
+<text x="400" y="410" font-size="15" text-anchor="middle" fill="#64748b" font-weight="normal">(ตัวอย่างช่อง [x]: x เปลี่ยนตอนรอบที่ 3)</text>
+</svg>
