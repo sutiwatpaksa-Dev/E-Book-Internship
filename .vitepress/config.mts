@@ -1,4 +1,7 @@
+import { readFileSync } from "node:fs";
 import { defineConfig } from "vitepress";
+
+const { version } = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf-8"));
 
 const chapters = [
   { text: "00 · ก่อนเริ่ม", link: "/00-start" },
@@ -71,6 +74,7 @@ export default defineConfig({
       { text: "Deploy", link: "/17-network" },
       { text: "ศัพท์", link: "/glossary" },
       { text: "Cheat Sheet", link: "/cheat-sheet" },
+      { text: `v${version}`, link: "/changelog" },
     ],
     sidebar: [
       { text: "🏠 หน้าแรก", link: "/" },
@@ -83,6 +87,7 @@ export default defineConfig({
       { text: "ด่าน 7 · ขึ้นเว็บจริง", items: chapters.slice(17, 24) },
       { text: "📖 ศัพท์ที่ต้องรู้", link: "/glossary" },
       { text: "📋 Cheat Sheet", link: "/cheat-sheet" },
+      { text: "📝 มีอะไรใหม่", link: "/changelog" },
     ],
     outline: { level: [2, 3], label: "ในบทนี้" },
     docFooter: { prev: "บทก่อนหน้า", next: "บทถัดไป" },
@@ -104,7 +109,7 @@ export default defineConfig({
       },
     },
     footer: {
-      message: "สำหรับน้องฝึกงาน บริษัท บลิคซ์เทค คอนซัลแทนท์ จำกัด",
+      message: `สำหรับน้องฝึกงาน บริษัท บลิคซ์เทค คอนซัลแทนท์ จำกัด · เวอร์ชัน ${version}`,
     },
   },
 });

@@ -12,6 +12,7 @@ npm run build      # ตรวจว่า build ผ่าน (ลิงก์�
 
 - เนื้อหาแต่ละบทคือไฟล์ `00-start.md` ถึง `23-go-live.md`, Mini Project อยู่ในโฟลเดอร์ `starter/` และ `cheat-sheet.md`
 - `README.md` คือหน้าแรกของ e-book
+- ออกเวอร์ชันใหม่: เพิ่มหัวข้อบนสุดใน `changelog.md` แล้วรัน `npm version <ตัวเลข> --no-git-tag-version` (เลขจะขึ้นที่เมนูและ footer เอง) จากนั้น commit, `git tag v<ตัวเลข>` และ push
 - เพิ่มบทใหม่: สร้างไฟล์ `.md` แล้วเพิ่มชื่อใน `chapters` ที่ `.vitepress/config.mts`
 - สีและฟอนต์อยู่ที่ `.vitepress/theme/custom.css`
 
