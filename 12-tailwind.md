@@ -38,6 +38,9 @@
 
 > 💡 **นึกภาพ:** CSS แบบเดิม = สั่งตัดชุดใหม่ทุกครั้ง / Tailwind = **ตัวต่อเลโก้** 🧱 มีชิ้นมาตรฐานให้ต่อ ขนาดเท่ากันทุกครั้ง
 
+![แต่ละคำใน className ของ Tailwind เทียบเท่า CSS หนึ่งอย่าง](/img/12-utility-classes.svg)
+*แต่ละคำทำอย่างเดียว ต่อกันแล้วได้หน้าตาของปุ่ม*
+
 **คำที่ใช้บ่อย**
 | เรื่อง | ตัวอย่าง | แปลว่า |
 |---|---|---|
@@ -47,6 +50,9 @@
 | สี | `text-white` `bg-brand` `border-gray-200` | สีตัวอักษร / สีพื้น / สีขอบ |
 | จัดวาง | `flex` `items-center` `justify-between` `grid grid-cols-3` | เรียงแนวนอน / จัดกลาง / ดันไปสองข้าง / แบ่ง 3 คอลัมน์ |
 | ตกแต่ง | `rounded-xl` `shadow-md` `hover:opacity-80` | มุมโค้ง / เงา / จางลงตอนเอาเมาส์ชี้ |
+
+![ระยะห่างของ Tailwind: padding margin และ gap หน่วยละ 4 พิกเซล](/img/12-spacing-scale.svg)
+*padding เว้นด้านใน margin เว้นด้านนอก gap เว้นระหว่างชิ้น ตัวเลขละ 4px*
 
 ---
 
@@ -97,6 +103,9 @@ export default defineConfig({
 ตอนนี้ใช้ `bg-brand`, `text-accent`, `bg-brand-light/50` (จางลงครึ่งหนึ่ง) ได้ทุกที่
 ลูกค้าขอเปลี่ยนสี? แก้ **บรรทัดเดียว** ✅
 
+![ตั้งสีร้านใน @theme ที่เดียว แล้วทุกคลาสสีทั้งเว็บเปลี่ยนตาม](/img/12-theme-colors.svg)
+*สีอยู่ที่เดียวใน @theme คลาสอย่าง bg-brand ดึงไปใช้ทุกที่*
+
 ---
 
 ## 4. ทำให้พอดีทุกจอ: เริ่มจากมือถือ
@@ -117,6 +126,10 @@ Tailwind มี **จุดเปลี่ยน (breakpoint)** = ความ�
 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
 ```
 = มือถือ 1 คอลัมน์ → ตั้งแต่ 768px เป็น 2 คอลัมน์ → ตั้งแต่ 1280px เป็น 3 คอลัมน์
+
+
+![จุดเปลี่ยน sm md lg xl และการ์ดที่เปลี่ยนจาก 1 เป็น 2 เป็น 3 คอลัมน์ตามความกว้างจอ](/img/12-breakpoints.svg)
+*จอกว้างขึ้นถึงจุดเปลี่ยนไหน คำนำหน้านั้นก็เริ่มทำงาน*
 
 > ⚠️ **กับดัก:** คิดว่า `md:` คือมือถือ ❌ คำที่ **ไม่มีคำนำหน้า** คือมือถือ ส่วน `md:` คือจอใหญ่กว่า
 
@@ -172,6 +185,9 @@ export default function Navbar({ shopName, logoUrl }: { shopName: string; logoUr
 ```
 (บทที่ 13 จะเปลี่ยน `<a>` เป็น `NavLink` เพื่อให้เมนูของหน้าที่อยู่เด่นขึ้น)
 
+![Navbar บนมือถือแสดงปุ่ม ☰ ส่วนจอตั้งแต่ md ขึ้นไปแสดงลิงก์เรียงแนวนอน](/img/12-navbar-responsive.svg)
+*hidden md:flex และ md:hidden ทำงานสลับกัน จอแคบเห็นปุ่ม ☰ จอกว้างเห็นลิงก์*
+
 ### ภาพใหญ่ด้านบนหน้าแรก
 ```tsx
 <section
@@ -190,6 +206,8 @@ export default function Navbar({ shopName, logoUrl }: { shopName: string; logoUr
 ```
 
 ### การ์ดสินค้าแบบตาราง (grid)
+![เปรียบเทียบ flex ที่เรียงในแนวเดียวกับ grid ที่แบ่งเป็นช่อง](/img/12-flex-grid.svg)
+*flex เหมาะกับเรียงชิ้นในแถวเดียว grid เหมาะกับแบ่งเป็นตาราง*
 ```tsx
 <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 md:grid-cols-2 xl:grid-cols-3">
   {services.map((s) => (
@@ -249,6 +267,8 @@ export default function Footer({ address, phone, openingHours }: Props) {
 ```
 
 ### ตารางในหน้าจัดการร้านบนมือถือ
+![ตารางที่ไม่ห่อทำให้ทั้งหน้าเลื่อนซ้ายขวา ส่วนที่ห่อด้วย overflow-x-auto เลื่อนเฉพาะในกรอบ](/img/12-table-scroll.svg)
+*ห่อตารางด้วย overflow-x-auto เพื่อให้เลื่อนเฉพาะในกรอบ*
 ```tsx
 <div className="overflow-x-auto rounded-lg border">   {/* ตารางเลื่อนในกรอบ ไม่ดันทั้งหน้า */}
   <table className="min-w-[640px] w-full text-left text-sm">...</table>

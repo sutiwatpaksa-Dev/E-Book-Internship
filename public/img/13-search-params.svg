@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" role="img" aria-label="จำหมวดที่เลือกไว้ในลิงก์" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
+<title>จำหมวดที่เลือกไว้ในลิงก์</title><desc>กดปุ่มหมวดแล้วลิงก์เปลี่ยน useSearchParams อ่านค่า useFetch ดึงข้อมูลใหม่</desc>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a4fb0"/></marker></defs>
+<rect x="1" y="1" width="798" height="358" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">จำหมวดที่เลือกไว้ในลิงก์ด้วย useSearchParams</text>
+<rect x="30" y="56" width="400" height="54" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="230.0" y="77.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">กดปุ่มหมวด "เครื่องดื่ม"</text>
+<text x="230.0" y="99.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">setParams({ category: "drinks" })</text>
+<line x1="230" y1="110" x2="230" y2="130" stroke="#64748b" stroke-width="2.5" marker-end="url(#as)"/>
+<rect x="30" y="130" width="400" height="54" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="230.0" y="151.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ลิงก์ด้านบนเปลี่ยนเป็น</text>
+<text x="230.0" y="173.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">/about?category=drinks</text>
+<line x1="230" y1="184" x2="230" y2="204" stroke="#64748b" stroke-width="2.5" marker-end="url(#as)"/>
+<rect x="30" y="204" width="400" height="54" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="230.0" y="225.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">useSearchParams อ่านค่า</text>
+<text x="230.0" y="247.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">category = "drinks"</text>
+<line x1="230" y1="258" x2="230" y2="278" stroke="#64748b" stroke-width="2.5" marker-end="url(#as)"/>
+<rect x="30" y="278" width="400" height="54" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="230.0" y="299.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">useFetch เห็นว่า url เปลี่ยน</text>
+<text x="230.0" y="321.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">→ ดึงข้อมูลใหม่ แสดงเฉพาะหมวดนั้น</text>
+<rect x="470" y="56" width="300" height="128" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="620.0" y="92.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">จำไว้ในลิงก์  ✓</text>
+<text x="620.0" y="114.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">รีเฟรชแล้วไม่หาย</text>
+<text x="620.0" y="136.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ส่งลิงก์ให้คนอื่นเห็นหมวดเดียวกัน</text>
+<text x="620.0" y="158.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ปุ่มย้อนกลับทำงานถูก</text>
+<rect x="470" y="200" width="300" height="98" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+<text x="620.0" y="232.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">จำไว้ในตัวแปร  ✗</text>
+<text x="620.0" y="254.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">รีเฟรชแล้วหาย</text>
+<text x="620.0" y="276.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ส่งลิงก์ให้คนอื่นไม่ได้</text>
+</svg>

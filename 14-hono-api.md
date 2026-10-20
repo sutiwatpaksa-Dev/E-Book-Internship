@@ -24,10 +24,8 @@
 
 ## 1. ภาพรวม
 
-```
- เบราว์เซอร์ ──> Vite :5173 ──(ขอ /api/... ส่งต่อให้)──> Hono API :3000 ──> PostgreSQL :5432
-  (React)       (หน้าเว็บ)                              (Bun)              (ในกล่อง Docker)
-```
+![เส้นทางคำขอ /api จากเบราว์เซอร์ผ่าน Vite, Hono, Drizzle ไปถึง PostgreSQL แล้วตอบกลับทางเดิม](/img/14-request-path.svg)
+*Vite ส่งต่อคำขอที่ขึ้นต้น /api ให้ Hono · Hono ใช้ Drizzle คุยกับ PostgreSQL ผลย้อนกลับทางเดิม*
 
 > 📚 บทนี้จัดโฟลเดอร์ `routes / db / validators / middleware` แบบแบ่งตามหน้าที่ ถ้าอยากรู้ว่าเมื่อไหร่ควรจัดแบบโมดูล/ฟีเจอร์ ดู [บทเสริม: จัดโครงสร้างโปรเจกต์](./project-structure.md)
 
@@ -112,6 +110,9 @@ const Env = z.object({
 export const env = Env.parse(process.env);
 ```
 
+![ไฟล์ .env ผ่านการตรวจด้วย Zod ถ้าผ่านได้ env ที่ถูกต้อง ถ้าขาดหรือผิดโปรแกรมหยุดทันที](/img/14-env-check.svg)
+*env.ts ตรวจตอนเปิดโปรแกรม ค่าที่ไม่ได้ใส่ใน .env จะใช้ค่าเริ่มต้น*
+
 ---
 
 ## 3. 🔧 ฐานข้อมูลด้วย Drizzle
@@ -163,6 +164,9 @@ export const contactMessages = pgTable("contact_messages", {
   ...timestamps,
 });
 ```
+
+![บรรทัดใน schema.ts เทียบกับคอลัมน์ของตารางใน PostgreSQL](/img/14-schema-table.svg)
+*แต่ละบรรทัดใน pgTable คือหนึ่งคอลัมน์ ชื่อ sortOrder ในโค้ดคือ sort_order ในฐานข้อมูล*
 
 `drizzle.config.ts` บอก Drizzle ว่าแบบแปลนอยู่ไหน และจะเก็บไฟล์อัปเดตตารางไว้ไหน (วางที่ `server/` นอก `src/`)
 ```ts
@@ -228,6 +232,8 @@ bun run db:generate     # อ่าน schema → สร้างไฟล์ SQ
 bun run db:migrate      # สร้างตารางใน DB จริง
 bun run seed            # ใส่ข้อมูลตัวอย่าง
 ```
+![ลำดับคำสั่ง db:generate, db:migrate และ seed จาก schema.ts จนตารางมีข้อมูล](/img/14-db-workflow.svg)
+*ทุกครั้งที่แก้ schema.ts ให้ทำ db:generate และ db:migrate ใหม่*
 เปิด pgAdmin (หรือ Adminer จากบทที่ 2) ต่อที่ `localhost:5432` ชื่อผู้ใช้ `app` รหัส `secret` ควรเห็น 3 ตารางพร้อมข้อมูล 🎉
 
 ---
@@ -272,6 +278,9 @@ export function parse<T extends z.ZodType>(schema: T, input: unknown): z.infer<T
 }
 ```
 
+![เปรียบเทียบรูปแบบคำตอบ JSON เมื่อสำเร็จกับเมื่อผิดพลาด](/img/14-envelope.svg)
+*ทุก API ตอบ success เป็น true พร้อม data หรือ false พร้อม error ฝั่งหน้าเว็บเช็คแค่ success*
+
 `src/index.ts` ไฟล์เริ่มต้น
 ```ts
 import { Hono } from "hono";
@@ -304,6 +313,9 @@ app.onError((err, c) => {
 export default { port: env.PORT, fetch: app.fetch };
 ```
 > 🔐 `onError` คือ **ตาข่ายรองรับสุดท้าย** error ไหนที่เราไม่ได้ตั้งใจ จะถูกเปลี่ยนเป็นข้อความกลางๆ ก่อนส่งกลับ รายละเอียดจริงอยู่ในหน้าจอ server ของเราเท่านั้น ไม่ต้องเขียนดักทุกที่เอง
+
+![error จากหลายที่ไหลมารวมที่ app.onError แล้วตอบ JSON หรือ 500 ข้อความกลางๆ](/img/14-error-funnel.svg)
+*AppError ที่ตั้งใจจะตอบตามที่ใส่ไว้ error ที่ไม่ได้ตั้งใจจะตอบ 500 ข้อความกลางๆ และเก็บรายละเอียดไว้ใน log ของ server*
 
 ---
 
@@ -367,6 +379,9 @@ export function rateLimit({ limit, windowMs }: { limit: number; windowMs: number
 }
 ```
 
+![เปรียบเทียบการหา IP ของผู้ส่งเมื่อ TRUST_PROXY เป็น false กับ true](/img/14-client-ip.svg)
+*ไม่มี proxy ใช้ IP ที่ต่อเข้ามาตรงๆ · มี proxy ที่ไว้ใจ ใช้ค่าท้ายสุดของ X-Forwarded-For (ตัวเลข IP ในภาพเป็นตัวอย่าง)*
+
 `src/routes/public.ts`
 ```ts
 import { Hono } from "hono";
@@ -417,6 +432,9 @@ publicRoutes.post("/contact", rateLimit({ limit: 5, windowMs: 10 * 60 * 1000 }),
   return ok(c, row, 201);
 });
 ```
+
+![ด่านที่คำขอ POST /api/contact ผ่านตามลำดับ พร้อมทางออกเมื่อเกิด error](/img/14-route-flow.svg)
+*ลำดับด่านของ POST /api/contact และ error ที่แต่ละด่านโยนออกมา*
 
 ```bash
 bun run dev

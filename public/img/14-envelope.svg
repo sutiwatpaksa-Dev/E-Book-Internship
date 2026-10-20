@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" role="img" aria-label="รูปแบบคำตอบของ API: สำเร็จเทียบกับผิดพลาด" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
+<title>รูปแบบคำตอบของ API: สำเร็จเทียบกับผิดพลาด</title><desc>ทุก API ตอบ JSON ที่มี success เป็น true พร้อม data หรือ false พร้อม error ที่มี code message details</desc>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a4fb0"/></marker></defs>
+<rect x="1" y="1" width="798" height="398" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">ทุก API ตอบหน้าตาเดียวกัน: success เป็นตัวบอก</text>
+<rect x="30" y="50" width="350" height="250" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="205" y="76" font-size="16" text-anchor="middle" fill="#16a34a" font-weight="bold">สำเร็จ  (200 / 201)</text>
+<text x="54" y="112" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">{</text>
+<text x="54" y="138" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">  "success": true,</text>
+<text x="54" y="164" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">  "data": { ... }</text>
+<text x="54" y="190" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">}</text>
+<text x="54" y="232" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">รายการที่แบ่งหน้า มี "meta" เพิ่ม</text>
+<text x="54" y="258" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">(page, limit, total)</text>
+<rect x="420" y="50" width="350" height="250" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+<text x="595" y="76" font-size="16" text-anchor="middle" fill="#dc2626" font-weight="bold">ผิดพลาด  (400 / 404 / 429 / 500)</text>
+<text x="438" y="106" font-size="14" text-anchor="start" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">{</text>
+<text x="438" y="129" font-size="14" text-anchor="start" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">  "success": false,</text>
+<text x="438" y="152" font-size="14" text-anchor="start" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">  "error": {</text>
+<text x="438" y="175" font-size="14" text-anchor="start" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">    "code": "VALIDATION_ERROR",</text>
+<text x="438" y="198" font-size="14" text-anchor="start" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">    "message": "ข้อมูลไม่ถูกต้อง",</text>
+<text x="438" y="221" font-size="14" text-anchor="start" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">    "details": { "phone": [...] }</text>
+<text x="438" y="244" font-size="14" text-anchor="start" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">  }</text>
+<text x="438" y="267" font-size="14" text-anchor="start" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">}</text>
+<rect x="30" y="322" width="740" height="56" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="400.0" y="344.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">client.ts ดูแค่ body.success ตัวเดียว</text>
+<text x="400.0" y="366.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">true → คืน data ให้หน้าเว็บ · false → throw ApiError(code, message, details)</text>
+</svg>

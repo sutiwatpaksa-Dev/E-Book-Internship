@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" role="img" aria-label="JSX: เขียนในโค้ด → เบราว์เซอร์เห็นเป็นหน้าเว็บ" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
+<title>JSX: เขียนในโค้ด → เบราว์เซอร์เห็นเป็นหน้าเว็บ</title><desc>JSX ที่เขียนในไฟล์ tsx ถูกแปลงเป็นคำสั่งสร้างแท็ก HTML แล้วแสดงในเบราว์เซอร์</desc>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="358" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">JSX: เขียนในโค้ด → เบราว์เซอร์เห็นเป็นหน้าเว็บ</text>
+<rect x="30" y="55" width="300" height="150" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="180.0" y="92.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold">App.tsx (JSX)</text>
+<text x="180.0" y="113.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">const shopName = "Bit Café";</text>
+<text x="180.0" y="134.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">&lt;h1&gt;{shopName}&lt;/h1&gt;</text>
+<text x="180.0" y="155.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">&lt;p&gt;{isOpen ? "เปิดอยู่ 🟢"</text>
+<text x="180.0" y="176.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">            : "ปิดแล้ว 🔴"}&lt;/p&gt;</text>
+<line x1="332" y1="130" x2="418" y2="130" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<text x="375" y="118" font-size="14" text-anchor="middle" fill="#64748b" font-weight="normal">Vite แปลง</text>
+<rect x="420" y="55" width="350" height="150" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="595.0" y="102.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">สิ่งที่เบราว์เซอร์แสดง</text>
+<text x="595.0" y="124.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">Bit Café</text>
+<text x="595.0" y="146.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">เปิดอยู่ 🟢</text>
+<text x="595.0" y="168.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">{ } = เอาค่าจากโค้ดมาใส่</text>
+<text x="400" y="236" font-size="16" text-anchor="middle" fill="#0b3c91" font-weight="bold">ข้อควรจำ 3 ข้อ</text>
+<rect x="30" y="252" width="240" height="80" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="150.0" y="286.4" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold">class → className</text>
+<text x="150.0" y="307.4" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">&lt;div className="card"&gt;</text>
+<rect x="280" y="252" width="240" height="80" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="400.0" y="286.4" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold">คืนค่าได้ก้อนเดียว</text>
+<text x="400.0" y="307.4" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">หลายก้อนห่อด้วย &lt;&gt;...&lt;/&gt;</text>
+<rect x="530" y="252" width="240" height="80" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="650.0" y="286.4" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold">วนลูปด้วย map</text>
+<text x="650.0" y="307.4" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">ต้องมี key ไม่ซ้ำ</text>
+</svg>

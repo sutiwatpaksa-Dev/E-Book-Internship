@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 390" role="img" aria-label="เส้นทางของคำขอ /api จากเบราว์เซอร์ถึงฐานข้อมูล" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
+<title>เส้นทางของคำขอ /api จากเบราว์เซอร์ถึงฐานข้อมูล</title><desc>เบราว์เซอร์เรียก Vite ซึ่งส่งต่อ /api ให้ Hono ที่ใช้ Drizzle คุยกับ PostgreSQL แล้วตอบกลับทางเดิม</desc>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a4fb0"/></marker></defs>
+<rect x="1" y="1" width="798" height="388" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">คำขอ /api เดินทางผ่านอะไรบ้าง</text>
+<rect x="320" y="52" width="310" height="132" rx="12" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5" stroke-dasharray="6 5"/>
+<text x="475" y="72" font-size="15" text-anchor="middle" fill="#64748b" font-weight="bold">โปรเซสเดียวกัน (Bun) :3000</text>
+<rect x="25" y="86" width="125" height="84" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="87.5" y="122.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">เบราว์เซอร์</text>
+<text x="87.5" y="144.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">React</text>
+<rect x="175" y="86" width="125" height="84" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="237.5" y="122.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">Vite :5173</text>
+<text x="237.5" y="144.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">หน้าเว็บ + proxy</text>
+<rect x="335" y="86" width="125" height="84" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="397.5" y="122.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">Hono</text>
+<text x="397.5" y="144.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">เส้นทาง API</text>
+<rect x="490" y="86" width="125" height="84" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="552.5" y="122.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">Drizzle</text>
+<text x="552.5" y="144.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">โค้ด → SQL</text>
+<rect x="650" y="86" width="125" height="84" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="712.5" y="122.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">PostgreSQL</text>
+<text x="712.5" y="144.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">:5432 (Docker)</text>
+<line x1="150" y1="116" x2="173" y2="116" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="175" y1="148" x2="152" y2="148" stroke="#16a34a" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#ag)"/>
+<line x1="300" y1="116" x2="333" y2="116" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="335" y1="148" x2="302" y2="148" stroke="#16a34a" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#ag)"/>
+<line x1="460" y1="116" x2="488" y2="116" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="490" y1="148" x2="462" y2="148" stroke="#16a34a" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#ag)"/>
+<line x1="615" y1="116" x2="648" y2="116" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="650" y1="148" x2="617" y2="148" stroke="#16a34a" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#ag)"/>
+<text x="400" y="206" font-size="15" text-anchor="middle" fill="#64748b" font-weight="normal">เส้นทึบ = คำขอไป · เส้นประ = คำตอบกลับ</text>
+<rect x="30" y="224" width="740" height="150" rx="10" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="50" y="252" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">1  หน้าเว็บเรียก fetch("/api/services") ไม่ต้องใส่ :3000</text>
+<text x="50" y="280" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">2  Vite เห็นว่าขึ้นต้น /api จึงส่งต่อไป http://localhost:3000</text>
+<text x="50" y="308" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">3  Hono จับคู่ route ตรวจข้อมูล แล้วรัน handler</text>
+<text x="50" y="336" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">4  Drizzle แปลงโค้ดเป็น SQL ส่งให้ PostgreSQL (:5432)</text>
+<text x="50" y="364" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">5  ผลย้อนกลับทางเดิม เป็น JSON  { success, data }</text>
+</svg>

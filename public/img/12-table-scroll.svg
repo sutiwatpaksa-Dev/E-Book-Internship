@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-label="ตารางกว้างบนมือถือ: ห่อด้วย overflow-x-auto" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
+<title>ตารางกว้างบนมือถือ: ห่อด้วย overflow-x-auto</title><desc>ถ้าไม่ห่อตารางกว้างทำให้ทั้งหน้าเลื่อนซ้ายขวา ถ้าห่อด้วย overflow-x-auto เลื่อนเฉพาะในกรอบตาราง</desc>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="448" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">ตารางกว้างบนมือถือ: ห่อด้วย overflow-x-auto</text>
+<rect x="70" y="90" width="200" height="230" rx="16" fill="#ffffff" stroke="#475569" stroke-width="3"/>
+<text x="170" y="66" font-size="15" text-anchor="middle" fill="#dc2626" font-weight="bold">ไม่ห่อ ✗</text>
+<rect x="530" y="90" width="200" height="230" rx="16" fill="#ffffff" stroke="#475569" stroke-width="3"/>
+<text x="630" y="66" font-size="15" text-anchor="middle" fill="#16a34a" font-weight="bold">ห่อ ✓</text>
+<rect x="82" y="104" width="176" height="20" rx="4" fill="#dbeafe"/>
+<text x="170" y="119" font-size="13" text-anchor="middle" fill="#0f172a" font-weight="normal">หัวข้อเว็บ</text>
+<rect x="82" y="140" width="330" height="90" rx="4" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+<text x="170" y="190" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">ตาราง 640px  →</text>
+<rect x="82" y="304" width="176" height="8" rx="4" fill="#dc2626"/>
+<text x="170" y="296" font-size="14" text-anchor="middle" fill="#dc2626" font-weight="bold">ทั้งหน้าเลื่อนซ้ายขวา</text>
+<rect x="542" y="104" width="176" height="20" rx="4" fill="#dbeafe"/>
+<text x="630" y="119" font-size="13" text-anchor="middle" fill="#0f172a" font-weight="normal">หัวข้อเว็บ</text>
+<rect x="542" y="140" width="176" height="90" rx="6" fill="#ffffff" stroke="#16a34a" stroke-width="2.5"/>
+<rect x="542" y="140" width="330" height="0" fill="none"/>
+<clipPath id="cl"><rect x="542" y="140" width="176" height="90" rx="6"/></clipPath><rect x="552" y="150" width="330" height="70" rx="4" fill="#dcfce7" stroke="#16a34a" clip-path="url(#cl)"/>
+<text x="630" y="190" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">ตาราง 640px →</text>
+<rect x="548" y="238" width="90" height="8" rx="4" fill="#16a34a"/>
+<text x="630" y="272" font-size="14" text-anchor="middle" fill="#16a34a" font-weight="bold">เลื่อนเฉพาะในกรอบตาราง</text>
+<text x="630" y="296" font-size="14" text-anchor="middle" fill="#64748b" font-weight="normal">ส่วนอื่นของหน้านิ่งอยู่กับที่</text>
+<rect x="200" y="344" width="400" height="56" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="400.0" y="366.4" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold">กรอบที่ห่อตาราง (ฝั่งขวา)</text>
+<text x="400.0" y="387.4" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">&lt;div className="overflow-x-auto rounded-lg border"&gt;</text>
+<text x="400" y="428" font-size="14" text-anchor="middle" fill="#64748b" font-weight="normal">ตารางใช้ min-w-[640px] w-full: ไม่ยอมบีบแคบกว่า 640px</text>
+</svg>
