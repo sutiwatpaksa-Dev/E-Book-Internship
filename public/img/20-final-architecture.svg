@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 432" role="img" aria-label="สถาปัตยกรรมระบบจริงบนเครื่องเช่า" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
+<title>สถาปัตยกรรมระบบจริงบนเครื่องเช่า</title><desc>ลูกค้าเข้าผ่าน Caddy ที่ 80/443 แล้วส่ง /api ต่อให้ server และฐานข้อมูล โดย 3000 และ 5432 ไม่เปิดสู่ภายนอก</desc>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="430" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">ระบบจริงหลังขึ้นเว็บ: เปิดประตูหน้าบานเดียว</text>
+<rect x="40" y="46" width="200" height="44" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="140.0" y="62.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">ลูกค้า</text>
+<text x="140.0" y="84.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">https://example.com</text>
+<rect x="16" y="100" width="768" height="318" rx="12" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="300" y="124" font-size="15" text-anchor="start" fill="#0f172a" font-weight="bold">เครื่องเช่า (VPS): ufw เปิดแค่ 22, 80, 443</text>
+<rect x="30" y="144" width="740" height="178" rx="10" fill="#ffffff" stroke="#1a4fb0" stroke-width="1.5" stroke-dasharray="6 5"/>
+<text x="300" y="164" font-size="14" text-anchor="start" fill="#1a4fb0" font-weight="bold">เครือข่ายภายใน Docker (คนนอกมองไม่เห็น)</text>
+<rect x="46" y="188" width="188" height="120" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="140.0" y="231.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">web (Caddy)</text>
+<text x="140.0" y="253.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">ทำ HTTPS + เสิร์ฟหน้าเว็บ</text>
+<text x="140.0" y="275.0" font-size="14" text-anchor="middle" fill="#15803d" font-weight="bold">เปิดประตู 80, 443</text>
+<rect x="306" y="188" width="188" height="120" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="400.0" y="231.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">server (Hono)</text>
+<text x="400.0" y="253.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">port 3000 ข้างใน</text>
+<text x="400.0" y="275.0" font-size="14" text-anchor="middle" fill="#b91c1c" font-weight="bold">ไม่เปิดประตูออกนอกเครื่อง</text>
+<rect x="566" y="188" width="188" height="120" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="660.0" y="231.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">db (PostgreSQL)</text>
+<text x="660.0" y="253.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">port 5432 ข้างใน</text>
+<text x="660.0" y="275.0" font-size="14" text-anchor="middle" fill="#b91c1c" font-weight="bold">ไม่เปิดประตูออกนอกเครื่อง</text>
+<line x1="236" y1="248" x2="304" y2="248" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<text x="270" y="240" font-size="14" text-anchor="middle" fill="#0b3c91" font-weight="bold">/api/*</text>
+<line x1="496" y1="248" x2="564" y2="248" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<text x="530" y="240" font-size="14" text-anchor="middle" fill="#0b3c91" font-weight="bold">SQL</text>
+<rect x="46" y="346" width="188" height="52" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+<text x="140.0" y="366.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">caddy_data</text>
+<text x="140.0" y="388.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">ใบรับรอง HTTPS</text>
+<rect x="566" y="346" width="188" height="52" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+<text x="660.0" y="366.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">pgdata</text>
+<text x="660.0" y="388.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">ข้อมูลฐานข้อมูล</text>
+<line x1="140" y1="346" x2="140" y2="310" stroke="#64748b" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#as)"/>
+<line x1="660" y1="346" x2="660" y2="310" stroke="#64748b" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#as)"/>
+<rect x="306" y="346" width="188" height="52" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+<text x="400.0" y="366.0" font-size="15" text-anchor="middle" fill="#b91c1c" font-weight="bold">3000 / 5432: ปิด ✗</text>
+<text x="400.0" y="388.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">คนนอกต่อตรงไม่ได้</text>
+<line x1="140" y1="92" x2="140" y2="186" stroke="#16a34a" stroke-width="3" marker-end="url(#ag)"/>
+<text x="150" y="128" font-size="15" text-anchor="start" fill="#15803d" font-weight="bold">80 / 443</text>
+</svg>

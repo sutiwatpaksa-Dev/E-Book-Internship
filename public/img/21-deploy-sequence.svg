@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 470" role="img" aria-label="ลำดับขึ้นระบบหลังรวมงาน" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
+<title>ลำดับขึ้นระบบหลังรวมงาน</title><desc>เครื่องกลางเข้าเครื่องเช่าด้วย SSH ดึงโค้ด รัน deploy.sh แล้วเปิดเว็บเช็ค</desc>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a4fb0"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="468" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">ลำดับตอนรวมงานเข้า main แล้วขึ้นระบบ</text>
+<rect x="30" y="46" width="200" height="50" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="130.0" y="76.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">เครื่องกลาง (runner)</text>
+<rect x="570" y="46" width="200" height="50" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="670.0" y="76.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">เครื่องเช่า (server)</text>
+<line x1="130" y1="98" x2="130" y2="452" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 5"/>
+<line x1="670" y1="98" x2="670" y2="452" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 5"/>
+<line x1="132" y1="135" x2="668" y2="135" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<text x="400" y="126" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">1 ssh เข้าเครื่องเช่า (ด้วยกุญแจใน Secrets)</text>
+<rect x="450" y="160" width="300" height="60" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="600.0" y="184.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">2 git fetch + reset --hard origin/main</text>
+<text x="600.0" y="206.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">โค้ดตรงกับ main ทุกตัวอักษร</text>
+<rect x="450" y="230" width="300" height="112" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="600.0" y="258.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">3 รัน deploy/deploy.sh</text>
+<text x="600.0" y="280.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">build กล่อง → db:migrate</text>
+<text x="600.0" y="302.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">→ up -d → ล้าง image เก่า</text>
+<text x="600.0" y="324.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">(set -e: พังตรงไหน หยุดทันที)</text>
+<line x1="668" y1="375" x2="132" y2="375" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
+<text x="400" y="366" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">4 ปิดสาย SSH (คำสั่งจบ)</text>
+<line x1="132" y1="425" x2="668" y2="425" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<text x="400" y="416" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">5 curl https://โดเมน/api/health (ลองซ้ำได้หลายรอบ)</text>
+<text x="400" y="448" font-size="14" text-anchor="middle" fill="#16a34a" font-weight="bold">ตอบ ok = เขียว · ไม่ตอบ = งานแดง รู้ทันที</text>
+</svg>

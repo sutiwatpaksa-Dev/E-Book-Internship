@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 300" role="img" aria-label="ลำดับใน deploy.sh" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
+<title>ลำดับใน deploy.sh</title><desc>build กล่อง อัปเดตตาราง เปิดกล่องใหม่ ล้าง image เก่า ถ้าขั้นไหนพังหยุดทันที</desc>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a4fb0"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="298" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">deploy.sh: 4 ขั้น เรียงลำดับสำคัญ</text>
+<rect x="30" y="70" width="155" height="100" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="107.5" y="103.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">1 build</text>
+<text x="107.5" y="125.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">สร้างกล่องใหม่</text>
+<text x="107.5" y="147.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">จากโค้ดล่าสุด</text>
+<line x1="187" y1="120" x2="222" y2="120" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<rect x="225" y="70" width="155" height="100" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="302.5" y="103.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">2 db:migrate</text>
+<text x="302.5" y="125.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">อัปเดตตาราง</text>
+<text x="302.5" y="147.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ก่อนเปิดโค้ดใหม่</text>
+<line x1="382" y1="120" x2="417" y2="120" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<rect x="420" y="70" width="155" height="100" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="497.5" y="103.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">3 up -d</text>
+<text x="497.5" y="125.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">เปิดกล่องใหม่</text>
+<text x="497.5" y="147.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">แทนของเก่า</text>
+<line x1="577" y1="120" x2="612" y2="120" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<rect x="615" y="70" width="155" height="100" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="692.5" y="103.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">4 image prune</text>
+<text x="692.5" y="125.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ล้างของเก่า</text>
+<text x="692.5" y="147.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ประหยัดดิสก์</text>
+<rect x="30" y="205" width="740" height="60" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+<text x="400.0" y="229.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">set -euo pipefail: ขั้นไหนพัง หยุดทันที ไม่ทำต่อแบบครึ่งๆ กลางๆ</text>
+<text x="400.0" y="251.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">(ลืมขั้น 2 ตอนทำมือคือสาเหตุเว็บ error ทั้งคืนในเรื่องเล่า)</text>
+</svg>

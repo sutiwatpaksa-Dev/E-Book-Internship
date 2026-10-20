@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 460" role="img" aria-label="โครงสร้างไฟล์ ci-cd.yml" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
+<title>โครงสร้างไฟล์ ci-cd.yml</title><desc>ไฟล์ workflow แบ่งเป็น on (เมื่อไหร่) jobs (งาน) และ steps (ขั้นตอน) โดย deploy ต้องรอ check</desc>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a4fb0"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="458" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">ไฟล์ ci-cd.yml อ่านเป็น 3 ชั้น: on → jobs → steps</text>
+<rect x="30" y="52" width="360" height="388" rx="8" fill="#0f172a"/>
+<text x="46" y="78" font-size="15" text-anchor="start" fill="#e2e8f0" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">name: CI/CD</text>
+<text x="46" y="97" font-size="15" text-anchor="start" fill="#93c5fd" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">on:</text>
+<text x="46" y="116" font-size="15" text-anchor="start" fill="#e2e8f0" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">  pull_request:</text>
+<text x="46" y="135" font-size="15" text-anchor="start" fill="#e2e8f0" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">  push:</text>
+<text x="46" y="154" font-size="15" text-anchor="start" fill="#e2e8f0" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">    branches: [main]</text>
+<text x="46" y="192" font-size="15" text-anchor="start" fill="#86efac" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">jobs:</text>
+<text x="46" y="211" font-size="15" text-anchor="start" fill="#86efac" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">  check:</text>
+<text x="46" y="230" font-size="15" text-anchor="start" fill="#e2e8f0" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">    runs-on: ubuntu-latest</text>
+<text x="46" y="249" font-size="15" text-anchor="start" fill="#fbbf24" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">    steps:</text>
+<text x="46" y="268" font-size="15" text-anchor="start" fill="#e2e8f0" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">      - checkout / setup-bun</text>
+<text x="46" y="287" font-size="15" text-anchor="start" fill="#e2e8f0" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">      - server: typecheck, test</text>
+<text x="46" y="306" font-size="15" text-anchor="start" fill="#e2e8f0" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">      - client: build</text>
+<text x="46" y="344" font-size="15" text-anchor="start" fill="#86efac" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">  deploy:</text>
+<text x="46" y="363" font-size="15" text-anchor="start" fill="#f87171" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">    needs: check</text>
+<text x="46" y="382" font-size="15" text-anchor="start" fill="#fbbf24" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">    steps:</text>
+<text x="46" y="401" font-size="15" text-anchor="start" fill="#e2e8f0" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">      - Deploy via SSH</text>
+<text x="46" y="420" font-size="15" text-anchor="start" fill="#e2e8f0" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">      - Health check</text>
+<rect x="430" y="52" width="340" height="56" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="600.0" y="74.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold">on = เมื่อไหร่ถึงเริ่มทำงาน</text>
+<text x="600.0" y="96.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">เปิด PR หรือ push เข้า main</text>
+<rect x="430" y="124" width="340" height="70" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="600.0" y="153.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold">jobs = งานใหญ่ (เครื่องแยกกัน)</text>
+<text x="600.0" y="175.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">check ตรวจ · deploy ขึ้นระบบ</text>
+<rect x="430" y="210" width="340" height="66" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+<text x="600.0" y="226.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold">needs: check</text>
+<text x="600.0" y="248.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">deploy รอ check ผ่านก่อน</text>
+<text x="600.0" y="270.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">ไม่ผ่าน = ไม่เริ่ม</text>
+<rect x="430" y="292" width="340" height="70" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="600.0" y="310.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold">steps = ขั้นตอนในงาน</text>
+<text x="600.0" y="332.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">ทำเรียงจากบนลงล่าง</text>
+<text x="600.0" y="354.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">ขั้นไหนพัง งานหยุดที่นั่น</text>
+<rect x="430" y="378" width="340" height="62" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
+<text x="600.0" y="403.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold">ชื่อเครื่องกลาง: runs-on</text>
+<text x="600.0" y="425.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">ได้เครื่องใหม่ สะอาด ทุกครั้ง</text>
+</svg>

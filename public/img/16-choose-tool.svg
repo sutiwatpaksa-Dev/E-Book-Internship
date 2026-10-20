@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 490" role="img" aria-label="เลือกเครื่องมือตามประเภทงาน" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
+<title>เลือกเครื่องมือตามประเภทงาน</title><desc>แนวทางเลือกเครื่องมือ: ถามแนวคิดและตรวจโค้ดสั้นใช้แชท งานหลายไฟล์ รันเทสต์ ดีบักจาก log ใช้ agent</desc>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker></defs>
+<rect x="1" y="1" width="798" height="488" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="19" text-anchor="middle" fill="#0b3c91" font-weight="bold">งานแบบนี้ เริ่มจากเครื่องมือแบบไหน</text>
+<rect x="20" y="48" width="372" height="36" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="206.0" y="72" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ผู้ช่วยแบบแชท (เว็บ/แอป)</text>
+<rect x="408" y="48" width="372" height="36" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="594.0" y="72" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">Agent ในโปรเจกต์ (terminal/IDE/cloud)</text>
+<rect x="20" y="98" width="760" height="44" rx="8" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
+<text x="34" y="125" font-size="15" text-anchor="start" fill="#0f172a" font-weight="bold">อธิบายแนวคิดที่ยังไม่เข้าใจ</text>
+<text x="404" y="125" font-size="15" text-anchor="start" fill="#1a4fb0" font-weight="bold">→ แชท</text>
+<text x="470" y="125" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">เร็ว ไม่ต้องให้เห็นโปรเจกต์</text>
+<rect x="20" y="148" width="760" height="44" rx="8" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
+<text x="34" y="175" font-size="15" text-anchor="start" fill="#0f172a" font-weight="bold">ขอ review โค้ดสั้นๆ (ไม่มีความลับ)</text>
+<text x="404" y="175" font-size="15" text-anchor="start" fill="#1a4fb0" font-weight="bold">→ แชท</text>
+<text x="470" y="175" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">วางเฉพาะส่วนที่เกี่ยว</text>
+<rect x="20" y="198" width="760" height="44" rx="8" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
+<text x="34" y="225" font-size="15" text-anchor="start" fill="#0f172a" font-weight="bold">เขียนฟังก์ชันเดียวแยกส่วน</text>
+<text x="404" y="225" font-size="15" text-anchor="start" fill="#1a4fb0" font-weight="bold">→ แชท</text>
+<text x="470" y="225" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">เราตรวจแล้วค่อยวางเอง</text>
+<rect x="20" y="248" width="760" height="44" rx="8" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
+<text x="34" y="275" font-size="15" text-anchor="start" fill="#0f172a" font-weight="bold">เรียนไลบรารีใหม่</text>
+<text x="404" y="275" font-size="15" text-anchor="start" fill="#1a4fb0" font-weight="bold">→ แชท</text>
+<text x="470" y="275" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">ถามให้สอน แล้วเปิดเอกสารทางการเทียบ</text>
+<rect x="20" y="298" width="760" height="44" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+<text x="34" y="325" font-size="15" text-anchor="start" fill="#0f172a" font-weight="bold">แก้หลายไฟล์ที่เชื่อมกัน</text>
+<text x="404" y="325" font-size="15" text-anchor="start" fill="#15803d" font-weight="bold">→ agent</text>
+<text x="470" y="325" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">ต้องอ่านโครงสร้างโปรเจกต์</text>
+<rect x="20" y="348" width="760" height="44" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+<text x="34" y="375" font-size="15" text-anchor="start" fill="#0f172a" font-weight="bold">ดีบัก error จาก log/เทสต์</text>
+<text x="404" y="375" font-size="15" text-anchor="start" fill="#15803d" font-weight="bold">→ agent</text>
+<text x="470" y="375" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">รันซ้ำและดูผลจริงได้</text>
+<rect x="20" y="398" width="760" height="44" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+<text x="34" y="425" font-size="15" text-anchor="start" fill="#0f172a" font-weight="bold">เขียนเทสต์แล้วรันให้ผ่าน</text>
+<text x="404" y="425" font-size="15" text-anchor="start" fill="#15803d" font-weight="bold">→ agent</text>
+<text x="470" y="425" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">รันเทสต์เองได้ เราอ่าน diff</text>
+<text x="400" y="470" font-size="15" text-anchor="middle" fill="#0b3c91" font-weight="bold">ไม่แน่ใจ? เริ่มแชทเพื่อเข้าใจ แล้วค่อยใช้ agent ลงมือ + ตรวจ diff เอง</text>
+</svg>

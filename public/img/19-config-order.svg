@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 424" role="img" aria-label="ลำดับการอ่านไฟล์ตั้งค่า SSH" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
+<title>ลำดับการอ่านไฟล์ตั้งค่า SSH</title><desc>ไฟล์ใน sshd_config.d อ่านเรียงชื่อ ค่าที่เจอก่อนชนะ จึงตั้งชื่อ 00-</desc>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="422" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">ทำไมไฟล์ตั้งค่าต้องชื่อขึ้นต้นด้วย 00-</text>
+<line x1="22" y1="80" x2="22" y2="330" stroke="#64748b" stroke-width="2.5" marker-end="url(#as)"/>
+<text x="40" y="66" font-size="14" text-anchor="start" fill="#475569" font-weight="normal">อ่านก่อน</text>
+<rect x="60" y="82" width="400" height="62" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="260.0" y="107.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">00-hardening.conf</text>
+<text x="260.0" y="129.0" font-size="14" text-anchor="middle" fill="#334155" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">PasswordAuthentication no</text>
+<text x="480" y="118" font-size="15" text-anchor="start" fill="#15803d" font-weight="bold">ของเรา เจอก่อน = ชนะ</text>
+<rect x="60" y="164" width="400" height="62" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
+<text x="260.0" y="189.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">50-cloud-init.conf</text>
+<text x="260.0" y="211.0" font-size="14" text-anchor="middle" fill="#334155" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">PasswordAuthentication yes</text>
+<text x="480" y="200" font-size="15" text-anchor="start" fill="#475569" font-weight="bold">ผู้ให้บริการใส่มา ถูกมองข้าม</text>
+<rect x="60" y="246" width="400" height="62" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+<text x="260.0" y="271.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">99-hardening.conf</text>
+<text x="260.0" y="293.0" font-size="14" text-anchor="middle" fill="#334155" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">PasswordAuthentication no</text>
+<text x="480" y="282" font-size="15" text-anchor="start" fill="#b91c1c" font-weight="bold">ถ้าตั้งชื่อ 99- เราจะแพ้</text>
+<text x="40" y="346" font-size="14" text-anchor="start" fill="#475569" font-weight="normal">อ่านทีหลัง</text>
+<rect x="60" y="362" width="680" height="46" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+<text x="400.0" y="390.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">ผลที่ใช้จริง: PasswordAuthentication no (ค่าที่เจอก่อนชนะ)</text>
+</svg>

@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 490" role="img" aria-label="โครงสร้างไฟล์ compose.prod.yaml" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
+<title>โครงสร้างไฟล์ compose.prod.yaml</title><desc>สามบริการ web server db อยู่ในเครือข่ายภายในเดียวกัน เปิด ports เฉพาะ web และมี volume เก็บข้อมูลถาวร</desc>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="488" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">compose.prod.yaml: 3 กล่อง · เครือข่ายภายใน · ที่เก็บถาวร</text>
+<rect x="240" y="44" width="320" height="44" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+<text x="400.0" y="60.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">.env บนเครื่องเช่า</text>
+<text x="400.0" y="82.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">DOMAIN · POSTGRES_PASSWORD · JWT_SECRET</text>
+<line x1="400" y1="90" x2="400" y2="116" stroke="#0b3c91" stroke-width="2" marker-end="url(#an)"/>
+<text x="412" y="110" font-size="13" text-anchor="start" fill="#475569" font-weight="normal">เติมค่า ${...}</text>
+<rect x="14" y="118" width="772" height="236" rx="12" fill="#ffffff" stroke="#1a4fb0" stroke-width="2" stroke-dasharray="7 5"/>
+<text x="30" y="142" font-size="14" text-anchor="start" fill="#1a4fb0" font-weight="bold">เครือข่ายภายในที่ compose สร้างให้ · เรียกกันด้วยชื่อกล่อง server:3000 · db:5432</text>
+<rect x="30" y="156" width="200" height="184" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="130.0" y="209.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">web (Caddy)</text>
+<text x="130.0" y="231.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">build: ./client</text>
+<text x="130.0" y="253.0" font-size="14" text-anchor="middle" fill="#15803d" font-weight="bold">ports: 80, 443</text>
+<text x="130.0" y="275.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">restart: unless-stopped</text>
+<text x="130.0" y="297.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">depends_on: server</text>
+<rect x="300" y="156" width="200" height="184" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="400.0" y="209.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">server (Hono)</text>
+<text x="400.0" y="231.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">build: ./server</text>
+<text x="400.0" y="253.0" font-size="14" text-anchor="middle" fill="#b91c1c" font-weight="bold">ไม่มี ports:</text>
+<text x="400.0" y="275.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">restart: unless-stopped</text>
+<text x="400.0" y="297.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">depends_on: db healthy</text>
+<rect x="570" y="156" width="200" height="184" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="670.0" y="209.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">db (postgres:17)</text>
+<text x="670.0" y="231.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">image สำเร็จรูป</text>
+<text x="670.0" y="253.0" font-size="14" text-anchor="middle" fill="#b91c1c" font-weight="bold">ไม่มี ports:</text>
+<text x="670.0" y="275.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">healthcheck: pg_isready</text>
+<text x="670.0" y="297.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">restart: unless-stopped</text>
+<line x1="298" y1="248" x2="232" y2="248" stroke="#64748b" stroke-width="2" marker-end="url(#as)"/>
+<text x="265" y="238" font-size="13" text-anchor="middle" fill="#475569" font-weight="bold">เปิดก่อน</text>
+<line x1="568" y1="248" x2="502" y2="248" stroke="#64748b" stroke-width="2" marker-end="url(#as)"/>
+<text x="535" y="238" font-size="13" text-anchor="middle" fill="#475569" font-weight="bold">เปิดก่อน</text>
+<rect x="14" y="372" width="236" height="50" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+<text x="132.0" y="391.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">caddy_data · caddy_config</text>
+<text x="132.0" y="413.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">ใบรับรอง HTTPS</text>
+<rect x="550" y="372" width="236" height="50" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+<text x="668.0" y="391.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">pgdata</text>
+<text x="668.0" y="413.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">ข้อมูลฐานข้อมูล</text>
+<line x1="130" y1="372" x2="130" y2="342" stroke="#64748b" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#as)"/>
+<line x1="670" y1="372" x2="670" y2="342" stroke="#64748b" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#as)"/>
+<rect x="270" y="372" width="250" height="50" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+<text x="395.0" y="391.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">volume = ที่เก็บถาวรนอกกล่อง</text>
+<text x="395.0" y="413.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">ลบกล่องแล้วข้อมูลไม่หาย</text>
+<rect x="14" y="436" width="772" height="40" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+<text x="400.0" y="461.0" font-size="15" text-anchor="middle" fill="#b91c1c" font-weight="bold">ห้ามใช้ docker compose down -v กับระบบจริง: -v ลบ volume ทั้งฐานข้อมูลและใบรับรอง</text>
+</svg>

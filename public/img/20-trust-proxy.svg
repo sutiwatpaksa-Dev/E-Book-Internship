@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 452" role="img" aria-label="TRUST_PROXY กับ X-Forwarded-For" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
+<title>TRUST_PROXY กับ X-Forwarded-For</title><desc>ผ่าน Caddy header ปลอมถูกเขียนทับด้วย IP จริง แต่ถ้าเปิดพอร์ต 3000 คนร้ายต่อตรงและใส่ header ปลอมเพื่อหลบการจำกัดได้</desc>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="450" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">TRUST_PROXY ปลอดภัยเฉพาะเมื่อ server เข้าได้ทางเดียวคือผ่าน Caddy</text>
+<rect x="16" y="46" width="378" height="322" rx="10" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+<rect x="406" y="46" width="378" height="322" rx="10" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+<text x="205" y="70" font-size="16" text-anchor="middle" fill="#15803d" font-weight="bold">ถูกต้อง: ไม่เปิดประตู 3000</text>
+<text x="595" y="70" font-size="16" text-anchor="middle" fill="#b91c1c" font-weight="bold">อันตราย: เปิดประตู 3000 ให้คนนอก</text>
+<rect x="30" y="84" width="350" height="66" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="205.0" y="100.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">คนร้าย (IP จริง 198.51.100.7)</text>
+<text x="205.0" y="122.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">ใส่ header ปลอม</text>
+<text x="205.0" y="144.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">X-Forwarded-For: 1.2.3.4</text>
+<rect x="420" y="84" width="350" height="66" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="595.0" y="100.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">คนร้าย (IP จริง 198.51.100.7)</text>
+<text x="595.0" y="122.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">ใส่ header ปลอม</text>
+<text x="595.0" y="144.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">X-Forwarded-For: 1.2.3.4</text>
+<line x1="130" y1="152" x2="130" y2="196" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
+<text x="140" y="180" font-size="14" text-anchor="start" fill="#15803d" font-weight="bold">ผ่านประตู 80/443</text>
+<rect x="30" y="198" width="350" height="64" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="205.0" y="224.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">Caddy เขียนทับ header</text>
+<text x="205.0" y="246.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">X-Forwarded-For = 198.51.100.7</text>
+<line x1="205" y1="264" x2="205" y2="290" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
+<rect x="30" y="292" width="350" height="60" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="205.0" y="316.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">server (TRUST_PROXY=true)</text>
+<text x="205.0" y="338.0" font-size="14" text-anchor="middle" fill="#15803d" font-weight="bold">เห็น IP จริง → จำกัดจำนวนครั้งได้ ✓</text>
+<rect x="420" y="198" width="230" height="64" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6 5"/>
+<text x="535.0" y="224.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">Caddy</text>
+<text x="535.0" y="246.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">(ถูกข้าม ไม่ได้ทำอะไร)</text>
+<line x1="745" y1="152" x2="745" y2="290" stroke="#dc2626" stroke-width="3" marker-end="url(#ar)"/>
+<text x="735" y="205" font-size="14" text-anchor="end" fill="#b91c1c" font-weight="bold">ต่อ :3000</text>
+<text x="735" y="225" font-size="14" text-anchor="end" fill="#b91c1c" font-weight="bold">ตรงๆ</text>
+<rect x="420" y="292" width="300" height="60" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+<text x="570.0" y="316.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">server (TRUST_PROXY=true)</text>
+<text x="570.0" y="338.0" font-size="14" text-anchor="middle" fill="#b91c1c" font-weight="bold">เชื่อ 1.2.3.4 → หลบการจำกัดได้ ✗</text>
+<rect x="16" y="384" width="768" height="54" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+<text x="400.0" y="405.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">ห้ามเขียน ports: ให้ server (และ db) เด็ดขาด</text>
+<text x="400.0" y="427.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">เข้าได้ทางเดียวผ่าน Caddy ที่เขียนทับ header ด้วย IP จริงเสมอ</text>
+</svg>

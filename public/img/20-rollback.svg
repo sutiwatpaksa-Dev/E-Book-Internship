@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 426" role="img" aria-label="ถอยเวอร์ชันบนเครื่องเช่า" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
+<title>ถอยเวอร์ชันบนเครื่องเช่า</title><desc>git checkout commit ที่ดีแล้ว up -d --build ถอยได้เฉพาะโค้ด ตารางที่ migrate ไปแล้วไม่ถอยตาม</desc>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="424" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">ถอยเวอร์ชัน: ถอยได้เฉพาะโค้ด ตารางไม่ถอยตาม</text>
+<text x="24" y="76" font-size="15" text-anchor="start" fill="#0b3c91" font-weight="bold">โค้ด (Git)</text>
+<text x="24" y="246" font-size="15" text-anchor="start" fill="#0b3c91" font-weight="bold">ตาราง</text>
+<text x="24" y="266" font-size="15" text-anchor="start" fill="#0b3c91" font-weight="bold">(ฐานข้อมูล)</text>
+<line x1="200" y1="118" x2="640" y2="118" stroke="#94a3b8" stroke-width="3"/>
+<circle cx="240" cy="118" r="30" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
+<text x="240" y="123" font-size="13" text-anchor="middle" fill="#0f172a" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">abc123</text>
+<circle cx="420" cy="118" r="30" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
+<text x="420" y="123" font-size="13" text-anchor="middle" fill="#0f172a" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">def456</text>
+<circle cx="600" cy="118" r="30" fill="#fee2e2" stroke="#dc2626" stroke-width="3"/>
+<text x="600" y="123" font-size="13" text-anchor="middle" fill="#0f172a" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">9f8e7d</text>
+<text x="240" y="172" font-size="15" text-anchor="middle" fill="#15803d" font-weight="bold">ดี</text>
+<text x="420" y="172" font-size="15" text-anchor="middle" fill="#15803d" font-weight="bold">ดีล่าสุด</text>
+<text x="600" y="172" font-size="15" text-anchor="middle" fill="#b91c1c" font-weight="bold">ใหม่ · มีปัญหา</text>
+<path d="M 590 86 Q 510 44 432 86" fill="none" stroke="#f59e0b" stroke-width="3" marker-end="url(#ao)"/>
+<text x="512" y="62" font-size="13" text-anchor="middle" fill="#92400e" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">git checkout def456 + up -d --build</text>
+<rect x="200" y="210" width="260" height="66" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+<text x="330.0" y="248.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">ตารางเวอร์ชันเดิม</text>
+<rect x="480" y="210" width="260" height="66" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+<text x="610.0" y="237.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">ตาราง + ช่องใหม่</text>
+<text x="610.0" y="259.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">migrate ไปแล้ว</text>
+<path d="M 610 280 Q 480 330 330 280" fill="none" stroke="#dc2626" stroke-width="3" stroke-dasharray="7 5" marker-end="url(#ar)"/>
+<text x="470" y="326" font-size="14" text-anchor="middle" fill="#b91c1c" font-weight="bold">✗ ไม่ถอยตามโค้ด</text>
+<rect x="24" y="346" width="752" height="66" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="400.0" y="373.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">โค้ดเก่า + ตารางใหม่ ต้องยังทำงานได้ → จึงต้องแก้ตารางแบบ "เพิ่มอย่างเดียว"</text>
+<text x="400.0" y="395.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">ถอยเสร็จแล้ว ค่อยแก้ปัญหา แล้วกลับมาที่ git checkout main</text>
+</svg>

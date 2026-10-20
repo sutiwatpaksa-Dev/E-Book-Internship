@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 396" role="img" aria-label="refused กับ timed out" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
+<title>refused กับ timed out</title><desc>Connection refused คือถึงเครื่องแต่ไม่มีโปรแกรมรอที่ประตูนั้น Connection timed out คือไปไม่ถึงหรือไม่มีใครตอบ</desc>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="394" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="19" text-anchor="middle" fill="#0b3c91" font-weight="bold">refused กับ timed out</text>
+<text x="400" y="60" font-size="17" text-anchor="middle" fill="#d97706" font-weight="bold">Connection refused</text>
+<rect x="20" y="76" width="150" height="70" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="95.0" y="116.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">เรา</text>
+<rect x="520" y="76" width="260" height="70" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="650.0" y="105.8" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">เครื่องปลายทาง</text>
+<text x="650.0" y="126.8" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ประตู 3000 ว่าง ไม่มีใครรอ</text>
+<line x1="170" y1="100" x2="518" y2="100" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="518" y1="126" x2="172" y2="126" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="7 5" marker-end="url(#ar)"/>
+<text x="345" y="168" font-size="15" text-anchor="middle" fill="#d97706" font-weight="bold">"ไม่มีใครรับที่นี่" ตอบกลับทันที = โปรแกรมไม่ได้เปิด / รอผิดประตู</text>
+<text x="400" y="222" font-size="17" text-anchor="middle" fill="#dc2626" font-weight="bold">Connection timed out</text>
+<rect x="20" y="238" width="150" height="70" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="95.0" y="278.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">เรา</text>
+<rect x="300" y="238" width="120" height="70" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="360.0" y="267.8" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">ยาม /</text>
+<text x="360.0" y="288.8" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">เครือข่าย</text>
+<rect x="600" y="238" width="180" height="70" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="690.0" y="267.8" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">เครื่องปลายทาง</text>
+<text x="690.0" y="288.8" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">(ปิด หรือ IP ผิด)</text>
+<line x1="170" y1="273" x2="298" y2="273" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="420" y1="273" x2="500" y2="273" stroke="#dc2626" stroke-width="1.5"/>
+<text x="520" y="282" font-size="26" text-anchor="middle" fill="#dc2626" font-weight="bold">✕</text>
+<text x="400" y="350" font-size="15" text-anchor="middle" fill="#dc2626" font-weight="bold">เงียบ ไม่มีคำตอบ รอจนหมดเวลา = ไปไม่ถึง (ยามบล็อก / IP ผิด / เครื่องปิด)</text>
+<text x="400" y="382" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ใช้ ping / traceroute / curl -v แยกว่าเป็นแบบไหน</text>
+</svg>

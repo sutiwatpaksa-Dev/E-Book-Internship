@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 416" role="img" aria-label="firewall เปิดแค่ 22 80 443" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
+<title>firewall เปิดแค่ 22 80 443</title><desc>ufw ปล่อยพอร์ต 22 80 443 ผ่านและบล็อกพอร์ตอื่น เช่น 5432 และ 3000</desc>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="414" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">ufw: ปิดทุกประตู แล้วเปิดเฉพาะที่จำเป็น</text>
+<rect x="24" y="70" width="150" height="270" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="99.0" y="177.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">คนทั้งโลก</text>
+<text x="99.0" y="199.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">(อินเทอร์เน็ต)</text>
+<text x="99.0" y="221.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">รวมโปรแกรม</text>
+<text x="99.0" y="243.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">เดารหัสด้วย</text>
+<rect x="600" y="70" width="176" height="270" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="688.0" y="199.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">เครื่องเช่า</text>
+<text x="688.0" y="221.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">203.0.113.10</text>
+<rect x="360" y="64" width="44" height="284" rx="8" fill="#f59e0b" stroke="#b45309" stroke-width="2"/>
+<text x="382" y="58" font-size="16" text-anchor="middle" fill="#b45309" font-weight="bold">ufw</text>
+<line x1="176" y1="100" x2="358" y2="100" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
+<line x1="406" y1="100" x2="598" y2="100" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
+<text x="268" y="93" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">22 (SSH)</text>
+<text x="500" y="93" font-size="15" text-anchor="middle" fill="#15803d" font-weight="bold">ผ่าน</text>
+<line x1="176" y1="148" x2="358" y2="148" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
+<line x1="406" y1="148" x2="598" y2="148" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
+<text x="268" y="141" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">80 (HTTP)</text>
+<text x="500" y="141" font-size="15" text-anchor="middle" fill="#15803d" font-weight="bold">ผ่าน</text>
+<line x1="176" y1="196" x2="358" y2="196" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
+<line x1="406" y1="196" x2="598" y2="196" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
+<text x="268" y="189" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">443 (HTTPS)</text>
+<text x="500" y="189" font-size="15" text-anchor="middle" fill="#15803d" font-weight="bold">ผ่าน</text>
+<line x1="176" y1="268" x2="354" y2="268" stroke="#dc2626" stroke-width="2.5" marker-end="url(#ar)"/>
+<text x="268" y="261" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">5432 (ฐานข้อมูล)</text>
+<text x="382" y="275" font-size="22" text-anchor="middle" fill="#7f1d1d" font-weight="bold">✗</text>
+<text x="500" y="273" font-size="15" text-anchor="middle" fill="#b91c1c" font-weight="bold">ถูกบล็อก</text>
+<line x1="176" y1="316" x2="354" y2="316" stroke="#dc2626" stroke-width="2.5" marker-end="url(#ar)"/>
+<text x="268" y="309" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">3000 (server)</text>
+<text x="382" y="323" font-size="22" text-anchor="middle" fill="#7f1d1d" font-weight="bold">✗</text>
+<text x="500" y="321" font-size="15" text-anchor="middle" fill="#b91c1c" font-weight="bold">ถูกบล็อก</text>
+<rect x="24" y="356" width="752" height="46" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+<text x="400.0" y="384.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">deny incoming (ค่าเริ่มต้น) แล้ว allow เฉพาะ 22, 80, 443</text>
+</svg>

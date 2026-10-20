@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 426" role="img" aria-label="เมฆสีเทากับเมฆสีส้มใน Cloudflare" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
+<title>เมฆสีเทากับเมฆสีส้มใน Cloudflare</title><desc>เมฆเทา DNS only ผู้ใช้ต่อตรงที่ IP จริง เมฆส้ม Proxied ผู้ใช้ผ่าน Cloudflare ก่อน</desc>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="424" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="19" text-anchor="middle" fill="#0b3c91" font-weight="bold">เมฆสีเทากับเมฆสีส้มใน Cloudflare</text>
+<text x="400" y="58" font-size="17" text-anchor="middle" fill="#64748b" font-weight="bold">เมฆสีเทา = DNS only (เริ่มด้วยแบบนี้)</text>
+<rect x="20" y="76" width="150" height="64" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+<text x="95.0" y="113.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">ผู้ใช้</text>
+<rect x="540" y="76" width="240" height="64" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="660.0" y="102.8" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">เครื่องเช่า / Caddy</text>
+<text x="660.0" y="123.8" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">เห็น IP จริง</text>
+<line x1="170" y1="108" x2="538" y2="108" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
+<text x="355" y="98" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">DNS ตอบ IP จริง ต่อตรงเลย</text>
+<text x="400" y="168" font-size="15" text-anchor="middle" fill="#16a34a" font-weight="bold">Caddy ขอใบรับรอง HTTPS ได้ตรงๆ</text>
+<line x1="20" y1="196" x2="780" y2="196" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="400" y="230" font-size="17" text-anchor="middle" fill="#d97706" font-weight="bold">เมฆสีส้ม = Proxied (ซ่อน IP จริง + กันโจมตี)</text>
+<rect x="20" y="248" width="130" height="64" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+<text x="85.0" y="285.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">ผู้ใช้</text>
+<rect x="300" y="248" width="170" height="64" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="385.0" y="274.8" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">Cloudflare</text>
+<text x="385.0" y="295.8" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ด่านกลาง</text>
+<rect x="620" y="248" width="160" height="64" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="700.0" y="274.8" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">เครื่องเช่า</text>
+<text x="700.0" y="295.8" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">IP ถูกซ่อน</text>
+<line x1="150" y1="280" x2="298" y2="280" stroke="#d97706" stroke-width="2.5" marker-end="url(#ao)"/>
+<line x1="470" y1="280" x2="618" y2="280" stroke="#d97706" stroke-width="2.5" marker-end="url(#ao)"/>
+<rect x="60" y="336" width="680" height="70" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+<text x="400.0" y="365.8" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">ต้องตั้ง SSL/TLS = Full (strict) ใน Cloudflare</text>
+<text x="400.0" y="386.8" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ไม่งั้นเว็บวนพาไปแล้วพากลับไม่จบ (redirect loop)</text>
+</svg>

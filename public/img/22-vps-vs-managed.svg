@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" role="img" aria-label="เช่าเครื่องเอง กับ บริการสำเร็จรูป" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
+<title>เช่าเครื่องเอง กับ บริการสำเร็จรูป</title><desc>เปรียบเทียบว่าใครดูแลแต่ละชั้น: เช่าเครื่องเองเราดูแลเกือบทั้งหมด บริการสำเร็จรูปผู้ให้บริการดูแลเครื่อง HTTPS และการขึ้นระบบ</desc>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a4fb0"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="398" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">ใครดูแลอะไร: เช่าเครื่องเอง vs บริการสำเร็จรูป</text>
+<rect x="270" y="50" width="230" height="44" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="385.0" y="77.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold">เช่าเครื่องเอง (บท 19-21)</text>
+<rect x="520" y="50" width="250" height="44" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="645.0" y="77.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold">บริการสำเร็จรูป (บทนี้)</text>
+<rect x="30" y="104" width="740" height="40" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="42" y="130" font-size="15" text-anchor="start" fill="#0f172a" font-weight="bold">ความปลอดภัยของเครื่อง</text>
+<rect x="270" y="108" width="230" height="32" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="385.0" y="129.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">เรา</text>
+<rect x="520" y="108" width="250" height="32" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="645.0" y="129.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">ผู้ให้บริการ</text>
+<rect x="30" y="150" width="740" height="40" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="42" y="176" font-size="15" text-anchor="start" fill="#0f172a" font-weight="bold">HTTPS</text>
+<rect x="270" y="154" width="230" height="32" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="385.0" y="175.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">เราตั้ง (Caddy)</text>
+<rect x="520" y="154" width="250" height="32" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="645.0" y="175.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">อัตโนมัติ</text>
+<rect x="30" y="196" width="740" height="40" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="42" y="222" font-size="15" text-anchor="start" fill="#0f172a" font-weight="bold">ขั้นตอนขึ้นระบบ</text>
+<rect x="270" y="200" width="230" height="32" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="385.0" y="221.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">เราเขียนเอง</text>
+<rect x="520" y="200" width="250" height="32" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="645.0" y="221.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">ส่งงานขึ้น Git แล้วขึ้นเอง</text>
+<rect x="30" y="242" width="740" height="40" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="42" y="268" font-size="15" text-anchor="start" fill="#0f172a" font-weight="bold">เว็บทดลองต่อ PR</text>
+<rect x="270" y="246" width="230" height="32" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="385.0" y="267.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">ไม่มีให้ ต้องทำเอง</text>
+<rect x="520" y="246" width="250" height="32" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="645.0" y="267.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">ได้เองทุกคำขอรวมงาน</text>
+<rect x="30" y="288" width="740" height="40" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="42" y="314" font-size="15" text-anchor="start" fill="#0f172a" font-weight="bold">โค้ดแอปของเรา</text>
+<rect x="270" y="292" width="230" height="32" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="385.0" y="313.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">เรา</text>
+<rect x="520" y="292" width="250" height="32" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="645.0" y="313.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">เรา</text>
+<rect x="30" y="340" width="740" height="44" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="400.0" y="367.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">ได้ความสะดวก แลกกับ: ปรับแต่งได้น้อยกว่า · แผนฟรีหลับเมื่อไม่มีคนใช้ · ย้ายออกทีหลังเหนื่อย</text>
+</svg>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 412" role="img" aria-label="VPS คือห้องเช่าในเครื่องจริง" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
+<title>VPS คือห้องเช่าในเครื่องจริง</title><desc>เครื่องจริงเครื่องเดียวถูกแบ่งเป็นหลาย VPS ด้วย hypervisor แต่ละห้องแยกกัน เราเช่าหนึ่งห้อง</desc>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="410" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">VPS = ได้เช่า "ห้อง" หนึ่งห้องในเครื่องจริงเครื่องใหญ่</text>
+<rect x="40" y="52" width="720" height="262" rx="12" fill="#e2e8f0" stroke="#64748b" stroke-width="2"/>
+<text x="60" y="78" font-size="15" text-anchor="start" fill="#0f172a" font-weight="bold">เครื่องจริงในศูนย์ข้อมูล (ของผู้ให้บริการ)</text>
+<rect x="60" y="96" width="150" height="110" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
+<text x="135.0" y="145.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">VPS ของลูกค้า A</text>
+<text x="135.0" y="167.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">แยกขาดจากกัน</text>
+<rect x="240" y="96" width="150" height="110" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
+<text x="315.0" y="145.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">VPS ของลูกค้า B</text>
+<text x="315.0" y="167.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">แยกขาดจากกัน</text>
+<rect x="420" y="96" width="150" height="110" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="3"/>
+<text x="495.0" y="123.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">VPS ของเรา</text>
+<text x="495.0" y="145.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">Ubuntu 24.04</text>
+<text x="495.0" y="167.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">IP 203.0.113.10</text>
+<text x="495.0" y="189.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">เราดูแลเอง</text>
+<rect x="600" y="96" width="150" height="110" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
+<text x="675.0" y="145.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">VPS ของลูกค้า D</text>
+<text x="675.0" y="167.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">แยกขาดจากกัน</text>
+<rect x="60" y="218" width="690" height="34" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="405.0" y="240.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">ซอฟต์แวร์แบ่งเครื่อง (hypervisor) แบ่ง CPU / RAM / ดิสก์ ให้แต่ละห้อง</text>
+<rect x="60" y="262" width="690" height="38" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+<text x="405.0" y="286.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">ฮาร์ดแวร์จริง: CPU หลายตัว · RAM ก้อนใหญ่ · ดิสก์ · สายเน็ต · ไฟสำรอง</text>
+<rect x="40" y="330" width="720" height="66" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="400.0" y="357.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">เช่า 1 ห้อง = ได้ IP ของตัวเอง เปิด 24 ชั่วโมง ติดตั้งอะไรก็ได้</text>
+<text x="400.0" y="379.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">แต่ต้องตั้งค่าความปลอดภัยและอัปเดตเอง (ผู้ให้บริการดูแลแค่ฮาร์ดแวร์)</text>
+</svg>

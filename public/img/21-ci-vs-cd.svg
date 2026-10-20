@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 300" role="img" aria-label="CI กับ CD" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
+<title>CI กับ CD</title><desc>ส่งงานขึ้น Git แล้ว CI ตรวจ ถ้าผ่านค่อย CD ขึ้นระบบจริง ถ้าไม่ผ่านหยุดและแจ้งสีแดง</desc>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a4fb0"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<rect x="1" y="1" width="798" height="298" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">CI ตรวจงาน, CD ขึ้นระบบ: เครื่องกลางทำให้ทุกครั้ง</text>
+<rect x="30" y="90" width="150" height="80" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="105.0" y="124.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">ส่งงานขึ้น Git</text>
+<text x="105.0" y="146.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">(push / PR)</text>
+<rect x="250" y="90" width="220" height="80" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="360.0" y="124.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">CI: ตรวจอัตโนมัติ</text>
+<text x="360.0" y="146.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ชนิดข้อมูล · ทดสอบ · แพ็กเว็บ</text>
+<rect x="540" y="90" width="230" height="80" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="655.0" y="124.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">CD: ขึ้นระบบจริง</text>
+<text x="655.0" y="146.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">เข้าเครื่อง · อัปเดต · เช็คเว็บ</text>
+<line x1="182" y1="130" x2="248" y2="130" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="472" y1="130" x2="538" y2="130" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
+<text x="510" y="118" font-size="15" text-anchor="middle" fill="#16a34a" font-weight="bold">ผ่าน</text>
+<text x="250" y="76" font-size="14" text-anchor="start" fill="#64748b" font-weight="normal">CI = Continuous Integration</text>
+<text x="540" y="76" font-size="14" text-anchor="start" fill="#64748b" font-weight="normal">CD = Continuous Delivery</text>
+<line x1="360" y1="172" x2="360" y2="210" stroke="#dc2626" stroke-width="2.5" marker-end="url(#ar)"/>
+<rect x="250" y="212" width="220" height="50" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+<text x="360.0" y="242.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ไม่ผ่าน = หยุด แจ้งสีแดง</text>
+<text x="375" y="194" font-size="15" text-anchor="start" fill="#dc2626" font-weight="bold">ไม่ผ่าน</text>
+<text x="650" y="225" font-size="15" text-anchor="middle" fill="#0b3c91" font-weight="bold">คนลืมได้ เครื่องไม่ลืม</text>
+<text x="650" y="247" font-size="14" text-anchor="middle" fill="#64748b" font-weight="normal">(ขั้นตอนเดียวกันทุกครั้ง)</text>
+</svg>
