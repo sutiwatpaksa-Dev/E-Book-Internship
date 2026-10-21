@@ -11,4 +11,10 @@ const schema = z.object({
   EXAMPLE_REPO_URL: z.string().url().optional(),
 });
 
-export const env = schema.parse(process.env);
+const parsed = schema.safeParse(process.env);
+if (!parsed.success) {
+  // บอกแค่ชื่อตัวแปรที่ขาดหรือผิดรูปแบบ ไม่พิมพ์ค่าออกมา (อาจเป็นความลับ)
+  const keys = [...new Set(parsed.error.issues.map((i) => i.path.join(".")))];
+  throw new Error(`ENV_INVALID: ${keys.join(", ")}`);
+}
+export const env = parsed.data;
