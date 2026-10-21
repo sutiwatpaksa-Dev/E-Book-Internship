@@ -1,5 +1,5 @@
-import { gate, isPageRequest } from "./server/gate";
-import { readCookie, readSessionToken, SESSION_COOKIE } from "./server/session";
+import { gate, isPageRequest } from "./server/middleware/page-gate";
+import { readCookie, readSessionToken, SESSION_COOKIE } from "./server/lib/session";
 
 // Vercel Routing Middleware: ทำงานก่อนส่งไฟล์ static ทุกไฟล์ที่ตรง matcher
 // เว็บนี้เป็น static ถ้าซ่อนแค่ปุ่มในหน้าเว็บ คนยังพิมพ์ URL เปิดเองได้ การตรวจจึงต้องอยู่ฝั่ง server ตรงนี้

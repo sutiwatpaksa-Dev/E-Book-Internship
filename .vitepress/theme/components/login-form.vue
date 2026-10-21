@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { api, refreshRole } from "../session";
+import { useSession } from "../composables/use-session";
+
+const { login } = useSession();
 
 const username = ref("");
 const pin = ref("");
@@ -17,12 +19,7 @@ async function submit() {
   error.value = "";
   busy.value = true;
   try {
-    await api("/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: username.value, pin: pin.value }),
-    });
-    refreshRole();
+    await login(username.value, pin.value);
     // โหลดหน้าใหม่ทั้งหน้า ให้คำขอผ่าน middleware พร้อม cookie ใหม่
     location.assign(nextPath());
   } catch (e) {

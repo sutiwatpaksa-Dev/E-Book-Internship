@@ -6,7 +6,24 @@
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["bun"]
+    "types": [
+      "bun"
+    ],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ]
   },
-  "include": ["server", "api", "scripts", "middleware.ts", "drizzle.config.ts"]
+  "include": [
+    "server",
+    "api",
+    "scripts",
+    "middleware.ts",
+    "drizzle.config.ts",
+    ".vitepress/theme/api",
+    ".vitepress/theme/composables",
+    ".vitepress/theme/lib",
+    ".vitepress/theme/types"
+  ]
 }

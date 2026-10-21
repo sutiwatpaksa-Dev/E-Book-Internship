@@ -3,9 +3,9 @@
 // ถ้าจอแคบจนเหลือที่ให้เนื้อหาไม่พอ (วางคู่กันไม่ได้) จะเปิด PDF ตามปกติแทน
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute } from "vitepress";
+import { REQUIREMENT_PDF_URL } from "../api/files.api";
 
-// ไฟล์อยู่หลัง login (API ตรวจ role ก่อนส่ง) ไม่ได้อยู่ใน public/ เพราะ repo นี้เปิดสาธารณะ
-const PDF = "/api/files/requirement.pdf";
+const PDF = REQUIREMENT_PDF_URL;
 // ความกว้างที่ต้องเหลือให้เนื้อหาคู่มือ (ข้อความ ~480px + ระยะขอบของ VitePress) และความกว้างต่ำสุดของแผง
 const CONTENT_MIN = 608;
 const PANEL_MIN = 360;

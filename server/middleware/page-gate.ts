@@ -1,4 +1,4 @@
-import type { Role } from "./db/schema";
+import type { Role } from "../db/schema";
 
 // path ไหนต้องมี role อะไร (dev เห็นทุกอย่างที่ intern เห็น)
 // ไฟล์ JS ของแต่ละหน้า VitePress ตั้งชื่อตาม path เช่น /assets/starter_index.md.abc123.js จึงต้องล็อกด้วย

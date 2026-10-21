@@ -2,7 +2,7 @@
 // ใช้: bun scripts/create-user.ts <username> <intern|dev>
 import { db } from "../server/db/client";
 import { ROLES, users, type Role } from "../server/db/schema";
-import { hashPin, newPin } from "../server/pin";
+import { hashPin, newPin } from "../server/lib/pin";
 
 const [username, role] = process.argv.slice(2);
 if (!username || !ROLES.includes(role as Role)) {

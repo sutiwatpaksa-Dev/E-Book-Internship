@@ -24,14 +24,31 @@ docs/                    หน้าเว็บทั้งหมด (VitePres
 └─ public/               ไฟล์ที่ส่งตรงๆ: img/ (แผนภาพ), brand/ (โลโก้)
 .vitepress/
 ├─ config.mts            เมนู, sidebar, head
-└─ theme/                index.ts, custom.css, session.ts, components/*.vue
+└─ theme/                frontend แบบแบ่งตามหน้าที่ (Layer-based)
+   ├─ index.ts           ประกอบ layout + ตรวจก่อนเปลี่ยนหน้า
+   ├─ components/        หน้าตา (.vue) ไม่เรียก fetch เอง
+   ├─ composables/       สถานะที่ใช้ร่วมกัน เช่น use-session.ts (เทียบได้กับ hooks ของ React)
+   ├─ api/               เรียก API ทั้งหมดผ่านที่นี่ (client.ts + ไฟล์ละกลุ่ม)
+   ├─ lib/               ฟังก์ชันช่วยที่ไม่ผูกกับ UI (access.ts)
+   ├─ types/             type ที่ใช้ร่วมกัน
+   └─ styles/custom.css
 api/server.ts            ทางเข้า API บน Vercel (เรียก server/app.ts)
-server/                  โค้ด API: app.ts, routes/, db/ (schema + migrations/), gate.ts, session.ts
+server/                  backend แบบแบ่งตามหน้าที่ (Layered / MVC)
+├─ app.ts                ประกอบ routes + csrf + error handler
+├─ routes/               Controller: รับคำขอ ตรวจ input ตอบกลับ (*.routes.ts)
+├─ validators/           schema ของ input (zod)
+├─ services/             Model: กฎธุรกิจ ไม่รู้จัก HTTP โยนรหัสข้อผิดพลาด (*.service.ts)
+├─ repositories/         Model: คุยกับฐานข้อมูลเท่านั้น (*.repository.ts)
+├─ middleware/           require-role, error-handler (แปลงรหัสเป็น status), page-gate (กฎว่า path ไหนต้อง login)
+├─ db/                   client.ts, schema.ts, migrations/
+├─ lib/                  session.ts (บัตรผ่าน), pin.ts
+└─ config/env.ts         ตรวจตัวแปร env ตอนเริ่ม
 middleware.ts            ด่านตรวจ login ก่อนส่งหน้าเว็บ (Vercel Routing Middleware ต้องอยู่ที่ root)
 scripts/                 สคริปต์ดูแลระบบ (สร้างบัญชีแรก)
 design/brand-source/     ไฟล์โลโก้ต้นฉบับ (ไม่ขึ้นเว็บ)
 ```
 
+- ทิศทางการเรียก: `routes → services → repositories → db` ห้ามข้ามชั้น ฝั่งหน้าเว็บ `components → composables / api → client`
 - ไฟล์ component ใช้ชื่อตัวพิมพ์เล็กคั่นด้วย `-` ตามที่คู่มือสอนใน [บทเสริมจัดโครงสร้างโปรเจกต์](docs/project-structure.md)
 - ออกเวอร์ชันใหม่: เพิ่มหัวข้อบนสุดใน `changelog.md` แล้วรัน `npm version <ตัวเลข> --no-git-tag-version` (เลขจะขึ้นที่เมนูและ footer เอง) จากนั้น commit, `git tag v<ตัวเลข>` และ push
 - เพิ่มบทใหม่: สร้างไฟล์ `.md` ใน `docs/` แล้วเพิ่มชื่อใน `chapters` ที่ `.vitepress/config.mts`
@@ -55,10 +72,10 @@ design/brand-source/     ไฟล์โลโก้ต้นฉบับ (ไ�
 
 | ส่วน | ไฟล์ | หน้าที่ |
 |---|---|---|
-| Routing Middleware | `middleware.ts`, `server/gate.ts` | ตรวจบัตรผ่าน (cookie `bt_session`) ก่อนส่งไฟล์หน้าเว็บ ไม่มีบัตรพาไปหน้า login |
+| Routing Middleware | `middleware.ts`, `server/middleware/page-gate.ts` | ตรวจบัตรผ่าน (cookie `bt_session`) ก่อนส่งไฟล์หน้าเว็บ ไม่มีบัตรพาไปหน้า login |
 | API (Hono บน Bun) | `api/server.ts`, `server/` | login/logout, หน้า admin, ส่ง PDF (เช็กกับ DB ทุกครั้ง) |
 
-ตารางกฎว่า path ไหนต้องมี role อะไรอยู่ที่ `server/gate.ts` ที่เดียว (หน้าเว็บใช้ `.vitepress/theme/session.ts` แค่แสดงปุ่ม)
+ตารางกฎว่า path ไหนต้องมี role อะไรอยู่ที่ `server/middleware/page-gate.ts` (หน้าเว็บใช้ `.vitepress/theme/lib/access.ts` แค่แสดงปุ่ม ถ้าเพิ่ม path ที่ล็อกต้องแก้ทั้งสองที่)
 หน้าใหม่ที่ต้องล็อกให้ใส่ `search: false` ใน frontmatter ไม่งั้นเนื้อหาจะหลุดไปอยู่ในดัชนีค้นหาที่ทุกคนโหลดได้
 
 > ⚠️ repo นี้ยังเปิดสาธารณะ ไฟล์ `.md` ของหน้าที่ล็อกยังอ่านบน GitHub ได้ login กันได้เฉพาะบนเว็บ ไฟล์ที่ต้องปิดจริง (PDF) จึงเก็บใน DB ไม่ใส่ใน repo
@@ -89,5 +106,5 @@ npm run dev              # เว็บที่ :5173 (ส่ง /api ไป :3
 npm test && npm run typecheck
 ```
 
-middleware ไม่ทำงานตอน `npm run dev` (เป็นของ Vercel) จึงมีเทสต์ใน `server/middleware.test.ts` แทน และตรวจของจริงบน Preview URL ก่อน merge
+middleware ไม่ทำงานตอน `npm run dev` (เป็นของ Vercel) จึงมีเทสต์ใน `server/middleware/vercel-middleware.test.ts` แทน และตรวจของจริงบน Preview URL ก่อน merge
 แก้ตารางใน `server/db/schema.ts` แล้ว `npm run db:generate` ได้ไฟล์ SQL ใหม่ใน `server/db/migrations/` ให้ commit ไฟล์นั้นด้วย และรัน `db:migrate` กับ Neon ก่อน deploy

@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import { env } from "../env";
+import { env } from "../config/env";
 import * as schema from "./schema";
 
 // serverless เปิดหลายเครื่องพร้อมกันได้ ให้แต่ละเครื่องถือ connection น้อยๆ (ใช้ connection string แบบ pooled ของ Neon)

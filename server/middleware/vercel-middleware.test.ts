@@ -1,6 +1,6 @@
 import { beforeAll, expect, test } from "bun:test";
-import middleware from "../middleware";
-import { createSessionToken } from "./session";
+import middleware from "../../middleware";
+import { createSessionToken } from "../lib/session";
 
 const SECRET = "test-secret-test-secret-test-secret-123";
 let intern = "";

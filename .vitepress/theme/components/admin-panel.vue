@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
-import { api, type Role } from "../session";
-
-type User = { id: number; username: string; role: Role; disabled: boolean; lockedUntil: string | null; lastLoginAt: string | null };
+import { adminApi } from "../api/admin.api";
+import { REQUIREMENT_PDF_URL } from "../api/files.api";
+import type { FileInfo, Role, User } from "../types";
 
 const users = ref<User[]>([]);
 const error = ref("");
@@ -10,7 +10,7 @@ const error = ref("");
 const issued = ref<{ username: string; pin: string } | null>(null);
 const newUsername = ref("");
 const newRole = ref<Role>("intern");
-const pdf = ref<{ size: number; updatedAt: string } | null>(null);
+const pdf = ref<FileInfo | null>(null);
 
 const fmt = (d: string | null) => (d ? new Date(d).toLocaleString("th-TH") : "–");
 const isLocked = (u: User) => !!u.lockedUntil && new Date(u.lockedUntil) > new Date();
@@ -26,15 +26,13 @@ async function run(fn: () => Promise<void>) {
 
 const load = () =>
   run(async () => {
-    users.value = await api<User[]>("/admin/users");
-    pdf.value = await api("/admin/requirement");
+    users.value = await adminApi.listUsers();
+    pdf.value = await adminApi.getRequirementInfo();
   });
-
-const json = (method: string, body: unknown) => ({ method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
 const create = () =>
   run(async () => {
-    const r = await api<{ user: User; pin: string }>("/admin/users", json("POST", { username: newUsername.value, role: newRole.value }));
+    const r = await adminApi.createUser(newUsername.value, newRole.value);
     issued.value = { username: r.user.username, pin: r.pin };
     newUsername.value = "";
     await load();
@@ -43,14 +41,14 @@ const create = () =>
 const resetPin = (u: User) =>
   run(async () => {
     if (!confirm(`ออก PIN ใหม่ให้ ${u.username}? PIN เดิมจะใช้ไม่ได้ทันที`)) return;
-    const r = await api<{ user: User; pin: string }>(`/admin/users/${u.id}/reset-pin`, { method: "POST" });
+    const r = await adminApi.resetPin(u.id);
     issued.value = { username: u.username, pin: r.pin };
     await load();
   });
 
-const patch = (u: User, body: object) =>
+const patch = (u: User, changes: Parameters<typeof adminApi.updateUser>[1]) =>
   run(async () => {
-    await api(`/admin/users/${u.id}`, json("PATCH", body));
+    await adminApi.updateUser(u.id, changes);
     await load();
   });
 
@@ -58,7 +56,7 @@ const upload = (e: Event) =>
   run(async () => {
     const file = (e.target as HTMLInputElement).files?.[0];
     if (!file) return;
-    pdf.value = await api("/admin/requirement", { method: "PUT", headers: { "Content-Type": "application/pdf" }, body: file });
+    pdf.value = await adminApi.uploadRequirement(file);
   });
 
 onMounted(load);
@@ -94,7 +92,7 @@ onMounted(load);
           <tr v-for="u in users" :key="u.id">
             <td>{{ u.username }}</td>
             <td>
-              <select :value="u.role" @change="patch(u, { role: ($event.target as HTMLSelectElement).value })">
+              <select :value="u.role" @change="patch(u, { role: ($event.target as HTMLSelectElement).value as Role })">
                 <option value="intern">Internship</option>
                 <option value="dev">Dev</option>
               </select>
@@ -112,7 +110,7 @@ onMounted(load);
     </div>
 
     <h2>ไฟล์ Requirement (PDF)</h2>
-    <p v-if="pdf">ไฟล์ปัจจุบัน {{ Math.round(pdf.size / 1024) }} KB · อัปเดต {{ fmt(pdf.updatedAt) }} · <a href="/api/files/requirement.pdf" target="_blank" rel="noopener">เปิดดู</a></p>
+    <p v-if="pdf">ไฟล์ปัจจุบัน {{ Math.round(pdf.size / 1024) }} KB · อัปเดต {{ fmt(pdf.updatedAt) }} · <a :href="REQUIREMENT_PDF_URL" target="_blank" rel="noopener">เปิดดู</a></p>
     <p v-else>ยังไม่มีไฟล์ น้องจะเปิดแผง Requirement ไม่ได้จนกว่าจะอัปโหลด</p>
     <label class="bt-btn bt-upload">
       อัปโหลด PDF ใหม่ (ไม่เกิน 4 MB)

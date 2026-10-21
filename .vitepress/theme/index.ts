@@ -5,8 +5,8 @@ import AdminPanel from "./components/admin-panel.vue";
 import AuthNav from "./components/auth-nav.vue";
 import LoginForm from "./components/login-form.vue";
 import RequirementViewer from "./components/requirement-viewer.vue";
-import { canSee, needsRole, readRoleHint } from "./session";
-import "./custom.css";
+import { canSee, needsRole, readRoleHint } from "./lib/access";
+import "./styles/custom.css";
 
 export default {
   extends: DefaultTheme,

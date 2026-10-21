@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
-import { api, refreshRole, role } from "../session";
+import { filesApi } from "../api/files.api";
+import { useSession } from "../composables/use-session";
+
+const { role, refresh, logout: endSession } = useSession();
 
 const exampleRepo = ref<string | null>(null);
 const label = { intern: "Internship", dev: "Dev" } as const;
 
 onMounted(async () => {
-  refreshRole();
+  refresh();
   if (!role.value) return;
   try {
-    exampleRepo.value = (await api<{ exampleRepo: string | null }>("/files/links")).exampleRepo;
+    exampleRepo.value = (await filesApi.links()).exampleRepo;
   } catch {
     // บัตรหมดอายุแต่ cookie บอก role ยังค้าง: ถือว่ายังไม่ได้ login
     role.value = null;
@@ -17,7 +20,7 @@ onMounted(async () => {
 });
 
 async function logout() {
-  await api("/auth/logout", { method: "POST" }).catch(() => {});
+  await endSession();
   location.assign("/");
 }
 </script>

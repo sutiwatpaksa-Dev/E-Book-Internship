@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { gate, isPageRequest } from "./gate";
+import { gate, isPageRequest } from "./page-gate";
 
 describe("gate", () => {
   test("หน้าทั่วไปเปิดได้ทุกคน", () => {

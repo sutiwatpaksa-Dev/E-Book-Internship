@@ -1,5 +1,5 @@
 import { sign, verify } from "hono/jwt";
-import type { Role } from "./db/schema";
+import type { Role } from "../db/schema";
 
 // ไฟล์นี้ใช้ทั้งใน API และ middleware จึงรับ secret เป็นพารามิเตอร์ ไม่ import env ทั้งก้อน
 export const SESSION_COOKIE = "bt_session";
