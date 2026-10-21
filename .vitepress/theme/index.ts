@@ -1,10 +1,10 @@
 import { h } from "vue";
 import DefaultTheme from "vitepress/theme";
 import type { Theme } from "vitepress";
-import AdminPanel from "./AdminPanel.vue";
-import AuthNav from "./AuthNav.vue";
-import LoginForm from "./LoginForm.vue";
-import RequirementViewer from "./RequirementViewer.vue";
+import AdminPanel from "./components/admin-panel.vue";
+import AuthNav from "./components/auth-nav.vue";
+import LoginForm from "./components/login-form.vue";
+import RequirementViewer from "./components/requirement-viewer.vue";
 import { canSee, needsRole, readRoleHint } from "./session";
 import "./custom.css";
 

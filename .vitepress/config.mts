@@ -48,8 +48,8 @@ export default defineConfig({
   description: "Basic Dev Fundamentals สำหรับน้องฝึกงาน บริษัท บลิคซ์เทค คอนซัลแทนท์ จำกัด",
   // Vercel เสิร์ฟที่ root ถ้าย้ายไปอยู่ใต้ path ย่อย ให้ตั้ง BASE_PATH เช่น /handbook/
   base,
-  rewrites: { "README.md": "index.md" },
-  srcExclude: ["node_modules/**", "MAINTAINING.md", "Handoff*.md"],
+  // หน้าเว็บทั้งหมดอยู่ใน docs/ ส่วนโค้ด API, สคริปต์ และไฟล์ดูแลระบบอยู่นอกโฟลเดอร์นี้ จึงไม่กลายเป็นหน้าเว็บ
+  srcDir: "docs",
   // ลิงก์ localhost ในบทเรียนตั้งใจให้เปิดบนเครื่องน้องเอง
   ignoreDeadLinks: "localhostLinks",
   cleanUrls: true,

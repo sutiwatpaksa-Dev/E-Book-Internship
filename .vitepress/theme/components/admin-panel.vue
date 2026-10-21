@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
-import { api, type Role } from "./session";
+import { api, type Role } from "../session";
 
 type User = { id: number; username: string; role: Role; disabled: boolean; lockedUntil: string | null; lastLoginAt: string | null };
 

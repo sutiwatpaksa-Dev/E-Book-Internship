@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { api, refreshRole } from "./session";
+import { api, refreshRole } from "../session";
 
 const username = ref("");
 const pin = ref("");

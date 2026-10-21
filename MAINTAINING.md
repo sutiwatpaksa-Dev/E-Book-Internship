@@ -10,10 +10,31 @@ npm run dev        # เปิด http://localhost:5173 แก้ไฟล์ .m
 npm run build      # ตรวจว่า build ผ่าน (ลิงก์เสียจะทำให้ build ไม่ผ่าน)
 ```
 
-- เนื้อหาแต่ละบทคือไฟล์ `00-start.md` ถึง `23-go-live.md`, Mini Project อยู่ในโฟลเดอร์ `starter/` และ `cheat-sheet.md`
-- `README.md` คือหน้าแรกของ e-book
+### โครงสร้างไฟล์
+
+```
+docs/                    หน้าเว็บทั้งหมด (VitePress srcDir) path ในนี้ = URL บนเว็บ
+├─ index.md              หน้าแรก
+├─ 00-start.md … 23-go-live.md   บทเรียน
+├─ react-language.md, project-structure.md   บทเสริม
+├─ glossary.md, cheat-sheet.md, changelog.md
+├─ starter/              Mini Project (ต้อง login: Internship ขึ้นไป)
+├─ dev/                  ส่วนพี่เลี้ยง (ต้อง login: Dev)
+├─ login.md, no-access.md
+└─ public/               ไฟล์ที่ส่งตรงๆ: img/ (แผนภาพ), brand/ (โลโก้)
+.vitepress/
+├─ config.mts            เมนู, sidebar, head
+└─ theme/                index.ts, custom.css, session.ts, components/*.vue
+api/server.ts            ทางเข้า API บน Vercel (เรียก server/app.ts)
+server/                  โค้ด API: app.ts, routes/, db/ (schema + migrations/), gate.ts, session.ts
+middleware.ts            ด่านตรวจ login ก่อนส่งหน้าเว็บ (Vercel Routing Middleware ต้องอยู่ที่ root)
+scripts/                 สคริปต์ดูแลระบบ (สร้างบัญชีแรก)
+design/brand-source/     ไฟล์โลโก้ต้นฉบับ (ไม่ขึ้นเว็บ)
+```
+
+- ไฟล์ component ใช้ชื่อตัวพิมพ์เล็กคั่นด้วย `-` ตามที่คู่มือสอนใน [บทเสริมจัดโครงสร้างโปรเจกต์](docs/project-structure.md)
 - ออกเวอร์ชันใหม่: เพิ่มหัวข้อบนสุดใน `changelog.md` แล้วรัน `npm version <ตัวเลข> --no-git-tag-version` (เลขจะขึ้นที่เมนูและ footer เอง) จากนั้น commit, `git tag v<ตัวเลข>` และ push
-- เพิ่มบทใหม่: สร้างไฟล์ `.md` แล้วเพิ่มชื่อใน `chapters` ที่ `.vitepress/config.mts`
+- เพิ่มบทใหม่: สร้างไฟล์ `.md` ใน `docs/` แล้วเพิ่มชื่อใน `chapters` ที่ `.vitepress/config.mts`
 - สีและฟอนต์อยู่ที่ `.vitepress/theme/custom.css`
 
 ## เผยแพร่ (Vercel)
@@ -69,4 +90,4 @@ npm test && npm run typecheck
 ```
 
 middleware ไม่ทำงานตอน `npm run dev` (เป็นของ Vercel) จึงมีเทสต์ใน `server/middleware.test.ts` แทน และตรวจของจริงบน Preview URL ก่อน merge
-แก้ตารางใน `server/db/schema.ts` แล้ว `npm run db:generate` ได้ไฟล์ SQL ใหม่ใน `drizzle/` ให้ commit ไฟล์นั้นด้วย และรัน `db:migrate` กับ Neon ก่อน deploy
+แก้ตารางใน `server/db/schema.ts` แล้ว `npm run db:generate` ได้ไฟล์ SQL ใหม่ใน `server/db/migrations/` ให้ commit ไฟล์นั้นด้วย และรัน `db:migrate` กับ Neon ก่อน deploy

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
-import { api, refreshRole, role } from "./session";
+import { api, refreshRole, role } from "../session";
 
 const exampleRepo = ref<string | null>(null);
 const label = { intern: "Internship", dev: "Dev" } as const;
