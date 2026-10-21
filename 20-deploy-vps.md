@@ -202,6 +202,7 @@ services:
       NODE_ENV: production          # → cookie มี Secure (บทที่ 15)
       PORT: "3000"
       TRUST_PROXY: "true"           # เชื่อ IP ที่ Caddy ส่งมา (บทที่ 14 ข้อ 5)
+      APP_ORIGIN: https://${DOMAIN}  # หน้าเว็บจริง ให้ด่านกัน CSRF เทียบ (บทที่ 15)
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
     depends_on:

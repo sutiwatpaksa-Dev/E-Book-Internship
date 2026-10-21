@@ -224,4 +224,4 @@ refused = ไปถึงเครื่องแล้ว แต่ไม่ม
 
 ---
 
-[← 🏪 Mini Project: การส่งงาน](./starter/submission.md) · [🏠 สารบัญ](/) · [บทที่ 18: ชื่อเว็บ (Domain & DNS) →](./18-domain-dns.md)
+[← 🏪 Mini Project: เทียบกับเอกสารต้นฉบับ](./starter/compare.md) · [🏠 สารบัญ](/) · [บทที่ 18: ชื่อเว็บ (Domain & DNS) →](./18-domain-dns.md)

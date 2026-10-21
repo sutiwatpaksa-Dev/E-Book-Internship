@@ -37,6 +37,7 @@ const starter = [
   { text: "คุณภาพที่ต้องได้", link: "/starter/quality" },
   { text: "แผน 10 วัน", link: "/starter/timeline" },
   { text: "การส่งงาน + เกณฑ์", link: "/starter/submission" },
+  { text: "เทียบกับเอกสารต้นฉบับ", link: "/starter/compare" },
 ];
 
 export default defineConfig({

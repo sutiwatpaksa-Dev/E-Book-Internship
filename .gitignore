@@ -5,6 +5,8 @@ node_modules/
 
 # เอกสารต้นฉบับ (เนื้อหาอยู่ในหน้าเว็บแล้ว ไม่เผยแพร่ใน repo สาธารณะ)
 *.pdf
+# ยกเว้น Requirement STARTER ที่เปิดให้น้องเทียบกับคู่มือ (ผู้ใช้อนุมัติ 21 ต.ค. 2569)
+!public/docs/starter-requirement.pdf
 
 # บันทึกส่งต่องานระหว่าง session (ไม่เผยแพร่)
 Handoff.md

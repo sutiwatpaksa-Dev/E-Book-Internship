@@ -206,7 +206,7 @@ jobs:
 |---|---|
 | `on: pull_request` / `push: main` | เปิดคำขอรวมงาน = ตรวจอย่างเดียว / รวมเข้า `main` = ตรวจ + ขึ้นระบบ |
 | `needs: check` | ขึ้นระบบได้ก็ต่อเมื่อตรวจผ่านแล้ว |
-| `environment: production` | ตั้งให้ต้องมีคนกดอนุมัติก่อนขึ้นระบบได้ (ข้อ 6) |
+| `environment: production` | ตั้งให้ต้องมีคนกดอนุมัติก่อนขึ้นระบบได้ (ข้อ 6 ดูด้วยว่าแผนของ GitHub รองรับไหม) |
 | `git reset --hard origin/main` | ทำให้โค้ดบนเครื่องเช่าตรงกับ `main` ทุกตัวอักษร (ถ้ามีคนแอบแก้ไฟล์บนเครื่องเช่า จะถูกทับ ซึ่งดีแล้ว เพราะไม่ควรมีใครแก้ตรงนั้น) |
 | `known_hosts` | ยืนยันว่ากำลังเข้าเครื่องเช่าตัวจริง |
 | Health check | ขึ้นระบบเสร็จแล้วลองเปิดเว็บจริง ถ้าไม่ตอบ งานนี้ขึ้นสีแดง เรารู้ทันที |
@@ -231,6 +231,19 @@ jobs:
 **GitHub → Settings → Environments → production**
 - ✅ Required reviewers: ใส่ชื่อพี่เลี้ยง ขึ้นระบบได้เมื่อพี่เลี้ยงกดอนุมัติ (เหมาะกับช่วงฝึกงาน)
 
+> ⚠️ **เช็คแผนของ GitHub ก่อน ว่าด่านเหล่านี้มีจริง** (ข้อมูล ณ ต.ค. 2569 จาก [เอกสาร rulesets](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets) และ [เอกสาร environments](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments))
+>
+> | | repo สาธารณะ | repo ส่วนตัว (private) |
+> |---|---|---|
+> | กติกาของ `main` (ruleset) | ทุกแผน รวม Free | ต้องเป็น Pro / Team / Enterprise |
+> | Required reviewers ของ environment | ทุกแผน รวม Free | ต้องเป็น **Enterprise** (Free / Pro / Team ใช้ไม่ได้) |
+>
+> งานลูกค้ามักเป็น repo ส่วนตัว ถ้าแผนไม่รองรับ หน้าตั้งค่าอาจไม่มีให้ตั้ง หรือ `environment: production` ก็ยังรันผ่านไปเฉยๆ **โดยไม่มีใครต้องกดอนุมัติ** ด่านที่เราคิดว่ามีแต่ไม่มีจริงอันตรายกว่าไม่มีด่านเลย เพราะทุกคนวางใจผิดๆ
+>
+> ทางเลือกเมื่อแผนไม่รองรับ
+> - เปลี่ยน `deploy` ให้เริ่มด้วยมือ: ลบ `push` ออกจาก `on:` แล้วเพิ่ม `workflow_dispatch:` (และแก้ `if:` ของ `deploy` เป็น `github.event_name == 'workflow_dispatch'`) พี่เลี้ยงเป็นคนกด **Run workflow** ในแท็บ Actions เอง
+> - ตกลงเป็นกติกาทีม: รวมเข้า `main` ได้เฉพาะพี่เลี้ยง (ให้น้องมีสิทธิ์แค่ Write ไม่ใช่ Admin) แล้ว **ลองทดสอบจริงว่ากติกาทำงาน** เช่น ลอง push ตรงเข้า `main` ต้องถูกปฏิเสธ
+
 ขั้นตอนทำงานหลังจากนี้ (ทบทวน [บทที่ 1 ข้อ 16 Workflow ของทีม](./01-git.md#_16-workflow-ของทีม-blicktech))
 ```
  แตก branch ใหม่ → แก้ → commit → ส่งขึ้น Git → เปิดคำขอรวมงาน (PR)
@@ -243,7 +256,11 @@ jobs:
 ## 7. 🦊 ถ้าใช้ GitLab แทน GitHub
 
 หลายโปรเจกต์ของทีม Blicktech ใช้ GitLab หลักการเหมือนกันทุกอย่าง ต่างแค่ไฟล์ตั้งค่า
-เก็บค่าลับที่ **Settings → CI/CD → Variables** (ติ๊ก Masked + Protected) ใช้ชื่อเดียวกับข้อ 4
+เก็บค่าลับที่ **Settings → CI/CD → Variables** (ติ๊ก Protected) ใช้ชื่อเดียวกับข้อ 4
+- `SSH_KEY` และ `SSH_KNOWN_HOSTS` มีหลายบรรทัด ให้เลือก **Type = File** GitLab จะเขียนค่าลงไฟล์ชั่วคราวแล้วให้ตัวแปรเป็น **ที่อยู่ของไฟล์** (ไม่ใช่ตัวค่า) ใน YAML จึงใช้ `cp` แทน `echo`
+- ค่าบรรทัดเดียว (`SSH_USER`, `SSH_HOST`, `DOMAIN`) ใช้ Type = Variable ได้ ติ๊ก Masked ได้ถ้าต้องการ
+
+> 💡 ทำไม `SSH_KEY` ติ๊ก Masked ไม่ได้: GitLab ซ่อนค่าใน log ได้เฉพาะค่าที่ **เป็นบรรทัดเดียวและไม่มีช่องว่าง** ([เอกสาร GitLab](https://docs.gitlab.com/ci/variables/)) กุญแจ SSH มีหลายบรรทัดจึงบันทึกแบบ Masked ไม่ผ่าน ส่วนแบบ File ค่าจริงไม่ถูกพิมพ์ลง log อยู่แล้ว เพราะ script ใช้แค่ที่อยู่ไฟล์ แต่ยังต้องระวังอย่าสั่ง `cat` ไฟล์นั้นใน script
 
 `.gitlab-ci.yml`
 
@@ -270,8 +287,8 @@ deploy:
   before_script:
     - apk add --no-cache openssh-client curl
     - install -m 700 -d ~/.ssh
-    - echo "$SSH_KEY" > ~/.ssh/id_ed25519 && chmod 600 ~/.ssh/id_ed25519
-    - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+    - cp "$SSH_KEY" ~/.ssh/id_ed25519 && chmod 600 ~/.ssh/id_ed25519   # ตัวแปรแบบ File = ที่อยู่ไฟล์
+    - cp "$SSH_KNOWN_HOSTS" ~/.ssh/known_hosts
   script:
     - ssh "$SSH_USER@$SSH_HOST" 'cd ~/bit-cafe && git fetch origin main && git reset --hard origin/main && ./deploy/deploy.sh'
     - curl -fsS --retry 10 --retry-delay 5 --retry-all-errors "https://$DOMAIN/api/health"
