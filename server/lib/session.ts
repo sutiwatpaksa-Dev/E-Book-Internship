@@ -1,7 +1,7 @@
 import { sign, verify } from "hono/jwt";
 import type { Role } from "../db/schema";
 
-// ไฟล์นี้ใช้ทั้งใน API และ middleware จึงรับ secret เป็นพารามิเตอร์ ไม่ import env ทั้งก้อน
+// ไฟล์นี้ใช้ทั้งใน API (Hono) และด่านตรวจหน้าเว็บ (src/lib/require-page-access.ts) จึงรับ secret เป็นพารามิเตอร์ ไม่ import env ทั้งก้อน
 export const SESSION_COOKIE = "bt_session";
 // cookie ที่ JavaScript อ่านได้ บอกหน้าเว็บแค่ว่า login เป็น role อะไร (ใช้แสดงปุ่ม ไม่ได้ใช้ตัดสินสิทธิ์)
 export const ROLE_HINT_COOKIE = "bt_role";
@@ -23,12 +23,4 @@ export async function readSessionToken(token: string | undefined, secret: string
   } catch {
     return null;
   }
-}
-
-export function readCookie(header: string | null, name: string) {
-  for (const part of (header ?? "").split(";")) {
-    const [k, ...v] = part.trim().split("=");
-    if (k === name) return decodeURIComponent(v.join("="));
-  }
-  return undefined;
 }

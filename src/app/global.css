@@ -1,0 +1,101 @@
+@import "tailwindcss";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
+
+/* โทนสีเดียวกับเอกสารบริษัท (navy 072A6B / 0B3C91) */
+:root {
+  --color-fd-primary: #0b3c91;
+  --color-fd-primary-foreground: #ffffff;
+  /* สีของ Roadmap หน้าแรก: กล่องด่านสีเหลือง เส้นแกนสีน้ำเงิน แบบเดียวกับ roadmap.sh */
+  --rm-node-bg: #ffe066;
+  --rm-node-fg: #1f2328;
+  --rm-item-bg: #fff6d6;
+  --rm-line: #2f6feb;
+  --rm-done: #2da44e;
+}
+
+.dark {
+  --color-fd-primary: #7aa7ff;
+  --color-fd-primary-foreground: #0b1020;
+  --rm-node-bg: #d4a72c;
+  --rm-node-fg: #1b1b1f;
+  --rm-item-bg: #2b2a24;
+  --rm-line: #4c8dff;
+  --rm-done: #3fb950;
+}
+
+/* ภาษาไทยอ่านสบายขึ้นเมื่อบรรทัดห่างกว่าค่าเริ่มต้น */
+.prose :where(p, li) {
+  line-height: 1.85;
+}
+
+/* กล่อง "สรุป 30 วินาที" และ blockquote อื่นๆ ให้เด่นแบบการ์ด */
+.prose blockquote {
+  border-left: 4px solid var(--color-fd-primary);
+  background: color-mix(in oklab, var(--color-fd-primary) 10%, transparent);
+  border-radius: 0 8px 8px 0;
+  padding: 2px 16px;
+  font-style: normal;
+  font-weight: inherit;
+  color: inherit;
+}
+.prose blockquote p::before,
+.prose blockquote p::after {
+  content: none;
+}
+
+/* เฉลยแบบกดเปิด */
+.prose details {
+  border: 1px solid var(--color-fd-border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  margin: 10px 0;
+  background: var(--color-fd-card);
+}
+.prose details summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* ภาพ ASCII ในกล่องโค้ดไม่ตัดบรรทัด */
+.prose pre {
+  white-space: pre;
+}
+
+/* รูปประกอบ (SVG แผนภาพ) และคำบรรยายใต้รูป */
+.prose img {
+  margin: 16px auto 4px;
+  border-radius: 10px;
+  border: 1px solid var(--color-fd-border);
+}
+.prose img + em {
+  display: block;
+  text-align: center;
+  font-size: 0.85em;
+  color: var(--color-fd-muted-foreground);
+}
+
+/* โลโก้เต็มบนหน้าแรก: การ์ดพื้นขาวทั้งสองโหมด (ไฟล์ภาพพื้นหลังขาว) */
+.prose .home-logo {
+  display: flex;
+  justify-content: center;
+}
+.prose .home-logo img {
+  border: 0;
+  background: #fff;
+  padding: 12px 20px;
+  max-width: min(480px, 100%);
+  height: auto;
+}
+
+/* เปิดแผง Requirement: เว้นที่ด้านขวาให้แผง ข้อความคู่มือจึงไม่ถูกบัง */
+html.req-open body {
+  padding-right: var(--req-w);
+}
+/* ระหว่างเปิดแผง ซ่อนสารบัญด้านขวาและคืนคอลัมน์ของมันให้เนื้อหาคู่มือ */
+html.req-open #nd-toc {
+  display: none;
+}
+html.req-open #nd-docs-layout {
+  --fd-toc-width: 0px !important;
+}

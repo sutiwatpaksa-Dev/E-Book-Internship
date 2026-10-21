@@ -1,0 +1,195 @@
+---
+navTitle: "📋 Cheat Sheet"
+title: "📋 Cheat Sheet"
+---
+
+> รวมคำสั่งที่ใช้บ่อย เปิดค้างไว้ข้างจอได้เลย
+
+---
+
+## Terminal
+```bash
+pwd · ls · cd <โฟลเดอร์> · cd .. · mkdir <ชื่อ> · code .
+Tab = เติมชื่อ · ↑ = คำสั่งก่อนหน้า · Ctrl+C = หยุดโปรแกรม
+```
+
+## Git
+```bash
+git status                          # ⭐ ดูสถานะ (ใช้บ่อยสุด)
+git add . && git commit -m "feat: ..."
+git log --oneline                   # ดูประวัติ
+git diff                            # ดูสิ่งที่แก้
+git restore <ไฟล์>                  # ยกเลิกการแก้ที่ยังไม่ add
+git switch -c feat/12-name          # สร้าง branch ใหม่
+git switch main && git pull         # ☀️ ทำทุกเช้า
+git push -u origin <branch>         # push ครั้งแรก
+git merge <branch>
+```
+ประเภท commit: `feat` · `fix` · `docs` · `refactor` · `test` · `chore`
+
+## Docker
+```bash
+docker run -d -p 8080:80 --name web nginx:alpine
+docker ps / docker ps -a
+docker logs -f <ชื่อ>
+docker exec -it <ชื่อ> sh
+docker rm -f <ชื่อ>
+docker build -t <image> .
+docker compose up -d [--build]
+docker compose logs -f <service>
+docker compose down [-v]            # -v = ลบ volume ⚠️
+```
+port: `-p เครื่องเรา:ในกล่อง` · ในกล่องเรียกกันด้วย **ชื่อ service** ไม่ใช่ localhost
+
+## Package manager
+| ทำอะไร | npm | Yarn | Bun |
+|---|---|---|---|
+| ติดตั้งทั้งหมด | `npm install` | `yarn` | `bun install` |
+| ตาม lock เป๊ะ | `npm ci` | `yarn install --frozen-lockfile` | `bun install --frozen-lockfile` |
+| เพิ่ม | `npm install x` | `yarn add x` | `bun add x` |
+| เพิ่มแบบ dev | `npm install -D x` | `yarn add -D x` | `bun add -d x` |
+| รัน script | `npm run dev` | `yarn dev` | `bun run dev` |
+
+## TypeScript
+```bash
+npm install -D typescript tsx @types/node
+npx tsx watch src/index.ts          # dev
+npx tsc --noEmit                    # ตรวจ type ✅ ก่อน commit (ฝั่ง server; ฝั่ง client ใช้ bun run build ซึ่งรัน tsc -b)
+npx tsc                             # build
+```
+```ts
+interface X { a: string; b?: number }      // object
+type S = "a" | "b";                         // union
+Omit<X, "a"> · Partial<X> · Pick<X, "a">    // utility
+unknown ✅  any 🚫
+```
+
+## HTTP
+| Method | ใช้ | | Code | ความหมาย |
+|---|---|---|---|---|
+| `GET` | ดู | | `200` | OK |
+| `POST` | สร้าง | | `201` | สร้างแล้ว |
+| `PATCH` | แก้บางส่วน | | `204` | สำเร็จ ไม่มี body |
+| `PUT` | แทนที่ | | `400` | ข้อมูลผิด |
+| `DELETE` | ลบ | | `401` / `403` | ไม่รู้ว่าใคร / ไม่มีสิทธิ์ |
+| | | | `404` / `409` | ไม่พบ / ขัดกับสถานะ |
+| | | | `500` | server พัง |
+
+## SQL
+```sql
+SELECT col FROM t WHERE ... ORDER BY ... ;
+INSERT INTO t (a, b) VALUES (1, 2);
+UPDATE t SET a = 1 WHERE id = 5;        -- ⚠️ อย่าลืม WHERE
+DELETE FROM t WHERE id = 5;             -- ⚠️ อย่าลืม WHERE
+SELECT ... FROM a JOIN b ON b.a_id = a.id;
+SELECT ... FROM a LEFT JOIN b ON ... WHERE b.id IS NULL;
+SELECT x, COUNT(*) FROM t GROUP BY x;
+BEGIN; ... COMMIT;   /   ROLLBACK;
+```
+psql: `\dt` ตาราง · `\d t` โครงสร้าง · `\q` ออก
+
+## ORM
+```bash
+npx drizzle-kit generate && npx drizzle-kit migrate
+npx prisma migrate dev --name <ชื่อ> && npx prisma generate
+npx prisma studio
+```
+กัน N+1: `with: { rentals: true }` (Drizzle) · `include: { rentals: true }` (Prisma)
+
+## Debugging
+- อ่าน error บรรทัดแรก + บรรทัดแรกที่เป็นไฟล์ของเรา
+- VS Code: `⌘/Ctrl+Shift+P` → **JavaScript Debug Terminal** → คลิกซ้ายเลขบรรทัด 🔴
+- `F5` ต่อ · `F10` บรรทัดถัดไป · `F11` เข้าในฟังก์ชัน
+- ถาม: 🎯 ทำอะไร · 👣 ขั้นตอน · ✅ คาดว่า · ❌ ได้จริง · 🔍 ลองแล้ว
+
+## Security
+- ความลับ → `.env` (ห้ามเข้า Git) + `.env.example`
+- รหัสผ่าน → `bcrypt.hash(pw, 12)` / `bcrypt.compare(pw, hash)` · Bun: `Bun.password.hash(pw)` / `Bun.password.verify(pw, hash)`
+- input → Zod ทุก endpoint · SQL → ORM หรือ `$1`
+- หลุด → เปลี่ยน key ทันที + แจ้งพี่
+
+## Frontend (React + Tailwind + Router)
+```bash
+bun create vite client --template react-ts
+# ⚠️ ใน client/ เปลี่ยน src/App.tsx เป็น src/app.tsx แล้วแก้ import ใน main.tsx (ดูบทที่ 11 ข้อ 2)
+bun add tailwindcss @tailwindcss/vite react-router
+bun run dev / bun run build
+```
+- state: `const [x, setX] = useState(..)` · ห้ามแก้ตรง ใช้ `[...arr]` / `{...obj}`
+- fetch: `useEffect(() => {...; return () => controller.abort()}, [url])` · ทุกหน้ามี loading / error
+- responsive: ไม่มี prefix = มือถือ · `md:` ≥768 · `xl:` ≥1280
+- ลิงก์ภายใน `<NavLink>` / `<Link>` · filter เก็บใน `useSearchParams`
+
+## Backend (Bun + Hono + Drizzle)
+```bash
+bun run dev                     # bun --watch src/index.ts
+bun run db:generate             # schema → ไฟล์ migration
+bun run db:migrate              # รัน migration
+bun run seed                    # ข้อมูลตั้งต้น (รันซ้ำได้)
+bun test                        # test
+```
+- response: `{ success, data }` / `{ success: false, error: { code, message, details } }`
+- status: 200 · 201 สร้าง · 400 validate · 401 ไม่ login · 404 · 409 ซ้ำ/ขัดสถานะ · 429 ถี่ไป · 500
+- `/api/admin/*` ต้องผ่าน `requireAdmin` · cookie `HttpOnly; SameSite=Lax; Secure`
+
+## Network / DNS
+```bash
+dig +short example.com          # ชื่อ → IP
+dig @1.1.1.1 +short example.com # ข้าม cache
+curl -v https://example.com     # ดูทุกชั้น DNS → TCP → TLS → HTTP
+sudo ss -tlnp                   # port ที่เปิดอยู่ (Linux)
+```
+refused = ไม่มีใครฟัง port · timeout = firewall/IP ผิด · 502 = proxy ต่อ app ไม่ได้
+
+## Server + Deploy
+```bash
+ssh bitcafe                                         # ~/.ssh/config
+sudo ufw status verbose                             # เปิดแค่ 22/80/443
+DC="docker compose -f compose.prod.yaml"
+$DC build && $DC run --rm server bun run db:migrate && $DC up -d
+$DC ps · $DC logs -f server · $DC logs -f web
+./deploy/backup.sh                                  # backup DB
+```
+⚠️ production ห้าม `down -v` · db/server ห้ามมี `ports:` · migration เพิ่มอย่างเดียว (expand-only)
+
+## ทำงานคู่กับ AI
+เข้าใจโจทย์ → ถามกลับ → ออกแบบ → แตกงาน → ทำทีละชิ้น + ตรวจ
+prompt = บริบท + เป้าหมาย + ข้อจำกัด + รูปแบบคำตอบ + เกณฑ์ว่าเสร็จ · อธิบายได้ทุกบรรทัดก่อน commit
+
+---
+
+## 📚 แหล่งเรียนรู้เพิ่มเติม
+
+| เรื่อง | ลิงก์ |
+|---|---|
+| Git (ฝึกแบบภาพ) | https://learngitbranching.js.org |
+| Docker | https://docs.docker.com/get-started/ |
+| TypeScript Handbook | https://www.typescriptlang.org/docs/handbook/intro.html |
+| TypeScript Playground | https://www.typescriptlang.org/play |
+| Zod | https://zod.dev |
+| HTTP status (แมว 🐱) | https://http.cat |
+| MDN: HTTP | https://developer.mozilla.org/en-US/docs/Web/HTTP |
+| SQL (ฝึกในเว็บ) | https://sqlbolt.com |
+| SQL Murder Mystery 🕵️ | https://mystery.knightlab.com |
+| PostgreSQL | https://www.postgresql.org/docs/ |
+| MySQL | https://dev.mysql.com/doc/ |
+| MongoDB | https://www.mongodb.com/docs/manual/ |
+| Drizzle | https://orm.drizzle.team/docs/overview |
+| Prisma | https://www.prisma.io/docs |
+| Sequelize (TS) | https://sequelize.org/docs/v6/other-topics/typescript/ |
+| Node.js | https://nodejs.org/en/learn |
+| Bun | https://bun.sh/docs |
+| OWASP Top 10 (ช่องโหว่ยอดฮิต) | https://owasp.org/www-project-top-ten/ |
+| React | https://react.dev/learn |
+| Tailwind CSS | https://tailwindcss.com/docs |
+| React Router | https://reactrouter.com |
+| Hono | https://hono.dev/docs/ |
+| Caddy | https://caddyserver.com/docs/ |
+| Let's Encrypt (HTTPS ทำงานยังไง) | https://letsencrypt.org/how-it-works/ |
+| Cloudflare DNS | https://developers.cloudflare.com/dns/ |
+| GitHub Actions | https://docs.github.com/actions |
+| Vercel | https://vercel.com/docs |
+
+---
+
+[← บทที่ 23: Go-live](/23-go-live) · [🏠 สารบัญ](/)

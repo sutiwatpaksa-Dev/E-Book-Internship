@@ -1,0 +1,13 @@
+{
+  "title": "เว็บไซต์ STARTER 🔒",
+  "defaultOpen": true,
+  "pages": [
+    "index",
+    "requirements",
+    "database-api",
+    "quality",
+    "timeline",
+    "submission",
+    "compare"
+  ]
+}
