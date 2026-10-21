@@ -54,6 +54,17 @@ design/brand-source/     ไฟล์โลโก้ต้นฉบับ (ไ�
 - เพิ่มบทใหม่: สร้างไฟล์ `.md` ใน `docs/` แล้วเพิ่มชื่อใน `chapters` ที่ `.vitepress/config.mts`
 - สีและฟอนต์อยู่ที่ `.vitepress/theme/custom.css`
 
+## branch และการ deploy
+
+| branch | ขึ้นที่ไหน | ใช้ทำอะไร |
+|---|---|---|
+| `main` | https://e-book-internship.vercel.app (Production) | เว็บที่น้องใช้อยู่จริง **แช่แข็งไว้** แก้ผ่าน `dev` แล้วค่อย merge |
+| `dev` | https://e-book-internship-git-dev-mao-ji.vercel.app (Preview) | ทำงานและทดสอบ push ได้เลย Vercel build ให้เอง |
+
+- Preview เปิดได้เฉพาะคนที่อยู่ในทีม Vercel (Vercel Authentication) คนนอกเห็นแค่หน้า login ของ Vercel
+- ตัวแปร env ของ `dev` ตั้งแยกที่ Settings → Environment Variables → Preview → เลือก branch `dev` ใช้ฐานข้อมูลคนละก้อนกับ Production ได้
+- ทดสอบบน `dev` ผ่านแล้ว จึง merge `dev` เข้า `main` เพื่อขึ้นเว็บจริง
+
 ## เผยแพร่ (Vercel)
 
 ตั้งครั้งแรก:
