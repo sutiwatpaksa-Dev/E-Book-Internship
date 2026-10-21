@@ -12,6 +12,9 @@ next-env.d.ts
 # บันทึกส่งต่องานระหว่าง session (ไม่เผยแพร่)
 Handoff.md
 
+# เอกสารภายในของทีม เช่น Daily Report (ไม่เผยแพร่ใน repo สาธารณะ)
+Docs/
+
 Handoff.archive-*.md
 
 # ค่าลับของ API (ดูตัวอย่างใน .env.example)
