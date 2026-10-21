@@ -30,6 +30,7 @@ docs/                    หน้าเว็บทั้งหมด (VitePres
    ├─ composables/       สถานะที่ใช้ร่วมกัน เช่น use-session.ts (เทียบได้กับ hooks ของ React)
    ├─ api/               เรียก API ทั้งหมดผ่านที่นี่ (client.ts + ไฟล์ละกลุ่ม)
    ├─ lib/               ฟังก์ชันช่วยที่ไม่ผูกกับ UI (access.ts)
+   ├─ data/roadmap.ts    ลำดับบทบน Roadmap หน้าแรก (เพิ่มบทใหม่ต้องแก้ที่นี่ + sidebar ใน config.mts)
    ├─ types/             type ที่ใช้ร่วมกัน
    └─ styles/custom.css
 api/server.ts            ทางเข้า API บน Vercel (เรียก server/app.ts)

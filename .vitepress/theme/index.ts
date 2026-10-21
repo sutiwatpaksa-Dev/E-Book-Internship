@@ -3,6 +3,7 @@ import DefaultTheme from "vitepress/theme";
 import type { Theme } from "vitepress";
 import AdminPanel from "./components/admin-panel.vue";
 import AuthNav from "./components/auth-nav.vue";
+import LearningRoadmap from "./components/learning-roadmap.vue";
 import LoginForm from "./components/login-form.vue";
 import RequirementViewer from "./components/requirement-viewer.vue";
 import { canSee, needsRole, readRoleHint } from "./lib/access";
@@ -19,6 +20,7 @@ export default {
   enhanceApp({ app, router }) {
     app.component("LoginForm", LoginForm);
     app.component("AdminPanel", AdminPanel);
+    app.component("LearningRoadmap", LearningRoadmap);
     // กดลิงก์ไปหน้าที่ล็อกโดยยังไม่ได้ login: พาไปหน้า login เลย แทนที่จะโหลดไฟล์หน้าแล้วได้ 401
     router.onBeforeRouteChange = (to) => {
       const path = new URL(to, "http://x").pathname;
