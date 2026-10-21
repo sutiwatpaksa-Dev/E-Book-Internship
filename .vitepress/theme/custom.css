@@ -80,3 +80,111 @@
   color: var(--vp-c-text-2);
   margin-bottom: 16px;
 }
+
+/* แผง Requirement ต้นฉบับ (RequirementViewer.vue): เปิดแล้วเนื้อหาหดไปทางซ้าย อ่านคู่กันได้ */
+.req-fab {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 30;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--vp-c-brand-1);
+  background: var(--vp-c-brand-1);
+  color: var(--vp-c-white);
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: var(--vp-shadow-3);
+  cursor: pointer;
+}
+.req-fab:hover {
+  background: var(--vp-c-brand-2);
+}
+.req-panel {
+  position: fixed;
+  top: var(--vp-nav-height);
+  right: 0;
+  bottom: 0;
+  z-index: 25;
+  width: var(--req-w, 560px);
+  display: flex;
+  flex-direction: column;
+  background: var(--vp-c-bg);
+  border-left: 1px solid var(--vp-c-divider);
+  box-shadow: var(--vp-shadow-2);
+}
+.req-resize {
+  position: absolute;
+  left: -4px;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: col-resize;
+  touch-action: none;
+}
+.req-resize:hover {
+  background: var(--vp-c-brand-soft);
+}
+.req-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--vp-c-divider);
+  font-size: 14px;
+}
+.req-head strong {
+  white-space: nowrap;
+}
+.req-jump {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 8px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg-soft);
+  color: var(--vp-c-text-1);
+}
+.req-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  color: var(--vp-c-text-2);
+  text-decoration: none;
+  cursor: pointer;
+}
+.req-btn:hover {
+  background: var(--vp-c-bg-soft);
+  color: var(--vp-c-text-1);
+}
+.req-frame {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  background: var(--vp-c-bg-soft);
+}
+.req-frame.is-dragging {
+  pointer-events: none;
+}
+/* เปิดแผงแล้ว: กันพื้นที่ทางขวาเท่าความกว้างแผง
+   ต้องใช้ !important เพราะจอ >= 1440px VitePress ตั้ง padding-right ของ .VPContent.has-sidebar เองด้วย selector ที่เจาะจงกว่า
+   และจอ >= 1280px .content มี min-width 640px ทำให้ข้อความไม่ยอมหด แล้วมุดไปอยู่ใต้แผง */
+html.req-open .VPContent,
+html.req-open .VPFooter {
+  padding-right: var(--req-w, 560px) !important;
+}
+html.req-open .VPDoc .content {
+  min-width: 0 !important;
+}
+html.req-open .VPDoc .aside {
+  display: none !important;
+}
+@media print {
+  .req-fab,
+  .req-panel {
+    display: none;
+  }
+}
