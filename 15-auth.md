@@ -358,7 +358,7 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
 ### หน้า login
 `client/src/pages/admin/login-page.tsx`
 ```tsx
-import { useState, type FormEvent } from "react";
+import { useState, type SubmitEvent } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { login } from "../../api/auth";
 
@@ -372,7 +372,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
 
-  async function onSubmit(e: FormEvent) {
+  async function onSubmit(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setSending(true);
     setError(null);

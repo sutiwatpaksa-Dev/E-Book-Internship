@@ -581,4 +581,4 @@ git commit --allow-empty -m "checkpoint ก่อนให้ AI ช่วย"  
 
 ---
 
-[← บทที่ 15: Auth](./15-auth.md) · [🏠 สารบัญ](/) · [🏪 Mini Project: STARTER →](./starter/index.md)
+[← บทที่ 15: Auth](./15-auth.md) · [🏠 สารบัญ](/) · [บทเสริม: ภาษาและคำสั่งที่ใช้เขียน React →](./react-language.md)

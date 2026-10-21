@@ -78,7 +78,7 @@ const found = await db.select().from(customers).where(eq(customers.name, name));
 | **Driver** | library ที่คุยกับฐานข้อมูลจริง (`pg` สำหรับ Postgres) ORM เรียกใช้อยู่เบื้องหลัง |
 | **Connection pool** | สระ connection ที่เปิดค้างไว้ใช้ซ้ำ (ดูข้อ 9) |
 | **Migration** | ไฟล์ที่บันทึกการเปลี่ยนโครงสร้างฐานข้อมูล (ข้อ 3) |
-| **Seed** | สคริปต์ใส่ข้อมูลตัวอย่าง (ขั้นที่ 8 ในข้อ 6) |
+| **Seed** | สคริปต์ใส่ข้อมูลตัวอย่าง (ขั้นที่ 6 ในข้อ 6) |
 
 ### ข้อดี-ข้อเสีย: ORM เทียบกับ SQL ดิบ
 
@@ -493,114 +493,11 @@ ALTER TABLE "customers" ADD COLUMN "email" text;
 ```
 สังเกต: ไฟล์ `0000_...` ไม่ถูกแตะเลย เราได้ไฟล์ใหม่ต่อท้าย นี่คือหลัก "ไม่แก้ migration เก่า"
 
-### ขั้นที่ 6: transaction
-```ts
-await db.transaction(async (tx) => {
-  await tx.insert(schema.rentals).values({ customerId: 1, laptop: "Asus", pricePerMonth: 1100 });
-  await tx.update(schema.customers).set({ phone: "089-000-0000" }).where(eq(schema.customers.id, 1));
-  // ถ้ามี error ตรงไหน ทุกอย่างในนี้ถูกยกเลิกทั้งหมด
-});
-```
-ฝั่งใน transaction ต้องใช้ **`tx`** ไม่ใช่ `db` (ถ้าไปเรียก `db` จะอยู่นอก transaction และไม่ถูกย้อนกลับ)
+### ขั้นที่ 6: Seed ข้อมูลตัวอย่าง
 
-💥 **ลองพังมันดู:** ทำให้ขั้นที่ 2 ผิดกฎ (เช่น ตั้ง `phone` เป็นเบอร์ที่คนอื่นใช้อยู่แล้ว) แล้วดูว่า rental ที่เพิ่งใส่หายไปด้วยไหม
-```ts
-try {
-  await db.transaction(async (tx) => {
-    await tx.insert(schema.rentals).values({ customerId: 1, laptop: "Asus", pricePerMonth: 1100 });
-    await tx.update(schema.customers).set({ phone: "083-333-3333" }).where(eq(schema.customers.id, 1));
-  });
-} catch (e) {
-  console.log("ยกเลิกทั้งหมดแล้ว:", (e as Error).message.split("\n")[0]);
-}
-```
-(สมมติว่า `083-333-3333` เป็นเบอร์ของลูกค้าอีกคนอยู่แล้ว) เมื่อเปิด `logger: true` ควรเห็น
-```text
-Query: begin
-Query: insert into "rentals" ... -- params: [1, "Asus", 1100]
-Query: update "customers" set "phone" = $1 where "customers"."id" = $2 -- params: ["083-333-3333", 1]
-Query: rollback
-ยกเลิกทั้งหมดแล้ว: Failed query: update "customers" set ...
-```
-`rollback` โผล่เอง และ rental "Asus" ไม่ถูกบันทึก (เช็คด้วย `select().from(schema.rentals)`) ถ้าอยากยกเลิกเองให้เรียก `tx.rollback()` ซึ่งจะ throw error ออกมาจาก `db.transaction` ให้ `catch` ไว้
+**Seed** = สคริปต์ที่ใส่ข้อมูลตัวอย่างให้ DB ทุกเครื่องในทีมได้ข้อมูลทดสอบเหมือนกัน (ไม่ต้องกดกรอกเองทีละแถว)
 
-> 💡 ตัวอย่างนี้ตรงกับ transaction ที่ทำด้วย SQL ในบทที่ 6 ข้อ 4 (เช่า laptop + เปลี่ยนสถานะ) ส่วนเรื่อง "2 คนกดพร้อมกัน" ก็ใช้วิธีเดียวกันได้ เช่น `tx.update(laptops).set({ status: "rented" }).where(and(eq(laptops.serial, "AS-01"), eq(laptops.status, "available"))).returning()` ถ้าได้ array ว่าง = มีคนเช่าไปก่อน
-
-### ขั้นที่ 7: relations และ join
-
-ดึงข้อมูลที่สัมพันธ์กันมี 2 แบบ เลือกตามความถนัด
-
-**แบบ A: relational query (`db.query`)** ได้ผลเป็น object ซ้อนกัน ใช้ง่าย เหมาะกับหน้าจอ
-```ts
-// ลูกค้า 1 คน พร้อม rental
-const one = await db.query.customers.findFirst({
-  where: eq(schema.customers.id, 1),
-  with: { rentals: true },
-});
-
-// เลือกเฉพาะคอลัมน์ + กรอง rental ที่แพงกว่า 1250
-const some = await db.query.customers.findMany({
-  columns: { name: true },
-  with: {
-    rentals: { columns: { laptop: true }, where: (r, { gt }) => gt(r.pricePerMonth, 1250) },
-  },
-});
-console.log(JSON.stringify(some));
-```
-```text
-[{"name":"สมชาย","rentals":[{"laptop":"Lenovo T14"}]},{"name":"สมหญิง","rentals":[{"laptop":"HP 840"}]},{"name":"มานี","rentals":[]}]
-```
-(คนที่ไม่มี rental ที่เข้าเงื่อนไข ยังอยู่ แค่ `rentals` เป็น array ว่าง)
-
-**แบบ B: join แบบ SQL (`innerJoin` / `leftJoin`)** ได้ผลเป็น "แถวแบน" เหมาะกับรายงานและ GROUP BY
-```ts
-import { eq, count, sum } from "drizzle-orm";
-
-const rows = await db
-  .select({ name: schema.customers.name, laptop: schema.rentals.laptop })
-  .from(schema.customers)
-  .leftJoin(schema.rentals, eq(schema.rentals.customerId, schema.customers.id));
-console.log(rows);
-```
-```text
-[
-  { name: 'สมชาย', laptop: 'Lenovo T14' },
-  { name: 'สมชาย', laptop: 'Dell 5420' },
-  { name: 'สมหญิง', laptop: 'HP 840' },
-  { name: 'มานี', laptop: null }
-]
-```
-`leftJoin` ให้ฝั่งขวาเป็น `null` ได้ (TS จะรู้ว่า `laptop: string | null`) ส่วน `innerJoin` ตัดคนที่ไม่มีคู่ออก เหมือน JOIN/LEFT JOIN ในบทที่ 6
-
-**สรุปผล (GROUP BY)**
-```ts
-const summary = await db
-  .select({
-    name: schema.customers.name,
-    total: count(schema.rentals.id),
-    price: sum(schema.rentals.pricePerMonth),
-  })
-  .from(schema.customers)
-  .leftJoin(schema.rentals, eq(schema.rentals.customerId, schema.customers.id))
-  .groupBy(schema.customers.id, schema.customers.name)
-  .orderBy(schema.customers.id);
-console.log(summary);
-```
-```text
-[
-  { name: 'สมชาย', total: 2, price: '2700' },
-  { name: 'สมหญิง', total: 1, price: '1300' },
-  { name: 'มานี', total: 0, price: null }
-]
-```
-⚠️ สังเกต `price` เป็น **string** (`'2700'`) หรือ `null` ไม่ใช่ number เพราะ Postgres คืน `SUM` เป็นชนิด numeric ที่อาจใหญ่เกิน number ของ JS ถ้าจะใช้คำนวณต้องแปลงเอง (`Number(row.price ?? 0)`) หรือใช้ `.mapWith(Number)` ใน Drizzle
-ส่วน `count` ได้ number ปกติ
-
-**เลือกแบบไหน?** ต้องการ "ลูกค้า 1 คน + รายการของเขาเป็นก้อน" → แบบ A · ต้องการตารางสรุป/รายงาน/เงื่อนไขซับซ้อน → แบบ B
-
-### ขั้นที่ 8: Seed ข้อมูลตัวอย่าง
-
-**Seed** = สคริปต์ที่ใส่ข้อมูลตัวอย่างให้ DB ทุกเครื่องในทีมได้ข้อมูลทดสอบเหมือนกัน (ไม่ต้องกดกรอกเองทีละแถว) สร้าง `src/seed.ts`
+ทำไมต้องทำก่อนขั้นที่ 7–8: ตอนนี้ DB มีแค่สมชายจากขั้นที่ 4 ถ้าจะลอง transaction ที่ชนกฎ UNIQUE หรือ join ที่มีลูกค้าไม่มี rental เราต้องมีข้อมูลหลายแบบก่อน และทุกคนต้องได้ข้อมูลชุดเดียวกัน ผลลัพธ์ถึงจะตรงกับในบท สร้าง `src/seed.ts`
 ```ts
 import "dotenv/config";
 import { drizzle } from "drizzle-orm/node-postgres";
@@ -659,6 +556,118 @@ seed เสร็จ: 3 ลูกค้า
 > - อยากเพิ่มแบบไม่ลบของเดิม ใช้ `.onConflictDoNothing()` ต่อท้าย `.values(...)` จะข้ามแถวที่ชนกฎ UNIQUE
 
 > 💡 ข้อมูลเยอะๆ ให้ลอง library สร้างข้อมูลปลอม เช่น `@faker-js/faker` (ชื่อ อีเมล ที่อยู่ ปลอมๆ)
+
+ตอนนี้ DB มีลูกค้า 3 คน: สมชาย (id 1, `081-111-1111`, เช่า 2 เครื่อง), สมหญิง (id 2, เช่า HP 840) และมานี (id 3, `083-333-3333`, ยังไม่เช่า)
+
+> 🧹 **ก่อนไปขั้นถัดไป** ลบโค้ด insert สมชายใน `src/index.ts` จากขั้นที่ 4 ออก (เก็บบรรทัด import กับ `const db = ...` ไว้) ข้อมูลตอนนี้มาจาก seed แล้ว ถ้ายังปล่อยไว้ รันทีไรจะชนกฎ UNIQUE ของเบอร์โทร แล้วเขียนโค้ดขั้นที่ 7–8 ต่อใน `src/index.ts` แทน
+
+### ขั้นที่ 7: transaction
+```ts
+await db.transaction(async (tx) => {
+  await tx.insert(schema.rentals).values({ customerId: 1, laptop: "Asus", pricePerMonth: 1100 });
+  await tx.update(schema.customers).set({ phone: "089-000-0000" }).where(eq(schema.customers.id, 1));
+  // ถ้ามี error ตรงไหน ทุกอย่างในนี้ถูกยกเลิกทั้งหมด
+});
+```
+ฝั่งใน transaction ต้องใช้ **`tx`** ไม่ใช่ `db` (ถ้าไปเรียก `db` จะอยู่นอก transaction และไม่ถูกย้อนกลับ)
+
+💥 **ลองพังมันดู:** ทำให้คำสั่งที่ 2 ผิดกฎ (ตั้ง `phone` ของสมชายเป็น `083-333-3333` ซึ่งเป็นเบอร์ของมานีจาก seed) แล้วดูว่า rental ที่เพิ่งใส่หายไปด้วยไหม
+```ts
+try {
+  await db.transaction(async (tx) => {
+    await tx.insert(schema.rentals).values({ customerId: 1, laptop: "Asus", pricePerMonth: 1100 });
+    await tx.update(schema.customers).set({ phone: "083-333-3333" }).where(eq(schema.customers.id, 1));
+  });
+} catch (e) {
+  console.log("ยกเลิกทั้งหมดแล้ว:", (e as Error).message.split("\n")[0]);
+}
+```
+เมื่อเปิด `logger: true` (ใส่ `{ schema, logger: true }` ตอนสร้าง `db`) ควรเห็น
+```text
+Query: begin
+Query: insert into "rentals" ... -- params: [1, "Asus", 1100]
+Query: update "customers" set "phone" = $1 where "customers"."id" = $2 -- params: ["083-333-3333", 1]
+Query: rollback
+ยกเลิกทั้งหมดแล้ว: Failed query: update "customers" set ...
+```
+`rollback` โผล่เอง และ rental "Asus" ไม่ถูกบันทึก (เช็คด้วย `select().from(schema.rentals)`) ถ้าอยากยกเลิกเองให้เรียก `tx.rollback()` ซึ่งจะ throw error ออกมาจาก `db.transaction` ให้ `catch` ไว้
+
+> 💡 ตัวอย่างนี้ตรงกับ transaction ที่ทำด้วย SQL ในบทที่ 6 ข้อ 4 (เช่า laptop + เปลี่ยนสถานะ) ส่วนเรื่อง "2 คนกดพร้อมกัน" ก็ใช้วิธีเดียวกันได้ ถ้ามีตาราง `laptops` ที่มีคอลัมน์ `status` แบบบทที่ 6 (schema ในบทนี้ยังไม่มี ไม่ต้องรัน แค่ดูหลักคิด) จะเขียนได้ว่า `tx.update(laptops).set({ status: "rented" }).where(and(eq(laptops.serial, "AS-01"), eq(laptops.status, "available"))).returning()` (`and` import จาก `drizzle-orm` เหมือน `eq`) ถ้าได้ array ว่าง = ไม่มีแถวไหนตรงเงื่อนไข คือมีคนเช่าไปก่อน เพราะเราใส่ "ต้องยังว่างอยู่" ไว้ในเงื่อนไขของคำสั่ง update เอง ฐานข้อมูลจึงตัดสินให้ ไม่ใช่โค้ดเราเช็คก่อนแล้วค่อยเขียน
+
+ถึงตรงนี้ transaction แรก (ที่สำเร็จ) ได้เพิ่ม Asus ให้สมชายและเปลี่ยนเบอร์ไปแล้ว ก่อนขั้นที่ 8 ให้รัน `npm run db:seed` อีกครั้ง ข้อมูลจะกลับเป็นชุดเดิม ผลลัพธ์ในขั้นที่ 8 จึงตรงกับในบท นี่คือประโยชน์ของ seed ที่รันซ้ำได้
+
+### ขั้นที่ 8: relations และ join
+
+ดึงข้อมูลที่สัมพันธ์กันมี 2 แบบ เลือกตามความถนัด
+
+**แบบ A: relational query (`db.query`)** ได้ผลเป็น object ซ้อนกัน ใช้ง่าย เหมาะกับหน้าจอ
+```ts
+// ลูกค้า 1 คน พร้อม rental
+const one = await db.query.customers.findFirst({
+  where: eq(schema.customers.id, 1),
+  with: { rentals: true },
+});
+
+// เลือกเฉพาะคอลัมน์ + กรอง rental ที่แพงกว่า 1250
+const some = await db.query.customers.findMany({
+  columns: { name: true },
+  with: {
+    rentals: { columns: { laptop: true }, where: (r, { gt }) => gt(r.pricePerMonth, 1250) },
+  },
+});
+console.log(JSON.stringify(some));
+```
+```text
+[{"name":"สมชาย","rentals":[{"laptop":"Lenovo T14"}]},{"name":"สมหญิง","rentals":[{"laptop":"HP 840"}]},{"name":"มานี","rentals":[]}]
+```
+(คนที่ไม่มี rental ที่เข้าเงื่อนไข ยังอยู่ แค่ `rentals` เป็น array ว่าง)
+
+**แบบ B: join แบบ SQL (`innerJoin` / `leftJoin`)** ได้ผลเป็น "แถวแบน" เหมาะกับรายงานและ GROUP BY
+เพิ่ม `count, sum` ในบรรทัด import เดิมของ `src/index.ts` (ไม่ต้อง import `eq` ซ้ำ ถ้าซ้ำจะเจอ `Identifier 'eq' has already been declared`)
+```ts
+import { eq, count, sum } from "drizzle-orm";   // แก้บรรทัดเดิม
+
+const rows = await db
+  .select({ name: schema.customers.name, laptop: schema.rentals.laptop })
+  .from(schema.customers)
+  .leftJoin(schema.rentals, eq(schema.rentals.customerId, schema.customers.id));
+console.log(rows);
+```
+```text
+[
+  { name: 'สมชาย', laptop: 'Lenovo T14' },
+  { name: 'สมชาย', laptop: 'Dell 5420' },
+  { name: 'สมหญิง', laptop: 'HP 840' },
+  { name: 'มานี', laptop: null }
+]
+```
+`leftJoin` ให้ฝั่งขวาเป็น `null` ได้ (TS จะรู้ว่า `laptop: string | null`) ส่วน `innerJoin` ตัดคนที่ไม่มีคู่ออก เหมือน JOIN/LEFT JOIN ในบทที่ 6
+
+**สรุปผล (GROUP BY)**
+```ts
+const summary = await db
+  .select({
+    name: schema.customers.name,
+    total: count(schema.rentals.id),
+    price: sum(schema.rentals.pricePerMonth),
+  })
+  .from(schema.customers)
+  .leftJoin(schema.rentals, eq(schema.rentals.customerId, schema.customers.id))
+  .groupBy(schema.customers.id, schema.customers.name)
+  .orderBy(schema.customers.id);
+console.log(summary);
+```
+```text
+[
+  { name: 'สมชาย', total: 2, price: '2700' },
+  { name: 'สมหญิง', total: 1, price: '1300' },
+  { name: 'มานี', total: 0, price: null }
+]
+```
+⚠️ สังเกต `price` เป็น **string** (`'2700'`) หรือ `null` ไม่ใช่ number เพราะ Postgres คืน `SUM` เป็นชนิด numeric ที่อาจใหญ่เกิน number ของ JS ถ้าจะใช้คำนวณต้องแปลงเอง (`Number(row.price ?? 0)`) หรือใช้ `.mapWith(Number)` ใน Drizzle
+ส่วน `count` ได้ number ปกติ
+
+**เลือกแบบไหน?** ต้องการ "ลูกค้า 1 คน + รายการของเขาเป็นก้อน" → แบบ A · ต้องการตารางสรุป/รายงาน/เงื่อนไขซับซ้อน → แบบ B
 
 ---
 

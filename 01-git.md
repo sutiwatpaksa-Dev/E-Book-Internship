@@ -1004,7 +1004,7 @@ fix/57-wrong-vat
 |---|---|---|
 | `git@github.com: Permission denied (publickey).` `fatal: Could not read from remote repository.` | เครื่องไม่มีกุญแจที่เว็บรู้จัก: ยังไม่ได้ฝาก public key, ssh-agent ไม่ได้โหลดกุญแจ, หรือล็อกอินผิดบัญชี | 1) `ssh -T git@github.com` ดูว่าเข้าได้ไหม 2) `ssh-add -l` ดูว่ากุญแจโหลดอยู่ ถ้าไม่ `ssh-add ~/.ssh/id_ed25519` 3) ตรวจว่าวาง **.pub** ถูกบัญชีแล้ว 4) `git remote -v` ว่า URL ถูกต้อง |
 | `! [rejected] main -> main (fetch first)` หรือ `(non-fast-forward)` / `failed to push some refs` | บน remote มี commit ที่เครื่องเราไม่มี (มีคน push ก่อน) | `git pull` (หรือ `git pull --rebase`) รวมของใหม่ แก้ conflict ถ้ามี แล้ว `git push` อีกครั้ง **อย่าใช้ `--force`** |
-| `You are in 'detached HEAD' state` | เราไปยืนที่ commit/tag ตรงๆ แทนที่จะอยู่บน branch (เช่น `git switch a1b2c3d`) commit ที่ทำตอนนี้ไม่มีป้าย branch ถือ | ถ้าไม่ได้ทำอะไร: `git switch main` ถ้าทำ commit ไว้และอยากเก็บ: `git switch -c ชื่อ-branch-ใหม่` ก่อนออก |
+| `You are in 'detached HEAD' state` | เราไปยืนที่ commit/tag ตรงๆ แทนที่จะอยู่บน branch (เช่น `git switch --detach a1b2c3d` หรือ `git checkout a1b2c3d`) HEAD ชี้ไปที่ commit ไม่ได้ชี้ที่ป้าย branch commit ที่ทำตอนนี้จึงไม่มีป้าย branch ถือ (ถ้าพิมพ์ `git switch a1b2c3d` เฉยๆ Git จะไม่ยอม ขึ้น `fatal: a branch is expected, got commit` เพราะ `switch` ตั้งใจไว้ย้ายระหว่าง branch ต้องใส่ `--detach` ให้รู้ว่าเราตั้งใจ) | ถ้าไม่ได้ทำอะไร: `git switch main` ถ้าทำ commit ไว้และอยากเก็บ: `git switch -c ชื่อ-branch-ใหม่` ก่อนออก |
 | `CONFLICT (content): Merge conflict in ...` | สองฝั่งแก้บรรทัดเดียวกัน | เปิดไฟล์ แก้ให้ถูก ลบ `<<<<<<<` `=======` `>>>>>>>` แล้ว `git add` + `git commit` (หรือ `git merge --abort` เพื่อถอยออก) ดูหัวข้อ 8 |
 | `fatal: Authentication failed for 'https://...'` หรือ `Support for password authentication was removed` | ใช้รหัสผ่านบัญชีกับ HTTPS (ไม่รับแล้ว) หรือ token หมดอายุ/ไม่มีสิทธิ์ | สร้าง token ใหม่แล้วใช้แทนรหัสผ่าน หรือเปลี่ยนไปใช้ SSH ตามหัวข้อ 13.1 ถ้า Mac/Windows จำ token เก่าไว้ ให้ลบรายการเก่าใน Keychain Access / Credential Manager แล้วลองใหม่ |
 | `fatal: The current branch xxx has no upstream branch` | branch ใหม่ยังไม่เคย push จึงยังไม่รู้ว่าคู่กับอะไรบน remote | `git push -u origin ชื่อ-branch` |
@@ -1013,6 +1013,7 @@ fix/57-wrong-vat
 | `error: Your local changes to the following files would be overwritten by merge` (หรือ `checkout`) | มีไฟล์ที่แก้ค้างอยู่ และของที่จะดึงมาชนไฟล์เดียวกัน | `git commit` งานที่ค้าง หรือ `git stash` เก็บไว้ก่อน แล้วทำคำสั่งเดิมซ้ำ จากนั้น `git stash pop` |
 | `nothing to commit, working tree clean` | ไม่มีอะไรเปลี่ยนจริงๆ หรือเปลี่ยนแล้วแต่ไฟล์ถูก `.gitignore` | ตรวจว่าบันทึกไฟล์แล้ว `git check-ignore -v ไฟล์` |
 | `nothing added to commit but untracked files present` | มีไฟล์ใหม่ แต่ยังไม่ได้ `git add` | `git add ไฟล์` แล้ว commit |
+| `no changes added to commit` | แก้ไฟล์ที่ Git รู้จักอยู่แล้ว แต่ยังไม่ได้ `git add` เข้า staging | `git add ไฟล์` แล้ว commit (`git status` จะบอกว่าไฟล์ไหนแก้แต่ยังไม่ stage) |
 | `fatal: not a git repository (or any of the parent directories): .git` | อยู่ผิดโฟลเดอร์ หรือยังไม่ได้ `git init` | `pwd` ตรวจตำแหน่ง แล้ว `cd` เข้าโฟลเดอร์โปรเจกต์ หรือ `git init` |
 | commit ด้วยชื่อ/อีเมลผิด (ไม่ขึ้นเป็นเราบนเว็บ) | ไม่ได้ตั้ง `user.name`/`user.email` หรือตั้งผิด | ตั้งค่าใหม่ตามหัวข้อ 3.2 commit ล่าสุดแก้ด้วย `git commit --amend --reset-author --no-edit` (ถ้ายังไม่ push) |
 | ไฟล์ใหญ่เกิน ถูกเว็บปฏิเสธตอน push (เช่น เกิน 100 MB บน GitHub) | commit ไฟล์ใหญ่ไว้ (วิดีโอ, dump ฐานข้อมูล) | เอาไฟล์ออกจาก commit (`git reset --soft HEAD~1` ถ้ายังไม่ push) ใส่ `.gitignore` และถามพี่เรื่องเก็บไฟล์ใหญ่ |
@@ -1037,9 +1038,9 @@ fix/57-wrong-vat
 
 ## 🧠 เช็คความเข้าใจ
 
-<details><summary>1. แก้ไฟล์แล้ว <code>git commit</code> แต่ขึ้นว่า "nothing added to commit" เพราะอะไร?</summary>
+<details><summary>1. แก้ไฟล์แล้ว <code>git commit</code> แต่ขึ้นว่า "no changes added to commit" เพราะอะไร?</summary>
 
-ยังไม่ได้ `git add` ไฟล์เข้า staging ก่อน
+ยังไม่ได้ `git add` ไฟล์เข้า staging ก่อน `git commit` บันทึกเฉพาะของที่อยู่ใน staging ไม่ใช่ทุกอย่างที่แก้ในโฟลเดอร์ (ถ้าเป็นไฟล์ใหม่ที่ Git ยังไม่เคยรู้จัก ข้อความจะเป็น "nothing added to commit but untracked files present" แทน)
 </details>
 
 <details><summary>2. เผลอ commit ไฟล์ <code>.env</code> ที่มีรหัสผ่าน DB ขึ้น GitLab ต้องทำอะไร?</summary>

@@ -231,7 +231,7 @@ jobs:
 **GitHub → Settings → Environments → production**
 - ✅ Required reviewers: ใส่ชื่อพี่เลี้ยง ขึ้นระบบได้เมื่อพี่เลี้ยงกดอนุมัติ (เหมาะกับช่วงฝึกงาน)
 
-ขั้นตอนทำงานหลังจากนี้ (ทบทวน [บทที่ 1 ข้อ 8](./01-git.md))
+ขั้นตอนทำงานหลังจากนี้ (ทบทวน [บทที่ 1 ข้อ 16 Workflow ของทีม](./01-git.md#_16-workflow-ของทีม-blicktech))
 ```
  แตก branch ใหม่ → แก้ → commit → ส่งขึ้น Git → เปิดคำขอรวมงาน (PR)
    → เครื่องตรวจผ่าน (เขียว) → พี่เลี้ยงตรวจ + อนุมัติ → รวมงาน
@@ -262,7 +262,7 @@ check:
 
 deploy:
   stage: deploy
-  image: alpine:3.20
+  image: alpine:3.22
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
   environment: production

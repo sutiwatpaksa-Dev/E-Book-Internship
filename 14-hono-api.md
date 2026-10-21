@@ -217,15 +217,16 @@ if (existing === 0) {
   const all = await db.select().from(categories);
   const id = (slug: string) => all.find((c) => c.slug === slug)!.id;
   await db.insert(services).values([
-    { categoryId: id("drinks"), name: "ลาเต้", description: "นมสดหอมมัน", price: 65, isFeatured: true },
-    { categoryId: id("drinks"), name: "มอคค่า", description: "ช็อกโกแลตเข้มข้น", price: 70, isFeatured: true },
-    { categoryId: id("catering"), name: "Coffee Break 50 ที่", description: "สอบถามราคา", price: null, isFeatured: true },
+    { categoryId: id("drinks"), name: "ลาเต้", description: "นมสดหอมมัน", price: 65, isFeatured: true, imageUrl: "https://picsum.photos/seed/latte/400/300" },
+    { categoryId: id("drinks"), name: "มอคค่า", description: "ช็อกโกแลตเข้มข้น", price: 70, isFeatured: true, imageUrl: "https://picsum.photos/seed/mocha/400/300" },
+    { categoryId: id("catering"), name: "Coffee Break 50 ที่", description: "สอบถามราคา", price: null, isFeatured: true, imageUrl: "https://picsum.photos/seed/event/400/300" },
   ]);
 }
 
 console.log("🌱 seed เสร็จ");
 process.exit(0);
 ```
+> 💡 ใส่ `imageUrl` ด้วย เพราะการ์ดในบทที่ 11 แสดง `<img src={service.imageUrl}>` ถ้า seed ไม่ใส่ คอลัมน์จะได้ค่า default `""` แล้วพอหน้าเว็บเปลี่ยนจากไฟล์จำลองมาเรียก API จริง การ์ดทุกใบจะเป็นรูปเสีย ข้อมูลตั้งต้นจึงต้องมีครบทุกช่องที่หน้าเว็บใช้ ถ้าเคยรัน seed ไปแล้ว (มีบริการอยู่แล้วจึงถูกข้าม) ให้ลบแถวในตาราง `services` ก่อนแล้วรันใหม่
 
 ```bash
 bun run db:generate     # อ่าน schema → สร้างไฟล์ SQL ใน drizzle/

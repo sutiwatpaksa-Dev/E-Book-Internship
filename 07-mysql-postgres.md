@@ -265,11 +265,15 @@ ERROR 1064 (42000): You have an error in your SQL syntax; ... near 'RETURNING id
 🐬  DESCRIBE customers;  → มี id, name, email    (ALTER ไม่ถูกยกเลิก)
 ```
 
-### ขั้นที่ 6: ปิดและเก็บกวาด
+### ขั้นที่ 6: ปิดและเก็บกวาด (ตอนเลิกงาน)
+**ยังไม่ต้องปิดตอนนี้** ข้อ 5, 7 และ 9 ยังใช้คอนเทนเนอร์ชุดนี้และข้อมูลแถว "ปิติ" ต่อ ให้รู้ไว้ว่าเวลาเลิกงานปิดยังไง:
 ```bash
 docker compose down          # หยุดและลบคอนเทนเนอร์ (ข้อมูลใน volume ยังอยู่)
 docker compose down -v       # ลบ volume ด้วย = ข้อมูลหายหมด (ใช้ตอนอยากเริ่มใหม่)
 ```
+ทำไมสองคำสั่งนี้ต่างกัน: คอนเทนเนอร์คือ "โปรแกรมที่กำลังรัน" ลบแล้วสร้างใหม่ได้ ส่วนข้อมูลจริงของฐานข้อมูลเก็บอยู่ใน **volume** แยกออกมา (ดูบทที่ 2) `down` ลบแค่คอนเทนเนอร์ `down -v` ลบ volume ไปด้วย
+
+ถ้าเผลอ `down` ไปแล้ว ให้ `docker compose up -d` อีกครั้งก่อนทำข้อถัดไป คอนเทนเนอร์ใหม่จะต่อกับ volume เดิม ข้อมูลกลับมาครบ แต่ถ้าใช้ `down -v` ไปแล้ว ข้อมูลหายจริง ต้องกลับไปทำขั้นที่ 4–5 ใหม่
 > ⚠️ `down -v` คือลบข้อมูลทิ้งถาวร ห้ามใช้กับฐานข้อมูลที่มีข้อมูลสำคัญ
 
 ---
@@ -282,7 +286,9 @@ docker compose down -v       # ลบ volume ด้วย = ข้อมูล�
 ที่เราทำมาในข้อ 4 โปรแกรม `psql`/`mysql` มีอยู่ในคอนเทนเนอร์แล้ว
 
 ### วิธีที่ 2: CLI จากเครื่องเราเอง
-ติดตั้ง client (macOS: `brew install libpq` หรือ `brew install postgresql`, Windows/Linux: ติดตั้ง PostgreSQL client) แล้วต่อผ่าน port ที่เปิดไว้
+ติดตั้ง client (macOS: `brew install libpq` หรือ `brew install postgresql@17`, Windows/Linux: ติดตั้ง PostgreSQL client) แล้วต่อผ่าน port ที่เปิดไว้
+
+> 💡 บน Mac ถ้าติด `libpq` แล้วพิมพ์ `psql` ขึ้น `command not found` เป็นเพราะ Homebrew ติดตั้ง `libpq` แบบ keg-only (ไม่เอาคำสั่งไปไว้ใน PATH ให้ เพื่อไม่ชนกับ PostgreSQL ตัวเต็ม) แก้ด้วย `brew link --force libpq` หรือทำตามคำแนะนำที่ `brew info libpq` แสดง
 ```bash
 psql "postgres://postgres:secret@localhost:5432/shop"
 ```

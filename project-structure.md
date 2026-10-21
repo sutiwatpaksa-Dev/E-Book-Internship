@@ -60,7 +60,14 @@
 - Windows และ Mac **ไม่แยก** `Laptop.ts` กับ `laptop.ts` แต่ Linux (เซิร์ฟเวอร์จริง, Docker) **แยก**
 - เขียน `import "./Laptop"` ทั้งที่ไฟล์ชื่อ `laptop.ts` จะรันได้บนเครื่องเรา แล้ว **พังตอน deploy** ซึ่งหาสาเหตุยากมาก
 
-💥 **ลองพังมันดู:** ในเครื่อง Mac ลองสร้างไฟล์ `Laptop.ts` แล้ว `import` เป็น `./laptop` ดูว่ารันได้ไหม (บน Mac ส่วนใหญ่จะรันได้ แต่บน Linux จะ error `Cannot find module`) แล้วลองใน Docker ด้วย `docker run --rm -v "$PWD":/app -w /app oven/bun:1 bun run index.ts`
+💥 **ลองพังมันดู:** ในเครื่อง Mac ลองสร้างไฟล์ `Laptop.ts` แล้วใน `index.ts` เขียน `import` เป็น `./laptop` สั่ง `bun run index.ts` จะรันได้ แล้วลองรันแบบ Linux ใน Docker:
+
+```bash
+docker run --rm -v "$PWD":/src:ro oven/bun:1 sh -c 'cp -r /src /app && cd /app && bun run index.ts'
+```
+**ควรเห็น:** `error: ENOENT reading "/app/laptop.ts"` (หาไฟล์ไม่เจอ แบบเดียวกับที่จะเจอบน Vercel/CI)
+
+> 🤓 **ทำไมต้อง `cp` เข้าไปก่อน?** ถ้าใช้ `-v "$PWD":/app` แล้วรันตรงๆ จะยังรันได้ เพราะ Docker บน Mac แค่ "ยืม" โฟลเดอร์จากเครื่องเรา ซึ่งยังไม่แยกตัวพิมพ์ การ copy ไฟล์เข้าไปในตัว container ทำให้ไฟล์อยู่บนระบบไฟล์ของ Linux ที่แยกตัวพิมพ์จริง จำไว้ว่า **"รันได้บนเครื่องเรา" ยังไม่ได้แปลว่า "รันได้บนเซิร์ฟเวอร์"** ถ้าระบบไฟล์ต่างกัน
 
 ---
 
@@ -462,7 +469,7 @@ export default function LaptopsPage() {
 | `shared/` มีไฟล์เป็นร้อย | ใครไม่รู้จะวางไหนก็โยนลงไป | ย้ายกลับเข้าฟีเจอร์ที่ใช้จริง เก็บเฉพาะของที่ ≥ 2 ฟีเจอร์ใช้ |
 | `Circular dependency` หรือค่าเป็น `undefined` ตอนรัน | โมดูล A import B และ B import A | ดึงส่วนร่วมไป `shared/` หรือรวมสองโมดูลเป็นหนึ่ง |
 | `Cannot find module './Laptop'` เฉพาะบนเซิร์ฟเวอร์ | ชื่อไฟล์ตัวพิมพ์ใหญ่-เล็กไม่ตรงกับตอน import (Linux แยกตัวพิมพ์) | ตั้งชื่อไฟล์ตัวพิมพ์เล็กทั้งหมด และ import ให้ตรงตัวอักษร |
-| import ยาว `../../../../components/button` | โฟลเดอร์ซ้อนลึก | ตั้ง path alias ใน `tsconfig.json` (`"paths": { "@/*": ["./src/*"] }`) แล้วเขียน `@/components/button` (Vite ต้องตั้ง alias ให้ตรงกันด้วย) |
+| import ยาว `../../../../components/button` | โฟลเดอร์ซ้อนลึก | ตั้ง path alias 2 ที่ให้ตรงกัน: `tsconfig.app.json` ใส่ `"paths": { "@/*": ["./src/*"] }` (ไฟล์ `tsconfig.json` ของ Vite แค่ชี้ไปไฟล์อื่น ใส่ตรงนั้นไม่มีผล) และ `vite.config.ts` ใส่ `resolve: { alias: { "@": path.resolve(import.meta.dirname, "src") } }` (`import path from "node:path"`) แล้วเขียน `@/components/button` ได้ เหตุที่ต้องตั้ง 2 ที่: TypeScript แค่ตรวจ type ส่วน Vite เป็นคนหาไฟล์จริงตอนรัน |
 | `git` บอกว่าไฟล์หายแล้วเพิ่มใหม่ ประวัติหาย | ย้ายไฟล์ด้วยการลากใน Finder แล้วค่อย add | ใช้ `git mv เดิม ใหม่` แล้วตรวจ `git status` ต้องเห็น `renamed` |
 | เปลี่ยนชื่อไฟล์ตัวพิมพ์ใหญ่เป็นเล็กแล้ว Git ไม่เห็น (Mac/Windows) | ระบบไฟล์ไม่แยกตัวพิมพ์ | `git mv Laptop.ts tmp.ts && git mv tmp.ts laptop.ts` |
 
@@ -528,4 +535,4 @@ Linux ที่ใช้บนเซิร์ฟเวอร์แยกตั�
 
 ---
 
-[← บทที่ 16: ทำงานคู่กับ AI](./16-ai-pairing.md) · [🏠 สารบัญ](/) · [บทที่ 17: เน็ตเวิร์กพื้นฐาน →](./17-network.md)
+[← บทเสริม: ภาษาและคำสั่งที่ใช้เขียน React](./react-language.md) · [🏠 สารบัญ](/) · [🏪 Mini Project: STARTER →](./starter/index.md)

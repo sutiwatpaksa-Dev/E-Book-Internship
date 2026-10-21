@@ -119,7 +119,7 @@ node hello.mjs
     "zod": "^4.1.0"
   },
   "devDependencies": {
-    "typescript": "^5.9.0",
+    "typescript": "^7.0.0",
     "tsx": "^4.20.0"
   }
 }

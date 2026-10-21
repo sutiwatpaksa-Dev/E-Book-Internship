@@ -751,14 +751,16 @@ const { data, error, loading } = useFetch<Laptop[]>("/mock/laptops.json");
 |---|---|---|---|
 | `onClick` | คลิก | `onClick={() => setOpen(!open)}` | `React.MouseEvent<HTMLButtonElement>` |
 | `onChange` | ค่าในช่องกรอกเปลี่ยน | `onChange={(e) => setKeyword(e.target.value)}` | `React.ChangeEvent<HTMLInputElement>` |
-| `onSubmit` | ส่งฟอร์ม | `onSubmit={handleSubmit}` | `React.FormEvent<HTMLFormElement>` |
+| `onSubmit` | ส่งฟอร์ม | `onSubmit={handleSubmit}` | `React.SubmitEvent<HTMLFormElement>` |
+
+> 💡 บทความเก่าๆ มักเขียน `React.FormEvent` ให้ฟอร์ม ตอนนี้ `@types/react` ประกาศว่าเลิกใช้แล้ว (VS Code จะขีดฆ่าชื่อ) ให้ใช้ `SubmitEvent` แทน
 
 ```tsx
 const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   setKeyword(e.target.value);              // e.target = ช่องกรอก, .value = ข้อความที่พิมพ์
 };
 
-const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
   e.preventDefault();                      // ห้ามเบราว์เซอร์รีโหลดหน้า (ค่าเริ่มต้นของฟอร์ม)
   // ตรวจข้อมูล แล้วส่งไป API
 };
@@ -867,3 +869,7 @@ React จำว่า hook ตัวไหนเป็นของ component จ
 - [ ] เขียน `try / catch / finally` กับ `await` ได้ และรู้ว่า `fetch` ต้องเช็ค `res.ok` เอง
 - [ ] เขียน JSX ได้ถูกกฎ (`className`, `htmlFor`, <code v-pre>style={{ }}</code>, `key`) และบอกได้ว่า hook ไหนใช้เมื่อไหร่
 - [ ] รู้กฎของ Hooks และเปิดตาราง error หัวข้อ 6 เพื่อแก้เองก่อนถามได้
+
+---
+
+[← บทที่ 16: ทำงานคู่กับ AI](./16-ai-pairing.md) · [🏠 สารบัญ](/) · [บทเสริม: จัดโครงสร้างโปรเจกต์ →](./project-structure.md)

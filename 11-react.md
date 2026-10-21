@@ -440,7 +440,8 @@ useEffect(() => {
 | `Can't perform a React state update on an unmounted component` (พบในบทความ/React เวอร์ชันเก่า) | request/timer เสร็จหลังชิ้นส่วนหายไปแล้ว แล้วยังไป `setState` | ทำ cleanup (`abort()` / `clearInterval`) ให้ครบ เหมือน `useFetch` (React 18 ขึ้นไปเลิกแสดงข้อความนี้แล้ว แต่การเก็บกวาดยังจำเป็น) |
 | effect ไม่รัน / ไม่รันใหม่ตอนที่คิดว่าต้องรัน | ค่าใน `[...]` ไม่ได้เปลี่ยนจริง, ใส่ `[]` แต่ต้องการให้รันตาม `x`, หรือแก้ state ตรงๆ (ดูข้อ 5) ทำให้ React ไม่รู้ว่าเปลี่ยน | ใส่ตัวแปรที่ effect ใช้ลงใน `[...]` และสร้างค่าใหม่เสมอเมื่ออัปเดต state |
 | effect รันถี่เกินจำเป็น | ใส่ object/array/ฟังก์ชันที่สร้างใหม่ทุกรอบ (เช่น `[{ id }]`) ใน `[...]` ทำให้ React ถือว่า "เปลี่ยน" ทุกรอบ | ใส่เฉพาะค่าพื้นฐาน (`id`, `url`) ลงใน `[...]` |
-| ESLint เตือน `React Hook useEffect has a missing dependency: 'x'. Either include it or remove the dependency array` (กฎ `react-hooks/exhaustive-deps`) | ใน effect ใช้ตัวแปร `x` จากชิ้นส่วน แต่ไม่ได้ใส่ใน `[...]` | ใส่ `x` ลงใน `[...]` อย่าแก้ด้วยการปิด warning ถ้าใส่แล้ววนไม่หยุด แปลว่าควรคิดโครงสร้างใหม่ (ข้อ 6.7) |
+| `bun run lint` เตือน `react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'x'` (Vite รุ่นปัจจุบันใช้ตัวตรวจโค้ดชื่อ oxlint ถ้าโปรเจกต์ใช้ ESLint ข้อความแทบเหมือนกัน) | ใน effect ใช้ตัวแปร `x` จากชิ้นส่วน แต่ไม่ได้ใส่ใน `[...]` effect จึงเห็นแค่ค่า `x` ตอนรันครั้งแรก พอ `x` เปลี่ยน effect ก็ไม่รันใหม่ | ใส่ `x` ลงใน `[...]` อย่าแก้ด้วยการปิด warning ถ้าใส่แล้ววนไม่หยุด แปลว่าควรคิดโครงสร้างใหม่ (ข้อ 6.7) ตัวตรวจโค้ดแค่ช่วยเตือน ส่วนคนเขียนต้องรู้เองว่า effect ใช้ค่าอะไรบ้าง |
+| `bun run lint` เตือน `react(set-state-in-effect)` ที่ `setLoading(true)` ใน `useFetch` (ข้อ 6.9) | กฎนี้เตือนทุกครั้งที่สั่ง `setState` ทันทีใน effect เพราะส่วนใหญ่ควรคำนวณตรงๆ แทน (ข้อ 6.7) | ใน `useFetch` ตั้งใจทำ เพราะ effect คุยกับระบบภายนอก (เน็ตเวิร์ก) และต้องรีเซ็ตสถานะทุกครั้งที่ `url` เปลี่ยน warning นี้ปล่อยไว้ได้ แต่ถ้าเจอในโค้ดอื่นให้ถามตัวเองก่อนว่าค่านี้คำนวณจาก props/state ตรงๆ ได้ไหม |
 | ซ้ำ 2 รอบตอนเปิดหน้าใน dev | `<StrictMode>` (ข้อ 6.6) | ปกติ ไม่ต้องแก้ ตรวจว่า cleanup ครบ |
 
 ### 6.9 🔧 ลงมือ: ดึงข้อมูลจาก API
@@ -545,7 +546,7 @@ export default function App() {
 
 `src/components/contact-form.tsx`
 ```tsx
-import { useState, type FormEvent } from "react";
+import { useState, type SubmitEvent } from "react";
 
 const empty = { name: "", phone: "", message: "" };
 type Form = typeof empty;
@@ -568,7 +569,7 @@ export default function ContactForm() {
 
   const update = (field: keyof Form, value: string) => setForm({ ...form, [field]: value });
 
-  async function onSubmit(e: FormEvent) {
+  async function onSubmit(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();                       // ไม่ให้ browser reload หน้า
     const found = validate(form);
     setErrors(found);
@@ -647,7 +648,7 @@ client/src/
 | ตัวเลขใน effect พุ่งไม่หยุด Console เตือน `Maximum update depth exceeded` | `setState` ใน useEffect ที่ไม่มี `[...]` | ใส่ array ให้ถูก หรือคำนวณตรงๆ แทนการใช้ effect (ข้อ 6.3, 6.7) |
 | timer นับแค่ 1 แล้วหยุด / ได้ค่าเก่า | effect ที่ `[]` จำค่า state ตอนเริ่มไว้ (stale value) | `setCount((c) => c + 1)` หรือใส่ค่านั้นใน `[...]` (ข้อ 6.8) |
 | useEffect ทำงาน 2 รอบตอนเปิดหน้า | `<StrictMode>` ตอนพัฒนา (ปกติ ไม่ใช่บั๊ก) | ไม่ต้องลบ StrictMode แค่ตรวจว่ามี cleanup ครบ (ข้อ 6.6) |
-| ESLint เตือน `react-hooks/exhaustive-deps` | ใช้ตัวแปรใน effect แต่ไม่ได้ใส่ใน `[...]` | ใส่ตัวแปรนั้นลงใน `[...]` อย่าปิด warning ทิ้ง (ข้อ 6.8) |
+| `bun run lint` เตือน `exhaustive-deps` | ใช้ตัวแปรใน effect แต่ไม่ได้ใส่ใน `[...]` | ใส่ตัวแปรนั้นลงใน `[...]` อย่าปิด warning ทิ้ง (ข้อ 6.8) |
 | `Cannot read properties of null` | ใช้ข้อมูลก่อนโหลดเสร็จ | เช็คว่ากำลังโหลดอยู่ไหมก่อน หรือใช้ `data?.` |
 | หน้าขาวทั้งหน้า | มี error ในชิ้นส่วน | เปิด Console อ่าน error บรรทัดแรก ([บทที่ 9](./09-debugging.md)) |
 

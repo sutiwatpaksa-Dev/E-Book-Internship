@@ -147,7 +147,7 @@ found 0 vulnerabilities
 |---|---|
 | `typescript` | compiler ชื่อคำสั่ง `tsc` |
 | `tsx` | รันไฟล์ `.ts` ได้ทันทีตอน dev |
-| `@types/node` | คำอธิบาย type ของ Node (ให้ TS รู้จัก `process`, `console`) |
+| `@types/node` | คำอธิบาย type ของ Node (ให้ TS รู้จัก `process`, `console`) ต้องเปิดใช้ใน `tsconfig.json` ด้วย ดู `types` ในขั้นที่ 2 |
 
 > 💡 `-D` = ติดตั้งเป็น **devDependencies** (ใช้ตอนพัฒนาเท่านั้น ไม่ต้องติดไปกับของที่ส่งขึ้น server)
 
@@ -164,7 +164,8 @@ found 0 vulnerabilities
     "esModuleInterop": true,
     "skipLibCheck": true,
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "src",
+    "types": ["node"]
   },
   "include": ["src"]
 }
@@ -178,6 +179,7 @@ found 0 vulnerabilities
 | `outDir` / `rootDir` | โค้ดอยู่ `src/` ผลลัพธ์ไป `dist/` |
 | `module` / `moduleResolution` | ระบบ import แบบที่ Node ใช้ |
 | `include` | บอกว่าให้ตรวจไฟล์ในโฟลเดอร์ไหน |
+| `types: ["node"]` | โหลด type ของ Node จาก `@types/node` (ให้ TS รู้จัก `process`, `Buffer`) TypeScript 7 ไม่โหลด `@types/*` ให้เองอีกแล้ว ถ้าไม่ใส่จะเจอ `TS2591: Cannot find name 'process'` แม้ติดตั้ง `@types/node` แล้ว |
 
 > 🔎 **`strict: true` เป็นสวิตช์รวม** เปิดการตรวจเข้มหลายข้อ ที่สำคัญที่สุด 2 ข้อสำหรับมือใหม่คือ
 > - **`noImplicitAny`**: ห้ามปล่อย parameter ไม่ใส่ type จน TS ต้อง "ยอมรับว่าเป็น any"
@@ -295,7 +297,7 @@ lp.ramgb;   // ❌ Property 'ramgb' does not exist on type 'Laptop'. Did you mea
 ลืมช่องที่จำเป็น หรือใส่ช่องที่ไม่มีใน interface ก็ถูกจับ:
 ```ts
 const a: Laptop = { id: 1 };
-// ❌ Property 'brand' is missing in type '{ id: number; }' but required in type 'Laptop'.
+// ❌ Type '{ id: number; }' is missing the following properties from type 'Laptop': brand, model, serial, ramGb
 const b: Laptop = { id: 1, brand: "x", model: "y", serial: "z", ramGb: 8, colour: "red" };
 // ❌ Object literal may only specify known properties, and 'colour' does not exist in type 'Laptop'.
 ```
@@ -428,7 +430,7 @@ console.log(describe(3));
 ข้อความยาว 3 ตัว
 ตัวเลข 3.0
 ```
-ถ้าไม่เช็คก่อน แล้วเรียก `v.toUpperCase()` ตรงๆ TS จะไม่ยอม: `Property 'toUpperCase' does not exist on type 'string | number'.` เพราะถ้า `v` เป็นเลขก็ไม่มีเมธอดนี้
+ถ้าไม่เช็คก่อน แล้วเรียก `v.toUpperCase()` ตรงๆ TS จะไม่ยอม 2 ข้อ: `'v' is possibly 'null'.` (ถ้าเป็น `null` จะเรียกเมธอดอะไรก็พัง) และ `Property 'toUpperCase' does not exist on type 'string | number'.` (ถ้า `v` เป็นเลขก็ไม่มีเมธอดนี้) TS ไล่ดูทุกชนิดที่ `v` อาจเป็น แล้วเตือนทุกกรณีที่พังได้
 
 | วิธีเช็ค | ใช้กับ | ตัวอย่าง |
 |---|---|---|

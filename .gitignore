@@ -8,3 +8,5 @@ node_modules/
 
 # บันทึกส่งต่องานระหว่าง session (ไม่เผยแพร่)
 Handoff.md
+
+Handoff.archive-*.md

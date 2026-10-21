@@ -296,7 +296,7 @@ import { createHmac } from "node:crypto";
 
 const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString("base64url");
 const header = b64({ alg: "HS256", typ: "JWT" });
-const payload = b64({ sub: 1, role: "staff", exp: 1790000000 });
+const payload = b64({ sub: 1, role: "staff", exp: 2000000000 });
 const sig = createHmac("sha256", "super-secret-key-for-demo-only")
   .update(header + "." + payload)
   .digest("base64url");
@@ -312,13 +312,15 @@ bun jwt-demo.ts
 ```
 **ควรเห็น**
 ```
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInJvbGUiOiJzdGFmZiIsImV4cCI6MTc5MDAwMDAwMH0.PXbmOqmxKUyQrPK7awW_I4vGZgWIE7G1wzs3K4WuY5I
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInJvbGUiOiJzdGFmZiIsImV4cCI6MjAwMDAwMDAwMH0.zFmMaeQaLfC2putfGef9wyC2EMTSDOlML6BrWEfS3j0
 {
   sub: 1,
   role: "staff",
-  exp: 1790000000,
+  exp: 2000000000,
 }
 ```
+> 💡 `exp` คือเวลาหมดอายุเป็นวินาทีนับจาก 1 ม.ค. 1970 (Unix time) `2000000000` คือปี 2033 ตั้งไกลไว้เพื่อให้วางที่ jwt.io แล้วยังไม่ขึ้นว่าหมดอายุ ของจริงตั้งสั้นตามข้อ 4 ด้านล่าง
+
 อ่านข้อมูลได้ครบโดยไม่ต้องมี secret ส่วน **signature** มีไว้ให้ server ตรวจว่า "ใครแก้ข้อมูลหรือเปล่า" (ถ้าเราแก้ `role` เป็น `admin` ลายเซ็นจะไม่ตรง และ server ที่ตรวจต้องปฏิเสธ)
 
 **ข้อควรระวังกับ JWT**
@@ -660,12 +662,14 @@ Referrer-Policy: strict-origin-when-cross-origin
 | Container | รันเป็น root | รันด้วย user ธรรมดา |
 | คนในทีม | ให้สิทธิ์ production ทุกคน | ให้เฉพาะคนที่ต้องใช้ ถอดเมื่อไม่ต้องใช้แล้ว |
 
-ตัวอย่างใน PostgreSQL (สร้าง user ที่อ่านและเพิ่มข้อมูลได้ แต่ลบตารางไม่ได้)
+ตัวอย่างใน PostgreSQL (สร้าง user ที่อ่านและเพิ่มข้อมูลได้ แต่ลบตารางไม่ได้) ใช้ชื่อ `app_rw` เพราะ `app_user` ในบทที่ 7 สร้างไว้แล้วและได้สิทธิ์ทั้งหมด (ถ้าสั่ง `CREATE ROLE app_user` ซ้ำจะเจอ `role "app_user" already exists`)
 ```sql
-CREATE ROLE app_user LOGIN PASSWORD 'ใส่รหัสผ่านสุ่มยาวๆ ที่นี่';
-GRANT SELECT, INSERT, UPDATE ON rentals, laptops, customers TO app_user;
+CREATE ROLE app_rw LOGIN PASSWORD 'ใส่รหัสผ่านสุ่มยาวๆ ที่นี่';
+GRANT SELECT, INSERT, UPDATE ON rentals, laptops, customers TO app_rw;
+GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO app_rw;
 -- ไม่ให้ DELETE / DROP / สิทธิ์สร้างตาราง ตัว migration ใช้ user อีกตัวที่มีสิทธิ์มากกว่า
 ```
+> 💡 ทำไมต้องมีบรรทัด `SEQUENCES`: คอลัมน์ `id SERIAL` ไม่ได้นับเลขเอง แต่ไปขอเลขถัดไปจาก **sequence** ซึ่งเป็นอีกวัตถุหนึ่งใน database ถ้าให้สิทธิ์แค่ตาราง INSERT จะพังด้วย `permission denied for sequence rentals_id_seq` นี่คือตัวอย่างว่า least privilege ต้องรู้ว่าระบบทำงานข้างในอย่างไร ไม่ใช่แค่ไล่ตัดสิทธิ์
 > 💡 ประโยชน์ตรงๆ: ถ้า SQL injection หลุดมาสักจุด คนร้ายก็ลบตารางหรืออ่านตาราง `users` ไม่ได้ (ถ้าไม่ได้ให้สิทธิ์)
 
 ### 📦 Dependency security: library ที่เราใช้ก็มีรูได้

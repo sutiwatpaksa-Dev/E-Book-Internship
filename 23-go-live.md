@@ -114,7 +114,7 @@ $DC exec -T db dropdb -U app restore_test
 ### บริการเฝ้าเว็บ
 ใช้บริการฟรีอย่าง **UptimeRobot** หรือ **Better Stack**
 - ให้เปิด `https://example.com/api/health` ทุก 5 นาที
-- แจ้งเตือนทางอีเมล + LINE / Slack / Telegram ของทีม
+- แจ้งเตือนทางอีเมล + LINE / Slack / Telegram ของทีม (LINE Notify ปิดบริการไปแล้วตั้งแต่ 31 มี.ค. 2568 ถ้าเจอคู่มือเก่าที่ใช้ LINE Notify อย่าทำตาม ให้ใช้ช่องทางที่บริการเฝ้าเว็บมีให้ หรือ LINE Messaging API ผ่าน LINE Official Account)
 - ตั้งอีกตัวเฝ้า `https://example.com/` (หน้าเว็บ) แยกกัน
 
 💡 ให้ที่อยู่เช็คความปกติ (`/api/health`) ลองถามฐานข้อมูลด้วย จะได้รู้เมื่อฐานข้อมูลมีปัญหา ไม่ใช่รู้แค่ว่าโปรแกรมยังเปิดอยู่
