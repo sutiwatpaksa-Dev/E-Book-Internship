@@ -5,10 +5,14 @@ node_modules/
 
 # เอกสารต้นฉบับ (เนื้อหาอยู่ในหน้าเว็บแล้ว ไม่เผยแพร่ใน repo สาธารณะ)
 *.pdf
-# ยกเว้น Requirement STARTER ที่เปิดให้น้องเทียบกับคู่มือ (ผู้ใช้อนุมัติ 21 ต.ค. 2569)
-!public/docs/starter-requirement.pdf
+# Requirement STARTER ย้ายไปเก็บใน DB หลัง login แล้ว (v2.0.0) อัปโหลดผ่านหน้า /dev/admin
 
 # บันทึกส่งต่องานระหว่าง session (ไม่เผยแพร่)
 Handoff.md
 
 Handoff.archive-*.md
+
+# ค่าลับของ API (ดูตัวอย่างใน .env.example)
+.env
+.env.*
+!.env.example

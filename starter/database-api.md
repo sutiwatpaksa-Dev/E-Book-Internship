@@ -1,6 +1,10 @@
+---
+search: false
+---
+
 # STARTER: ฐานข้อมูล + รายการ API 🗄️
 
-> 📄 **เทียบกับต้นฉบับ:** [เปิด Requirement (PDF) หน้า 7–9](/docs/starter-requirement.pdf#page=7){target="_blank" rel="noopener"} · [ตารางเทียบหัวข้อและจุดที่คู่มือต่างจากต้นฉบับ](./compare.md)
+> 📄 **เทียบกับต้นฉบับ:** [เปิด Requirement (PDF) หน้า 7–9](/api/files/requirement.pdf#page=7){target="_blank" rel="noopener"} · [ตารางเทียบหัวข้อและจุดที่คู่มือต่างจากต้นฉบับ](./compare.md)
 
 > **⚡ สรุป 30 วินาที**
 > - ฐานข้อมูลมี **6 ตารางขึ้นไป** ทุกตารางมีช่อง `id` (เลขประจำแถว), `created_at` (สร้างเมื่อ), `updated_at` (แก้ล่าสุดเมื่อ)

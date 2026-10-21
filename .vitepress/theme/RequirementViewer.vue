@@ -4,7 +4,8 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute } from "vitepress";
 
-const PDF = "/docs/starter-requirement.pdf";
+// ไฟล์อยู่หลัง login (API ตรวจ role ก่อนส่ง) ไม่ได้อยู่ใน public/ เพราะ repo นี้เปิดสาธารณะ
+const PDF = "/api/files/requirement.pdf";
 // ความกว้างที่ต้องเหลือให้เนื้อหาคู่มือ (ข้อความ ~480px + ระยะขอบของ VitePress) และความกว้างต่ำสุดของแผง
 const CONTENT_MIN = 608;
 const PANEL_MIN = 360;

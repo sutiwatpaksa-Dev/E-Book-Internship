@@ -1,6 +1,10 @@
+---
+search: false
+---
+
 # STARTER: การส่งงาน + เกณฑ์ 📤
 
-> 📄 **เทียบกับต้นฉบับ:** [เปิด Requirement (PDF) หน้า 12–13](/docs/starter-requirement.pdf#page=12){target="_blank" rel="noopener"} · [ตารางเทียบหัวข้อและจุดที่คู่มือต่างจากต้นฉบับ](./compare.md)
+> 📄 **เทียบกับต้นฉบับ:** [เปิด Requirement (PDF) หน้า 12–13](/api/files/requirement.pdf#page=12){target="_blank" rel="noopener"} · [ตารางเทียบหัวข้อและจุดที่คู่มือต่างจากต้นฉบับ](./compare.md)
 
 > **⚡ สรุป 30 วินาที**
 > - ส่งงานใน Git ที่เดียว (มีทั้ง `client` และ `server`) พร้อม README, ผังตาราง, ไฟล์ทดสอบ API, สรุปร้าน + ภาพร่างหน้าเว็บ และนำเสนอสด 15 นาที

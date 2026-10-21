@@ -27,3 +27,46 @@ npm run build      # ตรวจว่า build ผ่าน (ลิงก์�
 เปิด Merge Request / Pull Request จะได้ลิงก์ Preview แยกให้ดูก่อน merge
 
 ถ้าต้องการโดเมนบริษัท เช่น `handbook.blicktechconsultant.co.th` ตั้งที่ Project → Settings → Domains
+
+## ระบบ login (ตั้งแต่ v2.0.0)
+
+หน้า `starter/`, `steps/`, `dev/` และไฟล์ Requirement PDF ต้อง login ก่อน มีสองส่วนที่ทำงานคู่กัน
+
+| ส่วน | ไฟล์ | หน้าที่ |
+|---|---|---|
+| Routing Middleware | `middleware.ts`, `server/gate.ts` | ตรวจบัตรผ่าน (cookie `bt_session`) ก่อนส่งไฟล์หน้าเว็บ ไม่มีบัตรพาไปหน้า login |
+| API (Hono บน Bun) | `api/server.ts`, `server/` | login/logout, หน้า admin, ส่ง PDF (เช็กกับ DB ทุกครั้ง) |
+
+ตารางกฎว่า path ไหนต้องมี role อะไรอยู่ที่ `server/gate.ts` ที่เดียว (หน้าเว็บใช้ `.vitepress/theme/session.ts` แค่แสดงปุ่ม)
+หน้าใหม่ที่ต้องล็อกให้ใส่ `search: false` ใน frontmatter ไม่งั้นเนื้อหาจะหลุดไปอยู่ในดัชนีค้นหาที่ทุกคนโหลดได้
+
+> ⚠️ repo นี้ยังเปิดสาธารณะ ไฟล์ `.md` ของหน้าที่ล็อกยังอ่านบน GitHub ได้ login กันได้เฉพาะบนเว็บ ไฟล์ที่ต้องปิดจริง (PDF) จึงเก็บใน DB ไม่ใส่ใน repo
+
+### ตั้งครั้งแรกบน Vercel
+
+1. สร้าง Postgres: Vercel → Storage → **Neon** (ฟรี) ผูกกับโปรเจกต์ จะได้ `DATABASE_URL` ใน env เอง
+2. Project → Settings → Environment Variables เพิ่ม
+   - `SESSION_SECRET` = ผลจาก `openssl rand -base64 48`
+   - `APP_ORIGIN` = `https://e-book-internship.vercel.app`
+   - `EXAMPLE_REPO_URL` = ลิงก์ repo ระบบตัวอย่าง (ไม่ใส่ก็ได้ ปุ่มจะไม่แสดง)
+3. สร้างตารางจากเครื่องเรา (ใช้ `DATABASE_URL` ของ Neon ชั่วคราว ไม่ต้องบันทึกลงไฟล์)
+   ```bash
+   DATABASE_URL='<ของ Neon>' npm run db:migrate
+   DATABASE_URL='<ของ Neon>' SESSION_SECRET=x APP_ORIGIN=https://e-book-internship.vercel.app bun scripts/create-user.ts <username> dev
+   ```
+   จด PIN ที่ได้ (แสดงครั้งเดียว)
+4. Deploy แล้ว login ด้วยบัญชีนั้น เปิด **⚙️ จัดการบัญชี** อัปโหลด PDF Requirement และสร้างบัญชีน้อง
+
+### รันในเครื่อง
+
+```bash
+cp .env.example .env     # แก้ SESSION_SECRET
+docker run -d --name ebook-auth-pg -e POSTGRES_PASSWORD=dev -e POSTGRES_DB=ebook -p 5544:5432 postgres:17-alpine
+npm run db:migrate && bun scripts/create-user.ts mentor dev
+npm run api:dev          # API ที่ :3001
+npm run dev              # เว็บที่ :5173 (ส่ง /api ไป :3001 ให้เอง)
+npm test && npm run typecheck
+```
+
+middleware ไม่ทำงานตอน `npm run dev` (เป็นของ Vercel) จึงมีเทสต์ใน `server/middleware.test.ts` แทน และตรวจของจริงบน Preview URL ก่อน merge
+แก้ตารางใน `server/db/schema.ts` แล้ว `npm run db:generate` ได้ไฟล์ SQL ใหม่ใน `drizzle/` ให้ commit ไฟล์นั้นด้วย และรัน `db:migrate` กับ Neon ก่อน deploy

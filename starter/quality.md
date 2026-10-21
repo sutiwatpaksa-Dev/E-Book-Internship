@@ -1,6 +1,10 @@
+---
+search: false
+---
+
 # STARTER: คุณภาพที่ต้องได้ 🛡️
 
-> 📄 **เทียบกับต้นฉบับ:** [เปิด Requirement (PDF) หน้า 10](/docs/starter-requirement.pdf#page=10){target="_blank" rel="noopener"} · [ตารางเทียบหัวข้อและจุดที่คู่มือต่างจากต้นฉบับ](./compare.md)
+> 📄 **เทียบกับต้นฉบับ:** [เปิด Requirement (PDF) หน้า 10](/api/files/requirement.pdf#page=10){target="_blank" rel="noopener"} · [ตารางเทียบหัวข้อและจุดที่คู่มือต่างจากต้นฉบับ](./compare.md)
 
 > **⚡ สรุป 30 วินาที**
 > - เว็บที่ "แค่ใช้ได้" ยังไม่พอ ต้อง **ใช้ได้ทุกจอ, Google หาเจอ, ปลอดภัย และโค้ดอ่านรู้เรื่อง**

@@ -56,6 +56,8 @@ export default defineConfig({
   // ขึ้นบรรทัดใหม่ในไฟล์ = ขึ้นบรรทัดใหม่บนหน้าเว็บ (บทสนทนาและกล่องข้อความเขียนไว้ทีละบรรทัด)
   markdown: { breaks: true },
   lastUpdated: true,
+  // ตอนพัฒนาในเครื่อง ส่ง /api ไปที่ API (bun run api:dev) บน Vercel ใช้ rewrites ใน vercel.json แทน
+  vite: { server: { proxy: { "/api": "http://localhost:3001" } } },
   head: [
     ["link", { rel: "icon", type: "image/png", sizes: "32x32", href: `${base}brand/favicon-32.png` }],
     ["link", { rel: "icon", type: "image/png", sizes: "64x64", href: `${base}brand/favicon-64.png` }],

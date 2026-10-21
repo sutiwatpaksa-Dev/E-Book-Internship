@@ -192,3 +192,24 @@ html.req-open .VPDoc .aside {
 /* โลโก้เต็มบนหน้าแรก: ตัวอักษรสีกรมท่า จึงวางบนการ์ดพื้นขาวให้อ่านได้ทั้งโหมดสว่างและมืด */
 .home-logo { margin: 0 0 24px; }
 .home-logo img { display: block; width: 100%; max-width: 480px; height: auto; padding: 12px 16px; background: #fff; border: 0 !important; border-radius: 12px; }
+
+/* ระบบ login: ปุ่มบน navbar, ฟอร์ม และหน้าจัดการบัญชี */
+.bt-auth { display: flex; align-items: center; gap: 12px; margin-left: 16px; font-size: 14px; white-space: nowrap; }
+.bt-auth-link { color: var(--vp-c-text-1); font-weight: 500; background: none; border: 0; padding: 0; cursor: pointer; font: inherit; }
+.bt-auth-link:hover { color: var(--vp-c-brand-1); }
+.bt-auth-role { padding: 2px 8px; border-radius: 999px; background: var(--vp-c-brand-soft); color: var(--vp-c-brand-1); font-size: 12px; font-weight: 600; }
+@media (max-width: 767px) { .bt-auth { margin-left: 8px; gap: 8px; } .bt-auth-role { display: none; } }
+.bt-form { display: grid; gap: 16px; max-width: 360px; margin: 24px 0; }
+.bt-form label { display: grid; gap: 6px; font-weight: 600; }
+.bt-form input, .bt-admin input, .bt-admin select { padding: 8px 12px; border: 1px solid var(--vp-c-divider); border-radius: 8px; background: var(--vp-c-bg-alt); color: var(--vp-c-text-1); font: inherit; }
+.bt-btn { display: inline-block; padding: 8px 18px; border-radius: 8px; border: 0; background: var(--vp-c-brand-1); color: var(--vp-c-white); font-weight: 600; cursor: pointer; }
+.bt-btn:disabled { opacity: 0.6; cursor: wait; }
+.dark .bt-btn { color: #0b1220; }
+.bt-error { color: var(--vp-c-danger-1); margin: 0; }
+.bt-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.bt-issued { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 16px; border-radius: 8px; background: var(--vp-c-tip-soft); }
+.bt-pin { font-size: 20px; letter-spacing: 4px; }
+.bt-table { overflow-x: auto; }
+.bt-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.bt-actions button { padding: 4px 10px; border: 1px solid var(--vp-c-divider); border-radius: 6px; background: var(--vp-c-bg-soft); color: var(--vp-c-text-1); cursor: pointer; font-size: 13px; }
+.bt-actions button:hover { border-color: var(--vp-c-brand-1); }

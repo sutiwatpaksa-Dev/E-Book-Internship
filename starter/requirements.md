@@ -1,6 +1,10 @@
+---
+search: false
+---
+
 # STARTER: หน้าเว็บ + หน้าจัดการร้าน 🖥️
 
-> 📄 **เทียบกับต้นฉบับ:** [เปิด Requirement (PDF) หน้า 4–6](/docs/starter-requirement.pdf#page=4){target="_blank" rel="noopener"} · [ตารางเทียบหัวข้อและจุดที่คู่มือต่างจากต้นฉบับ](./compare.md)
+> 📄 **เทียบกับต้นฉบับ:** [เปิด Requirement (PDF) หน้า 4–6](/api/files/requirement.pdf#page=4){target="_blank" rel="noopener"} · [ตารางเทียบหัวข้อและจุดที่คู่มือต่างจากต้นฉบับ](./compare.md)
 
 > **⚡ สรุป 30 วินาที**
 > - หน้าที่ลูกค้าเห็นมี 3 หน้า: **หน้าแรก `/`**, **เกี่ยวกับร้าน/บริการ `/about`**, **ติดต่อ `/contact`**
