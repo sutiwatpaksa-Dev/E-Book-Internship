@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { defineConfig } from "vitepress";
 
 const { version } = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf-8"));
+const base = process.env.BASE_PATH ?? "/";
+const siteUrl = "https://e-book-internship.vercel.app";
 
 const chapters = [
   { text: "00 · ก่อนเริ่ม", link: "/00-start" },
@@ -45,7 +47,7 @@ export default defineConfig({
   title: "คู่มือฝึกงาน Blicktech",
   description: "Basic Dev Fundamentals สำหรับน้องฝึกงาน บริษัท บลิคซ์เทค คอนซัลแทนท์ จำกัด",
   // Vercel เสิร์ฟที่ root ถ้าย้ายไปอยู่ใต้ path ย่อย ให้ตั้ง BASE_PATH เช่น /handbook/
-  base: process.env.BASE_PATH ?? "/",
+  base,
   rewrites: { "README.md": "index.md" },
   srcExclude: ["node_modules/**", "MAINTAINING.md", "Handoff*.md"],
   // ลิงก์ localhost ในบทเรียนตั้งใจให้เปิดบนเครื่องน้องเอง
@@ -55,7 +57,14 @@ export default defineConfig({
   markdown: { breaks: true },
   lastUpdated: true,
   head: [
-    ["link", { rel: "icon", href: `${process.env.BASE_PATH ?? "/"}logo.png` }],
+    ["link", { rel: "icon", type: "image/png", sizes: "32x32", href: `${base}brand/favicon-32.png` }],
+    ["link", { rel: "icon", type: "image/png", sizes: "64x64", href: `${base}brand/favicon-64.png` }],
+    ["link", { rel: "apple-touch-icon", href: `${base}brand/apple-touch-icon.png` }],
+    // ภาพตัวอย่างตอนแชร์ลิงก์ (LINE, Facebook, Slack) ต้องเป็น URL เต็ม
+    ["meta", { property: "og:image", content: `${siteUrl}/brand/og.png` }],
+    ["meta", { property: "og:image:width", content: "1200" }],
+    ["meta", { property: "og:image:height", content: "630" }],
+    ["meta", { name: "twitter:card", content: "summary_large_image" }],
     ["link", { rel: "preconnect", href: "https://fonts.googleapis.com" }],
     ["link", { rel: "preconnect", href: "https://fonts.gstatic.com", crossorigin: "" }],
     [
@@ -67,7 +76,7 @@ export default defineConfig({
     ],
   ],
   themeConfig: {
-    logo: "/logo.png",
+    logo: { light: "/brand/mark.png", dark: "/brand/mark-dark.png", alt: "Blicktech" },
     siteTitle: "คู่มือฝึกงาน",
     nav: [
       { text: "เริ่มอ่าน", link: "/00-start" },

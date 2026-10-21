@@ -1,3 +1,5 @@
+<p class="home-logo"><img src="/brand/logo-full.png" alt="Blicktech Internship E-Book: Developer Handbook" width="480" height="170"></p>
+
 # 🚀 คู่มือฝึกงาน Blicktech: Basic Dev Fundamentals
 
 > **ผู้มอบหมาย:** CEO · บริษัท บลิคซ์เทค คอนซัลแทนท์ จำกัด
