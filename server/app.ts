@@ -27,5 +27,6 @@ app.route("/auth", authRoutes);
 app.route("/admin", adminRoutes);
 app.route("/files", fileRoutes);
 
-app.notFound((c) => c.json({ error: "ไม่พบ" }, 404));
+// บอก path ที่ server เห็นด้วย ช่วยตรวจว่า rewrite ของ Vercel ส่ง path เดิมมาครบไหม
+app.notFound((c) => c.json({ error: "ไม่พบ", path: c.req.path }, 404));
 app.onError(errorHandler);
