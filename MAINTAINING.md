@@ -98,12 +98,13 @@ Vercel อ่านค่าจาก `vercel.json` เอง (Framework: Next.j
    - `APP_ORIGIN` = URL ของเว็บนั้น เช่น `https://e-book-internship.vercel.app`
    - `EXAMPLE_REPO_URL` = ลิงก์ repo ระบบตัวอย่าง (ไม่ใส่ก็ได้ ปุ่มจะไม่แสดง)
 3. ตาราง: Vercel รัน `npm run db:migrate` ก่อน `next build` ทุกครั้ง (`buildCommand` ใน `vercel.json`) จึงสร้าง/แก้ตารางให้เอง ใน Build Logs จะมีบรรทัด `migrate → <host>/<ฐาน>` (Vercel อาจปิด host เป็น `[REDACTED]` เพราะตรงกับค่า Secret ดู host จริงได้จาก Runtime Logs ตอน `/api/health` ล้ม) ต่อฐานไม่ได้ build จะล้มก่อน ไม่ปล่อยเว็บที่ไม่มีตารางขึ้นไป
-4. สร้างบัญชี Dev คนแรกจาก Terminal ของเราเอง ค่าใน Vercel เป็นแบบ Secret ดึงด้วย `vercel env pull` ไม่ได้ (ได้ค่าว่าง) ให้คัดลอก connection string ของฐาน**ที่เว็บใช้จริง** จาก Neon Console → Connect (`read -s` ไม่แสดงค่าบนจอ ไม่ติดใน history)
+4. สร้างบัญชี Dev คนแรกจาก Terminal ของเราเอง ค่าใน Vercel เป็นแบบ Secret ดึงด้วย `vercel env pull` ไม่ได้ (ได้ค่าว่าง) ให้คัดลอก connection string ของฐาน**ที่เว็บใช้จริง** จาก Neon Console → Connect (กดปุ่ม Copy) แล้วดึงจากคลิปบอร์ดด้วย `pbpaste` ค่าไม่ขึ้นจอ ไม่ติด history (อย่าใช้ `read -s` แล้ววาง: Terminal แอบเติมรหัส bracketed paste เข้าไปในค่า ทำให้ URL ผิดรูปแบบ)
    ```bash
-   read -s "DB?Neon URL: " && export DATABASE_URL=$DB SESSION_SECRET=$(openssl rand -base64 48) APP_ORIGIN=<URL ของเว็บ>
+   export DATABASE_URL="$(pbpaste)" SESSION_SECRET=$(openssl rand -base64 48) APP_ORIGIN=<URL ของเว็บ>
    bun scripts/create-user.ts <username> dev
+   pbcopy < /dev/null   # ล้างคลิปบอร์ด
    ```
-   ลืม PIN: รันแบบเดียวกันแต่ใช้ `bun scripts/reset-pin.ts <username>` (ออก PIN ใหม่ + ปลดล็อก) อยากตั้งเอง: `read -s "NEW_PIN?PIN 6 หลัก: " && export NEW_PIN` ก่อนรัน
+   ลืม PIN: รันแบบเดียวกันแต่ใช้ `bun scripts/reset-pin.ts <username>` (ออก PIN ใหม่ + ปลดล็อก) อยากตั้งเอง: `read -s "NEW_PIN?PIN 6 หลัก: " && export NEW_PIN` ก่อนรัน (พิมพ์เอง อย่าวาง)
    `SESSION_SECRET` ตรงนี้ใช้แค่ผ่านด่านตรวจ env ของสคริปต์ ไม่ต้องตรงกับบน Vercel
    จด PIN ที่ได้ (แสดงครั้งเดียว)
 5. เปิด `/api/health` ต้องได้ `{"ok":true,"db":"ok"}` แล้ว login ด้วยบัญชีนั้น เปิด **⚙️ จัดการบัญชี** อัปโหลด PDF Requirement และสร้างบัญชีน้อง
