@@ -2,6 +2,7 @@ import defaultMdxComponents from "fumadocs-ui/mdx";
 import type { MDXComponents } from "mdx/types";
 import type { ComponentProps } from "react";
 import { LearningRoadmap } from "./learning-roadmap";
+import { ToolTable } from "./tool-table";
 
 // ลิงก์ไปไฟล์จาก API (เช่น PDF Requirement) ไม่ใช่หน้าเว็บ ให้เปิดแท็บใหม่แบบลิงก์ธรรมดา
 // (ลิงก์หน้าเว็บใช้ Link ของ Next ตามปกติ เปลี่ยนหน้าได้โดยไม่โหลดใหม่ทั้งหน้า)
@@ -11,9 +12,9 @@ function Anchor(props: ComponentProps<"a">) {
   return <DefaultLink {...props} />;
 }
 
-// component ที่เรียกใช้ในไฟล์ .mdx ได้ เช่น <LearningRoadmap /> ในหน้าแรก
+// component ที่เรียกใช้ในไฟล์ .mdx ได้ เช่น <LearningRoadmap /> ในหน้าแรก, <ToolTable group="..." /> ในบทเรียน
 export function getMDXComponents(components?: MDXComponents) {
-  return { ...defaultMdxComponents, a: Anchor, LearningRoadmap, ...components } satisfies MDXComponents;
+  return { ...defaultMdxComponents, a: Anchor, LearningRoadmap, ToolTable, ...components } satisfies MDXComponents;
 }
 
 declare global {

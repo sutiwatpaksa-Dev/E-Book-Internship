@@ -57,6 +57,7 @@ design/brand-source/     ไฟล์โลโก้ต้นฉบับ (ไ�
 - ออกเวอร์ชันใหม่: เพิ่มหัวข้อบนสุดใน `changelog.mdx` แล้วรัน `npm version <ตัวเลข> --no-git-tag-version` (เลขจะขึ้นที่เมนูเอง) จากนั้น commit, `git tag v<ตัวเลข>` และ push
 - เพิ่มบทใหม่: สร้างไฟล์ `.mdx` ใน `content/docs/` (frontmatter `title` และ `navTitle` ชื่อสั้นใน sidebar) แล้วเพิ่มชื่อไฟล์ใน `content/docs/meta.json` และ `src/data/roadmap.ts`
 - เขียน MDX: `{` `}` และ `<` ในข้อความธรรมดาต้องอยู่ใน `` `โค้ด` `` หรือใส่ `\{` ไม่งั้น MDX อ่านเป็นโค้ด, `<details>` ต้องมีบรรทัดว่างก่อน `</details>`
+- ตาราง "ในกลุ่มนี้มีใครบ้าง" ในบทเรียนดึงจาก `src/data/tool-groups.ts` (ใช้ใน MDX ด้วย `<ToolTable group="js-runtime" />`) มีเครื่องมือใหม่ เพิ่มที่ไฟล์นั้นที่เดียว ใส่ระดับ team / know / aware
 - สีและฟอนต์อยู่ที่ `src/app/global.css` และ `src/app/layout.tsx`
 
 ## branch และการ deploy
