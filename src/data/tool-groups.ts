@@ -275,6 +275,22 @@ export const toolGroups = {
       { name: "TablePlus", url: "https://tableplus.com/pricing", detail: "PostgreSQL, MySQL, SQLite, SQL Server, Redis, MongoDB ฯลฯ", level: "aware", summary: "แอปหน้าตาเรียบ เปิดเร็ว · รุ่นฟรีเปิดได้ครั้งละ 2 แท็บ 2 หน้าต่าง ใช้เต็มที่ต้องซื้อ" },
     ],
   },
+  "object-storage": {
+    title: "Object Storage (ที่เก็บไฟล์)",
+    detailLabel: "คุยด้วย · ที่รัน",
+    checkedAt: "23 ต.ค. 2569",
+    tools: [
+      { name: "RustFS", url: "https://github.com/rustfs/rustfs", detail: "S3 API · รันเอง (Docker)", level: "team", summary: "เขียนด้วย Rust สัญญาอนุญาต Apache 2.0 ตั้งใจให้ง่ายแบบ MinIO · คำสั่ง docker เดียวได้ S3 API ที่ port 9000 และหน้าเว็บที่ 9001 · ล็อกเลขรุ่น (บทที่ 8c ใช้ 1.0.3)" },
+      { name: "Amazon S3", url: "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html", detail: "S3 API (ต้นฉบับ) · cloud", level: "know", summary: "ต้นแบบของทั้งกลุ่ม ตัวอื่นเลียนแบบ API ของมัน · bucket ใหม่เป็นแบบส่วนตัวและเปิด Block Public Access ไว้ให้ · คิดเงินตามที่ใช้จริง" },
+      { name: "Cloudflare R2", url: "https://developers.cloudflare.com/r2/pricing/", detail: "S3 API · cloud", level: "know", summary: "ไม่คิดค่าส่งข้อมูลออก (egress) · แผนฟรีเดือนละ 10 GB-month, คำขอแบบเขียน 1 ล้าน, แบบอ่าน 10 ล้าน · ไม่มีคำสั่ง bucket policy เปิดสาธารณะผ่านโดเมนใน dashboard" },
+      { name: "Vercel Blob", url: "https://vercel.com/docs/vercel-blob", detail: "SDK @vercel/blob · cloud", level: "know", summary: "สะดวกเมื่อเว็บอยู่บน Vercel · เลือก store แบบ public หรือ private ตอนสร้าง (เปลี่ยนทีหลังไม่ได้) · ข้างหลังเก็บบน Amazon S3 และมี CDN ของ Vercel cache ให้ · ไม่ได้คุยด้วย S3 API" },
+      { name: "Supabase Storage", url: "https://supabase.com/docs/guides/storage/s3/compatibility", detail: "SDK ของ Supabase + S3 API · cloud", level: "know", summary: "มากับ Supabase (Postgres + login) · คำสั่งไฟล์หลักและ presigned URL ใช้ได้ แต่ยังไม่มีคำสั่งตั้ง CORS และ lifecycle ผ่าน S3 API" },
+      { name: "Google Cloud Storage", url: "https://docs.cloud.google.com/storage/docs/interoperability", detail: "XML API ที่เข้ากับ S3 · cloud", level: "aware", summary: "ของ Google Cloud · ใช้เครื่องมือของ S3 ได้ผ่าน XML API คู่กับ HMAC key · เหมาะเมื่อระบบอื่นของลูกค้าอยู่บน Google" },
+      { name: "MinIO", url: "https://github.com/minio/minio", detail: "S3 API · รันเอง", level: "aware", summary: "เคยเป็นตัวมาตรฐานของการรัน S3 ในเครื่อง · repo ประกาศหยุดดูแลและถูก archive (อ่านอย่างเดียว) 25 เม.ย. 2569 รุ่นชุมชนแจกเป็น source code เท่านั้น ไม่มีไฟล์พร้อมใช้ (ดูบทที่ 8c)" },
+      { name: "Garage", url: "https://garagehq.deuxfleurs.fr/", detail: "S3 API · รันเอง", level: "aware", summary: "ออกแบบให้กระจายหลายที่บนเครื่องธรรมดาหรือเครื่องเก่า ทนเน็ตช้าและเครื่องดับ · ต้องการ RAM ขั้นต่ำ 1 GB" },
+      { name: "SeaweedFS", url: "https://github.com/seaweedfs/seaweedfs", detail: "S3 API · รันเอง", level: "aware", summary: "สัญญาอนุญาต Apache 2.0 · เน้นเก็บไฟล์จำนวนมหาศาล มีทั้ง S3 API และระบบไฟล์ · คำสั่ง docker เดียวได้ S3 ที่ port 8333" },
+    ],
+  },
 } satisfies Record<string, ToolGroup>;
 
 export type ToolGroupId = keyof typeof toolGroups;

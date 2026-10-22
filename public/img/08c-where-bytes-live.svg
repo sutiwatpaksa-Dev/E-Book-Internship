@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" role="img" aria-label="ฐานข้อมูลเก็บข้อมูลของรูปและ key ส่วน object storage เก็บไบต์ของรูป browser โหลดรูปตรงจาก storage">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker>
+<marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker>
+<marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker></defs>
+<rect x="1" y="1" width="798" height="398" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="34" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="18" font-weight="700" fill="#0b3c91" text-anchor="middle">ฐานข้อมูลเก็บ “ข้อมูลของรูป” · storage เก็บ “ตัวรูป”</text>
+<rect x="24" y="150" width="130" height="100" rx="8" fill="#e2e8f0" stroke="#64748b" stroke-width="1.5"/>
+<text x="89" y="190" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="17" font-weight="700" fill="#0f172a" text-anchor="middle">Browser</text>
+<text x="89" y="216" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="middle">หน้าเว็บร้าน</text>
+<rect x="300" y="64" width="180" height="96" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+<text x="390" y="98" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="17" font-weight="700" fill="#0f172a" text-anchor="middle">API (Express)</text>
+<text x="390" y="124" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="middle">ตรวจ · ย่อรูป · จัดลำดับงาน</text>
+<rect x="590" y="56" width="190" height="124" rx="8" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
+<text x="685" y="84" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="17" font-weight="700" fill="#0f172a" text-anchor="middle">PostgreSQL</text>
+<text x="685" y="108" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="600" fill="#0b3c91" text-anchor="middle">laptop_photos 1 แถว</text>
+<text x="685" y="130" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="middle">id · laptop_id · key</text>
+<text x="685" y="150" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="middle">size · width · height · is_cover</text>
+<text x="685" y="170" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="12" font-weight="600" fill="#dc2626" text-anchor="middle">(ไม่มีไบต์ของรูป)</text>
+<rect x="590" y="222" width="190" height="124" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+<text x="685" y="250" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="17" font-weight="700" fill="#0f172a" text-anchor="middle">Object storage</text>
+<text x="685" y="274" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="600" fill="#15803d" text-anchor="middle">bucket: laptop-photos</text>
+<text x="685" y="296" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="12" font-weight="400" fill="#334155" text-anchor="middle">laptops/2/9f3c…-1600.webp</text>
+<text x="685" y="316" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="12" font-weight="400" fill="#334155" text-anchor="middle">laptops/2/9f3c…-400.webp</text>
+<text x="685" y="336" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="12" font-weight="600" fill="#15803d" text-anchor="middle">(ไฟล์จริง หลาย KB–MB)</text>
+<line x1="156" y1="170" x2="298" y2="120" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#a)"/>
+<text x="214" y="128" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="600" fill="#0b3c91" text-anchor="middle">① ขอรายการรูป</text>
+<line x1="482" y1="100" x2="588" y2="100" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#a)"/>
+<text x="535" y="92" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="12" font-weight="600" fill="#0b3c91" text-anchor="middle">SELECT</text>
+<line x1="298" y1="140" x2="158" y2="190" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#a)"/>
+<text x="236" y="186" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="600" fill="#0b3c91" text-anchor="middle">② JSON + URL</text>
+<line x1="482" y1="140" x2="588" y2="262" stroke="#16a34a" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#g)"/>
+<text x="528" y="214" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="12" font-weight="600" fill="#15803d" text-anchor="end">ตอนอัปโหลด: API ส่งไฟล์ (PUT)</text>
+<line x1="156" y1="236" x2="588" y2="300" stroke="#16a34a" stroke-width="2.5" marker-end="url(#g)"/>
+<text x="330" y="292" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="600" fill="#15803d" text-anchor="middle">③ โหลดรูปตรงจาก storage / CDN ตาม URL</text>
+<text x="330" y="312" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="12" font-weight="400" fill="#334155" text-anchor="middle">(ไม่ผ่าน API ไม่ผ่านฐานข้อมูล)</text>
+<rect x="60" y="356" width="680" height="32" rx="8" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="400" y="377" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="600" fill="#0f172a" text-anchor="middle">ฐานข้อมูลตอบเร็วเพราะแถวเล็ก · ไฟล์ใหญ่ไปทางที่ออกแบบมาส่งไฟล์โดยเฉพาะ</text>
+</svg>

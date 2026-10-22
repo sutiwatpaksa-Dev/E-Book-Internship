@@ -1,0 +1,1725 @@
+---
+navTitle: "08c · เก็บรูปภาพคู่กับฐานข้อมูล"
+title: "บทที่ 8c: เก็บรูปภาพคู่กับฐานข้อมูล 🖼️"
+---
+
+> ⏱ ประมาณ 4–5 ชั่วโมง (แบ่ง 2 วันได้: วันแรกข้อ 1–7 · วันที่สองข้อ 8 เป็นต้นไป) · 🧩 ต้องผ่านก่อน: บทที่ 2, 5, 8b · 🛠 ใช้: TypeScript, Express, Drizzle, PostgreSQL, RustFS (Docker), AWS SDK, sharp, multer
+
+> **⚡ สรุป 30 วินาที**
+> - ไฟล์รูปมี 3 ที่ให้เก็บ: **ในฐานข้อมูล** (`bytea`), **โฟลเดอร์บน server**, **object storage** รูปที่ผู้ใช้อัปโหลดเรื่อยๆ ควรอยู่ใน **object storage**
+> - หลักจำ: **ฐานข้อมูลเก็บ "ข้อมูลของรูป" + key · storage เก็บ "ตัวรูป"** แล้ว browser โหลดรูปตรงจาก storage (หรือ CDN) ไม่ผ่าน API
+> - object storage เกือบทุกเจ้าพูด **ภาษา S3** โค้ดชุดเดียวใช้ได้ทั้งในเครื่อง (RustFS) และของจริง (S3, R2) แค่เปลี่ยน `.env`
+> - ฐานข้อมูลกับ storage เป็น 2 ระบบที่ไม่มี transaction ร่วมกัน **ลำดับงาน** จึงสำคัญที่สุด: พังกลางทางได้แค่ "ไฟล์กำพร้า" (เก็บกวาดได้) ห้ามเกิด "แถวที่ชี้ไปไฟล์ที่ไม่มี" (รูปแตก)
+> - **ไม่เชื่อสิ่งที่ผู้ใช้ส่งมา**: ตรวจชนิดจากเนื้อไฟล์ (magic bytes) จำกัดขนาด ไม่รับ SVG ตั้งชื่อไฟล์เอง ลบพิกัด GPS ออก
+> - เร็วและประหยัด: ย่อเป็นหลายขนาด แปลงเป็น WebP ตั้งชื่อใหม่ทุกครั้งที่เปลี่ยนรูป แล้วให้ cache ได้ 1 ปี (`immutable`)
+
+---
+
+## 📖 เรื่องเล่า
+
+ร้านเช่าโน้ตบุ๊กอยากให้ลูกค้าเห็นรูปเครื่องก่อนเช่า บิตทำเสร็จในบ่ายเดียว: เพิ่มคอลัมน์ `photo` ชนิด `bytea` ในตาราง `laptops` แล้วยัดไฟล์ทั้งไฟล์ลงไป 😎
+
+สัปดาห์ต่อมา พี่ไบต์ถามว่า *"ทำไมหน้ารายการเครื่องโหลด 8 วินาที"* บิตเปิดดูถึงรู้ว่า `GET /laptops` ดึงรูปขนาด 6 MB ทุกเครื่องมาด้วย และไฟล์ backup ฐานข้อมูลโตจาก 2 MB เป็น 900 MB
+
+บิตย้ายไปเซฟรูปในโฟลเดอร์ `uploads/` บน server แทน เร็วขึ้นจริง... จนวัน deploy เวอร์ชันใหม่ container ถูกสร้างใหม่ **รูปหายหมด** เพราะโฟลเดอร์นั้นอยู่ในกล่องที่เพิ่งถูกทิ้ง 😱
+
+พี่ไบต์: *"รูปไม่ใช่ข้อมูลแบบเดียวกับชื่อลูกค้า มันต้องมีบ้านของมันเอง ส่วนฐานข้อมูลจดแค่ว่าบ้านอยู่ที่ไหน"*
+
+> 🧭 **บทนี้ต่อจาก Laptop API ของบทที่ 8b** เพิ่มให้เครื่องแต่ละเครื่องมีรูปได้หลายรูป เพิ่ม เปลี่ยน ลบ และตั้งรูปปกได้ ข้อ 1–7 อธิบายวิธีคิดและเหตุผลทีละขั้น ข้อ 8 เป็นต้นไปลงมือ **ทุกคำสั่งในบทนี้รันจริงแล้ว** ผลที่แสดงคือผลจริง (เลข id, ชื่อไฟล์สุ่ม และขนาดไฟล์ของเราจะต่างไปเล็กน้อย)
+
+---
+
+## 1. ปัญหา: ไบต์ของรูปควรอยู่ที่ไหน
+
+### คำศัพท์ที่จะเจอในบทนี้
+
+| คำ | ความหมาย |
+|---|---|
+| **ไบต์ / ข้อมูล binary** | ข้อมูลดิบของไฟล์ ไม่ใช่ตัวอักษรที่อ่านออก รูปหนึ่งรูปคือไบต์หลักแสนถึงหลักล้านตัว |
+| **BLOB / `bytea`** | ชนิดคอลัมน์ที่เก็บไบต์ดิบในฐานข้อมูล (MySQL เรียก `BLOB` Postgres เรียก `bytea`) |
+| **Object storage** | บริการเก็บไฟล์ที่ออกแบบมาเพื่อเก็บไฟล์จำนวนมาก สั่งงานผ่าน HTTP (ข้อ 2) |
+| **Bucket** | "ถัง" ที่ใส่ไฟล์ ใน 1 storage มีได้หลายถัง เช่น `laptop-photos` |
+| **Object** | ไฟล์ 1 ไฟล์ใน bucket (ตัวไฟล์ + ข้อมูลกำกับ เช่น `Content-Type`) |
+| **Key** | ชื่อเต็มของ object ใน bucket เช่น `laptops/2/9f3c…-400.webp` ไม่ซ้ำกันในถังเดียวกัน |
+| **Metadata** | "ข้อมูลเกี่ยวกับข้อมูล" เช่น ขนาดไฟล์ กว้าง ยาว ชนิดไฟล์ วันที่สร้าง |
+| **Presigned URL** | ลิงก์ชั่วคราวที่ server เซ็นด้วยกุญแจลับ ให้คนที่ถือลิงก์ทำได้ 1 อย่างกับ 1 ไฟล์ ภายในเวลาที่กำหนด (ข้อ 7) |
+| **CDN** | เครือข่าย server ทั่วโลกที่เก็บสำเนาไฟล์ไว้ใกล้ผู้ใช้ ผู้ใช้โหลดจากที่ใกล้ที่สุด ไม่ต้องวิ่งมาถึง server เรา |
+| **multipart/form-data** | รูปแบบ body ที่ browser ใช้ส่งไฟล์ (ทบทวน `Content-Type` ใน [บทที่ 5](/05-http-api)) |
+
+### 3 ที่ให้เก็บ เทียบกันตรงๆ
+
+| | ① ในฐานข้อมูล (`bytea`) | ② โฟลเดอร์บน server (`uploads/`) | ③ Object storage |
+|---|---|---|---|
+| ตั้งค่า | ง่ายสุด ไม่ต้องมีอะไรเพิ่ม | ง่าย | ต้องเปิดบริการเพิ่ม 1 ตัว |
+| ขนาดฐานข้อมูล / backup | โตตามรูปทุกรูป backup และ restore ช้าลงเรื่อยๆ | ไม่กระทบ แต่ต้อง backup โฟลเดอร์แยกเอง | ไม่กระทบ ผู้ให้บริการดูแลความทนทานให้ |
+| ตอนส่งรูปให้ผู้ใช้ | ไบต์ต้องไหลผ่านฐานข้อมูล → API → browser ทุกครั้ง กิน RAM และ connection | API ต้องส่งไฟล์เอง | browser โหลดตรงจาก storage / CDN API ไม่เหนื่อย |
+| มี server หลายเครื่อง | ✅ ทุกเครื่องเห็นเหมือนกัน | ❌ รูปอยู่เครื่องที่รับอัปโหลดเครื่องเดียว | ✅ ทุกเครื่องเห็นเหมือนกัน |
+| deploy ใหม่ / container ใหม่ | ✅ ไม่หาย | ❌ หาย ถ้าไม่ได้ต่อ volume ไว้ (ทบทวน volume ใน [บทที่ 2](/02-docker)) | ✅ ไม่หาย |
+| ใส่ CDN และ cache | ยาก | พอทำได้ | ✅ ทำได้ตรงๆ |
+| เหมาะกับ | ไฟล์ **น้อย เล็ก และต้องเช็คสิทธิ์ทุกครั้งอยู่แล้ว** | ระบบเล็กมากที่มีเครื่องเดียวและไม่มีวันขยาย | **ไฟล์ที่ผู้ใช้อัปโหลดเพิ่มเรื่อยๆ** เช่น รูปสินค้า รูปโปรไฟล์ |
+
+> 💡 **`bytea` ไม่ได้ผิดเสมอไป ตัวอย่างจริงอยู่ในเว็บคู่มือนี้เอง** ไฟล์ Requirement PDF ของงาน STARTER เก็บเป็น `bytea` ในตาราง `files` (`server/db/schema.ts`) เพราะมีไม่กี่ไฟล์ ไฟล์เล็ก ต้องเช็ค login ทุกครั้งก่อนส่งอยู่แล้ว และ repo ของเว็บเปิดสาธารณะ จึงใส่ไฟล์ไว้ใน `public/` ไม่ได้ ข้อเสียทุกข้อในตารางแทบไม่กระทบ
+> ส่วน **รูปเครื่องที่ร้านอัปโหลด** ต่างกันทุกข้อ: มีเยอะขึ้นเรื่อยๆ ทุกคนดูได้ และถูกเปิดบ่อยมาก จึงควรไปอยู่ object storage
+> คำถามที่ใช้ตัดสินคือ **ไฟล์มีกี่ไฟล์ ใหญ่แค่ไหน ใครดู ดูบ่อยแค่ไหน** ไม่ใช่ "แบบไหนถูก"
+
+### หลักจำของบทนี้
+
+![ฐานข้อมูลเก็บข้อมูลของรูปและ key ส่วน object storage เก็บไบต์ของรูป browser โหลดรูปตรงจาก storage](/img/08c-where-bytes-live.svg)
+*API ตอบแค่ JSON ที่มี URL ตัวรูปวิ่งจาก storage ถึง browser ตรงๆ*
+
+- **ฐานข้อมูล** จดว่ารูปนี้เป็นของเครื่องไหน ชื่อ key อะไร กว้างยาวเท่าไหร่ เป็นรูปปกไหม แถวหนึ่งเล็กไม่กี่ร้อยไบต์ ค้นเร็ว JOIN ได้
+- **Storage** เก็บตัวไฟล์ ซึ่งเป็นงานที่มันถูกออกแบบมาทำ
+- ทั้งสองฝั่งเชื่อมกันด้วย **key** เท่านั้น
+
+---
+
+## 2. กลุ่ม "Object Storage" คืออะไร
+
+Object storage คือที่เก็บไฟล์ที่หน้าตาเรียบง่ายมาก มีแค่ 3 อย่าง: **bucket** (ถัง), **key** (ชื่อ), **object** (ไฟล์) สั่งงานด้วย HTTP ธรรมดา
+
+| ทำอะไร | คำขอ HTTP (หน้าตาแบบ S3) |
+|---|---|
+| ใส่ไฟล์ | `PUT /laptop-photos/laptops/2/abc-400.webp` + ไบต์ใน body |
+| อ่านไฟล์ | `GET /laptop-photos/laptops/2/abc-400.webp` |
+| ดูขนาดไฟล์โดยไม่โหลด | `HEAD /laptop-photos/laptops/2/abc-400.webp` |
+| ลบไฟล์ | `DELETE /laptop-photos/laptops/2/abc-400.webp` |
+| ดูรายชื่อไฟล์ | `GET /laptop-photos?list-type=2&prefix=laptops/2/` |
+
+สิ่งที่ต่างจากโฟลเดอร์ในคอมเรา 3 ข้อ
+1. **ไม่มีโฟลเดอร์จริง** `laptops/2/abc.webp` คือ "ชื่อยาวๆ ที่มี `/`" เครื่องมือแค่แสดงผลให้ดูเหมือนโฟลเดอร์ ส่วนหน้าของชื่อที่ใช้กรอง (เช่น `laptops/2/`) เรียกว่า **prefix**
+2. **แก้ไฟล์ทีละส่วนไม่ได้** อยากเปลี่ยนต้องเขียนทับทั้งไฟล์ หรือเขียนเป็นชื่อใหม่ (ข้อ 4 จะเลือกแบบหลัง)
+3. **สิทธิ์ทุกคำขอต้องมีลายเซ็น** โค้ดเราถือ access key + secret key แล้ว SDK เซ็นคำขอให้ คนที่ไม่มีกุญแจทำได้เฉพาะสิ่งที่เราเปิดให้ (เช่น อ่านรูปในบางโฟลเดอร์)
+
+**S3 API คือภาษากลาง** Amazon S3 เปิดตัวก่อนและดังที่สุด ผู้ให้บริการรายอื่นจึงทำให้ "พูดภาษาเดียวกับ S3" ได้ เรียกว่า **S3-compatible** ผลคือเราใช้ library ของ AWS (`@aws-sdk/client-s3`) คุยกับตัวไหนก็ได้ แค่เปลี่ยนที่อยู่และกุญแจ
+
+> ⚠️ **"เข้ากันได้กับ S3" ไม่ได้แปลว่าเหมือน 100%** คำสั่งหลัก (PUT / GET / DELETE / LIST / presigned URL) ได้ทุกตัว แต่คำสั่งตั้งค่า bucket บางคำสั่งบางตัวไม่มี เช่น Cloudflare R2 ไม่มีคำสั่งตั้ง bucket policy และ MinIO กับ Supabase ไม่มีคำสั่งตั้ง CORS ราย bucket ก่อนเลือกให้เปิดหน้า "S3 compatibility" ของตัวนั้นดูเสมอ (ข้อ 12 จะเจอของจริง)
+
+### ในกลุ่มนี้มีใครบ้าง
+
+<ToolTable group="object-storage" />
+
+ตารางนี้ไม่ได้ให้จำทุกตัว ดูแค่ช่อง **ระดับ**: 🟢 ทีมใช้ (ลงมือในบทนี้) · 🔵 ควรรู้จัก (เจอบ่อยในงานจริง) · ⚪ รู้ว่ามี (เจอแล้วบอกได้ว่าอยู่กลุ่มไหนก็พอ)
+
+> 📰 **เรื่องของ MinIO (ตรวจ 23 ต.ค. 2569)** หลายปีที่ผ่านมา MinIO คือตัวที่ทุกบทความใช้รัน "S3 ในเครื่อง" ด้วย Docker แต่ตอนนี้
+> - repo [github.com/minio/minio](https://github.com/minio/minio) ขึ้นข้อความว่า **ไม่ได้ดูแลแล้ว** และถูก archive (อ่านอย่างเดียว) เมื่อ 25 เม.ย. 2569 รุ่นชุมชนแจกเป็น **source code เท่านั้น** ไม่มีไฟล์พร้อมใช้ให้แล้ว
+> - เราลอง `docker pull minio/minio` และ `quay.io/minio/minio` เมื่อ 23 ต.ค. 2569 **ดึงไม่ได้ทั้งคู่** (`pull access denied` / `unauthorized`) บทความและวิดีโอเก่าที่ให้รัน `minio/minio` จึงใช้ไม่ได้แล้ว
+> - ถ้าระบบเดิมของลูกค้ายังใช้ MinIO อยู่ ยังมี image ที่บริษัท Chainguard build จาก source ให้ (`cgr.dev/chainguard/minio` แผนฟรีมีแค่ tag `latest` จึงควรล็อกด้วย digest `@sha256:...`) เราลองรันโค้ดของบทนี้กับ image นี้แล้ว ใช้ได้ทุกอย่าง ยกเว้นคำสั่งตั้ง CORS ที่ MinIO ตอบ `NotImplemented`
+>
+> บทนี้จึงลงมือด้วย **RustFS** (Apache 2.0, ยังพัฒนาอยู่, ตั้งใจให้ใช้แทน MinIO ได้) และ **ล็อกรุ่น `1.0.3`** นี่คือเหตุผลที่คู่มือสอนเป็นกลุ่ม: ชื่อเครื่องมือหายไปได้ในปีเดียว แต่ถ้าเข้าใจ bucket / key / S3 API ย้ายไปตัวไหนก็แก้แค่ `.env`
+
+### ตัวในกลุ่มเหมือนกันตรงไหน ต่างกันตรงไหน
+
+| หัวข้อ | รันเองใน Docker (RustFS, MinIO, Garage, SeaweedFS) | บริการ cloud (S3, R2, GCS) | บริการที่ผูกกับแพลตฟอร์ม (Vercel Blob, Supabase Storage) |
+|---|---|---|---|
+| คุยด้วย | S3 API | S3 API (GCS ผ่านโหมดที่เข้ากับ S3) | SDK ของตัวเองเป็นหลัก (Supabase มี S3 API ด้วย Vercel Blob ไม่มี) |
+| ใครดูแลเครื่อง/สำรองข้อมูล | เรา | ผู้ให้บริการ | ผู้ให้บริการ |
+| ค่าใช้จ่าย | ค่าเครื่อง + ดิสก์ | ตามพื้นที่ จำนวนคำขอ (บางเจ้าคิดค่าส่งข้อมูลออกด้วย) | ตามแผนของแพลตฟอร์ม |
+| เหมาะกับ | พัฒนาในเครื่อง, ระบบที่ข้อมูลต้องอยู่ในเครื่องของลูกค้า | งานจริงส่วนใหญ่ | ทีมที่อยู่บนแพลตฟอร์มนั้นอยู่แล้ว |
+
+---
+
+## 3. เลือกยังไง และคู่มือนี้ใช้อะไร
+
+**คำถาม 4 ข้อก่อนเลือก**
+1. **โปรเจกต์มีของเดิมไหม** ถ้าลูกค้าใช้ S3 อยู่แล้ว ใช้ต่อ ไม่เพิ่มเจ้าที่สอง
+2. **deploy ที่ไหน** อยู่บน Vercel ทั้งระบบ → Vercel Blob สะดวกสุด · ใช้ Supabase อยู่แล้ว → Supabase Storage · อยู่บนเครื่องเช่าเอง ([บทที่ 20](/20-deploy-vps)) → S3 / R2 หรือรันเองในเครื่องนั้น
+3. **รูปถูกเปิดบ่อยแค่ไหน** ร้านที่คนดูรูปเยอะ ค่าส่งข้อมูลออก (egress) จะเป็นก้อนใหญ่ของบิล ดูให้ดีว่าเจ้าไหนคิดเท่าไหร่ (R2 ไม่คิดค่า egress)
+4. **ข้อมูลต้องอยู่ประเทศไหน** ข้อมูลส่วนบุคคล (เช่น รูปบัตรประชาชน) อาจมีข้อกำหนดเรื่องที่เก็บ ([บทที่ 10 ข้อ 5](/10-security#5-ข้อมูลลูกค้าและ-pdpa-))
+
+> **แนวทางในคู่มือนี้**
+> - พัฒนาในเครื่องด้วย **RustFS ใน Docker** และเขียนโค้ดผ่าน **S3 API (`@aws-sdk/client-s3`)** เท่านั้น ไม่ใช้ SDK เฉพาะเจ้า เพื่อให้ย้ายไปของจริงได้ด้วย `.env`
+> - ขึ้นจริงเลือกตามคำถามข้างบน ข้อ 12 มีตัวอย่าง `.env` ของ S3 และ R2
+
+---
+
+## 4. ออกแบบตาราง: เก็บอะไรในฐานข้อมูล
+
+ทำแบบเดียวกับบทที่ 8b: **เขียนรายการกฎก่อน** แล้วหาบ้านให้ทุกข้อ
+
+| # | กฎ | บ้าน (ใครตรวจ) | ผิดแล้วตอบ |
+|---|---|---|---|
+| P1 | รับเฉพาะรูป JPEG / PNG / WebP **ดูจากเนื้อไฟล์** | `lib/image.ts` (magic bytes) | `415` |
+| P2 | ไฟล์ไม่เกิน 10 MB | `http/upload.ts` (multer) | `413` |
+| P3 | ต้องแนบไฟล์ในช่องชื่อ `photo` | `http/upload.ts` | `400` |
+| P4 | รูปต้องเป็นของเครื่องที่มีอยู่จริง | service + DB (`FK`) | `404` |
+| P5 | **รูปปกได้เครื่องละ 1 รูป** | service (transaction) + DB (partial unique index) | `409` |
+| P6 | key ห้ามซ้ำ | สุ่มด้วย UUID + DB (`UNIQUE`) | ไม่ควรเกิด |
+| P7 | **ฐานข้อมูลห้ามชี้ไปไฟล์ที่ไม่มี** | ลำดับงานใน service (ข้อ 5) | – |
+| P8 | ลบเครื่องแล้ว ไฟล์รูปของเครื่องนั้นต้องถูกลบด้วย | `laptop.service.ts` | – |
+| P9 | คนทั่วไปอ่านรูปได้ แต่ห้ามเขียน ห้ามลบ ห้ามดูรายชื่อไฟล์ทั้งหมด | bucket policy ใน storage | `403` (จาก storage) |
+
+### ตาราง `laptop_photos`
+
+```text
+laptops                         laptop_photos
+─────────────────               ──────────────────────────────
+id     PK    1 ──────────< N    laptop_id     FK (on delete cascade)
+brand                           id            PK
+model                           key           UNIQUE   laptops/2/9f3c…
+serial                          content_type           image/webp
+price_per_month                 size_bytes             530258
+                                width, height          1200 x 1600
+                                is_cover               รูปปก (เครื่องละ 1)
+                                created_at
+```
+
+ทีละคอลัมน์ พร้อมเหตุผล
+
+| คอลัมน์ | ทำไมต้องมี | ทำไมไม่ทำแบบอื่น |
+|---|---|---|
+| `key` | ชื่อไฟล์ใน storage ใช้ทั้งตอนแสดงและตอนลบ | **ไม่เก็บ URL เต็ม** เพราะวันหนึ่งเราอาจย้าย storage หรือใส่ CDN โดเมนจะเปลี่ยน ถ้าเก็บ key ไว้ แค่เปลี่ยน `PUBLIC_BASE_URL` ทุกรูปตามไปเอง |
+| `content_type`, `size_bytes` | รู้ชนิดและขนาดโดยไม่ต้องถาม storage | |
+| `width`, `height` | หน้าเว็บใส่ใน `<img width height>` จองที่ไว้ก่อนรูปโหลดเสร็จ หน้าจะไม่กระตุก (ข้อ 7) | |
+| `is_cover` | รูปที่แสดงในหน้ารายการ | ไม่เก็บ `cover_photo_id` ไว้ในตาราง `laptops` เพราะต้องดูแลสองตารางให้ตรงกัน (หลักเดียวกับคอลัมน์ `status` ในบท 8b) |
+| ไม่มีคอลัมน์ไบต์ | ตัวรูปอยู่ storage | `SELECT *` จะเล็กและเร็วเสมอ |
+
+**ตั้งชื่อ key ยังไง** เราใช้ `laptops/<id เครื่อง>/<UUID สุ่ม>` แล้วต่อท้ายด้วยขนาด เช่น `laptops/2/9f3c…-400.webp`
+- **ห้ามใช้ชื่อไฟล์ที่ผู้ใช้ส่งมา** (`รูปเครื่อง (1).JPG`) เพราะ ชื่อซ้ำกันได้ มีอักขระแปลก และถ้าวันหนึ่งเก็บลงดิสก์ ชื่ออย่าง `../../.env` จะพาไฟล์ไปเขียนทับที่อื่น (path traversal) ชื่อที่ผู้ใช้ตั้งถ้าอยากเก็บ ให้เก็บเป็นข้อความในฐานข้อมูลแยกต่างหาก
+- **prefix `laptops/<id>/`** ทำให้ดูทั้งหมดของเครื่องหนึ่งได้ และตั้งสิทธิ์เป็นโฟลเดอร์ได้ (P9 เปิดอ่านเฉพาะ `laptops/*`)
+- **UUID** (ตัวเลขสุ่ม 128 บิต) เดาไม่ได้และไม่ซ้ำ ถึงไม่มีคอลัมน์ `UNIQUE` ก็แทบเป็นไปไม่ได้ที่จะชนกัน แต่เราใส่ไว้ตามหลัก "กฎสำคัญต้องมีด่านในฐานข้อมูล"
+
+**เปลี่ยนรูป = key ใหม่ทุกครั้ง ไม่เขียนทับไฟล์เดิม** เพราะเราจะบอก browser และ CDN ว่า "ไฟล์นี้เก็บไว้ได้ 1 ปี ไม่ต้องถามอีก" (`Cache-Control: immutable` ข้อ 7) ถ้าเขียนทับชื่อเดิม คนที่เคยเปิดจะเห็นรูปเก่าไปอีกนาน ชื่อใหม่ = URL ใหม่ = ทุกคนได้รูปใหม่ทันที (เอกสารของ Vercel Blob ก็แนะนำแบบเดียวกัน)
+
+**`on delete cascade` ดีไหม** ตามหลักในบท 8b รูปไม่มีความหมายถ้าไม่มีเครื่อง → `cascade` ถูกแล้ว **แต่** cascade ลบได้แค่ **แถว** ในฐานข้อมูล ฐานข้อมูลไม่รู้จัก storage **ไฟล์จึงยังอยู่** นี่คือที่มาของกฎ P8 ที่ต้องเขียนโค้ดตามลบเอง
+
+**รูปปกเครื่องละ 1 รูป (P5)** ใช้ partial unique index แบบเดียวกับ "เครื่องหนึ่งเช่าได้ทีละคน" ในบท 8b: "ในบรรดาแถวที่ `is_cover` เป็นจริง ห้ามมี `laptop_id` ซ้ำ"
+
+---
+
+## 5. ลำดับงานระหว่างฐานข้อมูลกับ storage (หัวใจของบทนี้)
+
+ในบทที่ 6 เราใช้ **transaction** ให้หลายคำสั่ง "สำเร็จทั้งหมดหรือไม่เกิดเลย" แต่ transaction ทำงานได้ **ภายในฐานข้อมูลเดียว** storage เป็นอีกระบบหนึ่ง ไม่มีปุ่ม rollback ร่วมกัน
+
+ดังนั้นทุกการกระทำมี 2 ขั้นที่อาจพังคนละจังหวะ (เน็ตหลุด, storage ล่ม, server ดับกลางคำขอ) คำถามคือ **ถ้าพังตรงกลาง เราอยากเหลือสภาพไหน**
+
+| สภาพที่เหลือ | หน้าตา | ผู้ใช้เห็นไหม | แก้ยังไง |
+|---|---|---|---|
+| **ไฟล์กำพร้า** (orphan) | มีไฟล์ใน storage แต่ไม่มีแถวไหนอ้างถึง | ❌ ไม่เห็น เสียแค่พื้นที่ | งานเก็บกวาดตามลบทีหลัง (ข้อ 11 ❹) |
+| **รูปแตก** (dangling reference) | มีแถวในฐานข้อมูล แต่ไฟล์หายไปแล้ว | ✅ เห็นรูปเสียบนหน้าเว็บ | ต้องมีคนไล่แก้ข้อมูล |
+
+> 🔐 **หลักจำ:** เรียงงานให้ "ถ้าพัง ได้แค่ไฟล์กำพร้า" เสมอ แปลเป็นภาษาง่ายๆ คือ **ตอนสร้าง: ไฟล์มาก่อน แถวตามหลัง · ตอนลบ: แถวไปก่อน ไฟล์ตามหลัง**
+
+![ลำดับงานระหว่าง storage กับฐานข้อมูลตอนเพิ่ม เปลี่ยน และลบรูป](/img/08c-order-of-operations.svg)
+*ทุกแบบเรียงให้จุดที่อาจพังเหลือแค่ไฟล์กำพร้า*
+
+| การกระทำ | ขั้นที่ 1 | ขั้นที่ 2 | ขั้นที่ 3 | ถ้าพังหลังขั้นที่ 1 |
+|---|---|---|---|---|
+| **เพิ่ม** | PUT ไฟล์ (key ใหม่) | INSERT แถว | | ไฟล์กำพร้า · โค้ดพยายามลบไฟล์ที่เพิ่งใส่ทันที |
+| **เปลี่ยน** | PUT ไฟล์ใหม่ (key ใหม่) | UPDATE แถวให้ชี้ key ใหม่ | DELETE ไฟล์เก่า | ไฟล์ใหม่กำพร้า แถวยังชี้รูปเก่าที่ยังอยู่ ผู้ใช้เห็นรูปเก่า ไม่เสีย |
+| **ลบรูป** | DELETE แถว | DELETE ไฟล์ | | ไฟล์กำพร้า ผู้ใช้ไม่เห็นรูปแล้ว |
+| **ลบเครื่อง** | จด key รูปทั้งหมด → DELETE เครื่อง (แถวรูป cascade ตาม) | DELETE ไฟล์ทุกรูป | | ไฟล์กำพร้า |
+
+ลองคิดแบบกลับด้านเพื่อเห็นว่าทำไมต้องเรียงแบบนี้
+- **เพิ่มแบบ INSERT ก่อน PUT:** INSERT สำเร็จ แล้ว PUT พัง → มีแถวที่ชี้ไปไฟล์ที่ไม่มี หน้าเว็บแสดงรูปแตก ❌
+- **ลบแบบลบไฟล์ก่อน:** ลบไฟล์สำเร็จ แล้วลบแถวไม่ได้ (เช่น ฐานข้อมูลหลุด) → รูปแตก ❌ และกู้ไฟล์คืนไม่ได้
+- **เปลี่ยนแบบเขียนทับ key เดิม:** ถ้าไฟล์ใหม่เขียนไม่ครบ หรือ cache ยังจำรูปเก่า ผู้ใช้เห็นรูปผิดโดยไม่มีทางรู้ ❌
+
+**ทำไมไม่ใช่ "ไม่ยอมให้พังเลย"** ทำได้ แต่ซับซ้อนมาก (ต้องมีตารางจดงานค้างแล้วมีตัวทำงานคอยตาม) ระบบส่วนใหญ่เลือก "ยอมให้มีไฟล์กำพร้าได้ แล้วเก็บกวาดเป็นรอบ" เพราะไฟล์กำพร้าไม่มีใครเห็น และลบทีหลังได้เสมอ นี่คือการ **ชั่งความเสียหายกับความซับซ้อน** แบบเดียวกับคำถามข้อ 6 ในบท 8b
+
+**เปลี่ยนรูปพร้อมกัน 2 คำขอ** ขั้นที่ 2 ต้องอ่าน key เก่า (เพื่อรู้ว่าต้องลบไฟล์ไหน) แล้วเขียน key ใหม่ ถ้าสองคำขอเปลี่ยนรูปเดียวกันพร้อมกันแล้วอ่าน key เก่าตัวเดียวกัน คำขอหนึ่งจะลบไฟล์ของอีกคำขอไม่ได้ ไฟล์ใหม่ของคำขอแรกกลายเป็นกำพร้า เราจึงอ่านแถวด้วย `SELECT ... FOR UPDATE` ใน transaction คำขอที่สองต้อง **รอ** จนคำขอแรกเสร็จ แล้วจะอ่านได้ key ที่ถูกต้อง (ข้อ 9 ใน `photo.repository.ts`)
+
+---
+
+## 6. ตรวจไฟล์ให้ปลอดภัย: ไม่เชื่ออะไรที่ผู้ใช้ส่งมา
+
+ไฟล์ที่อัปโหลดมาคือ "ข้อมูลจากผู้ใช้" แบบเดียวกับข้อความในฟอร์ม ([บทที่ 10](/10-security)) แต่ใหญ่กว่าและซ่อนของได้มากกว่า
+
+| ภัย | เกิดยังไง | กันยังไงในบทนี้ |
+|---|---|---|
+| **ปลอมชนิดไฟล์** | ตั้งชื่อ `.jpg` และส่ง header `Content-Type: image/jpeg` มา แต่ข้างในเป็นอย่างอื่น ทั้งนามสกุลและ header **ผู้ใช้พิมพ์เองได้** | ดู **magic bytes** ของเนื้อไฟล์ (ตารางถัดไป) ด้วย `file-type` |
+| **SVG ซ่อนสคริปต์** | SVG เป็นข้อความ XML ใส่ `<script>` ได้ ถ้าเปิดไฟล์ตรงๆ ใน browser สคริปต์รันในโดเมนนั้น (XSS ทบทวน [บทที่ 10](/10-security)) | **ไม่รับ SVG เลย** (รับเฉพาะรายการที่อนุญาต) |
+| **ไฟล์ใหญ่ถล่ม server** | ส่งไฟล์หลาย GB จน RAM หมด | จำกัด 10 MB ที่ multer (ตัดตั้งแต่กำลังรับ) |
+| **ไฟล์เล็กที่ขยายแล้วมหาศาล** (decompression bomb) | PNG ไม่กี่ KB ที่ประกาศว่ากว้าง 50,000 x 50,000 พิกเซล พอแตกออกมากิน RAM หลาย GB | `limitInputPixels` ของ sharp |
+| **ข้อมูลส่วนตัวในรูป** | รูปจากมือถือมี EXIF ซึ่งมัก **พิกัด GPS** ของที่ถ่าย (บ้านเจ้าของร้าน) | sharp แปลงรูปใหม่และ **ทิ้ง metadata ทั้งหมด** โดยค่าเริ่มต้น |
+| **ชื่อไฟล์อันตราย** | `../../.env` | ไม่ใช้ชื่อจากผู้ใช้เลย สุ่ม UUID เอง |
+| **bucket เปิดให้เขียน** | ใครก็อัปโหลดไฟล์อะไรก็ได้มาฝาก ใช้ทรัพยากรเรา | policy เปิดเฉพาะ `s3:GetObject` ที่ `laptops/*` |
+| **ลิงก์อัปโหลดถูกใช้ซ้ำ** | ลิงก์ presigned หลุดไป | อายุสั้น (5 นาที) จำกัดชนิดไฟล์ และวางไฟล์ใน `incoming/` ที่ไม่มีใครเปิดอ่านได้ |
+| **ใครก็อัปโหลดได้** | endpoint ไม่เช็ค login | ในงานจริงต้องให้เฉพาะเจ้าของร้าน ([บทที่ 15](/15-auth)) บทนี้ข้ามไปเพื่อให้โฟกัสเรื่องไฟล์ |
+
+### Magic bytes: ไบต์แรกๆ บอกชนิดจริง
+
+ไฟล์แต่ละชนิดขึ้นต้นด้วยไบต์ชุดตายตัว เหมือนลายเซ็น
+
+| ชนิด | ไบต์แรก (เลขฐาน 16) | อ่านเป็นตัวอักษร |
+|---|---|---|
+| JPEG | `FF D8 FF` | |
+| PNG | `89 50 4E 47 0D 0A 1A 0A` | `.PNG....` |
+| WebP | `52 49 46 46` … `57 45 42 50` | `RIFF....WEBP` |
+
+ถ้าไฟล์ที่ชื่อ `.jpg` ไม่ได้ขึ้นต้นด้วย `FF D8 FF` ก็ไม่ใช่ JPEG ไม่ว่าชื่อจะเป็นอะไร ข้อ 11 ❶ จะเปิดดูไบต์จริงด้วยคำสั่ง `xxd`
+
+> 💡 **ทำไมตรวจ magic bytes แล้วยังต้องให้ sharp แปลงรูปใหม่** magic bytes บอกแค่ "หัวไฟล์" ข้างในอาจเสียหรือถูกตัดครึ่ง การให้ sharp อ่านทั้งรูปแล้ววาดเป็นไฟล์ใหม่ เป็นการพิสูจน์ว่าเป็นรูปจริง และสิ่งที่เราเก็บคือไฟล์ที่ **เราสร้างเอง** ไม่ใช่ไบต์ที่ผู้ใช้ส่งมา
+
+---
+
+## 7. ทำให้เร็วและประหยัด
+
+| ทำอะไร | ทำไม | ในโค้ดบทนี้ |
+|---|---|---|
+| **ย่อเป็นหลายขนาด** | หน้ารายการแสดงรูปกว้าง 300 พิกเซล ไม่ควรโหลดรูปกล้อง 4000 พิกเซล | `-1600.webp` (หน้ารายละเอียด) และ `-400.webp` (หน้ารายการ) |
+| **แปลงเป็น WebP** | ไฟล์เล็กกว่า JPEG/PNG ที่คุณภาพใกล้กัน browser ปัจจุบันเปิดได้ทุกตัว (AVIF เล็กกว่าอีกแต่แปลงช้ากว่า) | `webp({ quality: 80 })` ในการทดสอบ รูป 7.5 MB เหลือ 518 KB |
+| **ชื่อใหม่ + cache ยาว** | ไฟล์ที่ชื่อไม่เคยเปลี่ยนเนื้อหา cache ได้ตลอด browser ไม่ต้องถามซ้ำ | `Cache-Control: public, max-age=31536000, immutable` |
+| **CDN หน้า storage** | ผู้ใช้โหลดจากจุดที่ใกล้ storage ไม่ต้องรับคำขอทุกครั้ง | ทำตอนขึ้นจริง (ข้อ 12) |
+| **ไม่ SELECT ไบต์** | ตารางไม่มีไบต์อยู่แล้ว query เร็วเสมอ | `laptop_photos` |
+| **ทีละหน้า (pagination)** | เครื่องที่มี 200 รูปไม่ต้องส่งทั้งหมดทีเดียว | แบบฝึกหัดข้อ 3 |
+| **lazy loading** | รูปที่อยู่ล่างจอยังไม่ต้องโหลด | ฝั่งหน้าเว็บ (ด้านล่าง) |
+
+ฝั่งหน้าเว็บ ใช้ข้อมูลจาก API แบบนี้ (React ใน [บทที่ 11](/11-react) ก็เขียนแบบเดียวกัน)
+
+```html
+<img
+  src="http://localhost:9000/laptop-photos/laptops/2/9f3c…-400.webp"
+  srcset="…-400.webp 400w, …-1600.webp 1600w"
+  sizes="(max-width: 640px) 100vw, 300px"
+  width="300" height="400"
+  loading="lazy"
+  alt="Lenovo ThinkPad E14 ด้านหน้า"
+/>
+```
+- `width` / `height` คำนวณจาก `width` `height` ที่ API ส่งมา (สัดส่วนเดียวกัน) browser จองที่ไว้ก่อน หน้าไม่กระโดดตอนรูปโหลดเสร็จ
+- `loading="lazy"` ให้ browser โหลดเมื่อรูปใกล้จะเลื่อนมาถึง (รูปปกบนสุดของหน้า **ไม่ต้อง** ใส่)
+- `srcset` + `sizes` ให้ browser เลือกขนาดที่พอดีกับจอเอง
+
+### ส่งรูปให้คนดู: URL สาธารณะ หรือ presigned URL
+
+| แบบ | หน้าตา | ใช้เมื่อ |
+|---|---|---|
+| **URL สาธารณะ** (bucket policy เปิดอ่าน) | `http://localhost:9000/laptop-photos/laptops/2/…-400.webp` ไม่มีวันหมดอายุ | รูปที่ใครก็ควรดูได้ เช่น รูปสินค้า · cache และใส่ CDN ได้เต็มที่ |
+| **presigned GET** | URL เดิมต่อด้วย `?X-Amz-Signature=…&X-Amz-Expires=60` | ไฟล์ส่วนตัว เช่น สำเนาสัญญาเช่า รูปบัตรประชาชน · API เช็คสิทธิ์ก่อน แล้วค่อยออกลิงก์อายุสั้นให้ |
+
+บทนี้ใช้แบบแรกกับรูปเครื่อง และลองแบบที่สองในข้อ 11 ❺
+
+### อัปโหลดผ่าน API หรือให้ browser ส่งตรงเข้า storage
+
+| | ผ่าน API (multipart) | ตรงเข้า storage (presigned PUT) |
+|---|---|---|
+| ไฟล์วิ่งผ่าน | browser → API → storage | browser → storage ตรงๆ |
+| ภาระ server | รับไฟล์ทั้งไฟล์ไว้ใน RAM | แทบไม่มี (ออกลิงก์อย่างเดียว) |
+| ข้อจำกัดของแพลตฟอร์ม | บางที่จำกัดขนาด body ของคำขอ (เช่น serverless) | ไม่ติด |
+| ตรวจไฟล์ | ตรวจก่อนเก็บ | ไฟล์ถึง storage ก่อน **ต้องตรวจทีหลัง** ตอน browser มายืนยัน |
+| จำนวนคำขอจาก browser | 1 | 3 (ขอลิงก์ → PUT → ยืนยัน) |
+| เหมาะกับ | รูปทั่วไปไม่เกินไม่กี่ MB | ไฟล์ใหญ่ วิดีโอ หรือ server รับ body ใหญ่ไม่ได้ |
+
+แบบที่สองต้อง **ยืนยันเสมอ** เพราะลิงก์ PUT จำกัดขนาดไฟล์ไม่ได้ และ browser จะส่งอะไรมาก็ได้ ขั้นยืนยันจึงตรวจขนาด ตรวจ magic bytes และแปลงรูปเหมือนทางแรกทุกอย่าง ไฟล์ที่ไม่เคยถูกยืนยันค้างอยู่ใน `incoming/` ให้งานเก็บกวาดลบทิ้ง บทนี้ทำทั้งสองแบบ
+
+---
+
+> 🔧 **จากนี้คือการลงมือ** ต่อจากโปรเจกต์ `laptop-api` ของบทที่ 8b ที่มี PostgreSQL (`laptop-db`) รันอยู่แล้ว
+
+## 8. 🔧 ลงมือ: เปิด storage และเตรียมโปรเจกต์
+
+### ขั้นที่ 1: เปิด RustFS ด้วย Docker Compose
+
+Postgres เรามีแล้วจากบท 8b (`laptop-db` ที่ port 5432) จึงเปิดเพิ่มแค่ storage สร้าง `compose.yaml` ที่โฟลเดอร์บนสุดของโปรเจกต์
+
+```yaml
+services:
+  storage:
+    image: rustfs/rustfs:1.0.3          # ล็อกเลขรุ่น ไม่ใช้ latest
+    ports:
+      - "9000:9000"                     # S3 API (โค้ดคุยทางนี้)
+      - "9001:9001"                     # หน้าเว็บ console (คนดู)
+    environment:
+      RUSTFS_ACCESS_KEY: laptop-dev
+      RUSTFS_SECRET_KEY: laptop-dev-secret-change-me
+      RUSTFS_CONSOLE_ENABLE: "true"
+    volumes:
+      - storage-data:/data
+    command: /data
+
+volumes:
+  storage-data:
+```
+
+| บรรทัด | ความหมาย |
+|---|---|
+| `rustfs/rustfs:1.0.3` | ล็อกเลขรุ่น ถ้าใช้ `latest` วันหนึ่งรุ่นใหม่อาจเปลี่ยนพฤติกรรมโดยเราไม่รู้ตัว (บทเรียนจาก MinIO ในข้อ 2) |
+| `9000` | ประตู S3 API ที่โค้ดเราคุยด้วย |
+| `9001` | หน้าเว็บ console ไว้ดูไฟล์ด้วยตา เปิดที่ `http://localhost:9001/rustfs/console/index.html` (ไม่บังคับใช้ในบทนี้) |
+| `RUSTFS_ACCESS_KEY` / `RUSTFS_SECRET_KEY` | "ชื่อผู้ใช้ + รหัสผ่าน" ของ storage เอกสาร RustFS เตือนว่าห้ามใช้ค่าเริ่มต้น `rustfsadmin` |
+| `storage-data:/data` | volume เก็บไฟล์ ลบ container แล้วรูปไม่หาย (ทบทวน [บทที่ 2](/02-docker)) |
+
+```bash
+docker compose up -d
+docker compose ps
+curl http://localhost:9000/health
+```
+ผลที่ได้ (รันจริง)
+```text
+NAME                   IMAGE                 COMMAND                  SERVICE   CREATED         STATUS         PORTS
+laptop-api-storage-1   rustfs/rustfs:1.0.3   "/entrypoint.sh /data"   storage   5 seconds ago   Up 4 seconds   0.0.0.0:9000-9001->9000-9001/tcp, [::]:9000-9001->9000-9001/tcp
+{"service":"rustfs-endpoint","status":"ok","timestamp":"2026-10-22T18:10:02.253350625Z[Etc/Unknown]","version":"1.0.3"}
+```
+ชื่อ container ขึ้นต้นด้วยชื่อโฟลเดอร์โปรเจกต์ (ของเราคือ `laptop-api`)
+
+> 💡 ถ้า port `9000` ถูกใช้อยู่ เปลี่ยนเป็น `"9100:9000"` แล้วแก้ `S3_ENDPOINT` และ `PUBLIC_BASE_URL` ใน `.env` ให้เป็น `9100` ด้วย
+
+### ขั้นที่ 2: ติดตั้ง library และตั้งค่า `.env`
+
+```bash
+npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner sharp multer file-type
+npm install -D @types/multer
+mkdir -p src/storage src/lib src/scripts
+```
+
+| library | หน้าที่ |
+|---|---|
+| `@aws-sdk/client-s3` | คุยกับ storage ด้วย S3 API (เซ็นคำขอให้ จัดการ retry ให้) |
+| `@aws-sdk/s3-request-presigner` | สร้าง presigned URL |
+| `sharp` | อ่าน หมุน ย่อ และแปลงรูป (ใช้ libvips ข้างใน เร็วมาก) |
+| `multer` | middleware ของทีม Express สำหรับรับ `multipart/form-data` |
+| `file-type` | อ่าน magic bytes บอกชนิดไฟล์จริง |
+
+> 🤔 **ทำไม multer ไม่ใช่ busboy** busboy คือตัวแยก multipart ระดับล่าง (multer ใช้ busboy อยู่ข้างใน) ใช้ตรงๆ ต้องจัดการ stream และ error เองหลายสิบบรรทัด multer ห่อให้เหลือ `.single("photo")` บรรทัดเดียว มีตัวจำกัดขนาดในตัว และเป็นของทีม Express เอง ถ้าวันหนึ่งต้องส่งไฟล์ใหญ่มากต่อเข้า storage แบบไม่พักใน RAM ค่อยลงไปใช้ busboy หรือเปลี่ยนเป็น presigned PUT
+> (ทดสอบกับ Node 26, `express` 5.3, `@aws-sdk/client-s3` 3.1155, `sharp` 0.35, `multer` 2.5, `file-type` 22, `drizzle-orm` 0.45, RustFS 1.0.3)
+
+เพิ่มใน `.env` (ต่อจาก `DATABASE_URL` เดิม ไฟล์นี้อยู่ใน `.gitignore` แล้ว)
+```
+S3_ENDPOINT=http://localhost:9000
+S3_REGION=us-east-1
+S3_ACCESS_KEY_ID=laptop-dev
+S3_SECRET_ACCESS_KEY=laptop-dev-secret-change-me
+S3_BUCKET=laptop-photos
+S3_FORCE_PATH_STYLE=true
+PUBLIC_BASE_URL=http://localhost:9000/laptop-photos
+```
+
+| ตัวแปร | ความหมาย |
+|---|---|
+| `S3_ENDPOINT` | ที่อยู่ของ storage · AWS S3 จริงเว้นว่างได้ SDK รู้เอง |
+| `S3_REGION` | ภูมิภาค · storage ในเครื่องไม่สนใจค่านี้ แต่ SDK บังคับต้องมี |
+| `S3_FORCE_PATH_STYLE` | `true` = ใส่ชื่อ bucket ใน path (`localhost:9000/laptop-photos/...`) · `false` = ใส่ใน host (`laptop-photos.s3.amazonaws.com/...`) ในเครื่องต้องเป็น `true` เพราะไม่มีโดเมนย่อยให้ |
+| `PUBLIC_BASE_URL` | ต้นของ URL ที่ส่งให้ browser · ขึ้นจริงเปลี่ยนเป็นโดเมนของ CDN ได้ โดยไม่ต้องแก้ข้อมูลในฐานข้อมูล |
+
+`package.json` เพิ่มคำสั่งลัด 2 ตัว
+```json
+{
+  "scripts": {
+    "storage:setup": "tsx src/scripts/storage-setup.ts",
+    "storage:cleanup": "tsx src/scripts/cleanup-orphans.ts"
+  }
+}
+```
+
+### ขั้นที่ 3: ตัวต่อ storage `src/storage/index.ts`
+
+ไฟล์นี้คือคู่ของ `src/db/index.ts`: ชั้นล่างสุดที่คุยกับ storage ที่เดียว ที่อื่นในโปรเจกต์ไม่ต้องรู้จัก AWS SDK
+
+```ts
+import "dotenv/config";
+import { DeleteObjectsCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+
+// ค่าทุกตัวมาจาก .env เปลี่ยนจาก RustFS ในเครื่องไป S3 / R2 จริง = แก้ .env ไม่ต้องแก้โค้ด
+const env = process.env;
+export const bucket = env.S3_BUCKET!;
+
+export const s3 = new S3Client({
+  endpoint: env.S3_ENDPOINT || undefined,          // AWS S3 จริงไม่ต้องใส่ SDK รู้เอง
+  region: env.S3_REGION || "us-east-1",
+  forcePathStyle: env.S3_FORCE_PATH_STYLE === "true", // ในเครื่องใช้ http://host/bucket/key
+  credentials: {
+    accessKeyId: env.S3_ACCESS_KEY_ID!,
+    secretAccessKey: env.S3_SECRET_ACCESS_KEY!,
+  },
+  // SDK รุ่นใหม่แนบ checksum ทุกคำขอโดยอัตโนมัติ ซึ่งทำให้ presigned PUT พัง (เซ็น checksum ของไฟล์ว่างไว้)
+  // และบาง storage ที่เข้ากันได้กับ S3 ยังไม่รองรับ ตั้งให้แนบเฉพาะคำสั่งที่บังคับ
+  requestChecksumCalculation: "WHEN_REQUIRED",
+  responseChecksumValidation: "WHEN_REQUIRED",
+});
+
+// ไฟล์ที่ชื่อไม่เคยถูกเขียนทับ ให้ browser / CDN เก็บไว้ได้ 1 ปี
+const IMMUTABLE = "public, max-age=31536000, immutable";
+
+export const storage = {
+  put: (key: string, body: Buffer, contentType: string) =>
+    s3.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType, CacheControl: IMMUTABLE })),
+
+  get: async (key: string) => {
+    const res = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+    return Buffer.from(await res.Body!.transformToByteArray());
+  },
+
+  // ขนาดไฟล์ (byte) โดยไม่ต้องดาวน์โหลด ไม่มีไฟล์นี้ → undefined
+  sizeOf: async (key: string) => {
+    try {
+      const res = await s3.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
+      return res.ContentLength;
+    } catch (err) {
+      if ((err as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode === 404) return undefined;
+      throw err;
+    }
+  },
+
+  // ลบหลายไฟล์ในคำขอเดียว ไฟล์ที่ไม่มีอยู่แล้วนับว่าลบสำเร็จ (ลบซ้ำได้ไม่พัง)
+  removeMany: async (keys: string[]) => {
+    if (keys.length === 0) return;
+    const res = await s3.send(
+      new DeleteObjectsCommand({ Bucket: bucket, Delete: { Objects: keys.map((Key) => ({ Key })), Quiet: true } }),
+    );
+    if (res.Errors?.length) throw new Error(`ลบไม่สำเร็จ: ${res.Errors.map((e) => `${e.Key} (${e.Code})`).join(", ")}`);
+  },
+
+  // URL ที่ใครก็เปิดได้ (bucket ตั้งให้อ่านได้เฉพาะ laptops/*)
+  publicUrl: (key: string) => `${env.PUBLIC_BASE_URL}/${key}`,
+
+  // URL ชั่วคราวที่เซ็นด้วยกุญแจของเรา ใช้ได้ภายใน expiresIn วินาที
+  // เซ็น content-type ด้วย: ถ้า browser ส่งชนิดอื่นมา storage จะปฏิเสธ (SignatureDoesNotMatch)
+  signedPutUrl: (key: string, contentType: string, expiresIn: number) =>
+    getSignedUrl(s3, new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType }), {
+      expiresIn,
+      signableHeaders: new Set(["content-type"]),
+    }),
+  signedGetUrl: (key: string, expiresIn: number) =>
+    getSignedUrl(s3, new GetObjectCommand({ Bucket: bucket, Key: key }), { expiresIn }),
+};
+```
+
+อ่านจุดสำคัญ
+- **`requestChecksumCalculation: "WHEN_REQUIRED"`** SDK รุ่นใหม่แนบ checksum (ตัวเลขตรวจว่าไฟล์ไม่เพี้ยน) ทุกคำขอโดยอัตโนมัติ ตอนเราไม่ได้ตั้งค่านี้ ลิงก์ presigned PUT ที่ได้มี `x-amz-checksum-crc32=AAAAAA==` ติดมาด้วย ซึ่งคือ checksum ของ **ไฟล์ว่าง** storage ที่ตรวจค่านี้จะปฏิเสธไฟล์จริง และ storage ที่เข้ากับ S3 บางตัวยังไม่รองรับ checksum แบบใหม่ ตั้งให้แนบเฉพาะคำสั่งที่บังคับ (เช่น ลบหลายไฟล์) ปลอดภัยกว่า
+- **`removeMany`** ใช้ `DeleteObjects` ลบหลายไฟล์ในคำขอเดียว S3 ถือว่าการลบไฟล์ที่ไม่มีอยู่แล้ว "สำเร็จ" เราจึง **ลบซ้ำได้โดยไม่พัง** คุณสมบัตินี้เรียกว่า idempotent สำคัญมากกับงานเก็บกวาด
+- **`signableHeaders: new Set(["content-type"])`** ปกติ presigned URL เซ็นแค่ host ถ้าไม่ใส่บรรทัดนี้ browser จะส่งไฟล์ชนิดอะไรมาก็ผ่าน (เราลองแล้ว) ใส่แล้ว ชนิดไม่ตรงกับที่ขอไว้จะโดนปฏิเสธ (ข้อ 11 ❻)
+
+### ขั้นที่ 4: สร้าง bucket และตั้งสิทธิ์ `src/scripts/storage-setup.ts`
+
+สร้างด้วยโค้ดแทนการคลิกในหน้าเว็บ เพื่อให้ทุกคนในทีม (และเครื่องที่ขึ้นจริง) ได้ค่าเดียวกัน และรันซ้ำได้
+
+```ts
+import { CreateBucketCommand, HeadBucketCommand, PutBucketCorsCommand, PutBucketPolicyCommand } from "@aws-sdk/client-s3";
+import { bucket, s3 } from "../storage/index.js";
+
+// 1) สร้าง bucket ถ้ายังไม่มี (รันซ้ำได้)
+try {
+  await s3.send(new HeadBucketCommand({ Bucket: bucket }));
+  console.log(`มี bucket "${bucket}" อยู่แล้ว`);
+} catch {
+  await s3.send(new CreateBucketCommand({ Bucket: bucket }));
+  console.log(`สร้าง bucket "${bucket}" แล้ว`);
+}
+
+// 2) ให้ "ทุกคนอ่าน" ได้เฉพาะไฟล์ใต้ laptops/ อย่างเดียว
+//    ไม่ให้ list (ดูรายชื่อไฟล์ทั้งหมด) ไม่ให้เขียน ไม่ให้ลบ
+const policy = {
+  Version: "2012-10-17",
+  Statement: [
+    {
+      Effect: "Allow",
+      Principal: { AWS: ["*"] },
+      Action: ["s3:GetObject"],
+      Resource: [`arn:aws:s3:::${bucket}/laptops/*`],
+    },
+  ],
+};
+try {
+  await s3.send(new PutBucketPolicyCommand({ Bucket: bucket, Policy: JSON.stringify(policy) }));
+  console.log("ตั้ง policy: อ่านได้เฉพาะ laptops/*");
+} catch (err) {
+  // เช่น Cloudflare R2 ไม่มีคำสั่งนี้ เปิดอ่านสาธารณะทั้ง bucket ผ่านโดเมนในหน้า dashboard แทน (ข้อ 12)
+  console.warn(`⚠️ storage นี้ตั้ง bucket policy ไม่ได้ (${(err as Error).name}) ดูวิธีเปิดอ่านสาธารณะในเอกสารของตัวนั้น`);
+}
+
+// 3) CORS: อนุญาตให้หน้าเว็บของเรา (คนละ origin) PUT ไฟล์ตรงเข้า storage ด้วย presigned URL
+//    "เข้ากันได้กับ S3" ไม่ได้แปลว่าเหมือนทุกคำสั่ง บางตัว (เช่น MinIO, Supabase) ไม่มีคำสั่งนี้ ต้องตั้งที่อื่น
+try {
+  await s3.send(
+    new PutBucketCorsCommand({
+      Bucket: bucket,
+      CORSConfiguration: {
+        CORSRules: [
+          { AllowedOrigins: ["http://localhost:5173"], AllowedMethods: ["PUT"], AllowedHeaders: ["content-type"], MaxAgeSeconds: 3600 },
+        ],
+      },
+    }),
+  );
+  console.log("ตั้ง CORS: http://localhost:5173 PUT ได้");
+} catch (err) {
+  console.warn(`⚠️ storage นี้ตั้ง CORS ราย bucket ไม่ได้ (${(err as Error).name}) ดูวิธีตั้งในเอกสารของตัวนั้น`);
+}
+```
+
+**bucket policy** คือกฎสิทธิ์ที่เขียนเป็น JSON อ่านว่า "อนุญาต (`Allow`) ทุกคน (`*`) ให้ทำ `s3:GetObject` (อ่านไฟล์) กับไฟล์ที่ชื่อขึ้นต้นด้วย `laptops/`" สิ่งที่ **ไม่ได้** เขียนคือไม่อนุญาต: คนทั่วไปเขียน ลบ หรือดูรายชื่อไฟล์ทั้งหมดไม่ได้ และไฟล์ใน `incoming/` หรือ `private/` อ่านไม่ได้
+
+**CORS** ทบทวน [บทที่ 5 ข้อ 13](/05-http-api) browser จะไม่ยอมให้หน้าเว็บที่ `localhost:5173` ส่ง PUT ไปที่ `localhost:9000` (คนละ origin) ถ้า storage ไม่ตอบว่าอนุญาต
+
+```bash
+npm run storage:setup
+```
+```text
+สร้าง bucket "laptop-photos" แล้ว
+ตั้ง policy: อ่านได้เฉพาะ laptops/*
+ตั้ง CORS: http://localhost:5173 PUT ได้
+```
+รันซ้ำบรรทัดแรกจะเปลี่ยนเป็น `มี bucket "laptop-photos" อยู่แล้ว`
+
+### ขั้นที่ 5: ตาราง `laptop_photos`
+
+เพิ่มใน `src/db/schema.ts` (ใต้ `rentals`) และเพิ่ม `boolean`, `index` ในบรรทัด import ของ `drizzle-orm/pg-core`
+
+```ts
+// รูปของเครื่อง: เก็บแค่ "ข้อมูลเกี่ยวกับรูป" ตัวไฟล์อยู่ใน object storage
+export const laptopPhotos = pgTable(
+  "laptop_photos",
+  {
+    id: serial("id").primaryKey(),
+    laptopId: integer("laptop_id").notNull().references(() => laptops.id, { onDelete: "cascade" }),
+    key: text("key").notNull().unique(),                    // ชื่อไฟล์ใน storage (ไม่รวมขนาด) เช่น laptops/2/9f3c...
+    contentType: text("content_type").notNull(),            // ชนิดไฟล์ที่เราแปลงแล้ว (image/webp)
+    sizeBytes: integer("size_bytes").notNull(),             // ขนาดรูปใหญ่ หลังแปลง
+    width: integer("width").notNull(),
+    height: integer("height").notNull(),
+    isCover: boolean("is_cover").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("laptop_photos_laptop_id_idx").on(t.laptopId),                                  // ค้นรูปของเครื่องเร็ว
+    uniqueIndex("one_cover_per_laptop").on(t.laptopId).where(sql`${t.isCover}`),          // รูปปกได้เครื่องละ 1 รูป
+    check("photo_size_positive", sql`${t.sizeBytes} > 0`),
+  ],
+);
+
+export type LaptopPhoto = typeof laptopPhotos.$inferSelect;
+export type NewLaptopPhoto = typeof laptopPhotos.$inferInsert;
+```
+
+```bash
+npm run db:generate
+```
+**อ่าน SQL ก่อน migrate เสมอ** ไฟล์ใหม่ใน `drizzle/` ควรเป็นแบบนี้
+```sql
+CREATE TABLE "laptop_photos" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"laptop_id" integer NOT NULL,
+	"key" text NOT NULL,
+	"content_type" text NOT NULL,
+	"size_bytes" integer NOT NULL,
+	"width" integer NOT NULL,
+	"height" integer NOT NULL,
+	"is_cover" boolean DEFAULT false NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "laptop_photos_key_unique" UNIQUE("key"),
+	CONSTRAINT "photo_size_positive" CHECK ("laptop_photos"."size_bytes" > 0)
+);
+--> statement-breakpoint
+ALTER TABLE "laptop_photos" ADD CONSTRAINT "laptop_photos_laptop_id_laptops_id_fk" FOREIGN KEY ("laptop_id") REFERENCES "public"."laptops"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "laptop_photos_laptop_id_idx" ON "laptop_photos" USING btree ("laptop_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "one_cover_per_laptop" ON "laptop_photos" USING btree ("laptop_id") WHERE "laptop_photos"."is_cover";
+```
+ไล่เช็คกับรายการกฎ: `UNIQUE("key")` (P6) ✓ `ON DELETE cascade` (P8 ส่วนของแถว) ✓ unique index แบบมี `WHERE ... is_cover` (P5) ✓ แล้วค่อย
+```bash
+npm run db:migrate
+```
+
+---
+
+## 9. 🔧 ลงมือ: เขียนทีละชั้น
+
+ลำดับเดิมจากบท 8b: จากล่าง (ใกล้ฐานข้อมูล / storage) ขึ้นบน (ใกล้ HTTP)
+
+```text
+src/
+├── db/schema.ts                 + laptopPhotos
+├── storage/index.ts             ใหม่: ต่อ storage (ข้อ 8)
+├── lib/image.ts                 ใหม่: ตรวจและแปลงรูป
+├── http/
+│   ├── errors.ts                + รหัส error ของไฟล์
+│   ├── upload.ts                ใหม่: รับไฟล์ด้วย multer
+│   └── validate.ts              + schema ของ presigned upload
+├── repositories/photo.repository.ts   ใหม่
+├── services/
+│   ├── photo.service.ts         ใหม่: ลำดับงาน (หัวใจ)
+│   └── laptop.service.ts        แก้ remove ให้ลบไฟล์ด้วย
+├── routes/photo.routes.ts       ใหม่
+├── scripts/                     setup, เก็บกวาด, สร้างรูปทดสอบ
+└── app.ts                       + ต่อ photoRoutes
+```
+
+### `src/http/errors.ts` เพิ่มรหัส error
+
+เพิ่ม 3 รหัสต่อท้ายใน type ของ `code` และในตาราง `STATUS`
+```ts
+export class AppError extends Error {
+  constructor(
+    public code:
+      | "NOT_FOUND" | "VALIDATION_ERROR" | "DUPLICATE" | "LAPTOP_RENTED" | "ALREADY_RETURNED" | "IN_USE"
+      | "UNSUPPORTED_IMAGE" | "FILE_TOO_LARGE" | "COVER_CONFLICT",
+    message: string,
+    public details: unknown = undefined,
+  ) {
+    super(message);
+  }
+}
+
+export const STATUS: Record<AppError["code"], number> = {
+  NOT_FOUND: 404,
+  VALIDATION_ERROR: 400,
+  DUPLICATE: 409,
+  LAPTOP_RENTED: 409,
+  ALREADY_RETURNED: 409,
+  IN_USE: 409,
+  UNSUPPORTED_IMAGE: 415,   // Unsupported Media Type: ไม่ใช่รูปชนิดที่รับ
+  FILE_TOO_LARGE: 413,      // Content Too Large: ไฟล์ใหญ่เกินกำหนด
+  COVER_CONFLICT: 409,
+};
+
+export function pgCode(err: unknown): string | undefined {
+  const e = err as { code?: string; cause?: { code?: string } };
+  return e.cause?.code ?? e.code;
+}
+```
+`415 Unsupported Media Type` = "ชนิดไฟล์นี้ไม่รับ" · `413 Content Too Large` = "ใหญ่เกินที่รับ" ใช้ตัวเลขที่ตรงความหมาย client จะแสดงข้อความได้ถูก
+
+### `src/lib/image.ts` ตรวจและแปลงรูป (P1)
+
+```ts
+import { fileTypeFromBuffer } from "file-type";
+import sharp from "sharp";
+import { AppError } from "../http/errors.js";
+
+// รับเฉพาะ 3 ชนิดนี้ (ตัดสินจาก "เนื้อไฟล์" ไม่ใช่นามสกุลหรือ header ที่ผู้ใช้ส่งมา)
+const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+// ขนาดที่ใช้จริงบนหน้าเว็บ: รูปใหญ่ในหน้ารายละเอียด และรูปเล็กในหน้ารายการ
+export const VARIANTS = { large: 1600, thumb: 400 } as const;
+export type Variant = keyof typeof VARIANTS;
+
+export async function processPhoto(input: Buffer) {
+  // ① ดู magic bytes (ไบต์แรกๆ ของไฟล์ที่บอกชนิดจริง)
+  const detected = await fileTypeFromBuffer(input);
+  if (!detected || !ALLOWED.has(detected.mime)) {
+    throw new AppError("UNSUPPORTED_IMAGE", "รองรับเฉพาะรูป JPEG, PNG หรือ WebP", { detected: detected?.mime ?? "ไม่รู้จัก" });
+  }
+
+  try {
+    // ② หมุนรูปตาม EXIF ก่อน (ไม่งั้นรูปจากมือถือจะตะแคง) แล้ว sharp จะทิ้ง metadata ทั้งหมดตอนบันทึก รวมพิกัด GPS
+    //    limitInputPixels กันไฟล์เล็กที่ขยายแล้วใหญ่มหาศาล (decompression bomb)
+    const base = sharp(input, { limitInputPixels: 50_000_000 }).autoOrient();
+
+    // ③ ย่อเป็น 2 ขนาด แปลงเป็น WebP (ไม่ขยายรูปเล็กให้ใหญ่ขึ้น)
+    const make = (px: number) =>
+      base
+        .clone()
+        .resize({ width: px, height: px, fit: "inside", withoutEnlargement: true })
+        .webp({ quality: 80 })
+        .toBuffer({ resolveWithObject: true });
+
+    const [large, thumb] = await Promise.all([make(VARIANTS.large), make(VARIANTS.thumb)]);
+    return { large, thumb, contentType: "image/webp" };
+  } catch (err) {
+    // magic bytes ถูก แต่ข้างในเสีย/ตัดครึ่ง หรือใหญ่เกิน limitInputPixels
+    throw new AppError("UNSUPPORTED_IMAGE", "อ่านไฟล์รูปไม่ได้ ไฟล์อาจเสียหรือใหญ่เกินไป", { reason: (err as Error).message });
+  }
+}
+```
+- **`ALLOWED` เป็นรายการที่อนุญาต (allowlist)** ไม่ใช่รายการที่ห้าม (blocklist) ชนิดที่เราไม่รู้จัก (SVG, HEIC, PDF, ไฟล์ที่ยังไม่มีใครคิด) ตกหมดโดยอัตโนมัติ
+- **`autoOrient()`** กล้องมือถือมักเก็บรูปแนวนอนแล้วจด EXIF ว่า "ให้หมุน 90°" ถ้าเราทิ้ง EXIF โดยไม่หมุนก่อน รูปจะตะแคง
+- **ไม่ต้องสั่งลบ metadata** เอกสาร sharp ระบุว่าตอนบันทึกจะลบ metadata ทั้งหมดเป็นค่าเริ่มต้น (ต้องสั่ง `keepMetadata()` ถึงจะเก็บ) ข้อ 10 จะพิสูจน์ด้วยตา
+- **`limitInputPixels: 50_000_000`** ค่าเริ่มต้นของ sharp คือประมาณ 268 ล้านพิกเซล เราลดเหลือ 50 ล้าน (กล้องมือถือทั่วไปไม่เกินนี้) ยิ่งต่ำยิ่งกัน decompression bomb ได้ดี
+- **`clone()`** อ่านรูปต้นฉบับครั้งเดียว แล้วแยกทำ 2 ขนาดพร้อมกัน
+- `info` ที่ได้จาก `toBuffer({ resolveWithObject: true })` มี `size`, `width`, `height` ของไฟล์ที่ได้ เราเอาไปบันทึกในฐานข้อมูล
+
+### `src/http/upload.ts` รับไฟล์ (P2, P3)
+
+```ts
+import type { Request, RequestHandler } from "express";
+import multer from "multer";
+import { AppError } from "./errors.js";
+
+export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
+
+// เก็บไฟล์ไว้ใน RAM ชั่วคราว (เราต้องย่อรูปก่อนเก็บอยู่แล้ว) จึงต้องจำกัดขนาดเสมอ
+const single = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_UPLOAD_BYTES, files: 1, fields: 5 },
+}).single("photo");
+
+// ห่อ multer เพื่อแปลง error ของมันเป็น AppError ภาษาเดียวกับทั้งระบบ
+export const uploadPhoto: RequestHandler = (req, res, next) => {
+  single(req, res, (err: unknown) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === "LIMIT_FILE_SIZE") {
+        return next(new AppError("FILE_TOO_LARGE", `ไฟล์ต้องไม่เกิน ${MAX_UPLOAD_BYTES / 1024 / 1024} MB`));
+      }
+      return next(new AppError("VALIDATION_ERROR", "ส่งไฟล์ผิดรูปแบบ", { reason: err.code }));
+    }
+    next(err);
+  });
+};
+
+export function requireFile(req: Request): Buffer {
+  if (!req.file) throw new AppError("VALIDATION_ERROR", "ต้องแนบไฟล์รูปในช่องชื่อ photo (multipart/form-data)");
+  return req.file.buffer;
+}
+```
+- **`memoryStorage()`** เก็บไฟล์ไว้ใน RAM เป็น `Buffer` เหมาะกับเราเพราะต้องส่งให้ sharp อยู่แล้ว เอกสาร multer เตือนว่าไฟล์ใหญ่หรือมาพร้อมกันเยอะทำให้ RAM หมดได้ **`limits` จึงห้ามขาด** (10 MB x คำขอพร้อมกัน 50 คำขอ = RAM 500 MB)
+- **`files: 1, fields: 5`** กันคนส่งไฟล์หรือช่องข้อมูลมาเป็นพันๆ
+- **ห่อ multer** เพราะ multer โยน `MulterError` ของมันเอง เราแปลงเป็น `AppError` ทั้งระบบจะตอบรูปแบบเดียวกัน (หลักเดียวกับ `pgCode` ในบท 8b)
+- **multer ใส่เฉพาะ route ที่รับไฟล์** เอกสาร multer เตือนว่าห้ามใส่เป็น middleware ทั้งแอป ไม่งั้นทุก endpoint รับไฟล์ได้หมด
+
+### `src/repositories/photo.repository.ts` query อย่างเดียว
+
+```ts
+import { and, asc, desc, eq } from "drizzle-orm";
+import { db } from "../db/index.js";
+import { laptopPhotos, type NewLaptopPhoto } from "../db/schema.js";
+
+// ฐานข้อมูลเก็บแค่ข้อมูลของรูป ไม่มีไบต์ของรูปเลย
+export const photoRepository = {
+  listByLaptop: (laptopId: number) =>
+    db
+      .select()
+      .from(laptopPhotos)
+      .where(eq(laptopPhotos.laptopId, laptopId))
+      .orderBy(desc(laptopPhotos.isCover), asc(laptopPhotos.id)),   // รูปปกขึ้นก่อน
+
+  find: async (laptopId: number, photoId: number) => {
+    const [row] = await db
+      .select()
+      .from(laptopPhotos)
+      .where(and(eq(laptopPhotos.id, photoId), eq(laptopPhotos.laptopId, laptopId)));
+    return row;
+  },
+
+  create: async (data: NewLaptopPhoto) => {
+    const [row] = await db.insert(laptopPhotos).values(data).returning();
+    return row;
+  },
+
+  // เปลี่ยนรูป: ล็อกแถวไว้ อ่าน key เดิม แล้วเขียน key ใหม่ ใน transaction เดียว
+  // คืน { before, after } เพื่อให้ service รู้ว่าต้องลบไฟล์เก่าตัวไหน
+  replace: (laptopId: number, photoId: number, data: Pick<NewLaptopPhoto, "key" | "sizeBytes" | "width" | "height">) =>
+    db.transaction(async (tx) => {
+      const [before] = await tx
+        .select()
+        .from(laptopPhotos)
+        .where(and(eq(laptopPhotos.id, photoId), eq(laptopPhotos.laptopId, laptopId)))
+        .for("update");                       // คำขอเปลี่ยนรูปเดียวกันอีกตัวต้องรอจนเราเสร็จ
+      if (!before) return undefined;
+      const [after] = await tx.update(laptopPhotos).set(data).where(eq(laptopPhotos.id, photoId)).returning();
+      return { before, after };
+    }),
+
+  // ตั้งรูปปก: ปลดปกเดิมก่อน แล้วค่อยตั้งรูปนี้ ใน transaction เดียว (ไม่มีจังหวะที่คนอื่นเห็นปก 2 รูป)
+  setCover: (laptopId: number, photoId: number) =>
+    db.transaction(async (tx) => {
+      const [photo] = await tx
+        .select({ id: laptopPhotos.id })
+        .from(laptopPhotos)
+        .where(and(eq(laptopPhotos.id, photoId), eq(laptopPhotos.laptopId, laptopId)));
+      if (!photo) return undefined;
+      await tx
+        .update(laptopPhotos)
+        .set({ isCover: false })
+        .where(and(eq(laptopPhotos.laptopId, laptopId), eq(laptopPhotos.isCover, true)));
+      const [row] = await tx.update(laptopPhotos).set({ isCover: true }).where(eq(laptopPhotos.id, photoId)).returning();
+      return row;
+    }),
+
+  remove: async (laptopId: number, photoId: number) => {
+    const [row] = await db
+      .delete(laptopPhotos)
+      .where(and(eq(laptopPhotos.id, photoId), eq(laptopPhotos.laptopId, laptopId)))
+      .returning();
+    return row;
+  },
+
+  allKeys: async () => (await db.select({ key: laptopPhotos.key }).from(laptopPhotos)).map((r) => r.key),
+};
+```
+- **`replace`** อ่าน + เขียนใน transaction เดียว และอ่านด้วย `.for("update")` (= SQL `SELECT ... FOR UPDATE`) ล็อกแถวนั้นไว้จน transaction จบ เหตุผลอยู่ท้ายข้อ 5
+- **`setCover`** ปลดปกเดิมก่อนตั้งปกใหม่ ใน transaction เดียว ถ้าตั้งก่อนปลด จะชน unique index ของตัวเอง ส่วนกรณีสองคำขอตั้งปกคนละรูปพร้อมกัน ฐานข้อมูลจะให้ผ่านตัวเดียว (ข้อ 11 ❼)
+- ทุก query ใส่ทั้ง `photoId` **และ** `laptopId` ใน `WHERE` กัน `DELETE /laptops/1/photos/7` ไปลบรูปของเครื่อง 2 (ทบทวน "เช็คของใครทุกครั้ง" ใน [บทที่ 10 ข้อ 3](/10-security#3-authentication-vs-authorization))
+
+### `src/services/photo.service.ts` ลำดับงาน (P4, P5, P7)
+
+ไฟล์ที่สำคัญที่สุดของบท ทุกฟังก์ชันมีคอมเมนต์ลำดับ ①②③ ตรงกับตารางในข้อ 5
+
+```ts
+import { randomUUID } from "node:crypto";
+import type { LaptopPhoto } from "../db/schema.js";
+import { AppError, pgCode } from "../http/errors.js";
+import { MAX_UPLOAD_BYTES } from "../http/upload.js";
+import { processPhoto, VARIANTS, type Variant } from "../lib/image.js";
+import { laptopRepository } from "../repositories/laptop.repository.js";
+import { photoRepository } from "../repositories/photo.repository.js";
+import { storage } from "../storage/index.js";
+
+// key ในฐานข้อมูลคือ "ต้นชื่อ" เช่น laptops/2/9f3c...  ไฟล์จริงมี 2 ไฟล์: -1600.webp และ -400.webp
+export const variantKey = (key: string, v: Variant) => `${key}-${VARIANTS[v]}.webp`;
+const objectKeys = (key: string) => [variantKey(key, "large"), variantKey(key, "thumb")];
+
+// สิ่งที่ส่งออกไปทาง API: URL พร้อมใช้ ไม่ใช่ key ดิบ
+const toDto = (p: LaptopPhoto) => ({
+  id: p.id,
+  isCover: p.isCover,
+  width: p.width,
+  height: p.height,
+  sizeBytes: p.sizeBytes,
+  urls: { large: storage.publicUrl(variantKey(p.key, "large")), thumb: storage.publicUrl(variantKey(p.key, "thumb")) },
+  createdAt: p.createdAt,
+});
+
+// ลบไฟล์แบบ "พยายามเต็มที่": ถ้าพัง ไม่ทำให้คำขอล้ม แค่จดไว้ งานเก็บกวาด (cleanup-orphans.ts) จะตามลบให้
+async function removeObjectsQuietly(key: string) {
+  try {
+    await storage.removeMany(objectKeys(key));
+  } catch (err) {
+    const reason = (err as { code?: string }).code ?? (err as Error).message;
+    console.error(`⚠️ ลบไฟล์ ${key} ไม่สำเร็จ (${reason}) เหลือเป็นไฟล์กำพร้า งานเก็บกวาดจะตามลบ`);
+  }
+}
+
+async function ensureLaptop(laptopId: number) {
+  if (!(await laptopRepository.findById(laptopId))) throw new AppError("NOT_FOUND", "ไม่พบเครื่องนี้");
+}
+
+// ตรวจ → ย่อ → เก็บไฟล์ลง storage ด้วยชื่อใหม่ที่สุ่มขึ้น (ยังไม่แตะฐานข้อมูล)
+async function storeNewPhoto(laptopId: number, input: Buffer) {
+  const img = await processPhoto(input);
+  const key = `laptops/${laptopId}/${randomUUID()}`;
+  await Promise.all([
+    storage.put(variantKey(key, "large"), img.large.data, img.contentType),
+    storage.put(variantKey(key, "thumb"), img.thumb.data, img.contentType),
+  ]);
+  return {
+    key,
+    contentType: img.contentType,
+    sizeBytes: img.large.info.size,
+    width: img.large.info.width,
+    height: img.large.info.height,
+  };
+}
+
+export const photoService = {
+  async list(laptopId: number) {
+    await ensureLaptop(laptopId);
+    return (await photoRepository.listByLaptop(laptopId)).map(toDto);
+  },
+
+  // เพิ่มรูป: ① เก็บไฟล์ก่อน ② ค่อยบันทึกแถว
+  async add(laptopId: number, input: Buffer) {
+    await ensureLaptop(laptopId);
+    const stored = await storeNewPhoto(laptopId, input);
+    try {
+      return toDto(await photoRepository.create({ laptopId, ...stored }));
+    } catch (err) {
+      await removeObjectsQuietly(stored.key);          // บันทึกแถวไม่ได้ → เก็บกวาดไฟล์ที่เพิ่งใส่
+      if (pgCode(err) === "23503") throw new AppError("NOT_FOUND", "ไม่พบเครื่องนี้"); // เครื่องถูกลบระหว่างอัปโหลด
+      throw err;
+    }
+  },
+
+  // เปลี่ยนรูป: ① เก็บไฟล์ใหม่ (ชื่อใหม่) ② ชี้แถวไปที่ไฟล์ใหม่ ③ ค่อยลบไฟล์เก่า
+  async replace(laptopId: number, photoId: number, input: Buffer) {
+    if (!(await photoRepository.find(laptopId, photoId))) throw new AppError("NOT_FOUND", "ไม่พบรูปนี้");
+    const stored = await storeNewPhoto(laptopId, input);
+    const result = await photoRepository.replace(laptopId, photoId, stored);
+    if (!result) {
+      await removeObjectsQuietly(stored.key);          // รูปถูกลบไประหว่างนั้น
+      throw new AppError("NOT_FOUND", "ไม่พบรูปนี้");
+    }
+    await removeObjectsQuietly(result.before.key);
+    return toDto(result.after);
+  },
+
+  async setCover(laptopId: number, photoId: number) {
+    try {
+      const row = await photoRepository.setCover(laptopId, photoId);
+      if (!row) throw new AppError("NOT_FOUND", "ไม่พบรูปนี้");
+      return toDto(row);
+    } catch (err) {
+      // สองคำขอตั้งปกคนละรูปพร้อมกัน unique index ให้ผ่านแค่ตัวเดียว
+      if (pgCode(err) === "23505") throw new AppError("COVER_CONFLICT", "มีการเปลี่ยนรูปปกพร้อมกัน ลองใหม่อีกครั้ง");
+      throw err;
+    }
+  },
+
+  // ลบรูป: ① ลบแถวก่อน (ผู้ใช้เลิกเห็นทันที) ② ค่อยลบไฟล์
+  async remove(laptopId: number, photoId: number) {
+    const row = await photoRepository.remove(laptopId, photoId);
+    if (!row) throw new AppError("NOT_FOUND", "ไม่พบรูปนี้");
+    await removeObjectsQuietly(row.key);
+  },
+
+  // ใช้ตอนลบทั้งเครื่อง: แถวถูก cascade ไปแล้ว เหลือไฟล์ที่ต้องตามลบ
+  async removeFiles(keys: string[]) {
+    for (const key of keys) await removeObjectsQuietly(key);
+  },
+
+  // ---- อัปโหลดตรงจาก browser (presigned URL) ----
+
+  // ขั้น 1: ออกใบอนุญาตอัปโหลด 1 ไฟล์ อายุ 5 นาที ไปที่ incoming/ (ยังไม่ใช่ที่จริง ยังไม่มีใครเปิดดูได้)
+  async createUploadUrl(laptopId: number, contentType: string) {
+    await ensureLaptop(laptopId);
+    const uploadKey = `incoming/${laptopId}/${randomUUID()}`;
+    const expiresIn = 300;
+    const uploadUrl = await storage.signedPutUrl(uploadKey, contentType, expiresIn);
+    return { uploadKey, uploadUrl, method: "PUT", headers: { "Content-Type": contentType }, expiresIn };
+  },
+
+  // ขั้น 2: browser อัปโหลดเสร็จแล้วมาบอก server ตรวจไฟล์จริงแบบเดียวกับทางปกติ แล้วค่อยรับเข้าระบบ
+  async confirmUpload(laptopId: number, uploadKey: string) {
+    // รับเฉพาะ key ที่เราออกให้เครื่องนี้ กันคนส่ง key ของไฟล์อื่นมาให้เราประมวลผล
+    if (!new RegExp(`^incoming/${laptopId}/[0-9a-f-]{36}$`).test(uploadKey)) {
+      throw new AppError("VALIDATION_ERROR", "uploadKey ไม่ถูกต้อง");
+    }
+    const size = await storage.sizeOf(uploadKey);
+    if (size === undefined) throw new AppError("NOT_FOUND", "ยังไม่พบไฟล์ที่อัปโหลด");
+    if (size > MAX_UPLOAD_BYTES) {
+      await storage.removeMany([uploadKey]);
+      throw new AppError("FILE_TOO_LARGE", `ไฟล์ต้องไม่เกิน ${MAX_UPLOAD_BYTES / 1024 / 1024} MB`);
+    }
+    try {
+      return await photoService.add(laptopId, await storage.get(uploadKey));
+    } finally {
+      await storage.removeMany([uploadKey]).catch(() => {}); // ผ่านหรือไม่ผ่าน ไฟล์ชั่วคราวไม่ต้องเก็บ
+    }
+  },
+};
+```
+- **`toDto`** API ส่ง URL พร้อมใช้ ไม่ส่ง `key` ดิบ หน้าเว็บไม่ต้องรู้ว่าไฟล์อยู่ที่ไหน
+- **`removeObjectsQuietly`** ลบไฟล์ไม่สำเร็จไม่ทำให้คำขอล้ม เพราะตอนนั้นแถวถูกลบ/เปลี่ยนไปแล้ว ผู้ใช้ได้สิ่งที่ขอแล้ว ที่เหลือคือไฟล์กำพร้าซึ่งงานเก็บกวาดจัดการ ถ้าเราตอบ `500` ผู้ใช้จะกดซ้ำทั้งที่งานสำเร็จไปแล้ว
+- **`add` จับ error ของ INSERT** แล้วลบไฟล์ที่เพิ่งใส่ทันที (ไม่รองานเก็บกวาด) และแปลง `23503` (FK) เป็น `404` กรณีเครื่องถูกลบระหว่างที่รูปกำลังอัปโหลด
+- **`confirmUpload` ตรวจ `uploadKey` ด้วย regex** ถ้าไม่ตรวจ คนส่ง `laptops/2/…` ของเครื่องอื่นมาได้ แล้วระบบเราจะคัดลอกรูปเครื่องอื่นมาเป็นของตัวเอง
+- **`finally`** ลบไฟล์ใน `incoming/` ทุกกรณี ทั้งผ่านและไม่ผ่าน
+
+### `src/services/laptop.service.ts` แก้ `remove` (P8)
+
+แก้แค่ฟังก์ชัน `remove` และเพิ่ม import 2 บรรทัด
+```ts
+import { photoRepository } from "../repositories/photo.repository.js";
+import { photoService } from "./photo.service.js";
+
+// ...ฟังก์ชันอื่นเหมือนเดิม
+
+  async remove(id: number) {
+    // จด key ของรูปไว้ก่อน เพราะ cascade จะลบแถวรูปไปพร้อมเครื่อง แต่ "ไม่ลบไฟล์ใน storage"
+    const photos = await photoRepository.listByLaptop(id);
+    try {
+      const laptop = await laptopRepository.remove(id);
+      if (!laptop) throw new AppError("NOT_FOUND", "ไม่พบเครื่องนี้");
+    } catch (err) {
+      if (pgCode(err) === "23503") throw new AppError("IN_USE", "เครื่องนี้มีประวัติการเช่า ลบไม่ได้");
+      throw err;
+    }
+    // แถวหายแล้ว ค่อยตามลบไฟล์ (ลำดับเดียวกับการลบรูปทีละรูป)
+    await photoService.removeFiles(photos.map((p) => p.key));
+  },
+```
+**ทำไมจด key ก่อน แต่ลบไฟล์ทีหลัง** หลังลบเครื่องแล้วแถวรูปหายไปกับ cascade จะไม่รู้แล้วว่ามีไฟล์อะไร จึงต้องจดไว้ก่อน แต่ต้องรอให้ลบแถวสำเร็จก่อนค่อยลบไฟล์ ถ้าเครื่องลบไม่ได้ (มีประวัติเช่า → `409`) รูปต้องอยู่ครบเหมือนเดิม
+
+### `src/http/validate.ts` เพิ่มท้ายไฟล์
+
+```ts
+// อัปโหลดตรงจาก browser: บอกชนิดไฟล์ล่วงหน้า (ยังต้องตรวจเนื้อไฟล์จริงอีกรอบตอน confirm)
+export const UploadUrlInput = z.object({
+  contentType: z.enum(["image/jpeg", "image/png", "image/webp"]),
+});
+
+export const ConfirmUploadInput = z.object({
+  uploadKey: z.string().min(1),
+});
+```
+ชนิดที่ browser ประกาศตอนขอลิงก์ใช้แค่ **ใส่ในลายเซ็น** เท่านั้น ไม่ได้แปลว่าเชื่อ ตอน confirm ยังตรวจเนื้อไฟล์จริงเหมือนเดิม
+
+### `src/routes/photo.routes.ts`
+
+```ts
+import { Router } from "express";
+import { requireFile, uploadPhoto } from "../http/upload.js";
+import { ConfirmUploadInput, IdParam, parse, UploadUrlInput } from "../http/validate.js";
+import { photoService } from "../services/photo.service.js";
+
+// ต่อใต้ /laptops ใน app.ts → path เต็มคือ /laptops/:laptopId/photos/...
+export const photoRoutes = Router();
+
+photoRoutes.get("/:laptopId/photos", async (req, res) => {
+  res.json(await photoService.list(parse(IdParam, req.params.laptopId)));
+});
+
+// uploadPhoto (multer) อยู่เฉพาะ route ที่รับไฟล์ ไม่ใส่ทั้งแอป
+photoRoutes.post("/:laptopId/photos", uploadPhoto, async (req, res) => {
+  const laptopId = parse(IdParam, req.params.laptopId);
+  res.status(201).json(await photoService.add(laptopId, requireFile(req)));
+});
+
+photoRoutes.put("/:laptopId/photos/:photoId", uploadPhoto, async (req, res) => {
+  const laptopId = parse(IdParam, req.params.laptopId);
+  const photoId = parse(IdParam, req.params.photoId);
+  res.json(await photoService.replace(laptopId, photoId, requireFile(req)));
+});
+
+photoRoutes.post("/:laptopId/photos/:photoId/cover", async (req, res) => {
+  res.json(await photoService.setCover(parse(IdParam, req.params.laptopId), parse(IdParam, req.params.photoId)));
+});
+
+photoRoutes.delete("/:laptopId/photos/:photoId", async (req, res) => {
+  await photoService.remove(parse(IdParam, req.params.laptopId), parse(IdParam, req.params.photoId));
+  res.status(204).end();
+});
+
+// อัปโหลดตรงจาก browser 2 ขั้น
+photoRoutes.post("/:laptopId/photos/upload-url", async (req, res) => {
+  const { contentType } = parse(UploadUrlInput, req.body);
+  res.json(await photoService.createUploadUrl(parse(IdParam, req.params.laptopId), contentType));
+});
+
+photoRoutes.post("/:laptopId/photos/confirm", async (req, res) => {
+  const { uploadKey } = parse(ConfirmUploadInput, req.body);
+  res.status(201).json(await photoService.confirmUpload(parse(IdParam, req.params.laptopId), uploadKey));
+});
+```
+
+| ผู้ใช้อยากทำ | Endpoint | ตอบสำเร็จ | ตอบไม่สำเร็จ (กฎ) |
+|---|---|---|---|
+| ดูรูปของเครื่อง | `GET /laptops/:laptopId/photos` | `200` | `404` |
+| เพิ่มรูป | `POST /laptops/:laptopId/photos` (ไฟล์ในช่อง `photo`) | `201` | `400` (P3) · `404` (P4) · `413` (P2) · `415` (P1) |
+| เปลี่ยนรูป | `PUT /laptops/:laptopId/photos/:photoId` | `200` | เหมือนเพิ่มรูป |
+| ตั้งเป็นรูปปก | `POST /laptops/:laptopId/photos/:photoId/cover` | `200` | `404` · `409` (P5) |
+| ลบรูป | `DELETE /laptops/:laptopId/photos/:photoId` | `204` | `404` |
+| ขอลิงก์อัปโหลดตรง | `POST /laptops/:laptopId/photos/upload-url` | `200` | `400` · `404` |
+| ยืนยันอัปโหลดตรง | `POST /laptops/:laptopId/photos/confirm` | `201` | `400` · `404` · `413` · `415` |
+
+"เปลี่ยนรูป" ใช้ `PUT` เพราะความหมายคือ "แทนที่ทั้งก้อน" ส่วน "ตั้งรูปปก" เป็นการกระทำที่มีกฎของมัน จึงตั้งชื่อเป็น action แบบเดียวกับ `POST /rentals/:id/return` ในบท 8b
+
+### `src/app.ts` ต่อ route
+
+เพิ่ม 2 บรรทัด
+```ts
+import { photoRoutes } from "./routes/photo.routes.js";
+// ...
+app.use("/laptops", laptopRoutes);
+app.use("/laptops", photoRoutes);      // path เต็ม = /laptops/:laptopId/photos/...
+```
+สองตัวใช้ `/laptops` ร่วมกันได้ Express ลองทีละตัวตามลำดับ `GET /laptops/2/photos` ไม่ตรงกับ `/:id` ของ `laptopRoutes` (ยาวกว่า 1 ช่อง) จึงไหลไปเจอ `photoRoutes`
+
+### งานเก็บกวาดไฟล์กำพร้า `src/scripts/cleanup-orphans.ts`
+
+```ts
+import { ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { photoRepository } from "../repositories/photo.repository.js";
+import { bucket, s3, storage } from "../storage/index.js";
+
+// ไฟล์ที่อายุน้อยกว่านี้ไม่แตะ เพราะอาจเป็นรูปที่ "กำลังอัปโหลด" (เก็บไฟล์แล้ว แต่ยังไม่ได้บันทึกแถว)
+// สั่ง npm run storage:cleanup -- 0 เพื่อไม่รอ (ใช้ตอนทดลองเท่านั้น)
+const graceMinutes = Number(process.argv[2] ?? 60);
+const cutoff = Date.now() - graceMinutes * 60_000;
+
+// key ทั้งหมดที่ฐานข้อมูลยังอ้างถึง
+const keep = new Set(await photoRepository.allKeys());
+
+const orphans: string[] = [];
+let token: string | undefined;
+do {
+  // list ได้ทีละไม่เกิน 1000 ไฟล์ ต้องวนตาม ContinuationToken จนหมด
+  const page = await s3.send(new ListObjectsV2Command({ Bucket: bucket, ContinuationToken: token }));
+  for (const obj of page.Contents ?? []) {
+    if (!obj.Key || !obj.LastModified || obj.LastModified.getTime() > cutoff) continue;
+    const base = obj.Key.replace(/-\d+\.webp$/, ""); // laptops/2/abc-400.webp → laptops/2/abc
+    const referenced = obj.Key.startsWith("laptops/") && keep.has(base);
+    if (!referenced) orphans.push(obj.Key);          // incoming/ ที่ค้าง หรือรูปที่ไม่มีแถวอ้างถึง
+  }
+  token = page.NextContinuationToken;
+} while (token);
+
+console.log(`พบไฟล์กำพร้า ${orphans.length} ไฟล์`, orphans);
+for (let i = 0; i < orphans.length; i += 1000) await storage.removeMany(orphans.slice(i, i + 1000));
+console.log("ลบเรียบร้อย");
+process.exit(0);
+```
+- **ช่วงผ่อนผัน (grace) 60 นาที** ระหว่าง "PUT ไฟล์เสร็จ" กับ "INSERT แถว" มีช่วงสั้นๆ ที่ไฟล์ยังไม่มีแถวอ้างถึง ถ้างานเก็บกวาดมาตรงจังหวะนั้นแล้วลบทิ้ง รูปที่กำลังอัปโหลดจะแตก จึงแตะเฉพาะไฟล์ที่เก่ากว่า 1 ชั่วโมง
+- **วน `ContinuationToken`** S3 ส่งรายชื่อครั้งละไม่เกิน 1000 ไฟล์ ต้องขอหน้าถัดไปจนหมด
+- งานจริงตั้งให้รันเองทุกคืน (cron, งานตามเวลาใน [บทที่ 21](/21-cicd)) และ S3 / R2 มี lifecycle rule ที่สั่ง "ลบไฟล์ใน `incoming/` ที่อายุเกิน 1 วัน" ได้โดยไม่ต้องเขียนโค้ด
+
+```bash
+npm run typecheck      # ต้องไม่มี error
+npm run dev
+```
+
+---
+
+## 10. 🔧 ทดสอบทีละกฎ
+
+### เตรียมไฟล์ทดสอบ
+
+ไม่ต้องหารูปเอง สคริปต์นี้สร้างไฟล์ทดสอบให้ครบทุกกรณี รวมรูปที่มี EXIF บอกให้หมุนและมีพิกัด GPS เหมือนรูปจากมือถือ
+
+`src/scripts/make-test-images.ts`
+```ts
+import { mkdir, writeFile } from "node:fs/promises";
+import sharp from "sharp";
+
+// สร้างไฟล์ทดสอบไว้ในโฟลเดอร์ test-images/ (ไม่ต้องหารูปเอง)
+await mkdir("test-images", { recursive: true });
+const noise = (width: number, height: number) =>
+  sharp({ create: { width, height, channels: 3, background: "#1a4fb0", noise: { type: "gaussian", mean: 128, sigma: 40 } } });
+
+// ① รูปถ่ายจำลอง 4000x3000 พร้อม EXIF: บอกให้หมุน 90° และมีพิกัด GPS (เหมือนรูปจากมือถือ)
+await noise(4000, 3000)
+  .jpeg({ quality: 90 })
+  .withExif({
+    IFD0: { Make: "Phone", Model: "Demo" },
+    IFD3: { GPSLatitudeRef: "N", GPSLatitude: "13/1 45/1 0/1", GPSLongitudeRef: "E", GPSLongitude: "100/1 30/1 0/1" },
+  })
+  .withMetadata({ orientation: 6 })
+  .toFile("test-images/photo.jpg");
+
+// ② รูป PNG ขนาดเล็ก (ใช้ทดสอบ "เปลี่ยนรูป")
+await noise(800, 600).png().toFile("test-images/new.png");
+
+// ③ ไฟล์ข้อความที่ตั้งชื่อเป็น .jpg (ปลอมนามสกุล)
+await writeFile("test-images/fake.jpg", "นี่ไม่ใช่รูป แค่ตั้งชื่อลงท้าย .jpg\n");
+
+// ④ SVG ที่ซ่อน JavaScript
+await writeFile(
+  "test-images/evil.svg",
+  `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><script>alert(document.cookie)</script></svg>\n`,
+);
+
+// ⑤ ไฟล์ใหญ่ 12 MB (ใหญ่เกินที่รับ)
+await writeFile("test-images/huge.jpg", Buffer.alloc(12 * 1024 * 1024, 0xff));
+
+console.log("สร้างไฟล์ทดสอบใน test-images/ แล้ว");
+```
+`src/scripts/inspect-image.ts` ไว้ส่องข้างในไฟล์รูป
+```ts
+import sharp from "sharp";
+
+// ดูข้อมูลในไฟล์รูป: npx tsx src/scripts/inspect-image.ts <ไฟล์>
+const m = await sharp(process.argv[2]).metadata();
+console.log({ format: m.format, width: m.width, height: m.height, orientation: m.orientation, hasExif: Boolean(m.exif) });
+```
+```bash
+npx tsx src/scripts/make-test-images.ts
+echo "test-images/" >> .gitignore
+```
+
+### ① เพิ่มรูป แล้วตั้งรูปปก
+
+เปิด Terminal ใหม่ (อีกอันรัน `npm run dev` ค้างไว้) แล้วอยู่ที่โฟลเดอร์โปรเจกต์ `-F "photo=@ไฟล์"` คือให้ curl ส่งแบบ `multipart/form-data` ในช่องชื่อ `photo` (เหมือนฟอร์มที่มี `<input type="file" name="photo">`)
+
+```bash
+curl -s -w "\n%{http_code}\n" -F "photo=@test-images/photo.jpg" http://localhost:3000/laptops/2/photos
+curl -s -w "\n%{http_code}\n" -F "photo=@test-images/new.png" http://localhost:3000/laptops/2/photos
+curl -s -w "\n%{http_code}\n" -X POST http://localhost:3000/laptops/2/photos/2/cover
+curl -s http://localhost:3000/laptops/2/photos
+```
+ผลที่ได้ (รันจริง ตัด URL ที่ยาวซ้ำบางส่วนเป็น `…`)
+```text
+{"id":1,"isCover":false,"width":1200,"height":1600,"sizeBytes":530258,"urls":{"large":"http://localhost:9000/laptop-photos/laptops/2/e2e9819b-ffc1-4f3e-a26e-d24ba186dc44-1600.webp","thumb":"http://localhost:9000/laptop-photos/laptops/2/e2e9819b-ffc1-4f3e-a26e-d24ba186dc44-400.webp"},"createdAt":"2026-10-22T17:57:12.771Z"}
+201
+{"id":2,"isCover":false,"width":800,"height":600,"sizeBytes":246586,"urls":{"large":"…/laptops/2/24f86997-d267-4aff-b520-bfc10473fe15-1600.webp","thumb":"…/laptops/2/24f86997-d267-4aff-b520-bfc10473fe15-400.webp"},"createdAt":"2026-10-22T17:57:12.899Z"}
+201
+{"id":2,"isCover":true,"width":800,"height":600,...}
+200
+[{"id":2,"isCover":true,...},{"id":1,"isCover":false,...}]
+```
+สังเกต 3 อย่าง
+1. รูปต้นฉบับ 4000 x 3000 (แนวนอน) ได้ออกมา **1200 x 1600 (แนวตั้ง)** เพราะหมุนตาม EXIF แล้วย่อให้ด้านยาวไม่เกิน 1600
+2. รูป PNG 800 x 600 ยังเป็น 800 x 600 เพราะ `withoutEnlargement` ไม่ขยายรูปเล็ก
+3. รายการเรียงรูปปกขึ้นก่อน (`orderBy(desc(isCover))`)
+
+> 💡 ขนาดไฟล์ (`sizeBytes`) ของเราจะต่างจากนี้เล็กน้อย เพราะรูปทดสอบสร้างจากจุดสีสุ่ม รูปถ่ายจริงมักเล็กกว่านี้มาก (จุดสีสุ่มบีบอัดยากที่สุด)
+
+### ② รูปเปิดได้ตรงจาก storage และ cache ได้ 1 ปี
+
+เอา URL `large` ของรูป id 1 จากผลของเรามาใส่
+```bash
+curl -s -I http://localhost:9000/laptop-photos/laptops/2/e2e9819b-ffc1-4f3e-a26e-d24ba186dc44-1600.webp
+```
+```text
+HTTP/1.1 200 OK
+cache-control: public, max-age=31536000, immutable
+content-length: 530258
+content-type: image/webp
+etag: "796ea50c069be057e9aeb05e30459a25"
+```
+`-I` ขอแค่ header (ทบทวน `HEAD` ใน [บทที่ 5](/05-http-api)) ลองเอา URL ไปเปิดใน browser ก็เห็นรูป
+
+### ③ GPS และ EXIF หายไปจริง
+
+```bash
+curl -s -o test-images/large.webp http://localhost:9000/laptop-photos/laptops/2/e2e9819b-ffc1-4f3e-a26e-d24ba186dc44-1600.webp
+npx tsx src/scripts/inspect-image.ts test-images/photo.jpg
+npx tsx src/scripts/inspect-image.ts test-images/large.webp
+```
+```text
+{ format: 'jpeg', width: 4000, height: 3000, orientation: 6, hasExif: true }
+{ format: 'webp', width: 1200, height: 1600, orientation: undefined, hasExif: false }
+```
+ไฟล์ต้นฉบับมี EXIF (ในนั้นมีพิกัด GPS ที่เราใส่ไว้) ไฟล์ที่เก็บจริงไม่มีแล้ว
+
+### ④ ฐานข้อมูลเก็บแค่ข้อมูลของรูป
+
+```bash
+docker exec -it laptop-db psql -U postgres -c "select id, laptop_id, key, size_bytes, width, height, is_cover from laptop_photos order by id"
+```
+```text
+ id | laptop_id |                      key                       | size_bytes | width | height | is_cover
+----+-----------+------------------------------------------------+------------+-------+--------+----------
+  1 |         2 | laptops/2/e2e9819b-ffc1-4f3e-a26e-d24ba186dc44 |     530258 |  1200 |   1600 | f
+  2 |         2 | laptops/2/24f86997-d267-4aff-b520-bfc10473fe15 |     246586 |   800 |    600 | t
+```
+แถวละไม่กี่สิบไบต์ ไม่มีไบต์ของรูปสักตัว
+
+### ⑤ เปลี่ยนรูป: URL ใหม่ ไฟล์เก่าหาย
+
+```bash
+curl -s -w "\n%{http_code}\n" -X PUT -F "photo=@test-images/new.png" http://localhost:3000/laptops/2/photos/1
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:9000/laptop-photos/laptops/2/e2e9819b-ffc1-4f3e-a26e-d24ba186dc44-1600.webp
+```
+```text
+{"id":1,"isCover":false,"width":800,"height":600,"sizeBytes":246586,"urls":{"large":"…/laptops/2/f0d3483b-aeed-4dd7-97a3-8cc1d22eefd6-1600.webp",...},"createdAt":"2026-10-22T17:57:12.771Z"}
+200
+404
+```
+`id` และ `createdAt` เดิม (แถวเดิม) แต่ key ใหม่ URL เก่าตอบ `404` แปลว่าไฟล์เก่าถูกลบหลัง UPDATE สำเร็จ
+
+### ⑥ ลบรูป
+
+```bash
+curl -s -w "%{http_code}\n" -X DELETE http://localhost:3000/laptops/2/photos/2
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:9000/laptop-photos/laptops/2/24f86997-d267-4aff-b520-bfc10473fe15-400.webp
+curl -s -w "\n%{http_code}\n" -X DELETE http://localhost:3000/laptops/2/photos/2
+```
+```text
+204
+404
+{"error":"ไม่พบรูปนี้","code":"NOT_FOUND"}
+404
+```
+
+### ⑦ ไฟล์ที่ไม่ผ่านกฎ
+
+```bash
+curl -s -w "\n%{http_code}\n" -F "photo=@test-images/fake.jpg" http://localhost:3000/laptops/2/photos
+curl -s -w "\n%{http_code}\n" -F "photo=@test-images/evil.svg;type=image/png" http://localhost:3000/laptops/2/photos
+curl -s -w "\n%{http_code}\n" -F "photo=@test-images/huge.jpg" http://localhost:3000/laptops/2/photos
+curl -s -w "\n%{http_code}\n" -X POST http://localhost:3000/laptops/2/photos
+curl -s -w "\n%{http_code}\n" -F "image=@test-images/new.png" http://localhost:3000/laptops/2/photos
+curl -s -w "\n%{http_code}\n" -F "photo=@test-images/new.png" http://localhost:3000/laptops/99/photos
+```
+```text
+{"error":"รองรับเฉพาะรูป JPEG, PNG หรือ WebP","code":"UNSUPPORTED_IMAGE","details":{"detected":"ไม่รู้จัก"}}
+415
+{"error":"รองรับเฉพาะรูป JPEG, PNG หรือ WebP","code":"UNSUPPORTED_IMAGE","details":{"detected":"ไม่รู้จัก"}}
+415
+{"error":"ไฟล์ต้องไม่เกิน 10 MB","code":"FILE_TOO_LARGE"}
+413
+{"error":"ต้องแนบไฟล์รูปในช่องชื่อ photo (multipart/form-data)","code":"VALIDATION_ERROR"}
+400
+{"error":"ส่งไฟล์ผิดรูปแบบ","code":"VALIDATION_ERROR","details":{"reason":"LIMIT_UNEXPECTED_FILE"}}
+400
+{"error":"ไม่พบเครื่องนี้","code":"NOT_FOUND"}
+404
+```
+- บรรทัดที่ 2 `;type=image/png` คือให้ curl **โกหก** ว่าเป็น PNG แต่ระบบไม่สนใจ header นี้เลย ดูเนื้อไฟล์อย่างเดียว
+- SVG ได้ `ไม่รู้จัก` เพราะ `file-type` อ่านเฉพาะไฟล์ binary SVG เป็นข้อความจึงไม่ถูกจัดชนิด แต่ไม่เป็นไร เพราะเราใช้ allowlist อะไรที่ไม่อยู่ในรายการก็ไม่ผ่าน
+- บรรทัดที่ 5 ส่งไฟล์มาในช่องชื่อ `image` multer ไม่รู้จักช่องนี้จึงปฏิเสธ (`LIMIT_UNEXPECTED_FILE`)
+
+### ⑧ อัปโหลดตรงจาก browser (presigned PUT)
+
+สคริปต์นี้ทำ 3 ขั้นแบบเดียวกับที่หน้าเว็บจะทำ (`fetch`, `Blob` ใน Node คือตัวเดียวกับใน browser)
+
+`src/scripts/upload-direct.ts`
+```ts
+import { readFile } from "node:fs/promises";
+
+// จำลองสิ่งที่หน้าเว็บทำ (fetch ตัวเดียวกับใน browser) อัปโหลดรูปเข้าเครื่องที่ 1
+const API = "http://localhost:3000/laptops/1/photos";
+const file = new Blob([await readFile("test-images/photo.jpg")], { type: "image/jpeg" });
+
+// ขั้น 1: ขอใบอนุญาตจาก API ของเรา
+const ticket = await (
+  await fetch(`${API}/upload-url`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ contentType: file.type }),
+  })
+).json();
+console.log("ได้ใบอนุญาต:", ticket.uploadKey, `(อายุ ${ticket.expiresIn} วินาที)`);
+
+// ขั้น 2: ส่งไฟล์ตรงไปที่ storage (ไม่ผ่าน server ของเรา)
+const put = await fetch(ticket.uploadUrl, { method: "PUT", headers: ticket.headers, body: file });
+console.log("PUT ไป storage:", put.status);
+
+// ขั้น 3: บอก API ว่าอัปโหลดเสร็จ ให้ตรวจและรับเข้าระบบ
+const done = await fetch(`${API}/confirm`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ uploadKey: ticket.uploadKey }),
+});
+console.log("confirm:", done.status, await done.json());
+```
+```bash
+npx tsx src/scripts/upload-direct.ts
+```
+```text
+ได้ใบอนุญาต: incoming/1/b0648e7c-d3eb-40d3-98eb-f8fa84da70ac (อายุ 300 วินาที)
+PUT ไป storage: 200
+confirm: 201 {
+  id: 3,
+  isCover: false,
+  width: 1200,
+  height: 1600,
+  sizeBytes: 530258,
+  urls: {
+    large: 'http://localhost:9000/laptop-photos/laptops/1/329bfa9c-9e5c-4458-bebf-12f3410d8348-1600.webp',
+    thumb: 'http://localhost:9000/laptop-photos/laptops/1/329bfa9c-9e5c-4458-bebf-12f3410d8348-400.webp'
+  },
+  createdAt: '2026-10-22T17:57:50.837Z'
+}
+```
+ลองดูว่า CORS ที่ตั้งไว้ทำงาน (browser จะส่งคำขอ `OPTIONS` แบบนี้ก่อน PUT จริง)
+```bash
+curl -s -i -X OPTIONS -H "Origin: http://localhost:5173" -H "Access-Control-Request-Method: PUT" -H "Access-Control-Request-Headers: content-type" http://localhost:9000/laptop-photos/incoming/1/x
+curl -s -i -X OPTIONS -H "Origin: http://evil.example" -H "Access-Control-Request-Method: PUT" -H "Access-Control-Request-Headers: content-type" http://localhost:9000/laptop-photos/incoming/1/x
+```
+```text
+HTTP/1.1 200 OK
+access-control-allow-origin: http://localhost:5173
+access-control-allow-methods: PUT
+access-control-allow-headers: content-type
+...
+HTTP/1.1 403 Forbidden
+```
+หน้าเว็บของเรา (`localhost:5173`) ได้รับอนุญาต เว็บอื่นไม่ได้
+
+### ⑨ ลบเครื่องที่มีรูป: แถวและไฟล์หายครบ
+
+ใช้เครื่องใหม่ เพราะเครื่องจากบท 8b ส่วนใหญ่มีประวัติเช่า ลบไม่ได้ (`409`) ซึ่งก็ถูกแล้ว
+```bash
+curl -s -w "\n%{http_code}\n" -X POST -H "Content-Type: application/json" -d '{"brand":"HP","model":"Pavilion 14","serial":"HP-001","pricePerMonth":1100}' http://localhost:3000/laptops
+curl -s -o /dev/null -w "%{http_code}\n" -F "photo=@test-images/new.png" http://localhost:3000/laptops/4/photos
+docker exec -it laptop-db psql -U postgres -c "select id, key from laptop_photos where laptop_id = 4"
+curl -s -w "%{http_code}\n" -X DELETE http://localhost:3000/laptops/4
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:9000/laptop-photos/laptops/4/605f4cb4-6a35-455e-bdcc-c046a5d4697e-400.webp
+```
+```text
+{"id":4,"brand":"HP","model":"Pavilion 14","serial":"HP-001","pricePerMonth":1100}
+201
+201
+ id |                      key
+----+------------------------------------------------
+  4 | laptops/4/605f4cb4-6a35-455e-bdcc-c046a5d4697e
+204
+404
+```
+เปลี่ยน `4` และ key ในบรรทัดสุดท้ายให้ตรงกับของเรา (`id` ของเครื่องใหม่ขึ้นกับว่าเคยเพิ่มเครื่องไปกี่เครื่อง)
+
+ครบ 9 ข้อ = กฎ P1–P9 มีบ้านและทำงานจริง ✅
+
+---
+
+## 11. 💥 ลองพังมันดู
+
+### ❶ ส่องไบต์จริงของไฟล์ปลอม
+
+```bash
+file test-images/fake.jpg test-images/photo.jpg test-images/evil.svg
+xxd -l 8 test-images/photo.jpg
+xxd -l 8 test-images/new.png
+xxd -l 8 test-images/fake.jpg
+```
+```text
+test-images/fake.jpg:  Unicode text, UTF-8 text
+test-images/photo.jpg: JPEG image data, Exif standard: [TIFF image data, little-endian, direntries=9, manufacturer=Phone, model=Demo, orientation=upper-right, ..., GPS-Data], baseline, precision 8, 4000x3000, components 3
+test-images/evil.svg:  SVG Scalable Vector Graphics image
+00000000: ffd8 ffe1 0152 4578                      .....REx
+00000000: 8950 4e47 0d0a 1a0a                      .PNG....
+00000000: e0b8 99e0 b8b5 e0b9                      ........
+```
+คำสั่ง `file` ของระบบก็ใช้หลัก magic bytes แบบเดียวกัน `fake.jpg` ขึ้นต้นด้วย `e0 b8 99` ซึ่งคือตัว "น" ใน UTF-8 ไม่ใช่ `ff d8 ff` และสังเกตว่า `file` บอกเลยว่ารูปทดสอบมี `GPS-Data` (บน Windows ลองใน Git Bash จากบทที่ 0 ถ้าไม่มีคำสั่งนี้ ข้ามได้ ผลอยู่ข้างบนแล้ว)
+
+### ❷ ลองเชื่อนามสกุลแทน magic bytes
+
+ใน `lib/image.ts` แทนที่บรรทัด `const detected = await fileTypeFromBuffer(input);` ชั่วคราวด้วย
+```ts
+const detected = { mime: "image/jpeg" }; // ❌ เชื่อว่าเป็น JPEG ตามชื่อไฟล์
+```
+แล้วส่ง `fake.jpg` อีกรอบ ยังไม่ผ่านเพราะ sharp อ่านไม่ออก (`อ่านไฟล์รูปไม่ได้...`) แต่ด่านแรกของเราหายไปแล้ว ถ้าวันหนึ่งมีคนเปลี่ยนโค้ดให้เก็บไฟล์ต้นฉบับด้วย ไฟล์อะไรก็หลุดเข้า storage ได้ **ใส่บรรทัดเดิมกลับ** ด่านหลายชั้นมีไว้เพราะแต่ละชั้นพลาดได้ (แนวคิดเดียวกับ 3 ด่านในบท 8b)
+
+### ❸ storage ล่มระหว่างใช้งาน
+
+```bash
+docker compose stop storage
+curl -s -w "\n%{http_code}\n" -F "photo=@test-images/new.png" http://localhost:3000/laptops/2/photos
+docker exec -it laptop-db psql -U postgres -c "select id, key from laptop_photos order by id"
+curl -s -w "%{http_code}\n" -X DELETE http://localhost:3000/laptops/2/photos/1
+docker compose start storage
+```
+```text
+{"error":"เกิดข้อผิดพลาดในระบบ"}
+500
+ id |                      key
+----+------------------------------------------------
+  1 | laptops/2/f0d3483b-aeed-4dd7-97a3-8cc1d22eefd6
+  3 | laptops/1/329bfa9c-9e5c-4458-bebf-12f3410d8348
+204
+```
+และในหน้าจอที่รัน `npm run dev`
+```text
+⚠️ ลบไฟล์ laptops/2/f0d3483b-aeed-4dd7-97a3-8cc1d22eefd6 ไม่สำเร็จ (ECONNREFUSED) เหลือเป็นไฟล์กำพร้า งานเก็บกวาดจะตามลบ
+```
+อ่านผลตามตารางในข้อ 5
+- **เพิ่มรูปตอน storage ล่ม** → `500` และ **ไม่มีแถวใหม่ในฐานข้อมูล** เพราะเรา PUT ไฟล์ก่อน INSERT พอ PUT พัง ก็ไม่ไปต่อ ไม่มีรูปแตก
+- **ลบรูปตอน storage ล่ม** → ผู้ใช้ได้ `204` (รูปหายจากหน้าเว็บจริง) ไฟล์ยังค้างใน storage เป็นไฟล์กำพร้า
+
+### ❹ เก็บกวาดไฟล์กำพร้า
+
+ไฟล์จาก ❸ ยังอยู่ (เปิด URL ได้ `200`) แต่ไม่มีแถวไหนอ้างถึงแล้ว
+```bash
+npm run storage:cleanup
+npm run storage:cleanup -- 0
+```
+```text
+พบไฟล์กำพร้า 0 ไฟล์ []
+ลบเรียบร้อย
+
+พบไฟล์กำพร้า 2 ไฟล์ [
+  'laptops/2/f0d3483b-aeed-4dd7-97a3-8cc1d22eefd6-1600.webp',
+  'laptops/2/f0d3483b-aeed-4dd7-97a3-8cc1d22eefd6-400.webp'
+]
+ลบเรียบร้อย
+```
+รอบแรกไม่เจอ เพราะไฟล์อายุยังไม่ถึง 60 นาที (ช่วงผ่อนผัน) รอบสองสั่ง `0` นาที จึงเจอและลบ เปิด URL เดิมอีกครั้งจะได้ `404` ส่วนรูปที่ยังมีแถวอ้างถึง (รูปของเครื่อง 1) ไม่ถูกแตะ
+
+### ❺ ลิงก์ส่วนตัวที่หมดอายุ (presigned GET)
+
+`src/scripts/presign-demo.ts`
+```ts
+import { setTimeout as sleep } from "node:timers/promises";
+import { storage } from "../storage/index.js";
+
+// ไฟล์ "ส่วนตัว" (อยู่นอก laptops/ จึงไม่มีใครเปิดตรงๆ ได้)
+const key = "private/contract-demo.txt";
+await storage.put(key, Buffer.from("สัญญาเช่าของมานี"), "text/plain; charset=utf-8");
+
+console.log("เปิดตรงๆ ไม่มีลายเซ็น →", (await fetch(storage.publicUrl(key))).status);
+
+const url = await storage.signedGetUrl(key, 5); // ใช้ได้ 5 วินาที
+const first = await fetch(url);
+console.log("ลิงก์เซ็นแล้ว ทันที →", first.status, await first.text());
+
+await sleep(6000);
+console.log("ลิงก์เดิม ผ่านไป 6 วินาที →", (await fetch(url)).status);
+
+await storage.removeMany([key]);
+process.exit(0);
+```
+```bash
+npx tsx src/scripts/presign-demo.ts
+```
+```text
+เปิดตรงๆ ไม่มีลายเซ็น → 403
+ลิงก์เซ็นแล้ว ทันที → 200 สัญญาเช่าของมานี
+ลิงก์เดิม ผ่านไป 6 วินาที → 403
+```
+ไฟล์นอก `laptops/` ไม่มีใครเปิดได้ ลิงก์ที่เซ็นแล้วใช้ได้แค่ช่วงเวลาที่กำหนด หลังจากนั้นใช้ไม่ได้แม้จะเป็นลิงก์เดิมทุกตัวอักษร ใช้กับไฟล์ที่ต้องเช็คสิทธิ์ก่อนดู
+
+### ❻ ส่งไฟล์คนละชนิดกับที่ขอลิงก์ไว้
+
+ขอลิงก์สำหรับ `image/jpeg` แต่ PUT ด้วย `Content-Type: image/png`
+```bash
+curl -s -X POST -H "Content-Type: application/json" -d '{"contentType":"image/jpeg"}' http://localhost:3000/laptops/1/photos/upload-url
+```
+คัดลอก `uploadUrl` ที่ได้มาใส่แทน `<uploadUrl>` (ใส่ในเครื่องหมายคำพูดด้วย เพราะ URL มี `&`)
+```bash
+curl -s -w "\n%{http_code}\n" -X PUT -H "Content-Type: image/png" --data-binary @test-images/photo.jpg "<uploadUrl>"
+```
+```text
+<?xml version="1.0" encoding="UTF-8"?><Error><Code>SignatureDoesNotMatch</Code><Message>The request signature we calculated does not match the signature you provided. ...</Message></Error>
+403
+```
+`content-type` อยู่ในลายเซ็น (`X-Amz-SignedHeaders=content-type%3Bhost` ใน URL) เปลี่ยนแล้วลายเซ็นไม่ตรง ลองลบ `signableHeaders` ใน `storage/index.ts` แล้วทำซ้ำ จะได้ `200` (ชนิดอะไรก็ผ่าน) เสร็จแล้วใส่กลับ
+
+### ❼ สองคนตั้งรูปปกพร้อมกัน
+
+ต้องมีรูปของเครื่อง 1 อย่างน้อย 2 รูป (มีรูป id 3 จาก ⑧ แล้ว เพิ่มอีกรูป)
+```bash
+curl -s -F "photo=@test-images/new.png" http://localhost:3000/laptops/1/photos
+```
+สร้าง `race-cover.ts` ไว้ที่โฟลเดอร์บนสุด แก้เลข `3` กับ `5` ให้เป็น id รูปของเครื่อง 1 ของเรา
+```ts
+// ยิง "ตั้งรูปปก" สลับรูป 3 กับรูป 5 ของเครื่อง 1 พร้อมกัน 10 ครั้ง
+const shots = Array.from({ length: 10 }, (_, i) =>
+  fetch(`http://localhost:3000/laptops/1/photos/${i % 2 ? 5 : 3}/cover`, { method: "POST" }).then((r) => r.status),
+);
+console.log(await Promise.all(shots));
+```
+```bash
+npx tsx race-cover.ts
+docker exec -it laptop-db psql -U postgres -c "select id, is_cover from laptop_photos where laptop_id = 1 order by id"
+```
+```text
+[
+  200, 200, 200, 200,
+  409, 200, 409, 200,
+  409, 200
+]
+ id | is_cover
+----+----------
+  3 | t
+  5 | f
+```
+ลำดับของ `409` สลับได้ทุกรอบ แต่ตารางมีรูปปก **รูปเดียวเสมอ** service ปลดปกเดิมก่อนตั้งใหม่แล้วก็จริง แต่สองคำขอที่มาพร้อมกันต่างคนต่างเห็นว่า "ยังไม่มีปก" แล้วตั้งของตัวเอง ด่านที่ตัดสินได้แน่นอนคือ unique index `one_cover_per_laptop` ในฐานข้อมูล (ด่าน 3 ในบท 8b) ตัวที่ช้ากว่าได้ `23505` แล้ว service แปลงเป็น `409`
+
+### ❽ ยิงตรงเข้า storage โดยไม่มีกุญแจ
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" "http://localhost:9000/laptop-photos?list-type=2"
+curl -s -o /dev/null -w "%{http_code}\n" -X PUT --data-binary @test-images/fake.jpg http://localhost:9000/laptop-photos/laptops/2/hack.jpg
+curl -s -o /dev/null -w "%{http_code}\n" -X DELETE http://localhost:9000/laptop-photos/laptops/1/329bfa9c-9e5c-4458-bebf-12f3410d8348-1600.webp
+```
+```text
+403
+403
+403
+```
+ดูรายชื่อไฟล์ทั้งหมด ฝากไฟล์ และลบไฟล์ ถูกปฏิเสธทั้งหมด ตาม policy ที่เปิดแค่ "อ่าน" (P9)
+
+---
+
+## 12. ย้ายไป storage จริง: แก้ `.env`
+
+โค้ดไม่ต้องแก้ เปลี่ยนแค่ค่าเหล่านี้ (ค่าใน `< >` เอาจากหน้า dashboard ของผู้ให้บริการ)
+
+| ตัวแปร | RustFS ในเครื่อง | Amazon S3 | Cloudflare R2 |
+|---|---|---|---|
+| `S3_ENDPOINT` | `http://localhost:9000` | (เว้นว่าง) | `https://<ACCOUNT_ID>.r2.cloudflarestorage.com` |
+| `S3_REGION` | `us-east-1` | เช่น `ap-southeast-1` | `auto` |
+| `S3_FORCE_PATH_STYLE` | `true` | `false` | `false` |
+| `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` | จาก `compose.yaml` | IAM access key ที่ให้สิทธิ์เฉพาะ bucket นี้ | R2 API token |
+| `PUBLIC_BASE_URL` | `http://localhost:9000/laptop-photos` | `https://<bucket>.s3.<region>.amazonaws.com` หรือโดเมนของ CDN | โดเมนของเราที่ผูกกับ bucket |
+
+สิ่งที่ต่างกันจริงตอนย้าย (เพราะ "เข้ากันได้" ไม่ได้แปลว่าเหมือน)
+- **Amazon S3** bucket ใหม่ **ปิดการเข้าถึงสาธารณะ (Block Public Access) เป็นค่าเริ่มต้น** ต้องตั้งให้ยอมรับ bucket policy ก่อน `storage:setup` ถึงจะตั้ง policy ได้ หรือดีกว่านั้นคือปล่อย bucket เป็นส่วนตัวแล้วให้ CDN (CloudFront) เป็นคนเดียวที่อ่านได้
+- **Cloudflare R2** ไม่มีคำสั่งตั้ง bucket policy (`storage:setup` จะขึ้น ⚠️ ข้ามไป) การเปิดอ่านสาธารณะทำในหน้า dashboard โดยผูกโดเมนของเรา (โดเมน `r2.dev` ใช้ได้แค่ตอนทดลอง เพราะถูกจำกัดความเร็ว) และเปิดแล้วเปิด **ทั้ง bucket** ไม่ใช่เฉพาะ `laptops/` ดังนั้นไฟล์ `incoming/` และไฟล์ส่วนตัวต้องแยกไปอีก bucket
+- **MinIO (image ของ Chainguard)** ตั้ง CORS ราย bucket ไม่ได้ (`NotImplemented`) ส่วนอื่นใช้โค้ดนี้ได้ทั้งหมด (เราลองแล้ว)
+- **ความลับ**: ห้ามใช้กุญแจหลักของบัญชี สร้างกุญแจที่ทำได้แค่กับ bucket นี้ (หลัก least privilege ใน [บทที่ 10](/10-security)) และใส่ใน env ของ server เท่านั้น **ห้ามส่งไปหน้าเว็บเด็ดขาด** หน้าเว็บได้แค่ presigned URL
+
+> ⚠️ ข้อ 12 นี้เราไม่ได้รันกับบัญชี S3 / R2 จริง ข้อมูลมาจากเอกสารทางการของแต่ละเจ้า (กดชื่อในตารางข้อ 2) ตอนทำจริงให้เปิดเอกสารเวอร์ชันล่าสุดประกอบ
+
+---
+
+## 13. ⚠️ ปัญหาที่เจอบ่อย
+
+| อาการ | สาเหตุ | วิธีแก้ |
+|---|---|---|
+| `docker pull minio/minio` ได้ `pull access denied` | MinIO เลิกแจก image รุ่นชุมชนแล้ว (ข้อ 2) | ใช้ RustFS ตามบทนี้ หรือ image ของ Chainguard ถ้าจำเป็นต้องเป็น MinIO |
+| `NotImplemented: Virtual-hosted-style request for host 'laptop-photos.localhost' could not be routed ...` | ไม่ได้ตั้ง `S3_FORCE_PATH_STYLE=true` SDK เลยเอาชื่อ bucket ไปไว้หน้า host | ตั้งเป็น `true` สำหรับ storage ในเครื่อง |
+| `SignatureDoesNotMatch` ตอนรัน `storage:setup` | secret key ใน `.env` ไม่ตรงกับ `compose.yaml` | แก้ให้ตรงกัน แล้ว `docker compose up -d` ใหม่ถ้าแก้ฝั่ง compose |
+| `NoSuchBucket: The specified bucket does not exist` | ยังไม่ได้รัน `storage:setup` หรือพิมพ์ชื่อ bucket ใน `.env` ผิด | รัน `npm run storage:setup` / แก้ `S3_BUCKET` |
+| `AggregateError [ECONNREFUSED]` ใน log | storage ไม่ได้รัน หรือ port ไม่ตรง | `docker compose ps` / `curl http://localhost:9000/health` |
+| รูปตอบ `403 AccessDenied` ทั้งที่ไฟล์มีอยู่ | ยังไม่ได้ตั้ง bucket policy หรือ key ไม่ได้ขึ้นต้นด้วย `laptops/` | รัน `storage:setup` อีกครั้ง ดูว่า policy ผ่านไหม |
+| อัปโหลดแล้วได้ `ต้องแนบไฟล์รูปในช่องชื่อ photo` | ส่งเป็น JSON หรือลืม `-F` ใน curl / ลืม `FormData` ในหน้าเว็บ | ส่งแบบ `multipart/form-data` ช่องชื่อ `photo` |
+| presigned PUT จาก browser ติด CORS (ใน Console ขึ้น `blocked by CORS policy`) | origin ของหน้าเว็บไม่อยู่ใน `AllowedOrigins` หรือ storage ไม่รองรับ CORS ราย bucket | เพิ่ม origin ใน `storage-setup.ts` แล้วรันใหม่ / ดูเอกสารของ storage ตัวนั้น |
+| presigned PUT ได้ `SignatureDoesNotMatch` | ส่ง `Content-Type` ไม่ตรงกับตอนขอลิงก์ หรือลิงก์หมดอายุ | ใช้ `headers` ที่ API ส่งกลับมาตรงๆ / ขอลิงก์ใหม่ |
+| presigned PUT พังกับ storage จริง แต่ในเครื่องผ่าน | ลิงก์มี `x-amz-checksum-crc32=...` (checksum ของไฟล์ว่าง) | ตั้ง `requestChecksumCalculation: "WHEN_REQUIRED"` ตามข้อ 8 |
+| รูปจากมือถือตะแคง | ลืม `autoOrient()` ก่อนย่อ | ใส่ `autoOrient()` ก่อน `resize` |
+| เปลี่ยนรูปแล้ว browser ยังเห็นรูปเก่า | เขียนทับ key เดิม ทั้งที่ตั้ง cache 1 ปี | ใช้ key ใหม่ทุกครั้งที่เปลี่ยนรูป |
+| ลบเครื่องแล้วไฟล์รูปยังอยู่ใน storage | คิดว่า `on delete cascade` ลบไฟล์ให้ด้วย | cascade ลบแค่แถว ต้องตามลบไฟล์เองแบบ `laptop.service.ts` และมีงานเก็บกวาด |
+| server RAM พุ่งตอนมีคนอัปโหลดพร้อมกัน | `memoryStorage` ไม่มี `limits` | ใส่ `limits.fileSize` เสมอ ไฟล์ใหญ่ใช้ presigned PUT |
+| `npm install` ขึ้น `npm warn install-scripts ... esbuild` | npm รุ่นใหม่ถามก่อนรันสคริปต์ติดตั้งของ package | ตอนเราทดสอบ `tsx` ยังใช้ได้ปกติ ถ้ารันไม่ได้ให้อ่านคำแนะนำในข้อความนั้น (`npm install-scripts approve <ชื่อ>`) |
+
+---
+
+## 14. 📋 เช็คลิสต์ "เก็บไฟล์คู่กับฐานข้อมูล" (ใช้กับงาน STARTER ได้)
+
+- [ ] ตัดสินที่เก็บจาก "กี่ไฟล์ ใหญ่แค่ไหน ใครดู ดูบ่อยแค่ไหน" ไม่ใช่ความเคยชิน
+- [ ] ฐานข้อมูลเก็บ key + metadata ไม่เก็บไบต์ ไม่เก็บ URL เต็ม
+- [ ] key สุ่มเอง ไม่ใช้ชื่อไฟล์ของผู้ใช้ เปลี่ยนรูป = key ใหม่
+- [ ] ลำดับงาน: สร้าง = ไฟล์ก่อนแถว · ลบ = แถวก่อนไฟล์ · พังได้แค่ไฟล์กำพร้า
+- [ ] มีงานเก็บกวาดไฟล์กำพร้า พร้อมช่วงผ่อนผัน
+- [ ] ตรวจชนิดจาก magic bytes แบบ allowlist ไม่รับ SVG จำกัดขนาด จำกัดจำนวนพิกเซล
+- [ ] แปลงรูปใหม่ทุกครั้ง (หมุนตาม EXIF, ย่อหลายขนาด, WebP, ทิ้ง metadata)
+- [ ] ไฟล์ที่ชื่อไม่เปลี่ยนเนื้อหาตั้ง `Cache-Control: immutable`
+- [ ] bucket อ่านได้เฉพาะที่ตั้งใจ เขียน/ลบ/list ไม่ได้ ไฟล์ส่วนตัวใช้ presigned GET อายุสั้น
+- [ ] endpoint อัปโหลดเช็ค login และ "ของใคร" ทุกครั้ง
+- [ ] กุญแจ storage อยู่ใน env ของ server เท่านั้น สิทธิ์เฉพาะ bucket นี้
+- [ ] ล็อกเลขรุ่น image ของ storage ใน `compose.yaml`
+
+ปุ่ม "อัปโหลดรูปจริง" คือหนึ่งใน [งานเสริมของ STARTER](/starter/submission) ใช้เช็คลิสต์นี้ได้ทันที (ใน STARTER ใช้ Hono บน Bun แต่ลำดับงาน การตรวจไฟล์ และโค้ดส่วน storage ใช้ได้เหมือนเดิม)
+
+---
+
+## 🧠 เช็คความเข้าใจ
+
+<details>
+<summary>1. เว็บคู่มือนี้เก็บ Requirement PDF เป็น `bytea` ในฐานข้อมูล ทำไมรูปเครื่องในร้านไม่ควรทำแบบเดียวกัน</summary>
+
+PDF มีไม่กี่ไฟล์ ไฟล์เล็ก และต้องเช็ค login ก่อนส่งทุกครั้งอยู่แล้ว ข้อเสียของ `bytea` (ฐานข้อมูลโต backup ช้า ไบต์วิ่งผ่าน API) จึงแทบไม่กระทบ ส่วนรูปเครื่องมีเพิ่มขึ้นเรื่อยๆ ทุกคนดูได้ และถูกเปิดบ่อยมาก ถ้าอยู่ในฐานข้อมูล ทุกครั้งที่มีคนเปิดหน้าร้าน ไบต์ต้องวิ่งผ่านฐานข้อมูลและ API ใส่ CDN ก็ยาก object storage ส่งไฟล์ตรงถึง browser และ cache ได้
+
+</details>
+
+<details>
+<summary>2. ทำไมตอนเพิ่มรูปต้อง PUT ไฟล์ก่อน INSERT แถว ไม่ใช่กลับกัน</summary>
+
+ถ้า INSERT ก่อนแล้ว PUT พัง จะมีแถวที่ชี้ไปไฟล์ที่ไม่มี ผู้ใช้เห็นรูปแตก ถ้า PUT ก่อนแล้ว INSERT พัง จะเหลือแค่ไฟล์กำพร้าที่ไม่มีใครเห็น ซึ่งโค้ดลบทันที หรืองานเก็บกวาดตามลบทีหลังได้ เราเลือกให้ความผิดพลาดตกไปฝั่งที่มองไม่เห็นและแก้ได้
+
+</details>
+
+<details>
+<summary>3. ตาราง `laptop_photos` ตั้ง `on delete cascade` แล้ว ทำไม `laptopService.remove` ยังต้องเขียนโค้ดลบไฟล์เอง</summary>
+
+cascade เป็นกฎของฐานข้อมูล ลบได้แค่แถวในฐานข้อมูล ฐานข้อมูลไม่รู้ว่ามี storage อยู่ ไฟล์จึงยังค้าง ต้องจด key ไว้ก่อนลบเครื่อง (เพราะหลังลบ แถวรูปหายไปแล้ว) แล้วลบไฟล์หลังลบเครื่องสำเร็จ (ถ้าลบเครื่องไม่ได้ รูปต้องอยู่ครบ)
+
+</details>
+
+<details>
+<summary>4. ผู้ใช้ส่งไฟล์ชื่อ `cat.png` พร้อม header `Content-Type: image/png` ทำไมยังไม่พอจะเชื่อว่าเป็น PNG</summary>
+
+ทั้งชื่อไฟล์และ header ผู้ใช้พิมพ์เองได้ (ข้อ 10 ⑦ เราใช้ `;type=image/png` โกหก curl ได้) สิ่งเดียวที่บอกชนิดจริงคือเนื้อไฟล์ PNG ต้องขึ้นต้นด้วย `89 50 4E 47 0D 0A 1A 0A` และเพื่อให้แน่ใจว่าข้างในไม่เสีย เราให้ sharp อ่านแล้ววาดเป็นไฟล์ใหม่อีกที
+
+</details>
+
+<details>
+<summary>5. ทำไมเปลี่ยนรูปแล้วต้องได้ key ใหม่ ไม่เขียนทับไฟล์เดิม</summary>
+
+เราตั้ง `Cache-Control: immutable` ให้ browser และ CDN เก็บไฟล์ไว้ได้ 1 ปีโดยไม่ถามซ้ำ ถ้าเขียนทับชื่อเดิม คนที่เคยเปิดจะเห็นรูปเก่าต่อไป key ใหม่ = URL ใหม่ ทุกคนได้รูปใหม่ทันที อีกเหตุผลคือถ้าไฟล์ใหม่เขียนไม่สำเร็จ รูปเก่ายังอยู่ครบ (ไม่มีจังหวะที่ไฟล์เสียครึ่งๆ)
+
+</details>
+
+<details>
+<summary>6. ทำไมไม่รับไฟล์ SVG ทั้งที่มันก็เป็นรูป</summary>
+
+SVG คือข้อความ XML ที่ใส่ `<script>` ได้ ถ้าคนเปิดไฟล์ตรงๆ สคริปต์จะรันในโดเมนของ storage หรือเว็บเรา (XSS) การกรอง SVG ให้ปลอดภัยทำได้แต่ยากและพลาดง่าย ร้านเช่าโน้ตบุ๊กไม่จำเป็นต้องรับ SVG จึงไม่รับเลย (allowlist เฉพาะ JPEG/PNG/WebP)
+
+</details>
+
+<details>
+<summary>7. งานเก็บกวาดทำไมต้องมีช่วงผ่อนผัน 60 นาที ลบไฟล์ที่ไม่มีแถวอ้างถึงทันทีไม่ได้หรือ</summary>
+
+ระหว่าง "PUT ไฟล์เสร็จ" กับ "INSERT แถว" มีช่วงสั้นๆ ที่ไฟล์ยังไม่มีแถวอ้างถึง ถ้างานเก็บกวาดมาตรงจังหวะนั้นแล้วลบ คำขอนั้นจะบันทึกแถวที่ชี้ไปไฟล์ที่เพิ่งถูกลบ = รูปแตก ช่วงผ่อนผันทำให้แตะเฉพาะไฟล์ที่เก่าพอจะแน่ใจว่าไม่มีใครกำลังใช้
+
+</details>
+
+<details>
+<summary>8. อัปโหลดแบบ presigned PUT ประหยัดแรง server ทำไมยังต้องมีขั้น confirm</summary>
+
+ลิงก์ PUT จำกัดขนาดไฟล์ไม่ได้ และ browser จะส่งอะไรมาก็ได้ (คนแก้โค้ดหน้าเว็บได้เสมอ) ไฟล์ที่ถึง storage จึงยังไม่ผ่านการตรวจ ขั้น confirm คือที่ server ตรวจขนาด magic bytes และแปลงรูปเหมือนทางปกติ แล้วค่อยบันทึกแถว ไฟล์ที่ไม่เคยถูกยืนยันค้างใน `incoming/` ซึ่งไม่มีใครเปิดอ่านได้ และถูกงานเก็บกวาดลบ
+
+</details>
+
+---
+
+## ✏️ แบบฝึกหัด
+
+1. **รูปที่ผู้ใช้ตั้งชื่อ** เพิ่มคอลัมน์ `alt_text` (คำอธิบายรูปสำหรับคนที่มองไม่เห็นและสำหรับ SEO) รับจากช่อง `alt` ในฟอร์มเดียวกับไฟล์ เดินตาม 6 ขั้นของบท 8b (รายการกฎ → schema → migration → validation → โค้ด → ทดสอบ) คำใบ้: ช่องข้อความใน multipart อยู่ใน `req.body` หลัง multer ทำงาน
+2. **เรียงรูปเอง** เพิ่มคอลัมน์ `position` และ endpoint ให้สลับลำดับรูปได้ คิดก่อนว่ากฎ "ห้ามมี position ซ้ำในเครื่องเดียวกัน" ควรมีบ้านที่ไหน และถ้าสลับ 2 รูปจะชน unique ระหว่างทางไหม
+3. **ทีละหน้า** ให้ `GET /laptops/:laptopId/photos?limit=10&cursor=<id>` ส่งทีละ 10 รูป (ให้ฐานข้อมูลตัดให้ ไม่ใช่ดึงมาทั้งหมดแล้วตัดใน JavaScript)
+4. **AVIF** เพิ่มขนาด `-400.avif` แล้ววัดขนาดไฟล์และเวลาที่ใช้แปลงเทียบกับ WebP บันทึกผลแล้วตัดสินว่าคุ้มไหม
+5. เขียนรายการกฎแบบข้อ 4 สำหรับ "อัปโหลดรูปบริการ" ในงาน STARTER ส่งให้พี่เลี้ยงดูก่อนเริ่มเขียนโค้ด
+
+## ✅ ผ่านด่าน
+
+- [ ] อธิบายได้ว่าไฟล์แบบไหนควรอยู่ในฐานข้อมูล ดิสก์ หรือ object storage พร้อมเหตุผล
+- [ ] อธิบาย bucket / key / object และ S3-compatible ได้ และรู้ว่า "เข้ากันได้" ไม่ได้แปลว่าเหมือน 100%
+- [ ] ออกแบบตารางเก็บ key + metadata ได้ ตั้งชื่อ key อย่างปลอดภัย
+- [ ] เรียงลำดับงานเพิ่ม / เปลี่ยน / ลบ ให้พังได้แค่ไฟล์กำพร้า และอธิบายได้ว่าทำไม
+- [ ] ตรวจไฟล์ด้วย magic bytes จำกัดขนาด ทิ้ง EXIF/GPS และรู้ว่าทำไมไม่รับ SVG
+- [ ] ทำ ⑤ ⑥ ⑦ ในข้อ 10 และ ❸ ❹ ในข้อ 11 แล้วได้ผลตรงตามที่อธิบาย
+- [ ] บอกได้ว่าต้องแก้อะไรบ้างถ้าย้ายจาก RustFS ไป S3 หรือ R2
+
+---
+
+[← บทที่ 8b: จากแบบฐานข้อมูลสู่ Backend](/08b-db-to-backend) · [🏠 สารบัญ](/) · [บทที่ 9: Debugging →](/09-debugging)
