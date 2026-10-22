@@ -828,10 +828,18 @@ dist
 .git
 ```
 
+ก่อน `docker run` **กด Ctrl+C หยุด `npm run dev` ที่เปิดค้างไว้ก่อน** เพราะ port 3000 ของเครื่องเราใช้ได้ทีละโปรแกรม ถ้าลืม Docker จะฟ้องบรรทัดยาวที่ลงท้ายด้วย `Bind for 0.0.0.0:3000 failed: port is already allocated` แล้ว container จะไม่เริ่ม (แต่ชื่อ `api` ถูกจองไปแล้ว ก่อนลองใหม่ให้สั่ง `docker rm -f api` ไม่อย่างนั้นจะเจอ `Conflict. The container name "/api" is already in use`)
 ```bash
 docker build -t laptop-api .
 docker run -d -p 3000:3000 --name api laptop-api
+docker logs api
 ```
+**ควรเห็น** (จาก `docker logs api`) บรรทัดเดียวกับที่ `app.listen` ใน `src/index.ts` พิมพ์ตอนรัน `npm run dev`
+```
+🚀 API on http://localhost:3000
+```
+ถ้าเห็นบรรทัดนี้ แปลว่าโค้ดใน container เริ่มทำงานแล้ว ถ้าเห็น error แทน ให้อ่านบรรทัดแรกของ error ก่อน
+
 ทดสอบ: `curl http://localhost:3000/health` ต้องได้ `{"status":"ok"}`
 
 > 💡 **ทำไม COPY `package.json` ก่อนโค้ด?** Docker จำ (cache) แต่ละชั้นไว้ เราแก้โค้ดบ่อย แต่เพิ่ม package นานๆ ครั้ง แยกแบบนี้ตอนแก้โค้ด Docker จะข้าม `npm ci` (ขั้นที่ช้าที่สุด) build เร็วขึ้นมาก
@@ -859,6 +867,8 @@ docker run -d -p 3000:3000 --name api laptop-api
 - **CORS ไม่ได้กันทุกอย่าง:** คำขอธรรมดายังไปถึง server ได้ (แค่อ่านคำตอบไม่ได้) การกันเว็บอื่นแอบส่งคำสั่งแทนผู้ใช้ (CSRF) เป็นอีกเรื่องหนึ่ง อยู่ใน [บทที่ 10](/10-security)
 
 ลองดู header ที่ server ตอบตอนเบราว์เซอร์ถาม preflight (ตัวอย่างเขียน middleware เองให้เห็นกลไก งานจริงใช้ library เช่น `cors` ของ Express หรือ middleware ของ Hono ใน [บทที่ 14](/14-hono-api))
+
+**วางที่ไหน:** ใน `src/index.ts` ต่อจากบรรทัด `app.use(express.json())` และ **ก่อน route ทุกตัว** (`app.get`, `app.post`, ...) เพราะ Express เรียก middleware และ route **ตามลำดับบรรทัดที่เขียน** ถ้าวางไว้หลัง route คำขอ `OPTIONS` จะไม่มีใครตอบ และคำตอบของ route จะออกไปก่อนโดยไม่มี header อนุญาต เบราว์เซอร์ก็จะบล็อกเหมือนไม่ได้ใส่เลย
 ```ts
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");

@@ -14,6 +14,8 @@ title: "บทที่ 20: ขึ้นเว็บจริงบนเคร�
 > **📖 คำใหม่ในบทนี้**
 > [Deploy](/glossary#deploy) · [Production](/glossary#production) · [Reverse proxy](/glossary#reverse-proxy) · [Docker Compose](/glossary#docker-compose) · [Volume](/glossary#volume) · [HTTPS](/glossary#https) · [Migration](/glossary#migration) · [Rollback](/glossary#rollback)
 
+> **🪙 ยังไม่มีเครื่องเช่าหรือชื่อเว็บ?** ซ้อมได้ **ทั้งระบบ** บนเครื่องตัวเอง (หรือ VM จากบทที่ 19) ด้วย `DOMAIN=bitcafe.localhost` ไฟล์ทุกไฟล์ในข้อ 2 ใช้ได้โดยไม่ต้องแก้ ต่างแค่ข้อ 3–4 กับวิธีตรวจในข้อ 6 ดูตารางเทียบทีละข้อใน [ข้อ 9](#9--ซ้อมทั้งบทบนเครื่องตัวเอง-ฟรี) สิ่งที่ซ้อมไม่ได้มีแค่ใบรับรองจริงจาก Let's Encrypt และการเปิดจากมือถือ ถ้าแบบฝึกหัดต้องใช้ของจริง ให้ **ถามพี่เลี้ยง / บริษัท** ว่ามีเครื่องหรือชื่อย่อยให้ไหม
+
 ---
 
 ## 📖 เรื่องเล่า
@@ -152,7 +154,7 @@ www.{$DOMAIN} {
 อ่านทีละส่วน
 | บรรทัด | ทำอะไร |
 |---|---|
-| `{$DOMAIN} {` | ตั้งค่าของเว็บชื่อนี้ (อ่านชื่อเว็บจากไฟล์ `.env`) แค่ใส่ชื่อเว็บ **Caddy ก็ทำ HTTPS ให้เอง** และพาคนที่เข้า `http://` ไป `https://` |
+| `{$DOMAIN} {` | ตั้งค่าของเว็บชื่อนี้ แค่ใส่ชื่อเว็บ **Caddy ก็ทำ HTTPS ให้เอง** และพาคนที่เข้า `http://` ไป `https://` ค่านี้เดินทางมา 3 ทอด: `DOMAIN=` ในไฟล์ `.env` → compose อ่านแล้วใส่เป็น `environment: DOMAIN` ของกล่อง `web` → Caddy อ่านจากตัวแปรของกล่องด้วย `{$ชื่อ}` ถ้าทอดไหนขาด Caddy จะได้ชื่อว่าง |
 | `encode zstd gzip` | บีบไฟล์ให้เล็กลงก่อนส่ง เว็บโหลดเร็วขึ้น |
 | `header { ... }` | ป้ายกันภัยที่แนบไปกับทุกหน้า เช่น บังคับใช้ HTTPS, ห้ามเว็บอื่นเอาหน้าเราไปซ้อน |
 | `handle /api/*` → `reverse_proxy server:3000` | คำขอที่ขึ้นต้น `/api` ส่งต่อให้กล่องชื่อ `server` |
@@ -269,9 +271,13 @@ ADMIN_PASSWORD=
 **ลองตรวจไฟล์ในเครื่องเราก่อน** (แค่ตรวจว่าเขียนถูก ยังไม่ได้เปิดจริง)
 
 ```bash
-cp .env.prod.example .env       # ใส่ค่าอะไรก็ได้ชั่วคราว
+cp .env.prod.example .env       # แล้วเปิด .env ใส่ค่าชั่วคราวให้ทุกบรรทัดที่ว่าง เช่น POSTGRES_PASSWORD=x และ JWT_SECRET=x
 docker compose -f compose.prod.yaml config --quiet && echo OK
 rm .env
+```
+ถ้าก๊อปมาแล้วสั่งเลยโดยไม่ใส่ค่า จะได้ error นี้ (ผลจริง) ซึ่งแปลว่า **ด่าน `${...:?}` ทำงานถูกแล้ว** ไม่ใช่ไฟล์เราผิด
+```
+error while interpolating services.db.environment.POSTGRES_PASSWORD: required variable POSTGRES_PASSWORD is missing a value: ต้องตั้ง POSTGRES_PASSWORD ใน .env
 ```
 แล้วบันทึกงาน (commit) และส่งขึ้น GitHub/GitLab
 
@@ -325,6 +331,7 @@ openssl rand -base64 48       # → ใช้เป็น JWT_SECRET
 nano .env                     # ใส่ DOMAIN, ค่าที่สุ่มได้, อีเมลและรหัส admin คนแรก
 chmod 600 .env                # ให้ deploy อ่านได้คนเดียว
 ```
+💡 `nano` คือโปรแกรมแก้ไฟล์ใน Terminal ใช้ลูกศรเลื่อน พิมพ์ได้เลย **Ctrl+O แล้ว Enter = บันทึก**, **Ctrl+X = ออก** (เมาส์ใช้ไม่ได้ วางข้อความด้วยคลิกขวา หรือ Cmd+V / Ctrl+Shift+V ตาม Terminal)
 
 ---
 
@@ -337,7 +344,14 @@ docker compose -f compose.prod.yaml run --rm server bun run seed       # ③ ข
 docker compose -f compose.prod.yaml up -d                              # ④ เปิดทั้งระบบ
 docker compose -f compose.prod.yaml ps                                 # ทุกกล่องต้อง running (db = healthy)
 ```
-💡 คำสั่งยาวพิมพ์เหนื่อย ตั้งคำย่อไว้ในไฟล์ `~/.bashrc` บนเครื่องเช่า: `alias dc='docker compose -f ~/bit-cafe/compose.prod.yaml'` แล้วใช้ `dc ps`, `dc logs -f`
+**ตั้งคำย่อ `dc` (ทำเลย เพราะข้อ 8 และบทที่ 23 ใช้ `dc` ตลอด)** บนเครื่องเช่า
+```bash
+echo "alias dc='docker compose -f ~/bit-cafe/compose.prod.yaml'" >> ~/.bashrc
+source ~/.bashrc              # ให้มีผลในหน้าต่างนี้เลย (หน้าต่างใหม่มีผลเอง)
+dc ps                         # = docker compose -f ~/bit-cafe/compose.prod.yaml ps
+```
+ซ้อมบนเครื่องตัวเองที่เป็น Mac (zsh) ใส่บรรทัดเดียวกันใน `~/.zshrc` แทน และแก้ path ให้ตรงกับโฟลเดอร์โปรเจกต์ในเครื่องเรา
+> 🤓 ทำไมใช้ alias ไม่ใช้ตัวแปร `DC="docker compose ..."` แล้วพิมพ์ `$DC ps`? ใน bash ได้ แต่ใน **zsh (ค่าเริ่มต้นของ Mac)** ได้ `command not found: docker compose -f compose.prod.yaml` เพราะ zsh ไม่แยกค่าในตัวแปรเป็นหลายคำ (ลองจริงแล้วตอนเขียนคู่มือ) alias ใช้ได้ทั้งสองแบบ
 
 ดูว่า Caddy ได้ใบรับรอง HTTPS หรือยัง:
 
@@ -426,6 +440,79 @@ docker compose -f compose.prod.yaml up -d --build
 
 ---
 
+## 9. 🏠 ซ้อมทั้งบทบนเครื่องตัวเอง (ฟรี)
+
+ทุกไฟล์ในข้อ 2 ใช้ได้ทันที เปลี่ยนแค่ **ค่า `DOMAIN` ใน `.env`** เป็นชื่อที่ลงท้าย `.localhost` (เครื่องตัวเองเสมอ ไม่ต้องซื้อ ไม่ต้องแก้ DNS: บทที่ 18 ข้อ 4)
+
+**ทำไม `bitcafe.localhost` ไม่ใช้ `localhost` เฉยๆ?** Caddyfile ส่ง header `Strict-Transport-Security` (บังคับ https 1 ปี) เบราว์เซอร์จะจำกฎนี้ไว้ **ตามชื่อเว็บ ไม่สนเลขประตู** ถ้าใช้ `localhost` เบราว์เซอร์อาจบังคับให้ `http://localhost:5173` ของ Vite กลายเป็น https ไปด้วย แล้วหน้า dev เปิดไม่ขึ้น ใช้ชื่อแยกจึงไม่กระทบงานอื่น
+
+### ขั้นตอน (บนเครื่องเราที่มี Docker Desktop)
+```bash
+cd bit-cafe                                   # โฟลเดอร์โปรเจกต์ที่มีไฟล์จากข้อ 2
+cp .env.prod.example .env
+# แก้ .env:  DOMAIN=bitcafe.localhost  และใส่ค่าสุ่มจาก openssl ให้ POSTGRES_PASSWORD / JWT_SECRET (ข้อ 4)
+docker compose -f compose.prod.yaml build
+docker compose -f compose.prod.yaml run --rm server bun run db:migrate
+docker compose -f compose.prod.yaml run --rm server bun run seed
+docker compose -f compose.prod.yaml up -d
+docker compose -f compose.prod.yaml ps
+```
+ผลจริงตอนเขียนคู่มือ (ตัดส่วน `[::]` ของ IPv6 ออก): คอลัมน์ PORTS คือข้อพิสูจน์ว่าประตูที่เปิดสู่ภายนอก (`0.0.0.0:...`) มีแค่ `web`
+```
+SERVICE   STATUS                    PORTS
+db        Up 14 seconds (healthy)   5432/tcp
+server    Up 6 seconds              3000/tcp
+web       Up 6 seconds              0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp, 0.0.0.0:443->443/udp
+```
+บันทึกของ `web` บอกว่าใครออกใบรับรองให้ (`docker compose -f compose.prod.yaml logs web | grep "certificate obtained"`)
+```
+"msg":"certificate obtained successfully","identifier":"bitcafe.localhost","issuer":"local"
+```
+👀 `"issuer":"local"` = Caddy **ออกใบรับรองเอง** จาก CA ภายในของมัน (บนระบบจริงจะเห็น issuer เป็นของ Let's Encrypt) เพราะไม่มีผู้ออกใบรับรองที่ไหนในโลกยืนยันได้ว่าเราเป็นเจ้าของ `bitcafe.localhost` เบราว์เซอร์และ `curl` จึง **ไม่เชื่อ** ใบนี้ นี่คือขั้น ③ "ตรวจบัตร" ของบทที่ 17 ที่ได้เห็นของจริง:
+```
+$ curl -sS https://bitcafe.localhost/api/health
+curl: (60) SSL certificate problem: unable to get local issuer certificate
+```
+ทางแก้สำหรับการซ้อม คือเอา "บัตรของผู้ออกใบรับรองภายใน" (root certificate) ออกมาจากกล่อง แล้วบอก `curl` ให้เชื่อใบนี้ **เฉพาะคำสั่งนั้น**
+```bash
+docker compose -f compose.prod.yaml cp web:/data/caddy/pki/authorities/local/root.crt ./caddy-root.crt
+curl -sS --cacert caddy-root.crt https://bitcafe.localhost/api/health     # {"status":"ok"}
+```
+(หรือ `curl -k` = ไม่ตรวจบัตรเลย ใช้ได้ตอนซ้อม แต่ต้องรู้ว่ากำลังปิดด่านความปลอดภัย ห้ามติดมือไปใช้กับระบบจริง) ส่วน **เบราว์เซอร์** จะขึ้น "Your connection is not private" ให้กด Advanced → Proceed ได้ เพราะรู้ว่าเป็นเครื่องเราเอง
+
+### ตรวจตามข้อ 6 (ผลจริง)
+```
+$ curl -I http://bitcafe.localhost
+HTTP/1.1 308 Permanent Redirect
+Location: https://bitcafe.localhost/
+$ curl -I --cacert caddy-root.crt https://www.bitcafe.localhost
+HTTP/2 301
+location: https://bitcafe.localhost/
+$ curl -I --cacert caddy-root.crt https://bitcafe.localhost/about
+HTTP/2 200
+$ curl -s --cacert caddy-root.crt -o /dev/null -w "%{http_code}\n" https://bitcafe.localhost/api/admin/me
+401
+```
+login แล้ว cookie ก็ได้ครบ `HttpOnly; Secure; SameSite=Lax` เหมือนระบบจริง เพราะเป็น https จริง (แค่บัตรออกโดย CA ภายใน)
+
+### ต่างจากระบบจริงตรงไหนบ้าง
+
+| ขั้นในบท | บนเครื่องเช่าจริง | ซ้อมบนเครื่องตัวเอง |
+|---|---|---|
+| ข้อ 3 ชี้ชื่อเว็บ | ตั้ง A record แล้วรอ `dig` ได้ IP | **ข้าม** ชื่อ `.localhost` ชี้มาเครื่องเราเสมอ |
+| ข้อ 4 เอาโค้ดขึ้นเครื่อง | deploy key + `git clone` บนเครื่องเช่า | ใช้โฟลเดอร์โปรเจกต์เดิม (หรือ clone ใน VM เพื่อซ้อม deploy key) |
+| `.env` | `DOMAIN=example.com` | `DOMAIN=bitcafe.localhost` · `APP_ORIGIN` เป็น `https://bitcafe.localhost` ให้เองผ่าน compose |
+| ใบรับรอง | Let's Encrypt (เบราว์เซอร์เชื่อ) | CA ภายในของ Caddy (`"issuer":"local"`) ต้องใช้ `--cacert` / `-k` |
+| ประตู 80 / 443 | ufw + Cloud Firewall เปิดให้ | ต้องว่างในเครื่องเรา ถ้าขึ้น `port is already allocated` / `address already in use` ให้ปิดโปรแกรมที่ใช้อยู่ (ดูด้วย `lsof -i :443` / `netstat -ano \| findstr :443`) |
+| ตรวจว่า 5432 / 3000 ไม่เปิด | `sudo ss -tlnp` บนเครื่องเช่า + `curl` จากข้างนอก | ดูคอลัมน์ PORTS ของ `ps` ข้างบน **อย่าใช้ `curl localhost:5432`** เพราะอาจไปเจอฐานข้อมูลตอน dev ของบทที่ 14 ที่เปิด 5432 ไว้ (ตอนเขียนคู่มือเจอจริง ได้ `Empty reply from server` จากฐานข้อมูลอีกตัว ไม่ใช่ของระบบนี้) |
+| มือถือ / แชร์ลง LINE | ได้ | ไม่ได้ คนนอกเครื่องมองไม่เห็น ไปทำในบทที่ 22 ซึ่งได้ลิงก์สาธารณะฟรี |
+
+**ซ้อมใน VM (บทที่ 19)** ได้ใกล้ของจริงกว่า เพราะได้ทำข้อ 4 ครบ (deploy key, `git clone`, `nano .env`) แต่ชื่อ `.localhost` ใน VM หมายถึงตัว VM เอง เครื่องเราเปิดไม่ถึง ให้ใช้ชื่อลงท้าย `.internal` แทน (Caddy ก็ออกใบรับรองภายในให้ชื่อแบบนี้) เช่น `DOMAIN=bitcafe.internal` แล้วเพิ่มบรรทัด `192.168.64.5  bitcafe.internal www.bitcafe.internal` ในไฟล์ `hosts` ของเครื่องเรา (บทที่ 18 ข้อ 4, ใช้ IP จาก `multipass info`)
+
+**เลิกซ้อม:** `docker compose -f compose.prod.yaml down -v` (บนเครื่องซ้อม `-v` ลบข้อมูลทิ้งได้ เพราะไม่ใช่ข้อมูลจริง แต่ **ห้ามใช้กับระบบจริง** ตามข้อ 8) แล้วลบ `caddy-root.crt` และ `.env`
+
+---
+
 ## 🧠 เช็คความเข้าใจ
 
 <details>
@@ -462,12 +549,14 @@ docker compose -f compose.prod.yaml up -d --build
 
 ขึ้น Bit Café (หรืองาน STARTER ของตัวเอง) บนเครื่องเช่า ด้วยชื่อเว็บจริงหรือชื่อย่อยที่พี่เลี้ยงให้ แล้วส่ง: ลิงก์เว็บ, ผลคำสั่งในข้อ 6 ทั้งหมด, ภาพหน้าจอ cookie ใน DevTools และภาพการ์ดตอนแชร์ลิงก์ลง LINE
 
+**ยังไม่มีเครื่องเช่า / ชื่อเว็บ:** ทำตามข้อ 9 แล้วส่ง: ผลของ `ps`, บรรทัด `"issuer":"local"`, ผลตรวจทั้ง 4 คำสั่งในข้อ 9, ภาพหน้าจอ cookie ใน DevTools และคำอธิบายสั้นๆ ว่าทำไม `curl` ไม่เชื่อใบรับรองนี้ ส่วนภาพการ์ด LINE ไปทำในบทที่ 22
+
 ## ✅ ผ่านด่าน
 
 - [ ] เขียนสูตรสร้างกล่องของ server และหน้าเว็บได้
 - [ ] อธิบาย Caddyfile ได้ทุกบรรทัด
 - [ ] ไฟล์ compose เปิดประตูแค่ 80/443 และมีการเปิดใหม่เอง, เช็คความพร้อม, ที่เก็บถาวร, จำกัดขนาดบันทึก
-- [ ] ขึ้นเว็บครั้งแรกแล้วได้ HTTPS เอง และตรวจครบตามข้อ 6
+- [ ] ขึ้นเว็บครั้งแรกแล้วได้ HTTPS เอง และตรวจครบตามข้อ 6 (หรือซ้อมครบตามข้อ 9 และอธิบายได้ว่าต่างจากระบบจริงตรงไหน)
 - [ ] อัปเดตและถอยเวอร์ชันได้ และเข้าใจว่าทำไมการแก้ตารางต้อง "เพิ่มอย่างเดียว"
 
 ---

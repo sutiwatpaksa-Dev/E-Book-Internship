@@ -27,6 +27,7 @@ export const roadmap: RoadmapLevel[] = [
     goal: "เขียน TypeScript และคุยกันผ่าน HTTP เป็น",
     items: [
       { num: "03", title: "Runtime & Package Manager", link: "/03-node-yarn-bun", outcome: "แยกตัวรันกับตัวจัดการ library ได้ เลือกเครื่องมือเป็น", time: "4 ชม." },
+      { num: "เสริม", title: "JavaScript พื้นฐาน", link: "/js-basics", outcome: "อ่านและเขียน JS พื้นฐานได้ก่อนเริ่ม TypeScript", time: "30–60 นาที", extra: true },
       { num: "04", title: "ภาษาและระบบ Type", link: "/04-typescript", outcome: "เขียน TypeScript เป็น แยกตรวจ type ก่อนรันกับตรวจข้อมูลตอนรัน", time: "6 ชม." },
       { num: "05", title: "HTTP & รูปแบบ API", link: "/05-http-api", outcome: "เข้าใจ HTTP เลือกรูปแบบ API เป็น สร้าง REST API และแพ็กใส่ Docker ได้", time: "6 ชม." },
     ],
@@ -47,6 +48,7 @@ export const roadmap: RoadmapLevel[] = [
     goal: "หาบั๊กเองเป็นระบบ และไม่เปิดช่องโหว่",
     items: [
       { num: "09", title: "Debugging", link: "/09-debugging", outcome: "หาบั๊กเองเป็นระบบ ใช้ debugger ได้", time: "3 ชม." },
+      { num: "เสริม", title: "เรียนรู้ด้วยตัวเอง", link: "/self-learning", outcome: "หาคำตอบเองจาก error เอกสาร และการค้น ก่อนถามพี่เลี้ยง", time: "2 ชม.", extra: true },
       { num: "10", title: "Security พื้นฐาน", link: "/10-security", outcome: "เก็บรหัสผ่าน/ความลับถูกวิธี รู้จักช่องโหว่ที่เจอบ่อย", time: "4 ชม." },
     ],
   },
@@ -55,12 +57,12 @@ export const roadmap: RoadmapLevel[] = [
     goal: "หน้าบ้าน หลังบ้าน และ login ครบในโปรเจกต์เดียว",
     items: [
       { num: "11", title: "สร้างหน้าเว็บด้วย React", link: "/11-react", outcome: "สร้างหน้าเว็บจากชิ้นส่วนเล็กๆ ดึงข้อมูล ทำฟอร์ม", time: "4 ชม." },
+      { num: "เสริม", title: "ภาษาและคำสั่งที่ใช้เขียน React", link: "/react-language", outcome: "อ่านโค้ด React ออกทีละบรรทัด", time: "–", extra: true },
       { num: "12", title: "ตกแต่งเว็บทุกขนาดจอ (Tailwind)", link: "/12-tailwind", outcome: "แต่งเว็บตามสีร้าน ใช้ได้ทุกขนาดจอ", time: "3 ชม." },
       { num: "13", title: "หลายหน้า + Google หาเจอ", link: "/13-router-seo", outcome: "หลายหน้า, หน้า 404, เลือกหมวด, การ์ดตอนแชร์", time: "3 ชม." },
       { num: "14", title: "สร้าง API (Bun + Hono)", link: "/14-hono-api", outcome: "API จริงที่ต่อฐานข้อมูล ตามงาน STARTER", time: "5 ชม." },
       { num: "15", title: "ระบบ login หน้าจัดการร้าน", link: "/15-auth", outcome: "login ของเจ้าของร้านที่ปลอดภัย", time: "4 ชม." },
       { num: "16", title: "ทำงานคู่กับ AI", link: "/16-ai-pairing", outcome: "คุยกับ AI ให้ได้ระบบครบ และเข้าใจทุกบรรทัด", time: "5 ชม." },
-      { num: "เสริม", title: "ภาษาและคำสั่งที่ใช้เขียน React", link: "/react-language", outcome: "อ่านโค้ด React ออกทีละบรรทัด", time: "–", extra: true },
       { num: "เสริม", title: "จัดโครงสร้างโปรเจกต์", link: "/project-structure", outcome: "วางโฟลเดอร์แบบแบ่งตามหน้าที่และตามฟีเจอร์", time: "–", extra: true },
     ],
   },

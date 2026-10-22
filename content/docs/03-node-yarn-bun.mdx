@@ -378,7 +378,7 @@ bun --watch index.ts           # รันใหม่เองทุกคร�
 | ต้องการ | npm | Yarn | Bun |
 |---|---|---|---|
 | ติดตั้งตามที่ `package.json` ระบุ | `npm install` | `yarn` | `bun install` |
-| ติดตั้งตาม lock เป๊ะ (CI/Docker) | `npm ci` | `yarn install --immutable` | `bun install --frozen-lockfile` |
+| ติดตั้งตาม lock เป๊ะ (CI/Docker) | `npm ci` | v2 ขึ้นไป: `yarn install --immutable` / v1: `yarn install --frozen-lockfile` | `bun install --frozen-lockfile` |
 | เพิ่ม package | `npm install zod` | `yarn add zod` | `bun add zod` |
 | เพิ่มแบบ dev | `npm install -D tsx` | `yarn add -D tsx` | `bun add -d tsx` |
 | เพิ่มเวอร์ชันที่ระบุ | `npm install zod@4.1.0` | `yarn add zod@4.1.0` | `bun add zod@4.1.0` |
@@ -388,7 +388,7 @@ bun --watch index.ts           # รันใหม่เองทุกคร�
 | อัปเดตตามช่วงใน `package.json` | `npm update` | ต่างกันตามรุ่น ดูเอกสาร Yarn | `bun update` |
 | รันโปรแกรมใน package โดยไม่ติดตั้งถาวร | `npx ชื่อ` | ต่างกันตามรุ่น ดูเอกสาร Yarn | `bunx ชื่อ` |
 
-> ⚠️ ตาราง Yarn ด้านบนเป็นของ Yarn รุ่นใหม่ (v2 ขึ้นไป) ที่คำสั่งบางตัวต่างจากรุ่นเก่า ถ้าโปรเจกต์ไหนใช้ Yarn ให้ดูเวอร์ชันด้วย `yarn --version` และอ่านเอกสารของ Yarn ประกอบ
+> ⚠️ Yarn มี 2 สายที่คำสั่งบางตัวต่างกัน: **v1 (classic)** ซึ่งเป็นตัวที่ได้เมื่อติดตั้ง package ชื่อ `yarn` จาก npm และ **v2 ขึ้นไป** ที่โปรเจกต์เปิดใช้ผ่าน Corepack ถ้าโปรเจกต์ไหนใช้ Yarn ให้ดูเวอร์ชันด้วย `yarn --version` ก่อนเสมอ เพราะ **Yarn v1 ไม่ฟ้องเมื่อเจอ flag ที่ไม่รู้จัก** เช่น `yarn install --immutable` บน v1 จะจบด้วย `success` เฉยๆ โดยไม่ได้ล็อกอะไรเลย ใน CI แบบนี้อันตรายเพราะดูเหมือนผ่าน
 
 ### 🔧 ลงมือ: เพิ่ม → ดู → ลบ
 
@@ -426,11 +426,39 @@ npm update                       # อัปเดตเท่าที่ช่
 ### `npx` / `bunx`: รันเครื่องมือโดยไม่ต้องติดตั้งถาวร
 
 **`npx ชื่อโปรแกรม`** (ของ Bun คือ `bunx`) = ดาวน์โหลด package นั้นมารันครั้งเดียว (หรือใช้ตัวที่ติดตั้งในโปรเจกต์อยู่แล้ว) เหมาะกับเครื่องมือที่ใช้นานๆ ครั้ง เช่น ตัวสร้างโปรเจกต์
+**กับดักที่ต้องรู้: ชื่อ package ≠ ชื่อคำสั่ง** คำสั่ง `tsc` มาจาก package ชื่อ `typescript` ไม่ใช่ package ชื่อ `tsc` แต่ `npx ชื่อ` จะหาจาก **ชื่อคำสั่งในโปรเจกต์ก่อน** ถ้าไม่เจอจึงไปโหลด **package ที่ชื่อตรงกับที่พิมพ์** จาก registry
+
+ตอนนี้ในโฟลเดอร์ `pkg-demo` เราเพิ่งถอน `typescript` ออกไป ลองดูว่าเกิดอะไรขึ้น:
 ```bash
-npx tsc --version        # ใช้ typescript ที่ติดตั้งในโปรเจกต์ (ถ้ามี)
-bunx tsc --noEmit        # ตรวจ type ด้วย Bun
+npx tsc --version        # ❌ ไม่มี typescript ในโปรเจกต์ → npx ไปโหลด package ชื่อ "tsc"
 ```
-> ⚠️ `npx` จะรันโค้ดของ package นั้นทันที ตรวจชื่อให้ถูก (พิมพ์ผิดอาจไปรันของแอบแฝง ดูข้อ 14) และถ้าไม่ได้ติดตั้ง package ไว้ npm จะถามว่าจะติดตั้งไหม อ่านชื่อให้ดีก่อนตอบ `y`
+ควรเห็น: npm ถามว่าจะติดตั้ง package ชื่อ `tsc` ไหม (สังเกตว่าไม่ใช่ `typescript`)
+```
+Need to install the following packages:
+tsc@2.0.4
+Ok to proceed? (y)
+```
+ให้ตอบ `n` ถ้าเผลอตอบ `y` จะได้ป้ายแดงนี้แทนเลขเวอร์ชัน:
+```
+                This is not the tsc command you are looking for
+
+To get access to the TypeScript compiler, tsc, from the command line either:
+- Use npm install typescript to first add TypeScript to your project before using npx
+```
+package `tsc` บน npm เป็นของเก่าที่เลิกใช้แล้ว (ทีม TypeScript เอามาทำเป็นป้ายเตือนไว้) โชคดีที่ตัวนี้แค่เตือน แต่กลไกเดียวกันนี้คือสิ่งที่คนร้ายใช้ในข้อ 14: ตั้งชื่อ package ให้ตรงกับคำที่คนชอบพิมพ์ แล้วรอให้ใครสักคน `npx` เข้ามา
+
+วิธีที่ถูก (ตามเอกสาร TypeScript) มี 2 แบบ:
+```bash
+npm install -D typescript   # แบบที่ 1: ติดตั้งในโปรเจกต์ก่อน แล้ว npx จะเจอคำสั่ง tsc ในโปรเจกต์
+npx tsc --version
+
+npx -p typescript tsc --version   # แบบที่ 2: บอกชื่อ package ตรงๆ ด้วย -p (ไม่ติดตั้งถาวร)
+```
+ควรเห็น: เลขเวอร์ชันของ TypeScript เช่น `Version 7.0.2` (ตัวเลขขึ้นกับวันที่ติดตั้ง)
+
+ฝั่ง Bun ก็ใช้หลักเดียวกัน: ในโปรเจกต์ที่ติดตั้ง `typescript` แล้ว สั่ง `bunx tsc --noEmit` เพื่อตรวจ type ถ้ายังไม่ได้ติดตั้ง ให้ระบุ package เองด้วย `bunx -p typescript tsc --noEmit`
+
+> ⚠️ `npx` จะรันโค้ดของ package นั้นทันที ตรวจชื่อให้ถูก (พิมพ์ผิดอาจไปรันของแอบแฝง ดูข้อ 14) และถ้าไม่ได้ติดตั้ง package ไว้ npm จะถามว่าจะติดตั้งไหม **อ่านชื่อ package ในคำถามให้ดีก่อนตอบ `y`** ถ้าชื่อไม่ใช่ตัวที่ตั้งใจ (เช่นถาม `tsc` แต่เราต้องการ `typescript`) ให้ตอบ `n`
 
 ---
 
@@ -453,6 +481,16 @@ nvm use 22             # สลับไปใช้ Node 22 ใน Terminal น
 node -v                # เช็คว่าสลับแล้ว
 ```
 ควรเห็น: หลัง `nvm use 22` สั่ง `node -v` ได้ `v22.x.x`
+
+**🪟 nvm-windows คำสั่งไม่เหมือนกันทุกตัว** เพราะเป็นคนละโปรแกรม (อ่าน README ของ nvm-windows ประกอบ):
+
+| ต้องการ | nvm (Mac/Linux) | nvm-windows |
+|---|---|---|
+| ก่อนติดตั้ง | ไม่ต้องทำอะไร | **ถอน Node ที่ติดตั้งจากบทที่ 0 ออกก่อน** (Settings > Apps) ไม่อย่างนั้น 2 ตัวจะแย่ง PATH กัน |
+| ติดตั้งรุ่น LTS | `nvm install --lts` | `nvm install lts` |
+| ดูรุ่นในเครื่อง | `nvm ls` | `nvm list` |
+| สลับรุ่น | `nvm use 22` | `nvm use 22` ใน Terminal ที่เปิดแบบ **Run as administrator** (มันต้องสร้าง symlink ในโฟลเดอร์ระบบ) |
+| อ่าน `.nvmrc` | `nvm use` เฉยๆ ได้ | ไม่อ่านอัตโนมัติ ให้เปิดไฟล์ดูเลขแล้วสั่ง `nvm use <เลข>` เอง |
 
 **บอกเวอร์ชันที่โปรเจกต์ต้องการ** ให้ทีมเห็นตรงกัน:
 - สร้างไฟล์ `.nvmrc` ในโปรเจกต์ ข้างในมีบรรทัดเดียว เช่น `22` แล้วใครเข้าโฟลเดอร์มาสั่ง `nvm use` ก็ได้เวอร์ชันที่ถูกเอง
@@ -576,33 +614,61 @@ npm error   npm run
 ใช้คำสั่งในข้อ 14 (ชื่อที่ไม่มีอยู่) จะได้ `E404` ให้ฝึกอ่านตามขั้นตอนที่บอกไว้
 
 **พังที่ 4: มี lock file สองตัว** (เพื่อเห็นปัญหาแล้วลบทิ้ง ในโฟลเดอร์ทดลองเท่านั้น)
-สร้างโฟลเดอร์ทดลองที่มี `package-lock.json` แล้วลองรัน `bun install` ในนั้น Bun จะสร้าง `bun.lock` เพิ่มขึ้นมา → ตอนนี้โปรเจกต์มี lock file 2 ตัว ไม่มีใครรู้ว่าตัวไหนเป็นของจริง ทีมจะได้เวอร์ชันไม่ตรงกัน **ห้ามทำในโปรเจกต์จริง** (ดูวิธีเลือกตัวที่ถูกในข้อ 5)
+```bash
+mkdir ~/two-locks && cd ~/two-locks
+npm init -y
+npm install dayjs      # npm สร้าง package-lock.json
+bun install            # Bun เจอ package-lock.json แล้วสร้าง bun.lock เพิ่มอีกตัว
+ls
+```
+ควรเห็น:
+```
+bun.lock  node_modules  package-lock.json  package.json
+```
+ตอนนี้โปรเจกต์มี lock file 2 ตัว คนที่สั่ง `npm ci` จะอ่าน `package-lock.json` ส่วนคนที่สั่ง `bun install` จะอ่าน `bun.lock` ถ้าวันหนึ่งสองไฟล์ไม่ตรงกัน ทีมจะได้เวอร์ชันไม่ตรงกันโดยไม่มีใครรู้ว่าตัวไหนเป็นของจริง **ห้ามทำในโปรเจกต์จริง** (ดูวิธีเลือกตัวที่ถูกในข้อ 5) ทดลองเสร็จแล้วลบโฟลเดอร์ `~/two-locks` ทิ้งได้เลย
 
 ---
 
 ## 16. 🔧 แข่งความเร็ว 🏁
 
-ติดตั้ง Yarn และ Bun:
+เตรียม Yarn และ Bun:
 ```bash
-npm install -g yarn
-# Mac / Linux
+# Yarn: ไม่ติดตั้งแบบ global ใช้ผ่าน npx แทน (เหตุผลอยู่ใต้กล่องนี้)
+npx yarn@1 --version
+# Bun: Mac / Linux
 curl -fsSL https://bun.sh/install | bash
-# Windows (PowerShell)
+# Bun: Windows (PowerShell)
 powershell -c "irm bun.sh/install.ps1 | iex"
 ```
-ปิดเปิด Terminal ใหม่ เช็ค `yarn --version`, `bun --version`
+ปิดเปิด Terminal ใหม่ เช็ค `npx yarn@1 --version` (ควรได้ `1.22.22` หรือใกล้เคียง) และ `bun --version`
 
-(ถ้า `npm install -g yarn` ขึ้น `EACCES` ดูวิธีแก้ในตารางข้อ 17 ห้ามใช้ `sudo`)
+ทำไมไม่ใช้ `npm install -g yarn`: (1) บน Mac ที่ติดตั้ง Node ด้วยไฟล์ `.pkg` ตามบทที่ 0 โฟลเดอร์ global เป็นของระบบ จะได้ `EACCES` และ (2) package ชื่อ `yarn` บน npm คือ **Yarn v1 (classic)** เสมอ การเขียน `yarn@1` ให้เห็นชัดๆ ทำให้รู้ว่ากำลังใช้รุ่นไหน (ถ้าเห็นคำสั่ง `--immutable` ในตารางข้อ 11 ให้ใช้ `--frozen-lockfile` แทน เพราะนี่คือ v1) ส่วนการสั่ง `npx yarn@1 --version` ไว้ก่อนหนึ่งครั้ง ทำให้ npx โหลด Yarn เก็บไว้ใน cache แล้ว จะได้ไม่เอาเวลาโหลด Yarn ไปปนกับเวลาติดตั้งตอนแข่ง
 
-สร้าง 3 โฟลเดอร์ `race-npm`, `race-yarn`, `race-bun` แต่ละโฟลเดอร์รัน `npm init -y` แล้วจับเวลา:
+สร้าง 3 โฟลเดอร์ `race-npm`, `race-yarn`, `race-bun` แต่ละโฟลเดอร์รัน `npm init -y`:
+```bash
+mkdir ~/race && cd ~/race
+mkdir race-npm race-yarn race-bun
+(cd race-npm && npm init -y) && (cd race-yarn && npm init -y) && (cd race-bun && npm init -y)
+```
+แล้วจับเวลา:
 ```bash
 cd race-npm  && time npm install express zod dayjs drizzle-orm pg
-cd ../race-yarn && time yarn add express zod dayjs drizzle-orm pg
+cd ../race-yarn && time npx yarn@1 add express zod dayjs drizzle-orm pg
 cd ../race-bun  && time bun add express zod dayjs drizzle-orm pg
 ```
 (PowerShell ใช้ `Measure-Command { npm install ... }` แทน `time`)
 
-ควรเห็น: แต่ละคำสั่งจบด้วยบรรทัดเวลา เช่น `real 0m3.2s` (ตัวเลขขึ้นกับเน็ตและเครื่อง) ให้จดเวลารอบแรกของแต่ละตัว
+ควรเห็น: แต่ละคำสั่งจบด้วยบรรทัดเวลา หน้าตาขึ้นกับ shell ที่ใช้ (ตัวเลขขึ้นกับเน็ตและเครื่อง):
+```
+# Git Bash / bash บน Linux
+real    0m3.2s
+user    0m2.1s
+sys     0m0.9s
+
+# zsh (ค่าเริ่มต้นของ Mac) พิมพ์บรรทัดเดียว ดูตัวเลขหน้าคำว่า total
+npm install express zod dayjs drizzle-orm pg  2.10s user 0.90s system 94% cpu 3.204 total
+```
+ให้จดเวลารอบแรกของแต่ละตัว (`real` ของ bash หรือ `total` ของ zsh คือเวลาจริงที่รอ)
 
 ลองรันซ้ำรอบที่ 2 หลังลบ `node_modules` (ตอนนี้มี cache แล้ว) แล้วเทียบกัน
 
@@ -612,7 +678,7 @@ cd ../race-bun  && time bun add express zod dayjs drizzle-orm pg
 
 | อาการ | สาเหตุ | วิธีแก้ |
 |---|---|---|
-| `EACCES: permission denied` ตอน `npm install -g ...` | พยายามเขียนลงโฟลเดอร์ระบบที่ user ธรรมดาไม่มีสิทธิ์ | **ไม่ต้องใช้ `sudo`** ติดตั้ง Node ผ่าน nvm (ข้อ 12) ซึ่งเก็บทุกอย่างในโฟลเดอร์ของเราเอง หรือเลี่ยง global โดยใช้ `npx` แทน |
+| `EACCES: permission denied` ตอน `npm install -g ...` | พยายามเขียนลงโฟลเดอร์ระบบที่ user ธรรมดาไม่มีสิทธิ์ | **ไม่ต้องใช้ `sudo`** ทางที่ง่ายที่สุดคือเลี่ยง global แล้วใช้ `npx ชื่อ` แทน (เช่น `npx yarn@1` ในข้อ 16) ถ้าต้องใช้ global บ่อยจริงๆ ค่อยย้ายไปติดตั้ง Node ผ่าน nvm (ข้อ 12) ซึ่งเก็บทุกอย่างในโฟลเดอร์ของเราเอง |
 | `EACCES` ในโฟลเดอร์โปรเจกต์ | เคยรัน `sudo npm install` ทำให้ไฟล์เป็นของ root | อยู่ในโฟลเดอร์โปรเจกต์ แล้วสั่ง `sudo chown -R $(whoami) .` ครั้งเดียว จากนั้นลบ `node_modules` ติดตั้งใหม่ (ระวัง: สั่งเฉพาะในโฟลเดอร์โปรเจกต์ ห้ามสั่งที่ `/` หรือโฟลเดอร์ระบบ) |
 | `ERESOLVE could not resolve` / `peer dependency` | package สองตัวต้องการเวอร์ชันของ package ที่สามไม่ตรงกัน | อ่านบรรทัด `Found:` และ `peer ...` ว่าใครต้องการอะไร แล้วอัปเดตหรือปรับเวอร์ชันให้เข้ากัน วิธีหลบสุดท้ายคือ `npm install --legacy-peer-deps` (ใช้เมื่อเข้าใจแล้วว่ากำลังข้ามอะไร) |
 | `Cannot find module 'xxx'` / `ERR_MODULE_NOT_FOUND` | ยังไม่ได้ติดตั้ง (เช่น เพิ่ง clone) หรือพิมพ์ชื่อ/ที่อยู่ไฟล์ผิด หรืออยู่ผิดโฟลเดอร์ | `npm install` (หรือตาม lock file ของโปรเจกต์) เช็คว่าอยู่โฟลเดอร์ที่มี `package.json` (`pwd`) และเช็คตัวสะกด |

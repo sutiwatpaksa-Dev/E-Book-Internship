@@ -88,6 +88,79 @@ export default function App() {
 ![ตารางจับคู่ลิงก์กับ Route และหน้าที่แสดง รวมหน้า 404](/img/13-route-table.svg)
 *Router เทียบลิงก์กับรายการ Route ลิงก์ที่ไม่มีในรายการไปที่ path="*" (หน้า 404)*
 
+> ⚠️ ถ้าบันทึก `app.tsx` ตอนนี้ Vite จะขึ้นจอแดง `Failed to resolve import "./components/public-layout"` (และไฟล์อื่นอีก 4 ไฟล์) เพราะเรา import ไฟล์ที่ยังไม่ได้สร้าง ไม่ต้องตกใจ สร้างให้ครบตามข้อ 2 และ 3 แล้วจะหายเอง
+
+### 🔧 สร้าง 3 หน้า: ย้ายของจาก `app.tsx` เดิม
+
+`app.tsx` ของบทที่ 12 เคยวาดทุกอย่างในหน้าเดียว ตอนนี้แยกออกเป็น: ส่วนที่ทุกหน้ามีเหมือนกัน (เมนู ส่วนท้าย ปุ่ม LINE) ย้ายไป `public-layout.tsx` ในข้อ 3 ส่วนเนื้อหาของแต่ละหน้าย้ายมาอยู่ในโฟลเดอร์ `src/pages/` หน้าละไฟล์ (`<title>` ในแต่ละหน้าคือชื่อแท็บของเบราว์เซอร์ อธิบายในข้อ 6)
+
+`src/pages/home-page.tsx` ภาพใหญ่ + การ์ดสินค้า (ย้ายมาจาก `app.tsx` บทที่ 12 ทั้งก้อน)
+```tsx
+import Hero, { type HeroContent } from "../components/hero";
+import ServiceCard from "../components/service-card";
+import { useFetch } from "../api/useFetch";
+import type { Service } from "../types/service";
+
+// ย้ายมาจาก app.tsx ของบทที่ 12 (บทที่ 14 จะดึงจากฐานข้อมูล)
+const hero: HeroContent = {
+  title: "กาแฟดี ใกล้บ้านคุณ",
+  subtitle: "คั่วสดทุกสัปดาห์ เสิร์ฟด้วยรอยยิ้ม",
+  imageUrl: "https://picsum.photos/seed/cafe/1600/900",
+  ctaText: "ติดต่อเรา",
+};
+
+export default function HomePage() {
+  const { data, error, loading } = useFetch<Service[]>("/mock/services.json");
+
+  return (
+    <>
+      <title>Bit Café | กาแฟคั่วสดใกล้บ้าน</title>
+      <Hero hero={hero} />
+      <section className="py-12">
+        <h2 className="mb-6 text-center text-2xl font-bold text-brand">เมนูแนะนำ</h2>
+        {loading && <p className="text-center">กำลังโหลด... ⏳</p>}
+        {error && <p className="text-center">โหลดข้อมูลไม่สำเร็จ: {error} 😢</p>}
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 md:grid-cols-2 xl:grid-cols-3">
+          {data?.map((s) => <ServiceCard key={s.id} service={s} />)}
+        </div>
+      </section>
+    </>
+  );
+}
+```
+
+`src/pages/about-page.tsx` (ข้อ 4 จะเพิ่มรายการบริการแบบเลือกหมวดลงในหน้านี้)
+```tsx
+export default function AboutPage() {
+  return (
+    <section className="mx-auto max-w-6xl px-4 py-12">
+      <title>เกี่ยวกับเรา | Bit Café</title>
+      <h1 className="text-3xl font-bold text-brand">เกี่ยวกับเรา</h1>
+      <p className="mt-4">Bit Café เปิดมาตั้งแต่ปี 2563 เราคั่วกาแฟเองทุกสัปดาห์</p>
+      {/* ข้อ 4 จะเพิ่ม <ServiceList /> ตรงนี้ */}
+    </section>
+  );
+}
+```
+
+`src/pages/contact-page.tsx` ใช้ฟอร์มจากบทที่ 11 ข้อ 7
+```tsx
+import ContactForm from "../components/contact-form";
+
+export default function ContactPage() {
+  return (
+    <section className="mx-auto max-w-xl px-4 py-12">
+      <title>ติดต่อเรา | Bit Café</title>
+      <h1 className="text-3xl font-bold text-brand">ติดต่อเรา</h1>
+      <div className="mt-6">
+        <ContactForm />
+      </div>
+    </section>
+  );
+}
+```
+👀 แต่ละหน้ามี `h1` ของตัวเองหน้าละ 1 อัน (หน้าแรกอยู่ใน `Hero`) เรื่องนี้สำคัญกับ Google ในข้อ 6
+
 ---
 
 ## 3. โครงหน้าร่วม + เมนูที่รู้ว่าอยู่หน้าไหน
@@ -127,21 +200,66 @@ export default function PublicLayout() {
 ![โครง PublicLayout ที่มี Navbar Footer และช่อง Outlet ให้หน้าลูกมาแสดง](/img/13-layout-outlet.svg)
 *Outlet คือช่องว่างในโครงหน้าร่วม หน้าที่ตรงกับลิงก์จะถูกวาดลงตรงนี้*
 
-แก้เมนูจากบทที่ 12: เปลี่ยน `<a href>` เป็น **`NavLink`** จะได้ 2 อย่าง: เปลี่ยนหน้าโดยไม่โหลดใหม่ + รู้ว่าตอนนี้อยู่หน้าไหน (เอาไปทำให้เมนูนั้นเด่น)
+แก้เมนูจากบทที่ 12: เปลี่ยน `<a href>` เป็น **`NavLink`** (และโลโก้เป็น `Link`) จะได้ 2 อย่าง: เปลี่ยนหน้าโดยไม่โหลดใหม่ + รู้ว่าตอนนี้อยู่หน้าไหน (เอาไปทำให้เมนูนั้นเด่น) เขียนทับ `src/components/navbar.tsx` ทั้งไฟล์
 ```tsx
-import { NavLink } from "react-router";
+import { useState } from "react";
+import { Link, NavLink } from "react-router";
 
-<NavLink
-  to={l.href}
-  end={l.href === "/"}                 // "/" ต้องตรงเป๊ะ ไม่งั้น active ทุกหน้า
-  className={({ isActive }) =>
-    isActive ? "font-semibold text-brand underline underline-offset-8" : "hover:text-brand"
-  }
-  onClick={() => setOpen(false)}       // มือถือ: กดแล้วปิดเมนู
->
-  {l.label}
-</NavLink>
+const links = [
+  { href: "/", label: "หน้าแรก" },
+  { href: "/about", label: "เกี่ยวกับเรา" },
+  { href: "/contact", label: "ติดต่อ" },
+];
+
+// หน้าตาของเมนู: หน้าที่อยู่ตอนนี้ (isActive) ตัวหนา สีร้าน มีขีดเส้นใต้
+const linkClass = ({ isActive }: { isActive: boolean }) =>
+  isActive ? "font-semibold text-brand underline underline-offset-8" : "hover:text-brand";
+
+export default function Navbar({ shopName, logoUrl }: { shopName: string; logoUrl: string }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <header className="sticky top-0 z-40 bg-white shadow-sm">
+      <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+        <Link to="/" className="flex items-center gap-2 font-bold text-brand">
+          <img src={logoUrl} alt={shopName} className="h-10 w-10 rounded-full" />
+          {shopName}
+        </Link>
+
+        <ul className="hidden gap-6 md:flex">
+          {links.map((l) => (
+            <li key={l.href}>
+              <NavLink to={l.href} end={l.href === "/"} className={linkClass}>   {/* "/" ต้องตรงเป๊ะ ไม่งั้น active ทุกหน้า */}
+                {l.label}
+              </NavLink>
+            </li>
+          ))}
+        </ul>
+
+        <button className="md:hidden text-2xl" onClick={() => setOpen(!open)} aria-label="เปิดเมนู">
+          {open ? "✕" : "☰"}
+        </button>
+      </nav>
+
+      {open && (
+        <ul className="border-t border-gray-200 px-4 pb-4 md:hidden">
+          {links.map((l) => (
+            <li key={l.href}>
+              <NavLink to={l.href} end={l.href === "/"} className={linkClass} onClick={() => setOpen(false)}>   {/* กดแล้วปิดเมนู */}
+                <span className="block py-2">{l.label}</span>
+              </NavLink>
+            </li>
+          ))}
+        </ul>
+      )}
+    </header>
+  );
+}
 ```
+อ่านส่วนที่เปลี่ยน:
+- `className` ของ `NavLink` รับ **ฟังก์ชัน** ได้ React Router เรียกฟังก์ชันนั้นพร้อมบอกว่า `isActive` (ลิงก์นี้ตรงกับหน้าปัจจุบันไหม) เราจึงคืนคลาสต่างกันได้ ประกาศไว้ครั้งเดียวใน `linkClass` แล้วใช้ทั้งเมนูจอใหญ่และมือถือ
+- `end` บอกว่าต้องตรง **ทั้งลิงก์** ถ้าไม่ใส่ `/` จะนับว่าตรงกับทุกหน้า (เพราะทุกลิงก์ขึ้นต้นด้วย `/`) เมนู "หน้าแรก" จะเด่นตลอด
+- เมนูมือถือมี `onClick={() => setOpen(false)}` เพิ่ม เพราะเปลี่ยนหน้าแล้วหน้าไม่โหลดใหม่ state `open` จึงไม่รีเซ็ตเอง ถ้าไม่ปิดเอง เมนูจะค้างเปิดทับหน้าใหม่
 > ⚠️ ลิงก์ไปหน้าอื่นในเว็บเราเอง ใช้ `<Link>` / `<NavLink>` เสมอ ถ้าใช้ `<a href>` เบราว์เซอร์จะโหลดใหม่ทั้งหน้า ข้อมูลที่จำไว้หายหมด
 > ลิงก์ออกไปเว็บอื่น (LINE, Facebook) ใช้ `<a href target="_blank" rel="noopener noreferrer">` ได้ตามปกติ
 
@@ -170,6 +288,7 @@ export default function NotFoundPage() {
 ![ขั้นตอนกดปุ่มหมวด ลิงก์เปลี่ยน useSearchParams อ่านค่า และ useFetch ดึงข้อมูลใหม่](/img/13-search-params.svg)
 *เก็บหมวดไว้ในลิงก์ รีเฟรช ส่งต่อ และย้อนกลับได้ ต่างจากเก็บไว้ในตัวแปร*
 
+`src/components/service-list.tsx`
 ```tsx
 import { useSearchParams } from "react-router";
 import { useFetch } from "../api/useFetch";
@@ -204,13 +323,44 @@ export default function ServiceList() {
 }
 ```
 👀 ลิงก์เปลี่ยน → `useFetch` ดึงข้อมูลใหม่เอง เพราะเราบอกไว้ในบทที่ 11 ข้อ 6 ว่าให้ทำใหม่เมื่อ `url` เปลี่ยน
-💡 ที่อยู่ `/api/...` จะมีจริงใน [บทที่ 14](/14-hono-api) ระหว่างนี้ชี้ไปที่ไฟล์ตัวอย่างใน `public/` แบบบทที่ 11 ไปก่อนได้
+
+ใส่รายการนี้ลงในหน้าเกี่ยวกับเรา: แก้ `src/pages/about-page.tsx` เพิ่มบรรทัด import และแทนบรรทัดคอมเมนต์ด้วยตัวรายการ
+```tsx
+import ServiceList from "../components/service-list";
+
+export default function AboutPage() {
+  return (
+    <section className="mx-auto max-w-6xl px-4 py-12">
+      <title>เกี่ยวกับเรา | Bit Café</title>
+      <h1 className="text-3xl font-bold text-brand">เกี่ยวกับเรา</h1>
+      <p className="mt-4">Bit Café เปิดมาตั้งแต่ปี 2563 เราคั่วกาแฟเองทุกสัปดาห์</p>
+      <div className="mt-8">
+        <ServiceList />
+      </div>
+    </section>
+  );
+}
+```
+
+> ⚠️ **ที่อยู่ `/api/...` ยังไม่มีจริงจนถึง [บทที่ 14](/14-hono-api)** ถ้าเปิด `/about` ตอนนี้จะเห็น `โหลดข้อมูลไม่สำเร็จ: ข้อมูลที่ได้กลับมาไม่ใช่ JSON (ที่อยู่ผิดหรือเปล่า?)` ซึ่งถูกต้องแล้ว (Vite ตอบที่อยู่ที่ไม่มีด้วยหน้า HTML ตามที่บทที่ 11 อธิบาย) ถ้าอยากลองปุ่มหมวดตอนนี้ ให้สร้าง `public/mock/categories.json`
+> ```json
+> {
+>   "success": true,
+>   "data": [
+>     { "id": 1, "name": "เครื่องดื่ม", "slug": "drinks" },
+>     { "id": 2, "name": "บริการจัดเลี้ยง", "slug": "catering" }
+>   ]
+> }
+> ```
+> แล้วเปลี่ยนชั่วคราวใน `service-list.tsx` เป็น `useFetch<Category[]>("/mock/categories.json")` และ `` useFetch<Service[]>(`/mock/services.json${category ? `?category=${encodeURIComponent(category)}` : ""}`) `` สิ่งที่ควรเห็น: กดปุ่มหมวดแล้ว **ลิงก์บนแถบที่อยู่เปลี่ยน** เป็น `/about?category=drinks` และ **ปุ่มที่กดเป็นสีร้าน** กดย้อนกลับแล้วปุ่มเด่นกลับไปที่เดิม แต่ **การ์ดยังแสดงครบทุกใบ** เพราะไฟล์ใน `public/` เป็นไฟล์นิ่ง ไม่อ่าน `?category=` (การกรองจริงเป็นงานของ server ในบทที่ 14) พอถึงบทที่ 14 ค่อยเปลี่ยนกลับเป็น `/api/...`
 
 ---
 
 ## 5. หน้าจัดการร้าน: หน้าซ้อนหน้า + หน้าที่ต้อง login
 
-เพิ่มใน `app.tsx`:
+> 📖 **ข้อนี้อ่านอย่างเดียว ยังไม่ต้องใส่ในโค้ด** ชิ้นส่วน `LoginPage`, `RequireAuth`, `AdminLayout` และหน้าในหลังร้านยังไม่มีอยู่จริง ถ้าใส่ตอนนี้จะได้ `Cannot find name 'LoginPage'` [บทที่ 15](/15-auth) จะสร้างครบแล้วให้กลับมาเพิ่มบรรทัดเหล่านี้ใน `app.tsx` ตอนนั้น ที่ให้ดูก่อนเพราะอยากให้เห็นภาพ "หน้าซ้อนหน้า" ต่อจากโครงหน้าร่วมในข้อ 3
+
+หน้าตาที่จะเพิ่มใน `app.tsx` (ข้างใน `<Routes>` ต่อจาก `<Route element={<PublicLayout />}>...</Route>`):
 ```tsx
 <Route path="admin/login" element={<LoginPage />} />
 <Route path="admin" element={<RequireAuth><AdminLayout /></RequireAuth>}>
@@ -260,7 +410,26 @@ export default function Seo({ title, description, image }: Props) {
   );
 }
 ```
-ใช้ในแต่ละหน้า โดยดึงค่าจาก API (ค่าที่เจ้าของร้านแก้ได้ในหน้าจัดการ):
+ใช้ในแต่ละหน้า **ตอนนี้ใส่ค่าตรงๆ ไปก่อน** แทนบรรทัด `<title>...</title>` เดิมของแต่ละหน้า เช่นใน `home-page.tsx`
+```tsx
+import Seo from "../components/seo";
+// ...ใน return แทน <title>Bit Café | กาแฟคั่วสดใกล้บ้าน</title>
+<Seo title="Bit Café | กาแฟคั่วสดใกล้บ้าน" description="ร้านกาแฟเล็กๆ คั่วสดทุกสัปดาห์ รับจัดเลี้ยงนอกสถานที่" />
+```
+ทำแบบเดียวกันกับ `about-page.tsx` และ `contact-page.tsx` โดยใส่คำอธิบายที่ต่างกันทุกหน้า (Google ใช้คำอธิบายเป็นข้อความใต้ลิงก์ในผลค้นหา ถ้าทุกหน้าเหมือนกัน คนอ่านแยกไม่ออกว่าหน้าไหนคืออะไร) ตรวจผล: เปิด DevTools → Elements → ดูใน `<head>` ต้องเห็น `<meta name="description">` เปลี่ยนตามหน้าที่เปิด
+
+> ⚠️ `og:image` ต้องเป็น **ที่อยู่เต็ม** ที่ขึ้นต้นด้วย `https://` เช่น `https://example.com/og.jpg` ไม่ใช่ `/og.jpg` เพราะระบบของ LINE/Facebook ไม่รู้ว่า `/` หมายถึงเว็บไหน
+
+**ต่อยอดในบทที่ 14:** เมื่อมี API `GET /api/pages/:slug` (แบบฝึกหัดบทที่ 14) ค่อยเปลี่ยนไปดึงค่าที่เจ้าของร้านตั้งเอง หน้าตาข้อมูลที่ API คืนมา:
+```ts
+// src/types/page.ts
+export interface PageData {
+  slug: string;
+  seoTitle: string;
+  seoDescription: string;
+  ogImageUrl?: string;        // ไม่ใส่ก็ได้ (Seo จะไม่สร้างแท็ก og:image)
+}
+```
 ```tsx
 const page = useFetch<PageData>("/api/pages/home");
 // ...
@@ -314,6 +483,20 @@ Sitemap: https://example.com/sitemap.xml
 > 💡 งาน STARTER ยอมรับข้อจำกัดนี้ได้ แต่ต้อง **เขียนอธิบายใน README** ว่าเพราะอะไร และถ้าจะแก้ต้องทำยังไง
 
 **ลองการ์ดตอนแชร์ (หลังขึ้นระบบจริง):** [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/) และส่งลิงก์ให้ตัวเองใน LINE
+
+---
+
+## ⚠️ ปัญหาที่เจอบ่อย
+
+| อาการ | สาเหตุ | วิธีแก้ |
+|---|---|---|
+| จอแดง `useNavigate() may be used only in the context of a <Router> component` (หรือข้อความคล้ายกันเมื่อใช้ `Link`/`NavLink`) | ใช้ของจาก React Router ในชิ้นส่วนที่ไม่ได้อยู่ใต้ `<BrowserRouter>` | ครอบ `<App />` ด้วย `<BrowserRouter>` ใน `main.tsx` ตามข้อ 2 |
+| `Failed to resolve import "./pages/about-page"` | import ไฟล์ที่ยังไม่ได้สร้าง หรือชื่อไฟล์สะกดไม่ตรง (ตัวพิมพ์เล็กใหญ่ด้วย) | สร้างไฟล์ตามข้อ 2 เช็คชื่อด้วย `ls src/pages` |
+| เมนูกับส่วนท้ายขึ้น แต่เนื้อหาตรงกลางว่าง | ลืม `<Outlet />` ใน `public-layout.tsx` | ใส่ `<Outlet />` ใน `<main>` ตามข้อ 3 |
+| เมนู "หน้าแรก" เด่นตลอดทุกหน้า | `NavLink` ของ `/` ไม่มี `end` | ใส่ `end={l.href === "/"}` |
+| กดเมนูแล้วหน้ากระพริบ โหลดใหม่ทั้งหน้า | ยังใช้ `<a href>` กับลิงก์ในเว็บเรา | เปลี่ยนเป็น `<Link to>` / `<NavLink to>` |
+| หน้าเกี่ยวกับเราขึ้น `ข้อมูลที่ได้กลับมาไม่ใช่ JSON` | ยังไม่มี `/api/...` จนกว่าจะถึงบทที่ 14 | ปกติ ใช้ไฟล์ mock ตามกล่องในข้อ 4 ไปก่อน |
+| ขึ้นระบบจริงแล้วกดรีเฟรชที่ `/about` ได้ 404 | server ไม่ได้ส่ง `index.html` กลับเมื่อไม่มีไฟล์ตามที่ขอ (SPA fallback ข้อ 1) | ตั้ง server ตาม [บทที่ 20](/20-deploy-vps) / [บทที่ 22](/22-deploy-managed) |
 
 ---
 

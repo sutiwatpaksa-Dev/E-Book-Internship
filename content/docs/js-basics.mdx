@@ -1,0 +1,569 @@
+---
+navTitle: "บทเสริม · JavaScript พื้นฐาน"
+title: "บทเสริม: JavaScript พื้นฐานใน 30–60 นาที 🟨"
+---
+
+> ⏱ 30–60 นาที (ถ้าไม่เคยเขียนโปรแกรมเลย เผื่อ 90 นาที) · 🧩 ต้องผ่านก่อน: บทที่ 3 (มี Node หรือ Bun ในเครื่อง) · 🛠 ใช้: Node.js หรือ Bun, VS Code, Terminal
+> อ่านก่อน [บทที่ 4](/04-typescript) ถ้ายังไม่เคยเขียน JavaScript หรือเขียนแล้วอ่านโค้ดอย่าง `laptops.map((l) => l.brand)` ไม่ออก
+
+> **⚡ สรุป 30 วินาที**
+> - TypeScript = JavaScript + type ดังนั้น **ทุกบรรทัดในบทนี้ใช้ใน TypeScript ได้เหมือนเดิม** บทที่ 4 แค่เติม type เข้าไป
+> - 9 เรื่องที่ต้องอ่านออก: **ค่าและตัวแปร, เงื่อนไข, loop, ฟังก์ชัน (รวม arrow และ callback), object/array, destructuring/spread, `map`/`filter`/`reduce`, `import`/`export`, Promise กับ `async`/`await`**
+> - ใช้ `const` เป็นค่าเริ่มต้น เทียบด้วย `===` เสมอ และจำว่า **ฟังก์ชันเป็น "ค่า" ส่งต่อได้** (หัวใจของ `map`, `filter`, React และ Hono)
+> - ทุกตัวอย่าง **รันจริงแล้ว** ด้วย Node 26 (ผล "ควรเห็น" มาจากการรันนั้น) รันด้วย Bun ได้ผลเดียวกัน ต่างแค่หน้าตาตอนพิมพ์ object
+
+> **📖 คำใหม่ในบทนี้**
+> [Variable](/glossary#variable) · [Function](/glossary#function) · [Array](/glossary#array) · [Object](/glossary#object) · [Arrow function](/glossary#arrow-function) · [Callback](/glossary#callback) · [Template literal](/glossary#template-literal) · [Destructuring](/glossary#destructuring) · [Spread](/glossary#spread) · [Module](/glossary#module) · [async / Promise](/glossary#async)
+
+---
+
+## 0. เตรียมโฟลเดอร์ทดลอง
+
+```bash
+mkdir js-basics && cd js-basics
+```
+สร้างไฟล์ตามชื่อในแต่ละข้อ แล้วรันด้วย `node ชื่อไฟล์.mjs` (หรือ `bun ชื่อไฟล์.mjs`)
+
+> 🤔 **ทำไมนามสกุล `.mjs`?** Node มีระบบ `import`/`export` 2 แบบ (ESM กับ CommonJS บทที่ 3) `.mjs` บอก Node ว่า "ไฟล์นี้ใช้ ESM แบบใหม่" โดยไม่ต้องสร้าง `package.json` ในโปรเจกต์จริงเราตั้ง `"type": "module"` ใน `package.json` แทน (บทที่ 4 ข้อ 9) แล้วใช้ `.ts` ได้เลย
+
+> 💡 **วิธีเรียนที่ได้ผล:** อย่าแค่ copy แล้วรัน ก่อนรันให้ **เดาผลก่อน** แล้วค่อยเทียบกับ "ควรเห็น" ตรงไหนเดาผิด คือตรงที่เพิ่งได้เรียนรู้ จากนั้นแก้ค่าในโค้ดเล่นแล้วรันใหม่
+
+---
+
+## 1. ค่าและตัวแปร
+
+`1-values.mjs`
+```js
+const shop = "Bit Rental";     // const = ป้ายติดถาวร เปลี่ยนค่าไม่ได้
+let stock = 3;                 // let = เปลี่ยนค่าได้
+stock = stock - 1;
+
+const price = 1500;            // number (ทั้งเลขเต็มและทศนิยมเป็นชนิดเดียวกัน)
+const isOpen = true;           // boolean
+let note;                      // ยังไม่ได้ใส่ค่า = undefined
+const discount = null;         // ตั้งใจให้ "ว่าง"
+
+console.log(shop, stock);
+console.log(typeof shop, typeof price, typeof isOpen, typeof note, typeof discount);
+console.log(`ร้าน ${shop} เหลือ ${stock} เครื่อง ราคา ${price * 2} บาท/2 เดือน`);
+```
+```bash
+node 1-values.mjs
+```
+**ควรเห็น**
+```
+Bit Rental 2
+string number boolean undefined object
+ร้าน Bit Rental เหลือ 2 เครื่อง ราคา 3000 บาท/2 เดือน
+```
+สิ่งที่ต้องสังเกต
+1. **`typeof null` ได้ `"object"`** เป็นความผิดพลาดที่ติดมาตั้งแต่ภาษาเกิดและแก้ไม่ได้แล้ว (แก้แล้วเว็บเก่าทั้งโลกจะพัง) เวลาเช็ค null ให้เขียน `x === null` ตรงๆ
+2. บรรทัดสุดท้ายใช้ **template literal**: ข้อความในเครื่องหมาย `` ` `` (backtick ปุ่มซ้ายของเลข 1) แทรกค่าด้วย `${...}` และข้างใน `${}` คำนวณได้ (`price * 2`)
+3. `undefined` = ยังไม่มีใครใส่ค่า / `null` = มีคนตั้งใจใส่ว่า "ว่าง" ทั้งคู่เป็นต้นเหตุของ error ยอดฮิต `Cannot read properties of undefined` (บทที่ 9)
+
+> 💡 **ใช้ `const` ก่อนเสมอ** เปลี่ยนเป็น `let` เมื่อจำเป็นต้องเปลี่ยนค่าจริงๆ เหตุผล: คนอ่านโค้ดเห็น `const` แล้วรู้ทันทีว่าค่านี้ไม่เปลี่ยนตลอดทาง ไม่ต้องไล่หา ส่วน `var` เป็นแบบเก่าที่มีกฎแปลกๆ ไม่ใช้แล้ว
+
+---
+
+## 2. เปรียบเทียบและเงื่อนไข
+
+`2-conditions.mjs`
+```js
+const stock = 0;
+const input = "0";             // ค่าจากฟอร์มเป็นข้อความเสมอ
+
+console.log(input == stock);   // == แปลงชนิดให้ก่อนเทียบ
+console.log(input === stock);  // === เทียบทั้งค่าและชนิด
+
+if (stock === 0) {
+  console.log("หมด");
+} else if (stock < 3) {
+  console.log("ใกล้หมด");
+} else {
+  console.log("มีของ");
+}
+
+const label = stock > 0 ? "ว่าง" : "ไม่ว่าง";   // ternary: เงื่อนไข ? ถ้าจริง : ถ้าเท็จ
+console.log(label);
+
+// ค่าที่นับเป็น "เท็จ" (falsy): false, 0, "", null, undefined, NaN นอกนั้นเป็น "จริง"
+console.log(Boolean(0), Boolean(""), Boolean("0"), Boolean([]));
+console.log(stock || 10, stock ?? 10);  // || ถือว่า 0 คือไม่มีค่า, ?? ถือแค่ null/undefined
+```
+**ควรเห็น**
+```
+true
+false
+หมด
+ไม่ว่าง
+false false true true
+10 0
+```
+สิ่งที่ต้องสังเกต
+1. **`"0" == 0` ได้ `true`** เพราะ `==` แปลงข้อความเป็นตัวเลขก่อนเทียบ (type coercion แบบเดียวกับบั๊ก 1,500,105 ของบิตในบทที่ 4) ใช้ **`===` เสมอ** จะได้ไม่มีอะไรแปลงให้แบบเงียบๆ
+2. `Boolean("0")` และ `Boolean([])` เป็น `true` ข้อความ `"0"` ไม่ว่าง (มีตัวอักษร 1 ตัว) และ array ว่างก็ยังเป็น "ของ 1 ชิ้น"
+3. `stock || 10` ได้ `10` เพราะ `||` มองว่า `0` คือ "ไม่มีค่า" ถ้า 0 เป็นค่าที่ถูกต้อง (สต็อกหมดจริง) ต้องใช้ `??` ซึ่งใช้ค่าสำรองเฉพาะตอนเป็น `null`/`undefined`
+
+---
+
+## 3. Loop: ทำซ้ำ
+
+`3-loops.mjs`
+```js
+const brands = ["Acer", "Asus", "Lenovo"];
+
+for (const b of brands) {          // for...of = หยิบทีละตัว (ใช้บ่อยที่สุด)
+  console.log("ยี่ห้อ:", b);
+}
+
+for (let i = 0; i < brands.length; i++) {   // แบบนับเลข: เริ่ม 0, ทำตราบที่ i < 3, เพิ่มทีละ 1
+  console.log(i, brands[i]);
+}
+
+let total = 0;
+for (const price of [1500, 1200, 1300]) {
+  if (price > 1400) continue;      // ข้ามตัวนี้ไปตัวถัดไป
+  total += price;                  // total = total + price
+}
+console.log("รวม", total);
+```
+**ควรเห็น**
+```
+ยี่ห้อ: Acer
+ยี่ห้อ: Asus
+ยี่ห้อ: Lenovo
+0 Acer
+1 Asus
+2 Lenovo
+รวม 2500
+```
+- array **เริ่มนับที่ 0** ตัวสุดท้ายคือ `length - 1` จึงเขียน `i < brands.length` (ไม่ใช่ `<=`)
+- ในงานจริงจะใช้ `for...of` หรือ `map`/`filter` (ข้อ 7) มากกว่าแบบนับเลข เพราะไม่ต้องจัดการ `i` เอง พลาดยากกว่า
+
+---
+
+## 4. ฟังก์ชัน, arrow function และ callback
+
+`4-functions.mjs`
+```js
+// แบบ 1: function declaration
+function addVat(price) {
+  return price + price * 0.07;
+}
+
+// แบบ 2: arrow function (ใช้บ่อยในโค้ดสมัยใหม่)
+const calcRent = (pricePerMonth, months = 1) => pricePerMonth * months;   // บรรทัดเดียว ไม่ต้องเขียน return
+
+// arrow หลายบรรทัด ต้องมี { } และ return เอง
+const describe = (brand, ram) => {
+  const size = ram >= 16 ? "แรง" : "พอใช้";
+  return `${brand} ${ram}GB (${size})`;
+};
+
+console.log(addVat(100));
+console.log(calcRent(1500, 3), calcRent(1500));
+console.log(describe("Asus", 16));
+
+// ฟังก์ชันเป็น "ค่า" ส่งต่อให้ฟังก์ชันอื่นได้ (เรียกว่า callback)
+function repeat(times, action) {
+  for (let i = 1; i <= times; i++) action(i);
+}
+repeat(3, (n) => console.log("รอบที่", n));
+```
+**ควรเห็น**
+```
+107
+4500 1500
+Asus 16GB (แรง)
+รอบที่ 1
+รอบที่ 2
+รอบที่ 3
+```
+สิ่งที่ต้องสังเกต
+1. `months = 1` คือ **ค่าเริ่มต้น** ถ้าไม่ส่งมา `calcRent(1500)` จึงได้ `1500`
+2. arrow แบบบรรทัดเดียว **คืนค่าให้เอง** แต่พอใส่ `{ }` แล้ว **ต้องเขียน `return` เอง** ถ้าลืมจะได้ `undefined` (บั๊กที่เจอบ่อยมาก)
+3. **บรรทัดสุดท้ายสำคัญที่สุดของบทนี้:** เราส่ง `(n) => console.log(...)` ซึ่งเป็น "ฟังก์ชัน" เข้าไปเป็น argument ให้ `repeat` เป็นคนเรียก นี่คือ **callback** ถ้าเข้าใจบรรทัดนี้ จะอ่าน `laptops.map((l) => l.brand)`, `onClick={() => setOpen(true)}` (React) และ `app.get("/", (c) => c.json(...))` (Hono) ออกทั้งหมด เพราะเป็นท่าเดียวกัน
+
+> 💡 อ่าน `(n) => console.log(n)` ว่า "รับ `n` แล้วทำ `console.log(n)`" ลูกศร `=>` คือ "แล้วได้"
+
+---
+
+## 5. Object และ array
+
+`5-objects-arrays.mjs`
+```js
+const laptop = { id: 1, brand: "Lenovo", ramGb: 16, spec: { cpu: "i5" } };
+
+console.log(laptop.brand, laptop["ramGb"], laptop.spec.cpu);
+laptop.status = "available";             // เพิ่มช่องใหม่ได้ (const ห้ามเปลี่ยนกล่อง แต่ของในกล่องแก้ได้)
+console.log(laptop);
+
+console.log(laptop.color);               // ช่องที่ไม่มี = undefined (ไม่ error)
+console.log(laptop.owner?.name);         // ?. = ถ้าไม่มีให้หยุดแล้วได้ undefined แทนที่จะพัง
+
+const list = [laptop, { id: 2, brand: "Acer", ramGb: 8 }];
+console.log(list.length, list[1].brand, list[5]);   // index เริ่มที่ 0, เกินขอบได้ undefined
+```
+**ควรเห็น** (Node · ถ้ารันด้วย Bun object จะพิมพ์แบบมีเครื่องหมาย `"` และขึ้นบรรทัดใหม่ทุกช่อง ความหมายเหมือนกัน)
+```
+Lenovo 16 i5
+{
+  id: 1,
+  brand: 'Lenovo',
+  ramGb: 16,
+  spec: { cpu: 'i5' },
+  status: 'available'
+}
+undefined
+undefined
+2 Acer undefined
+```
+- **`const` ล็อก "ป้าย" ไม่ได้ล็อก "ของในกล่อง"** `laptop.status = ...` จึงทำได้ แต่ `laptop = {...}` (เปลี่ยนกล่อง) ทำไม่ได้
+- อ่านช่องที่ไม่มีได้ `undefined` **ไม่ error** แต่ถ้าอ่านต่ออีกชั้น (`laptop.owner.name`) จะพังด้วย `Cannot read properties of undefined (reading 'name')` เพราะ `laptop.owner` เป็น `undefined` ไปแล้ว `?.` คือการถามก่อนว่ามีไหม
+
+---
+
+## 6. Destructuring และ spread
+
+ท่านี้มีในเกือบทุกไฟล์ของ React และ Hono ถ้าอ่านไม่ออก จะอ่านโค้ดบทที่ 11 ไม่ออก
+
+`6-destructure-spread.mjs`
+```js
+const laptop = { id: 1, brand: "Lenovo", ramGb: 16 };
+
+// destructuring: แกะช่องออกมาเป็นตัวแปร (object แกะตาม "ชื่อ")
+const { brand, ramGb } = laptop;
+console.log(brand, ramGb);
+
+// ตั้งชื่อใหม่ และค่าสำรองเมื่อไม่มีช่องนั้น
+const { brand: b, price = 0 } = laptop;
+console.log(b, price);
+
+// array แกะตาม "ลำดับ"
+const [first, second] = ["Acer", "Asus", "Dell"];
+console.log(first, second);
+
+// แกะตั้งแต่ในวงเล็บของฟังก์ชัน (เห็นใน React ทุกไฟล์)
+const label = ({ brand, ramGb }) => `${brand} ${ramGb}GB`;
+console.log(label(laptop));
+
+// spread: กางของเดิมออกมาในกล่องใหม่ แล้วทับ/เติมเฉพาะที่เปลี่ยน
+const upgraded = { ...laptop, ramGb: 32 };
+console.log(laptop.ramGb, upgraded.ramGb);   // ของเดิมไม่เปลี่ยน
+
+const brands = ["Acer", "Asus"];
+const more = [...brands, "Dell"];
+console.log(brands, more);
+```
+**ควรเห็น**
+```
+Lenovo 16
+Lenovo 0
+Acer Asus
+Lenovo 16GB
+16 32
+[ 'Acer', 'Asus' ] [ 'Acer', 'Asus', 'Dell' ]
+```
+- **object แกะตามชื่อ / array แกะตามลำดับ** `const [open, setOpen] = useState(false)` ใน React จึงตั้งชื่ออะไรก็ได้ เพราะ `useState` คืน array 2 ช่อง
+- **spread สร้างของใหม่ ของเดิมไม่เปลี่ยน** (`laptop.ramGb` ยังเป็น 16) React ใช้ท่านี้เพื่อบอกว่า "ข้อมูลเปลี่ยนแล้ว วาดใหม่" ([บทที่ 11 ข้อ 5](/11-react#5-state-ข้อมูลที่เปลี่ยนได้))
+- อ่านละเอียดพร้อมข้อผิดพลาดที่เจอบ่อย: [react-language ข้อ 1.4–1.5](/react-language#14-destructuring-แกะของออกจากกล่อง)
+
+---
+
+## 7. `map` / `filter` / `find` / `reduce`: ทำงานกับรายการ
+
+`7-array-methods.mjs`
+```js
+const laptops = [
+  { id: 1, brand: "Lenovo", price: 1500, status: "available" },
+  { id: 2, brand: "Acer", price: 1200, status: "rented" },
+  { id: 3, brand: "Asus", price: 1300, status: "available" },
+];
+
+// map: แปลงทุกตัว ได้ array ใหม่ยาวเท่าเดิม
+console.log(laptops.map((l) => l.brand));
+
+// filter: คัดเฉพาะตัวที่เงื่อนไขเป็นจริง
+const free = laptops.filter((l) => l.status === "available");
+console.log(free.length);
+
+// find: เอาตัวแรกที่ตรง (ไม่เจอ = undefined)
+console.log(laptops.find((l) => l.id === 3)?.brand, laptops.find((l) => l.id === 99));
+
+// some / every: มีสักตัวไหม / ทุกตัวไหม
+console.log(laptops.some((l) => l.price > 1400), laptops.every((l) => l.price > 1400));
+
+// reduce: รวมทั้ง array เป็นค่าเดียว (sum = ค่าที่สะสม เริ่มที่ 0)
+const total = laptops.reduce((sum, l) => sum + l.price, 0);
+console.log(total);
+
+// ต่อกันเป็นสาย: ราคารวมของเครื่องที่ว่าง
+console.log(laptops.filter((l) => l.status === "available").map((l) => l.price).reduce((s, p) => s + p, 0));
+console.log(laptops.length);   // ทั้งหมดนี้ไม่แก้ array เดิม
+```
+**ควรเห็น**
+```
+[ 'Lenovo', 'Acer', 'Asus' ]
+2
+Asus undefined
+true false
+4000
+2800
+3
+```
+ทุกตัวในข้อนี้ **รับ callback** (ข้อ 4) แล้วเรียกมันกับสมาชิกทีละตัว
+
+| method | callback ต้องคืนอะไร | ได้อะไรกลับมา |
+|---|---|---|
+| `map` | ค่าใหม่ของตัวนั้น | array ใหม่ **ยาวเท่าเดิม** |
+| `filter` | `true` = เก็บ / `false` = ทิ้ง | array ใหม่ **สั้นลงหรือเท่าเดิม** |
+| `find` | `true` เมื่อเจอ | **ตัวแรก** ที่เจอ หรือ `undefined` |
+| `some` / `every` | `true`/`false` | `true`/`false` ค่าเดียว |
+| `reduce` | ค่าสะสมรอบถัดไป | **ค่าเดียว** (ผลรวม, object สรุป ฯลฯ) |
+
+> ⚠️ **`reduce` ลืมค่าเริ่มต้น `0`** จะเริ่มจากสมาชิกตัวแรก (ที่เป็น object) แล้วได้ผลแปลกๆ อย่าง `[object Object]12001300` ใส่ค่าเริ่มต้นเสมอ
+
+---
+
+## 8. `import` / `export`: แยกไฟล์
+
+สร้าง 2 ไฟล์ในโฟลเดอร์เดียวกัน
+
+`money.mjs`
+```js
+// money.mjs: ไฟล์ที่ "ส่งออก" ของให้คนอื่นใช้
+export const VAT_PERCENT = 7;
+
+export function addVat(satang) {
+  return Math.round(satang * (100 + VAT_PERCENT) / 100);
+}
+
+export default function formatBaht(satang) {
+  return (satang / 100).toLocaleString("th-TH", { minimumFractionDigits: 2 }) + " บาท";
+}
+```
+`8-modules.mjs`
+```js
+// 8-modules.mjs: "นำเข้า" ของจาก money.mjs
+import formatBaht, { addVat, VAT_PERCENT } from "./money.mjs";
+// default ไม่มี {} ตั้งชื่อเองได้ · named อยู่ใน {} ชื่อต้องตรงกับที่ export
+
+console.log(VAT_PERCENT);
+console.log(formatBaht(addVat(150000)));
+```
+```bash
+node 8-modules.mjs
+```
+**ควรเห็น**
+```
+7
+1,605.00 บาท
+```
+- `./` = โฟลเดอร์เดียวกับไฟล์นี้ ต้องมีเสมอสำหรับไฟล์ของเรา (ถ้าไม่มี Node จะไปหาใน `node_modules` แทน)
+- ถ้าสลับแบบ เช่น `import { formatBaht } from "./money.mjs"` จะได้ `SyntaxError: The requested module './money.mjs' does not provide an export named 'formatBaht'` (ลองดูในข้อ 💥)
+- เงินคิดเป็น **สตางค์** (จำนวนเต็ม) แล้ว `Math.round` ทุกครั้งที่คูณหาร เหตุผลอยู่ใน [บทที่ 4](/04-typescript) หัวข้อ 💰
+
+---
+
+## 9. Promise และ `async` / `await`: งานที่ต้องรอ
+
+งานบางอย่างใช้เวลา (ดึง API, query ฐานข้อมูล, อ่านไฟล์) ถ้าโปรแกรมหยุดรอเฉยๆ ทุกอย่างค้าง JavaScript จึงให้งานพวกนี้คืน **Promise** = ใบรับของที่ "สัญญาว่าจะได้ของ หรือแจ้งว่าพัง" แล้วโปรแกรมทำอย่างอื่นต่อได้
+
+`9-async.mjs`
+```js
+// wait คืน Promise ที่จะ "สำเร็จ" หลังผ่านไป ms มิลลิวินาที
+// new Promise((resolve) => ...) : resolve คือปุ่ม "เสร็จแล้ว" ที่เรากดเมื่อพร้อม
+// setTimeout(fn, ms) : นัดให้เรียก fn หลังผ่านไป ms มิลลิวินาที (ไม่หยุดรอ)
+function wait(ms, value) {
+  return new Promise((resolve) => setTimeout(() => resolve(value), ms));
+}
+
+function findLaptop(id) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (id === 1) resolve({ id: 1, brand: "Lenovo" });
+      else reject(new Error(`ไม่พบ laptop id ${id}`));   // reject = ปุ่ม "พังแล้ว"
+    }, 100);
+  });
+}
+
+async function main() {
+  console.log("1. เริ่ม");
+  const msg = await wait(200, "2. รอ 200 ms แล้ว");   // await = รอจนได้ค่า ค่อยไปบรรทัดถัดไป
+  console.log(msg);
+
+  const laptop = await findLaptop(1);
+  console.log("3. เจอ", laptop.brand);
+
+  try {
+    await findLaptop(99);
+  } catch (e) {
+    console.log("4. จับ error ได้:", e.message);   // reject กลายเป็น error ที่ catch ได้
+  }
+
+  const forgot = findLaptop(1);                  // ❌ ลืม await
+  console.log("5. ลืม await ได้:", forgot);
+
+  const [a, b] = await Promise.all([wait(100, "A"), wait(100, "B")]);   // รอพร้อมกัน
+  console.log("6.", a, b);
+}
+
+main();
+console.log("0. บรรทัดนี้ขึ้นก่อน เพราะ main() กำลังรออยู่ แต่โปรแกรมไม่ค้าง");
+```
+**ควรเห็น**
+```
+1. เริ่ม
+0. บรรทัดนี้ขึ้นก่อน เพราะ main() กำลังรออยู่ แต่โปรแกรมไม่ค้าง
+2. รอ 200 ms แล้ว
+3. เจอ Lenovo
+4. จับ error ได้: ไม่พบ laptop id 99
+5. ลืม await ได้: Promise { <pending> }
+6. A B
+```
+สิ่งที่ต้องสังเกต
+1. **ลำดับ 1 → 0 → 2** `main()` ทำงานจนถึง `await` แรกแล้ว "พักไว้" โปรแกรมจึงไปพิมพ์บรรทัด 0 ก่อน พอครบ 200 ms ค่อยกลับมาทำต่อ นี่คือความหมายของ "ไม่ค้าง"
+2. **`await` ใช้ได้ใน `async function`** (หรือระดับบนสุดของไฟล์ `.mjs`/module) และ `async function` คืน Promise เสมอ
+3. **`reject` → `catch`** งานที่รอแล้วพัง จับได้ด้วย `try/catch` ธรรมดา ถ้าไม่จับ โปรแกรมจะล้ม (unhandled rejection [บทที่ 9 ข้อ 9](/09-debugging#9--debug-โค้ด-async-promise--async-await))
+4. **ลืม `await` ได้ `Promise { <pending> }`** แทนข้อมูลจริง บั๊กคลาสสิกที่สุดของงาน async ถ้าเห็นคำนี้ในจอ ให้หาว่าลืม `await` ตรงไหน
+5. `Promise.all` รอหลายงาน **พร้อมกัน** ใช้เวลารวม ~100 ms ไม่ใช่ 200 ms
+
+> 🤓 ในงานจริงเราแทบไม่เขียน `new Promise` เอง เพราะ `fetch`, Drizzle, `Bun.file` คืน Promise มาให้แล้ว แค่ `await` ให้เป็น แต่เขียนเองครั้งหนึ่งจะเข้าใจว่าข้างในมันคือ "ปุ่มเสร็จ/ปุ่มพัง" แค่นั้น
+
+---
+
+## ⚠️ ปัญหาที่เจอบ่อย
+
+| อาการ / ข้อความ | สาเหตุ | วิธีแก้ | ทำไม |
+|---|---|---|---|
+| `TypeError: Assignment to constant variable.` | กำหนดค่าใหม่ให้ `const` | เปลี่ยนเป็น `let` ถ้าตั้งใจเปลี่ยนค่าจริง | `const` สัญญาว่าป้ายนี้ไม่ย้าย |
+| `ReferenceError: totl is not defined` | สะกดชื่อผิด หรือใช้ก่อนประกาศ / ลืม import | ตรวจตัวสะกด, บรรทัด import | JS หาชื่อนี้ไม่เจอในขอบเขตที่มองเห็น |
+| `TypeError: Cannot read properties of undefined (reading 'brand')` | ค่าที่อยู่หน้า `.brand` เป็น `undefined` (เช่น `find` ไม่เจอ) | เช็คก่อนใช้ `if (!l) ...` หรือ `l?.brand` | อ่านช่องจาก "ไม่มีอะไร" ไม่ได้ |
+| ได้ `"23"` แทน `5` / ได้ `"015001200"` | บวก string กับ number | แปลงด้วย `Number(x)` (หรือให้ Zod ตรวจ บทที่ 4) | `+` กับข้อความคือ "ต่อข้อความ" |
+| arrow function คืน `undefined` | ใส่ `{ }` แล้วลืม `return` | เติม `return` หรือเอา `{ }` ออกถ้าบรรทัดเดียว | `{ }` เปลี่ยน arrow เป็นแบบหลายบรรทัดที่ต้อง return เอง |
+| เห็น `Promise { <pending> }` | ลืม `await` | ใส่ `await` (และฟังก์ชันรอบนอกต้องเป็น `async`) | ได้ใบรับของ ไม่ใช่ของ |
+| `SyntaxError: Unexpected reserved word` ที่บรรทัด `await` | ใช้ `await` ในฟังก์ชันที่ไม่ใช่ `async` | ใส่ `async` หน้าฟังก์ชันนั้น | `await` พักได้เฉพาะฟังก์ชันที่ประกาศว่าพักได้ |
+| `SyntaxError: The requested module './money.mjs' does not provide an export named 'formatBaht'` | `import { X }` แต่ไฟล์ `export default` (หรือชื่อไม่ตรง) | default: `import X from` · named: `import { X } from` | 2 แบบนี้คนละช่องทางกัน |
+| `Error [ERR_MODULE_NOT_FOUND]: Cannot find module '.../money'` | ลืมนามสกุลไฟล์ใน import | เขียน `./money.mjs` ให้ครบ | Node แบบ ESM ไม่เดานามสกุลให้ |
+| `[MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///.../x.js is not specified ...` (Node รุ่นเก่าก่อน 22.7 จะเป็น error `Cannot use import statement outside a module`) | ไฟล์ `.js` ที่ใช้ `import` ในโฟลเดอร์ที่ `package.json` ไม่มี `"type": "module"` | ใช้ `.mjs` หรือเพิ่ม `"type": "module"` ใน `package.json` (ข้อความเตือนก็บอกวิธีนี้) | ถ้าไม่บอก Node ถือว่า `.js` เป็น CommonJS รุ่นใหม่เดาได้แต่ต้องอ่านไฟล์ 2 รอบ จึงเตือน |
+
+---
+
+## 💥 ลองพังมันดู
+
+ทำทีละข้อ อ่าน error ให้จบ แล้วเทียบกับตารางด้านบน (ถ้าตารางไม่มี ใช้วิธีใน [เรียนรู้ด้วยตัวเอง](/self-learning) ข้อ 2)
+
+1. ใน `1-values.mjs` เพิ่ม `shop = "อื่น";` ต่อท้าย
+2. ใน `4-functions.mjs` เปลี่ยน `describe` ให้ลืม `return` แล้วดูว่าพิมพ์อะไร
+3. ใน `7-array-methods.mjs` ลบ `, 0` ออกจาก `reduce` บรรทัด `total`
+4. ใน `8-modules.mjs` เปลี่ยนเป็น `import { formatBaht } from "./money.mjs";`
+5. ใน `9-async.mjs` ลบคำว่า `async` หน้า `function main()`
+
+---
+
+## 🧠 เช็คความเข้าใจ
+
+<details>
+<summary>1. `const list = []; list.push(1);` ทำได้ไหม ทั้งที่เป็น `const`?</summary>
+
+ได้ `const` ห้ามเปลี่ยน "ป้าย" ไปชี้กล่องอื่น (`list = [...]`) แต่ของในกล่องแก้ได้ ส่วนใน React เราเลือกไม่แก้ของในกล่องเอง (ใช้ spread สร้างกล่องใหม่) ด้วยเหตุผลอีกเรื่องหนึ่ง (บทที่ 11)
+
+</details>
+
+<details>
+<summary>2. ทำไมทีมใช้ `===` แทน `==` ทุกที่?</summary>
+
+`==` แปลงชนิดให้ก่อนเทียบ (`"0" == 0` ได้ `true`) ซึ่งซ่อนบั๊กแบบที่ข้อมูลจากฟอร์มเป็นข้อความ `===` เทียบทั้งค่าและชนิด ผลตรงไปตรงมา
+
+</details>
+
+<details>
+<summary>3. `laptops.map((l) => { l.brand })` ได้อะไร และแก้ยังไง?</summary>
+
+ได้ `[undefined, undefined, undefined]` เพราะใส่ `{ }` แล้วไม่มี `return` แก้เป็น `laptops.map((l) => l.brand)` หรือ `(l) => { return l.brand; }`
+
+</details>
+
+<details>
+<summary>4. อยากได้ "ชื่อยี่ห้อของเครื่องที่ราคาต่ำกว่า 1400" ควรต่อ method ไหนกับไหน?</summary>
+
+`filter` ก่อน (คัดเครื่องราคา < 1400) แล้ว `map` (แปลงเป็นชื่อยี่ห้อ): `laptops.filter((l) => l.price < 1400).map((l) => l.brand)`
+
+</details>
+
+<details>
+<summary>5. `const { price = 0 } = laptop` ถ้า `laptop` ไม่มีช่อง `price` จะได้อะไร และถ้ามี `price: null` ล่ะ?</summary>
+
+ไม่มีช่อง → ได้ `0` (ค่าสำรองทำงานเมื่อเป็น `undefined`) แต่ถ้ามี `price: null` จะได้ `null` เพราะค่าสำรองของ destructuring ทำงานเฉพาะ `undefined` (ต่างจาก `??` ที่รวม `null` ด้วย)
+
+</details>
+
+<details>
+<summary>6. ในข้อ 9 ทำไมบรรทัด "0." ถึงขึ้นก่อน "2."?</summary>
+
+`main()` เริ่มทำงานแล้วไปเจอ `await wait(200)` จึงพักไว้และคืนการควบคุมให้โปรแกรม โปรแกรมไปทำบรรทัดถัดจาก `main();` คือพิมพ์ "0." ก่อน พอครบ 200 ms ค่อยกลับมาทำ `main` ต่อ
+
+</details>
+
+---
+
+## ✏️ แบบฝึกหัด: ใบเสนอราคาเช่าเครื่อง
+
+สร้าง `quote.mjs` ที่มีฟังก์ชัน `quote` แบบ arrow function รับ object `{ pricePerMonth, months }` (ใช้ destructuring ในวงเล็บ) แล้วคืน object `{ months, total, discount }` โดย
+- ราคาเต็ม = `pricePerMonth * months`
+- ถ้าเช่า **6 เดือนขึ้นไป** ลด 10% ของราคาเต็ม **ปัดเศษด้วย `Math.round`** ไม่ถึง 6 เดือนส่วนลดเป็น `0`
+- `total` = ราคาเต็ม − ส่วนลด
+
+จากนั้นใช้ข้อมูล `laptops` ของข้อ 7 พิมพ์ประโยคสรุปด้วย `filter` + `map` + `join` + template literal
+
+**ทดสอบด้วยค่าเหล่านี้** (ต้องได้ตรงทุกตัว)
+```js
+console.log(quote({ pricePerMonth: 1500, months: 3 }));
+console.log(quote({ pricePerMonth: 1500, months: 6 }));
+console.log(quote({ pricePerMonth: 1333, months: 7 }));
+```
+**ควรเห็น**
+```
+{ months: 3, total: 4500, discount: 0 }
+{ months: 6, total: 8100, discount: 900 }
+{ months: 7, total: 8398, discount: 933 }
+ว่าง 2 เครื่อง: Lenovo, Asus
+```
+(ชุดที่ 3: 1333 × 7 = 9331 ลด 10% = 933.1 ปัดเป็น 933 เหลือ 8398)
+
+<details>
+<summary>🔑 เฉลย (ลองเองก่อนค่อยเปิด)</summary>
+
+```js
+const quote = ({ pricePerMonth, months }) => {
+  const full = pricePerMonth * months;
+  const discount = months >= 6 ? Math.round(full * 0.1) : 0;
+  return { months, total: full - discount, discount };
+};
+
+const free = laptops.filter((l) => l.status === "available");
+console.log(`ว่าง ${free.length} เครื่อง: ${free.map((l) => l.brand).join(", ")}`);
+```
+`{ months, total: ..., discount }` ใช้ **shorthand**: ถ้าชื่อช่องตรงกับชื่อตัวแปร เขียนชื่อเดียวพอ (`months` = `months: months`)
+
+</details>
+
+---
+
+## ✅ ผ่านด่าน
+
+- [ ] เลือก `const`/`let` ได้ถูก และอธิบายได้ว่า `typeof null` ทำไมได้ `"object"`
+- [ ] ใช้ `===` และอธิบายความต่างของ `||` กับ `??` เมื่อค่าเป็น `0` ได้
+- [ ] เขียน arrow function ทั้งแบบบรรทัดเดียวและหลายบรรทัด (มี `return`) ได้
+- [ ] อธิบายได้ว่า callback คืออะไร และชี้ callback ใน `laptops.map((l) => l.brand)` ได้
+- [ ] อ่าน `const { a } = obj`, `const [x, y] = arr`, `{ ...obj, a: 1 }`, `[...arr, x]` ออก
+- [ ] ใช้ `map`/`filter`/`find`/`reduce` ได้ และรู้ว่าตัวไหนคืนอะไร
+- [ ] แยกไฟล์ด้วย `export`/`import` ทั้งแบบ default และ named ได้
+- [ ] อธิบายลำดับการพิมพ์ในข้อ 9 ได้ และรู้ว่า `Promise { <pending> }` แปลว่าลืม `await`
+- [ ] ทำแบบฝึกหัดใบเสนอราคาได้ผลตรงทั้ง 4 บรรทัด
+
+📚 **อ่านต่อ (เอกสารทางการ):** [MDN JavaScript Guide](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide) (บท Grammar and types, Control flow, Functions, Indexed collections, Using promises) · สำหรับมือใหม่จริงๆ [MDN: Dynamic scripting with JavaScript](https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Scripting)
+
+---
+
+[← บทที่ 3: Runtime & Package Manager](/03-node-yarn-bun) · [🏠 สารบัญ](/) · [บทที่ 4: ภาษาและระบบ Type →](/04-typescript)

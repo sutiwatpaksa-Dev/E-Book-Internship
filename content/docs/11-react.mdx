@@ -12,7 +12,9 @@ title: "บทที่ 11: สร้างหน้าเว็บด้วย 
 > - ทุกหน้าที่ดึงข้อมูลต้องมี 3 แบบ: **กำลังโหลด / โหลดพัง / สำเร็จ**
 
 > **📖 คำใหม่ในบทนี้**
-> [React](/glossary#react) · [Component](/glossary#component) · [Props](/glossary#props) · [State](/glossary#state) · [Vite](/glossary#vite) · [SPA](/glossary#spa) · [Loading / Error](/glossary#loading-state)
+> [React](/glossary#react) · [Component](/glossary#component) · [Props](/glossary#props) · [State](/glossary#state) · [Vite](/glossary#vite) · [SPA](/glossary#spa) · [Loading / Error](/glossary#loading-state) · [JSX](/glossary#jsx) · [Hook](/glossary#hook) · [Side effect](/glossary#side-effect)
+
+> 🧰 **ก่อนเริ่ม (~30 นาที):** บทนี้ใช้ไวยากรณ์ JavaScript ที่บทที่ 4 ยังไม่ได้สอนเต็มๆ เช่น `const [open, setOpen]`, `({ service })`, `[...items, x]`, `{ ...form, name }` ถ้าอ่านแล้วงง เปิด [บทเสริม: ภาษาและคำสั่งที่ใช้เขียน React](/react-language) ข้อ [1.4 Destructuring](/react-language#14-destructuring-แกะของออกจากกล่อง), [1.5 Spread](/react-language#15-spread--กางของออกมาวางใหม่), [1.12 Ternary/`&&`](/react-language#112-ternary-และ--ใน-jsx), [1.13 async/await](/react-language#113-async--await-try--catch--finally), [1.14 import/export](/react-language#114-import--export-default-กับ-named) ไว้ข้างๆ (ถ้ายังไม่แน่นเรื่องพื้นฐาน JS เลย ดู [JavaScript พื้นฐาน](/js-basics) ก่อน)
 
 ---
 
@@ -46,12 +48,34 @@ title: "บทที่ 11: สร้างหน้าเว็บด้วย 
 
 ```bash
 mkdir bit-cafe && cd bit-cafe
-bun create vite client --template react-ts
+bun create vite client --template react-ts --no-interactive
 cd client
 bun install
 bun run dev
 ```
+**ควรเห็น** (หลังคำสั่งที่ 2 ตัวเลขเวอร์ชันอาจต่างกัน)
+```
+create-vite v9.3.1
+
+│
+◇  Scaffolding project in /.../bit-cafe/client...
+│
+└  Done. Now run:
+
+  cd client
+  bun install
+  bun dev
+```
+และหลัง `bun run dev`
+```
+  VITE v8.3.5  ready in 969 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+```
 เปิด http://localhost:5173 ควรเห็นหน้าตัวอย่างของ Vite + React พร้อมปุ่มนับเลข 🎉
+
+> 🤔 **`--no-interactive` มีไว้ทำไม?** ถ้าไม่ใส่ create-vite (รุ่น 9) จะถามเพิ่ม 2 ข้อ: `Which linter to use?` (Oxlint / ESLint) และ `Install with bun and start now?` ถ้ากด Enter ผ่านไปเลย มันจะเลือก Oxlint แล้ว **ติดตั้งและเปิด dev server ค้างไว้ในโฟลเดอร์ `client` ทันที** ทำให้ `cd client && bun install && bun run dev` ที่ตามมาสับสน (port 5173 ถูกใช้อยู่แล้ว Vite จะย้ายไป 5174 เอง) `--no-interactive` ตอบแทนเราว่า "Oxlint และยังไม่ต้องติดตั้ง" เหมือนในหนังสือ ถ้าเผลอตอบ Yes ไปแล้ว กด `Ctrl + C` หยุด แล้วทำต่อจาก `cd client` ได้เลย (ข้อความนี้ทดสอบกับ create-vite 9.3.1 ถ้ารุ่นใหม่ถามไม่เหมือนนี้ ให้รัน `bun create vite --help` ดูตัวเลือกล่าสุด หรือดู [เอกสาร Vite](https://vite.dev/guide/))
 
 > ⚠️ **เปลี่ยนชื่อไฟล์ก่อนเขียนโค้ด:** Vite สร้างไฟล์ชื่อ `src/App.tsx` (A ตัวใหญ่) แต่หนังสือเล่มนี้ตั้งชื่อไฟล์เป็นตัวพิมพ์เล็กทั้งหมด (`app.tsx`) กด `Ctrl + C` หยุดเซิร์ฟเวอร์ แล้วรัน
 > ```bash
@@ -149,7 +173,7 @@ interface Props {
   service: Service;
 }
 
-export default function ServiceCard({ service }: Props) {
+export default function ServiceCard({ service }: Props) {   // { service } = แกะ props ออกมาเป็นตัวแปร (destructuring)
   return (
     <article className="card">
       <img src={service.imageUrl} alt={service.name} />
@@ -161,6 +185,8 @@ export default function ServiceCard({ service }: Props) {
 }
 ```
 ใช้งาน: `<ServiceCard service={latte} />`
+
+> 🔎 `({ service }: Props)` คือ **destructuring**: React ส่ง props มาเป็น object ก้อนเดียว `{ service: ... }` เราแกะช่อง `service` ออกมาเป็นตัวแปรตั้งแต่วงเล็บ แทนที่จะเขียน `(props: Props)` แล้วใช้ `props.service` ทุกที่ อ่านเพิ่ม [react-language ข้อ 1.4](/react-language#14-destructuring-แกะของออกจากกล่อง)
 
 ![แผนภาพต้นไม้ชิ้นส่วน App ส่ง props ลงไปยัง ServiceCard แต่ละใบ](/img/11-props-flow.svg)
 *App ส่ง props ลงไปให้ ServiceCard แต่ละใบ ข้อมูลไหลจากบนลงล่างทางเดียว*
@@ -188,6 +214,8 @@ export default function MenuToggle() {
 ```
 เรียก `setOpen` → React วาดชิ้นส่วนนี้ใหม่ด้วยค่าใหม่ นี่คือหัวใจของ React ทั้งหมด
 
+> 🔎 `const [open, setOpen] = ...` คือ **destructuring แบบ array**: `useState` คืน array 2 ช่องเสมอ (ค่า, ฟังก์ชันเปลี่ยนค่า) เราแกะตาม **ลำดับ** จึงตั้งชื่ออะไรก็ได้ ดู [react-language ข้อ 1.4](/react-language#14-destructuring-แกะของออกจากกล่อง)
+
 ![วงจรของ state: กดปุ่ม เปลี่ยนค่า React วาดใหม่ หน้าจอเปลี่ยน](/img/11-state-cycle.svg)
 *เปลี่ยน state แล้ว React วาดชิ้นส่วนใหม่ แล้วรอการกดครั้งต่อไป*
 
@@ -197,6 +225,7 @@ export default function MenuToggle() {
 > setItems([...items, newItem]);    // ✅ สร้าง array ใหม่
 > setForm({ ...form, name: "บิต" }); // ✅ object ก็เหมือนกัน
 > ```
+> `...` คือ **spread**: กางของในกล่องเดิมออกมาวางในกล่องใหม่ แล้วเติม/ทับเฉพาะที่เปลี่ยน React เทียบว่า "กล่องเดิมหรือกล่องใหม่" ถ้าเป็นกล่องเดิม (แม้ของข้างในเปลี่ยน) จะคิดว่าไม่มีอะไรเปลี่ยน ดู [react-language ข้อ 1.5](/react-language#15-spread--กางของออกมาวางใหม่)
 
 ---
 
@@ -507,6 +536,8 @@ export function useFetch<T>(url: string) {
 }
 ```
 
+> 🔎 **ทำไมใช้ `.then().catch().finally()` แทน `await`?** ฟังก์ชันที่ส่งให้ `useEffect` ต้องคืน "ฟังก์ชัน cleanup หรือไม่คืนอะไรเลย" แต่ `async` function คืน Promise เสมอ จึงเขียน `useEffect(async () => ...)` ตรงๆ ไม่ได้ `.then(ทำเมื่อสำเร็จ)` / `.catch(ทำเมื่อพัง)` / `.finally(ทำทุกกรณี)` คือ `try` / `catch` / `finally` แบบต่อสาย ([react-language ข้อ 1.13](/react-language#113-async--await-try--catch--finally)) ส่วน `AbortController` คือรีโมตสำหรับ "ยกเลิก fetch" ที่ cleanup กดตอนออกจากหน้า
+
 **ใช้งาน** `src/app.tsx`
 ```tsx
 import ServiceCard from "./components/service-card";
@@ -617,6 +648,12 @@ export default function ContactForm() {
 }
 ```
 ครบตามที่งาน STARTER ต้องการ: **ตรวจก่อนส่ง, ข้อความเตือนใต้ช่องที่ผิด, ปุ่มกดซ้ำไม่ได้ระหว่างส่ง, ส่งเสร็จขอบคุณแล้วล้างฟอร์ม**
+
+> 🔎 **อ่าน 3 บรรทัดบนสุดกับบรรทัด `update` ทีละท่อน** (เป็น TypeScript ที่บทที่ 4 แตะไว้สั้นๆ)
+> - `type Form = typeof empty` = "เอาหน้าตาของ object `empty` มาเป็น type" ได้ `{ name: string; phone: string; message: string }` โดยไม่ต้องเขียนซ้ำ (`typeof` ในตำแหน่ง type คือถาม type ของค่า)
+> - `keyof Form` = ชื่อช่องทั้งหมด คือ `"name" | "phone" | "message"` ใส่ชื่ออื่นแล้ว VS Code ขีดแดง
+> - `Record<keyof Form, string>` = object ที่มีทุกช่องนั้นเป็น string · `Partial<...>` = ทุกช่องไม่บังคับ (ช่องที่ไม่ผิดก็ไม่ต้องมีข้อความเตือน)
+> - `{ ...form, [field]: value }` = spread ของเดิม แล้วทับช่องที่ **ชื่ออยู่ในตัวแปร `field`** (`[field]` ในวงเล็บเหลี่ยมคือ "ใช้ค่าของตัวแปรเป็นชื่อช่อง" ไม่ใช่ช่องชื่อ `field`) ดู [react-language ข้อ 1.5](/react-language#15-spread--กางของออกมาวางใหม่)
 
 > ⚠️ การตรวจที่หน้าเว็บมีไว้ให้ **ผู้ใช้สะดวก** เท่านั้น คนร้ายส่งตรงไปที่ API ได้เสมอ server ต้องตรวจซ้ำด้วย Zod ทุกครั้ง ([บทที่ 10](/10-security))
 
@@ -732,4 +769,4 @@ props = ข้อมูลที่ **ชิ้นส่วนแม่ส่ง
 
 ---
 
-[← บทที่ 10: Security](/10-security) · [🏠 สารบัญ](/) · [บทที่ 12: ตกแต่งเว็บ (Tailwind) →](/12-tailwind)
+[← บทที่ 10: Security](/10-security) · [🏠 สารบัญ](/) · [บทเสริม: ภาษาและคำสั่งที่ใช้เขียน React](/react-language) · [บทที่ 12: ตกแต่งเว็บ (Tailwind) →](/12-tailwind)

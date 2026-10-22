@@ -106,6 +106,10 @@ export default defineConfig({
 ตอนนี้ใช้ `bg-brand`, `text-accent`, `bg-brand-light/50` (จางลงครึ่งหนึ่ง) ได้ทุกที่
 ลูกค้าขอเปลี่ยนสี? แก้ **บรรทัดเดียว** ✅
 
+**เช็คว่าใช้ได้จริง:** ใส่ `className="bg-brand text-white"` ให้ `<h1>` สักอัน แล้วเปิด DevTools (`F12`) → คลิกขวาที่ตัวหนังสือ → **Inspect** → แท็บ **Computed** พิมพ์ค้นว่า `font-family` ต้องเห็น `Prompt` อยู่ตัวแรก และ `background-color` เป็น `rgb(107, 62, 38)` (คือ `#6b3e26`) ถ้าฟอนต์ยังเป็นตัวเดิม ให้ดู 2 จุด:
+- **ลำดับบรรทัด:** `@import url(...)` ของ Google Fonts ต้องอยู่ **บนสุด** ก่อน `@import "tailwindcss"` ถ้าสลับกัน `bun run build` จะเตือน `@import rules must precede all rules aside from @charset and @layer statements` แล้วทิ้งบรรทัดฟอนต์ไปเงียบๆ (ตอน `bun run dev` อาจไม่เห็นคำเตือนนี้เลย) เหตุผล: กฎของ CSS บังคับให้ `@import` อยู่ก่อนกฎอื่นทั้งหมด และ `@import "tailwindcss"` ถูกแปลงเป็นกฎ CSS จำนวนมาก บรรทัด import ที่ตามหลังจึงผิดกฎ
+- **แท็บ Network:** กรองด้วยคำว่า `font` ต้องเห็นไฟล์จาก `fonts.gstatic.com` โหลดสำเร็จ (สถานะ 200)
+
 ![ตั้งสีร้านใน @theme ที่เดียว แล้วทุกคลาสสีทั้งเว็บเปลี่ยนตาม](/img/12-theme-colors.svg)
 *สีอยู่ที่เดียวใน @theme คลาสอย่าง bg-brand ดึงไปใช้ทุกที่*
 
@@ -176,7 +180,7 @@ export default function Navbar({ shopName, logoUrl }: { shopName: string; logoUr
       </nav>
 
       {open && (
-        <ul className="border-t px-4 pb-4 md:hidden">
+        <ul className="border-t border-gray-200 px-4 pb-4 md:hidden">
           {links.map((l) => (
             <li key={l.href}><a href={l.href} className="block py-2">{l.label}</a></li>
           ))}
@@ -188,43 +192,71 @@ export default function Navbar({ shopName, logoUrl }: { shopName: string; logoUr
 ```
 (บทที่ 13 จะเปลี่ยน `<a>` เป็น `NavLink` เพื่อให้เมนูของหน้าที่อยู่เด่นขึ้น)
 
+> 💡 ทำไมต้องใส่ `border-gray-200` คู่กับ `border-t`: ใน Tailwind 4 สีเส้นขอบตั้งต้นคือ `currentColor` (สีเดียวกับตัวหนังสือ) ไม่ใช่สีเทาอ่อนแบบ Tailwind 3 ถ้าใส่แค่ `border-t` จะได้เส้นสีเข้มเท่าตัวอักษร ตัวอย่างในเน็ตที่เขียนสำหรับรุ่น 3 จึงมักได้เส้นเข้มกว่าที่เห็นในภาพ
+
 ![Navbar บนมือถือแสดงปุ่ม ☰ ส่วนจอตั้งแต่ md ขึ้นไปแสดงลิงก์เรียงแนวนอน](/img/12-navbar-responsive.svg)
 *hidden md:flex และ md:hidden ทำงานสลับกัน จอแคบเห็นปุ่ม ☰ จอกว้างเห็นลิงก์*
 
 ### ภาพใหญ่ด้านบนหน้าแรก
+`src/components/hero.tsx` ข้อความและรูปรับเข้ามาทาง props (ตอนนี้ใส่ค่าเองใน `app.tsx` ท้ายข้อนี้ บทที่ 14 จะดึงจากฐานข้อมูล)
 ```tsx
-<section
-  className="relative flex min-h-[60vh] items-center justify-center bg-cover bg-center px-4 text-center text-white"
-  style={{ backgroundImage: `url(${hero.imageUrl})` }}       // รูปมาจาก API ใช้ style แทน class
->
-  <div className="absolute inset-0 bg-black/50" />            {/* ชั้นมืดให้อ่านตัวหนังสือออก */}
-  <div className="relative max-w-2xl">
-    <h1 className="text-3xl font-bold md:text-5xl">{hero.title}</h1>
-    <p className="mt-4 text-lg md:text-xl">{hero.subtitle}</p>
-    <a href="/contact" className="mt-8 inline-block rounded-full bg-accent px-8 py-3 font-semibold text-brand hover:opacity-90">
-      {hero.ctaText}
-    </a>
-  </div>
-</section>
+export interface HeroContent {
+  title: string;
+  subtitle: string;
+  imageUrl: string;
+  ctaText: string;
+}
+
+export default function Hero({ hero }: { hero: HeroContent }) {
+  return (
+    <section
+      className="relative flex min-h-[60vh] items-center justify-center bg-cover bg-center px-4 text-center text-white"
+      style={{ backgroundImage: `url(${hero.imageUrl})` }}       // รูปมาจาก API ใช้ style แทน class
+    >
+      <div className="absolute inset-0 bg-black/50" />            {/* ชั้นมืดให้อ่านตัวหนังสือออก */}
+      <div className="relative max-w-2xl">
+        <h1 className="text-3xl font-bold md:text-5xl">{hero.title}</h1>
+        <p className="mt-4 text-lg md:text-xl">{hero.subtitle}</p>
+        <a href="/contact" className="mt-8 inline-block rounded-full bg-accent px-8 py-3 font-semibold text-brand hover:opacity-90">
+          {hero.ctaText}
+        </a>
+      </div>
+    </section>
+  );
+}
 ```
 
 ### การ์ดสินค้าแบบตาราง (grid)
 ![เปรียบเทียบ flex ที่เรียงในแนวเดียวกับ grid ที่แบ่งเป็นช่อง](/img/12-flex-grid.svg)
 *flex เหมาะกับเรียงชิ้นในแถวเดียว grid เหมาะกับแบ่งเป็นตาราง*
+ไม่ต้องเขียนการ์ดใหม่ ใช้ `ServiceCard` จากบทที่ 11 แล้ว **แต่งตัวการ์ดในไฟล์ของมันเอง** (การ์ดหน้าตาเหมือนกันทุกที่ที่ใช้) เขียนทับ `src/components/service-card.tsx` ทั้งไฟล์
 ```tsx
-<div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 md:grid-cols-2 xl:grid-cols-3">
-  {services.map((s) => (
-    <article key={s.id} className="overflow-hidden rounded-2xl bg-white shadow-md">
-      <img src={s.imageUrl} alt={s.name} className="aspect-[4/3] w-full object-cover" />
+import type { Service } from "../types/service";
+
+interface Props {
+  service: Service;
+}
+
+export default function ServiceCard({ service }: Props) {
+  return (
+    <article className="overflow-hidden rounded-2xl bg-white shadow-md">
+      <img src={service.imageUrl} alt={service.name} className="aspect-[4/3] w-full object-cover" />
       <div className="p-5">
-        <h3 className="text-xl font-semibold">{s.name}</h3>
-        <p className="mt-2 text-gray-600">{s.description}</p>
-        {s.price !== null && <p className="mt-4 font-bold text-brand">{s.price.toLocaleString()} บาท</p>}
+        <h3 className="text-xl font-semibold">{service.name}</h3>
+        <p className="mt-2 text-gray-600">{service.description}</p>
+        {service.price !== null && <p className="mt-4 font-bold text-brand">{service.price.toLocaleString()} บาท</p>}
       </div>
     </article>
-  ))}
+  );
+}
+```
+ส่วน "ตาราง" เป็นหน้าที่ของคนที่วางการ์ดหลายใบ (`app.tsx` ด้านล่าง):
+```tsx
+<div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 md:grid-cols-2 xl:grid-cols-3">
+  {data?.map((s) => <ServiceCard key={s.id} service={s} />)}
 </div>
 ```
+แยกแบบนี้เพราะการ์ดรู้แค่ว่า "การ์ด 1 ใบหน้าตาเป็นยังไง" ส่วนจะเรียงกี่คอลัมน์เป็นเรื่องของหน้าที่ใช้มัน บทที่ 13 จะใช้การ์ดตัวเดียวกันนี้ในหน้าอื่นได้ทันที
 
 ### ปุ่ม LINE ลอยมุมขวาล่าง
 `src/components/line-button.tsx`
@@ -268,6 +300,59 @@ export default function Footer({ address, phone, openingHours }: Props) {
   );
 }
 ```
+
+### 🔧 ประกอบทั้งหน้า: `src/app.tsx`
+เขียนทับ `src/app.tsx` ของบทที่ 11 ข้อมูลร้านและภาพใหญ่ใส่เป็นค่าคงที่ไว้ก่อน (บทที่ 14 จะย้ายไปเก็บในฐานข้อมูล) ส่วนรายการสินค้ายังดึงจาก `/mock/services.json` เหมือนเดิม
+```tsx
+import Navbar from "./components/navbar";
+import Hero, { type HeroContent } from "./components/hero";
+import ServiceCard from "./components/service-card";
+import Footer from "./components/footer";
+import LineButton from "./components/line-button";
+import { useFetch } from "./api/useFetch";
+import type { Service } from "./types/service";
+
+// ข้อมูลร้านชั่วคราว (รูปโลโก้: วางไฟล์ logo.png ไว้ใน public/ ถ้ายังไม่มีจะเห็นแค่ข้อความ alt)
+const shop = {
+  shopName: "Bit Café",
+  logoUrl: "/logo.png",
+  address: "123 ถ.สุขุมวิท กรุงเทพฯ",
+  phone: "0812345678",
+  openingHours: "ทุกวัน 08:00–18:00",
+  lineUrl: "https://line.me/",
+};
+
+const hero: HeroContent = {
+  title: "กาแฟดี ใกล้บ้านคุณ",
+  subtitle: "คั่วสดทุกสัปดาห์ เสิร์ฟด้วยรอยยิ้ม",
+  imageUrl: "https://picsum.photos/seed/cafe/1600/900",
+  ctaText: "ติดต่อเรา",
+};
+
+export default function App() {
+  const { data, error, loading } = useFetch<Service[]>("/mock/services.json");
+
+  return (
+    <div className="flex min-h-screen flex-col">
+      <Navbar shopName={shop.shopName} logoUrl={shop.logoUrl} />
+      <main className="flex-1">
+        <Hero hero={hero} />
+        <section className="py-12">
+          <h2 className="mb-6 text-center text-2xl font-bold text-brand">เมนูแนะนำ</h2>
+          {loading && <p className="text-center">กำลังโหลด... ⏳</p>}
+          {error && <p className="text-center">โหลดข้อมูลไม่สำเร็จ: {error} 😢</p>}
+          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 md:grid-cols-2 xl:grid-cols-3">
+            {data?.map((s) => <ServiceCard key={s.id} service={s} />)}
+          </div>
+        </section>
+      </main>
+      <Footer address={shop.address} phone={shop.phone} openingHours={shop.openingHours} />
+      <LineButton lineUrl={shop.lineUrl} />
+    </div>
+  );
+}
+```
+**ควรเห็น** หลัง `bun run dev`: เมนูบนติดขอบบน, ภาพใหญ่มีชั้นมืดและข้อความ "กาแฟดี ใกล้บ้านคุณ", การ์ด 3 ใบ (ลาเต้ มอคค่า จัดเลี้ยงนอกสถานที่) ส่วนท้ายสีน้ำตาล และปุ่ม LINE สีเขียวมุมขวาล่าง สั่ง `bun run build` ต้องผ่านโดยไม่มี error
 
 ### ตารางในหน้าจัดการร้านบนมือถือ
 ![ตารางที่ไม่ห่อทำให้ทั้งหน้าเลื่อนซ้ายขวา ส่วนที่ห่อด้วย overflow-x-auto เลื่อนเฉพาะในกรอบ](/img/12-table-scroll.svg)
@@ -316,6 +401,11 @@ export default function Footer({ address, phone, openingHours }: Props) {
 | ทั้งเว็บไม่มีการตกแต่ง | ลืม `@import "tailwindcss"` หรือลืมใส่ใน `vite.config.ts` | ตรวจข้อ 2 |
 | `bg-brand` ไม่ทำงาน | ชื่อใน `@theme` ไม่ได้ขึ้นต้นด้วย `--color-` | ต้องเป็น `--color-ชื่อ` |
 | `className` ยาวจนอ่านยาก | ใส่ทุกอย่างไว้ที่เดียว | แยกเป็นชิ้นส่วนย่อย เช่น `<Button>` |
+| ฟอนต์ไม่เปลี่ยน และ `bun run build` เตือน `@import rules must precede all rules...` | `@import url(...)` ของฟอนต์อยู่ใต้ `@import "tailwindcss"` | ย้ายบรรทัดฟอนต์ขึ้นไปบนสุด (ข้อ 3) |
+| เส้นขอบเข้มเท่าตัวหนังสือ | Tailwind 4 ใช้ `currentColor` เป็นสีขอบตั้งต้น | ใส่สีเอง เช่น `border border-gray-200` |
+| `Cannot find name 'hero'` / `Cannot find module './components/hero'` | ลอกแค่ส่วน `<section>` ไปวางโดยไม่ได้สร้างไฟล์ `hero.tsx` | สร้างไฟล์ตามข้อ 5 ทั้งไฟล์ แล้ว import ใน `app.tsx` |
+
+> 🔎 **หาคลาสเองเป็น ไม่ต้องจำ:** เปิด [tailwindcss.com/docs](https://tailwindcss.com/docs) กด `Ctrl + K` (Mac: `⌘ + K`) แล้วพิมพ์ **ชื่อ property ของ CSS** ที่อยากได้ เช่น `position`, `object-fit`, `gap` จะเจอหน้าที่บอกว่าคลาสไหนตรงกับ CSS อะไร ในโค้ด ให้เอาเมาส์ชี้ชื่อคลาส (ต้องมีส่วนเสริม Tailwind CSS IntelliSense) จะเห็น CSS จริงที่คลาสนั้นสร้าง และในเบราว์เซอร์ DevTools แท็บ **Styles** จะบอกว่าคลาสไหนทำงานหรือถูกขีดฆ่าทับ
 
 ---
 

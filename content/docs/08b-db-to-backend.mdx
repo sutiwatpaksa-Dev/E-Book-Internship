@@ -232,7 +232,7 @@ src/
 
 ### error ของฐานข้อมูล → คำตอบที่คนเข้าใจ
 
-เมื่อชนด่านในฐานข้อมูล PostgreSQL ส่ง **รหัส error** กลับมา 2 ตัวที่จะเจอบ่อยที่สุด
+เมื่อชนด่านในฐานข้อมูล PostgreSQL ส่ง **รหัส error** กลับมา 3 ตัวที่จะเจอบ่อยที่สุด
 
 | รหัส | ชื่อ | เกิดเมื่อ | แปลงเป็น |
 |---|---|---|---|
@@ -297,6 +297,10 @@ export function pgCode(err: unknown): string | undefined {
 
 ## 7. 🔧 ลงมือ: เตรียมโปรเจกต์และฐานข้อมูล
 
+**ก่อนเริ่ม:** ปิดของที่จับ port ไว้จากบทก่อนๆ เพราะแต่ละ port รับได้ทีละโปรแกรม
+```bash
+docker stop api pg        # หยุด (ไม่ลบ) กล่อง API ของบทที่ 5 (จับ port 3000) และ Postgres ของบทที่ 8 (จับ port 5432) ถ้าไม่มีจะขึ้น No such container ไม่เป็นไร
+```
 ```bash
 docker run -d --name laptop-db -e POSTGRES_PASSWORD=secret -p 5432:5432 postgres:17
 
@@ -444,6 +448,10 @@ export const laptopRepository = {
 };
 ```
 อ่าน `listWithAvailability`: `LEFT JOIN` กับรายการเช่าที่ยังไม่คืน เครื่องที่จับคู่ไม่ได้ (`rentals.id is null`) คือเครื่องว่าง ใช้เทคนิคเดียวกับ "หาคนที่ยังไม่เคย..." ใน [บทที่ 6](/06-sql-nosql#join-รวมหลายตาราง)
+
+> 🆕 **ของใหม่ในโค้ดนี้**
+> - `getTableColumns(laptops)` คืน object ของทุกคอลัมน์ในตาราง `laptops` ส่วน `...` (spread) กางมันออกมาวางใน `select({...})` ผลคือ "เอาทุกคอลัมน์ของ laptops" โดยไม่ต้องพิมพ์ทีละชื่อ แล้วต่อด้วยคอลัมน์คำนวณ `available` อีกช่อง
+> - `` sql<boolean>`${rentals.id} is null` `` เขียน SQL ดิบบางส่วนเอง (ส่วน `${...}` Drizzle แปลงเป็นชื่อคอลัมน์ให้) ส่วน `<boolean>` **บอก TypeScript อย่างเดียว** ว่าผลเป็น boolean ตอนรันไม่มีใครตรวจ ถ้าเราเขียน SQL ที่คืนค่าอื่น TS ก็ยังเชื่อตามที่เราบอก จึงต้องเขียนให้ตรงเอง ([เอกสาร Drizzle: sql operator](https://orm.drizzle.team/docs/sql))
 
 `src/repositories/customer.repository.ts`
 ```ts
@@ -652,6 +660,11 @@ export const RentalInput = z.object({
 ```
 > 💡 Zod รับเฉพาะช่องที่ประกาศไว้ ช่องอื่นที่แนบมาจะถูกตัดทิ้ง ถ้ามีคนแอบส่ง `"id": 999` หรือ `"returnedAt": "..."` มาด้วย ก็ไม่หลุดถึงฐานข้อมูล
 
+> 🆕 **ของใหม่ในโค้ดชั้น routes**
+> - `z.coerce.number()` ใช้กับ `IdParam` เพราะค่าใน URL (`req.params.id`) **เป็น string เสมอ** (`/rentals/1/return` ได้ `"1"` ไม่ใช่ `1`) `coerce` แปลงเป็นตัวเลขก่อนตรวจ ส่วน body ที่เป็น JSON ส่งตัวเลขมาเป็นตัวเลขอยู่แล้ว จึงใช้ `z.number()` ธรรมดา ถ้าใช้ `coerce` กับ body ด้วย ค่า `"abc"` จะกลายเป็น `NaN` แล้วโดนปฏิเสธเหมือนกัน แต่ `"5"` จะหลุดผ่านทั้งที่ client ส่งผิดชนิด
+> - `z.flattenError(result.error).fieldErrors` แปลง error ของ Zod ให้เป็น object แบบ `{ ชื่อช่อง: [ข้อความ, ...] }` อ่านง่ายและส่งให้หน้าเว็บโชว์ใต้ช่องกรอกได้ทันที ([เอกสาร Zod: Formatting errors](https://zod.dev/error-formatting))
+> - `Router()` ของ Express คือ "app ย่อย" ที่มี `.get` `.post` เหมือน `app` แต่ยังไม่ผูกกับ path ใดๆ ไฟล์ `app.ts` จะเอาไปเสียบด้วย `app.use("/rentals", rentalRoutes)` แล้ว path ใน router (`"/"`, `"/:id/return"`) จะต่อท้าย `/rentals` ให้เอง ([เอกสาร Express: express.Router](https://expressjs.com/en/guide/routing.html#express-router))
+
 `src/routes/rental.routes.ts`
 ```ts
 import { Router } from "express";
@@ -748,7 +761,7 @@ const onError: ErrorRequestHandler = (err, _req, res, _next) => {
 app.use(onError);
 ```
 
-`src/index.ts`
+`src/index.ts` **เขียนทับไฟล์เดิมของบทที่ 5 ทั้งไฟล์** โค้ดเก็บข้อมูลใน memory (array `laptops`, `nextId` และ route ทั้งหมด) ของบทที่ 5 ถูกแทนที่ด้วยชั้น routes / services / repositories ข้างบนแล้ว ถ้าอยากเก็บไว้ดูเทียบ ให้ย้ายไฟล์เก่าไปไว้นอก `src/` ก่อน (เช่น `mkdir old && git mv src/index.ts old/index.ts`) อย่าเก็บไว้ใน `src/` เพราะ `npm run typecheck` จะตรวจไฟล์นั้นด้วย และสองไฟล์จะแย่งกันเปิด port 3000
 ```ts
 import { app } from "./app.js";
 
@@ -761,6 +774,11 @@ app.listen(3000, () => console.log("🚀 API on http://localhost:3000"));
 npm run typecheck      # ต้องไม่มี error
 npm run dev
 ```
+ควรเห็น `typecheck` จบโดยไม่มีบรรทัด `error TS...` และ `npm run dev` ขึ้น
+```text
+🚀 API on http://localhost:3000
+```
+ถ้าได้ `Error: listen EADDRINUSE: address already in use :::3000` แปลว่ายังมีของจับ port 3000 อยู่ ตัวที่เจอบ่อยที่สุดคือกล่อง `api` ที่ build ไว้ในบทที่ 5 ข้อ 12 (`docker rm -f api`) หรือ `npm run dev` อีกหน้าต่างที่ลืมปิด
 
 ---
 
@@ -853,7 +871,49 @@ npx tsx race.ts
 ควรเห็น `201` แค่ **ตัวเดียว** ที่เหลือเป็น `409` เช่น `[ 409, 201, 409, 409, 409 ]` (ตำแหน่งของ `201` สลับได้ทุกรอบ ขึ้นกับว่าคำขอไหนถึงฐานข้อมูลก่อน)
 ด่านใน service ปิดไปแล้ว แต่ unique index ในฐานข้อมูลยังกันไว้ได้ นี่คือเหตุผลที่กฎสำคัญต้องมีด่านในฐานข้อมูลเสมอ
 
-👉 อยากเห็นของพังจริง: ลองลบบรรทัด `uniqueIndex(...)` ใน schema → `db:generate` → `db:migrate` แล้วรัน `race.ts` อีกรอบ (คืนเครื่อง 3 ก่อน) จะเห็น `[ 201, 201, 201, 201, 201 ]` เครื่องเดียวถูกเช่าซ้อน 5 รายการ เสร็จแล้ว **ใส่บรรทัดนั้นกลับ** generate และ migrate อีกครั้ง และเอา `//` ใน service ออก
+👉 **อยากเห็นของพังจริง** (ทำต่อเป็นขั้นๆ อย่าข้ามขั้นที่ 4 ไม่อย่างนั้นจะใส่ index คืนไม่ได้)
+
+**1) คืนเครื่อง 3 ก่อน** ตอนนี้เครื่อง 3 ถูกเช่าอยู่จากรอบที่แล้ว ถ้าไม่คืน ทุกคำขอจะได้ `409` เพราะเครื่องไม่ว่าง หา id ของรายการที่ยังไม่คืน แล้วสั่งคืนผ่าน API
+```bash
+docker exec -it laptop-db psql -U postgres -c "SELECT id FROM rentals WHERE laptop_id = 3 AND returned_at IS NULL;"
+curl -s -X POST http://localhost:3000/rentals/<id ที่ได้>/return
+```
+
+**2) ถอดด่านในฐานข้อมูล** ลบบรรทัด `(t) => [uniqueIndex("one_open_rental_per_laptop")...]` ใน `src/db/schema.ts` → `npm run db:generate` (ไฟล์ใหม่จะมีแค่ `DROP INDEX "one_open_rental_per_laptop";`) → `npm run db:migrate`
+
+**3) รัน `race.ts` อีกรอบ**
+```bash
+npx tsx race.ts
+```
+ควรเห็น `[ 201, 201, 201, 201, 201 ]` เครื่องเดียวถูกเช่าซ้อน 5 รายการ เพราะทั้ง 5 คำขอไม่เหลือด่านไหนกันเลย
+
+**4) ใส่บรรทัด `uniqueIndex(...)` กลับ** แล้ว `npm run db:generate` → `npm run db:migrate` รอบนี้ **migrate จะไม่ผ่าน** (drizzle-kit 0.31 ขึ้นแค่ `applying migrations...` แล้วจบเงียบๆ ด้วย exit code 1 แบบที่บทที่ 8 ข้อ 9 ❶ เล่าไว้) ถ้ารันไฟล์ SQL ล่าสุดตรงๆ จะเห็นสาเหตุ
+```bash
+docker exec -i laptop-db psql -U postgres < drizzle/0002_xxx.sql     # แทน 0002_xxx ด้วยชื่อไฟล์ที่เพิ่ง generate
+```
+```text
+ERROR:  could not create unique index "one_open_rental_per_laptop"
+DETAIL:  Key (laptop_id)=(3) is duplicated.
+```
+**ทำไม:** กฎใหม่ไม่ได้ตรวจแค่ข้อมูลที่จะเข้ามาในอนาคต ฐานข้อมูลต้องตรวจ **ข้อมูลที่มีอยู่แล้วทุกแถว** ก่อนยอมสร้าง index และตอนนี้ในตารางมีรายการเช่าเครื่อง 3 ที่ยังไม่คืนอยู่ 5 แถว ซึ่งผิดกฎที่เรากำลังจะใส่ ฐานข้อมูลจึงปฏิเสธทั้งก้อน (เป็นบทเรียนเดียวกับเรื่องเพิ่มคอลัมน์ `NOT NULL` ในข้อ 11: **เพิ่มกฎไม่ได้ ถ้าข้อมูลที่มีอยู่ผิดกฎนั้นแล้ว** ต้องแก้ข้อมูลก่อน)
+
+**5) หาแถวที่ผิดกฎ แล้วแก้ข้อมูลก่อน**
+```bash
+docker exec -it laptop-db psql -U postgres -c "SELECT laptop_id, count(*) AS open_rentals FROM rentals WHERE returned_at IS NULL GROUP BY laptop_id HAVING count(*) > 1;"
+```
+```text
+ laptop_id | open_rentals
+-----------+--------------
+         3 |            5
+(1 row)
+```
+query นี้นับรายการที่ยังไม่คืนของแต่ละเครื่อง แล้วเอาเฉพาะเครื่องที่มีเกิน 1 (ตรงกับเงื่อนไขของ index พอดี) ในงานจริงต้องถามเจ้าของร้านว่ารายการไหนเป็นของจริง ในแบบฝึกนี้ให้เก็บรายการแรก (id น้อยสุด) ไว้ แล้วปิดรายการอื่นด้วยการใส่เวลาคืน
+```bash
+docker exec -it laptop-db psql -U postgres -c "UPDATE rentals SET returned_at = now() WHERE laptop_id = 3 AND returned_at IS NULL AND id <> (SELECT min(id) FROM rentals WHERE laptop_id = 3 AND returned_at IS NULL);"
+```
+ควรเห็น `UPDATE 4` แล้ว `npm run db:migrate` อีกครั้ง ควรเห็น `migrations applied successfully!` (ไม่ต้อง generate ใหม่ ไฟล์ migration ยังเป็นไฟล์เดิม แค่ตอนนี้ข้อมูลผ่านกฎแล้ว)
+
+**6) เก็บกวาด** เอา `//` ใน `rental.service.ts` ออก (เปิดด่านที่ 1 คืน) แล้วลองขั้นที่ 1 และ `race.ts` อีกรอบ ต้องกลับมาได้ `201` ตัวเดียว
 
 ### ❷ ลืมแปลง error ของฐานข้อมูล
 
@@ -888,6 +948,7 @@ npx tsx race.ts
 | ข้อมูลซ้ำได้ `500` แทน `409` | ไม่ได้แปลง `23505` ใน service | ใช้ `pgCode(err)` ตามข้อ 5 |
 | ใส่ `err.code === "23505"` แล้วไม่เคยเข้าเงื่อนไข | Drizzle ห่อ error ของ pg ไว้ รหัสจริงอยู่ใน `err.cause.code` | ใช้ตัวช่วย `pgCode` ที่ดูทั้งสองที่ |
 | `GET /laptops` ช้าลงเรื่อยๆ ตอนข้อมูลเยอะ | query แยกทีละเครื่องเพื่อหา "ว่างไหม" (N+1) | คำนวณใน query เดียวด้วย `LEFT JOIN` แบบข้อ 8 และสร้าง index ที่ `rentals.laptop_id` (unique index ของกฎข้อ 6 ช่วยแล้วส่วนหนึ่ง) |
+| `could not create unique index ... Key (laptop_id)=(3) is duplicated` ตอนรันไฟล์ migration (หรือ `db:migrate` จบเงียบๆ ด้วย exit code 1) | ข้อมูลที่มีอยู่แล้วผิดกฎของ index ที่กำลังจะสร้าง เช่น หลังลองพัง ❶ ในข้อ 10 | หาแถวที่ซ้ำด้วย `GROUP BY ... HAVING count(*) > 1` แก้ข้อมูลให้ผ่านกฎก่อน แล้ว `db:migrate` ใหม่ (ข้อ 10 ❶ ขั้นที่ 5) |
 | `column "deposit" of relation "rentals" contains null values` ตอน migrate | เพิ่มคอลัมน์ `NOT NULL` โดยไม่มีค่าเริ่มต้น | ใส่ `.default(...)` หรือทำ 3 ขั้นตามข้อ 11 |
 | ค่าที่ไม่ได้ตั้งใจหลุดเข้าฐานข้อมูล เช่น client ส่ง `id` มาเอง | ส่ง `req.body` ให้ repository ตรงๆ | ผ่าน `parse(...)` ก่อนเสมอ ให้ Zod ตัดช่องที่ไม่ได้ประกาศ |
 | `Cannot find module '../db/index'` | import ไม่ใส่ `.js` ทั้งที่ใช้ `NodeNext` | ใส่ `.js` ท้ายชื่อไฟล์ตอน import |

@@ -63,12 +63,37 @@ title: "บทเสริม: จัดโครงสร้างโปรเ�
 - Windows และ Mac **ไม่แยก** `Laptop.ts` กับ `laptop.ts` แต่ Linux (เซิร์ฟเวอร์จริง, Docker) **แยก**
 - เขียน `import "./Laptop"` ทั้งที่ไฟล์ชื่อ `laptop.ts` จะรันได้บนเครื่องเรา แล้ว **พังตอน deploy** ซึ่งหาสาเหตุยากมาก
 
-💥 **ลองพังมันดู:** ในเครื่อง Mac ลองสร้างไฟล์ `Laptop.ts` แล้วใน `index.ts` เขียน `import` เป็น `./laptop` สั่ง `bun run index.ts` จะรันได้ แล้วลองรันแบบ Linux ใน Docker:
+💥 **ลองพังมันดู:** สร้างโฟลเดอร์ทดลอง `case-demo` ที่มี 2 ไฟล์ (สังเกตว่าชื่อไฟล์ขึ้นต้นด้วย `L` ใหญ่ แต่ `import` เขียน `l` เล็ก)
+
+`case-demo/Laptop.ts`
+```ts
+export const brand = "Asus";
+```
+
+`case-demo/index.ts`
+```ts
+import { brand } from "./laptop"; // ตั้งใจพิมพ์ตัวเล็ก ไม่ตรงกับชื่อไฟล์
+console.log("brand =", brand);
+```
+
+อยู่ในโฟลเดอร์ `case-demo` แล้วสั่ง `bun run index.ts` บน Mac หรือ Windows จะรันได้ (`brand = Asus`) เพราะระบบไฟล์ของสองระบบนี้ไม่แยกตัวพิมพ์ แล้วลองรันแบบ Linux ใน Docker:
 
 ```bash
+# Mac / Linux / Git Bash
 docker run --rm -v "$PWD":/src:ro oven/bun:1 sh -c 'cp -r /src /app && cd /app && bun run index.ts'
 ```
-**ควรเห็น:** `error: ENOENT reading "/app/laptop.ts"` (หาไฟล์ไม่เจอ แบบเดียวกับที่จะเจอบน Vercel/CI)
+```powershell
+# PowerShell: ต้องเขียน ${PWD} ไว้ในเครื่องหมายคำพูดก้อนเดียวกับ :/src:ro
+# ถ้าเขียน "$PWD":/src:ro แบบ bash, PowerShell จะตัดคำที่เครื่องหมายคำพูดปิด ได้ 2 argument แล้ว Docker อ่านคำสั่งเพี้ยน
+docker run --rm -v "${PWD}:/src:ro" oven/bun:1 sh -c 'cp -r /src /app && cd /app && bun run index.ts'
+```
+**ควรเห็น:**
+```
+error: ENOENT reading "/app/laptop.ts"
+
+Bun v1.4.3 (Linux arm64)
+```
+(หาไฟล์ไม่เจอ แบบเดียวกับที่จะเจอบน Vercel/CI บรรทัดสุดท้ายเป็นเวอร์ชันของ Bun ใน image และสถาปัตยกรรมเครื่อง อาจเป็น `x64` บนเครื่อง Intel/AMD) แก้โดยเปลี่ยน `import` เป็น `"./Laptop"` ให้ตรงกับชื่อไฟล์ หรือดีกว่านั้นคือเปลี่ยนชื่อไฟล์เป็น `laptop.ts` ตามกฎข้อ 2
 
 > 🤓 **ทำไมต้อง `cp` เข้าไปก่อน?** ถ้าใช้ `-v "$PWD":/app` แล้วรันตรงๆ จะยังรันได้ เพราะ Docker บน Mac แค่ "ยืม" โฟลเดอร์จากเครื่องเรา ซึ่งยังไม่แยกตัวพิมพ์ การ copy ไฟล์เข้าไปในตัว container ทำให้ไฟล์อยู่บนระบบไฟล์ของ Linux ที่แยกตัวพิมพ์จริง จำไว้ว่า **"รันได้บนเครื่องเรา" ยังไม่ได้แปลว่า "รันได้บนเซิร์ฟเวอร์"** ถ้าระบบไฟล์ต่างกัน
 
@@ -188,14 +213,32 @@ export const app = new Hono();
 app.route("/api/laptops", laptopRoutes);
 ```
 
-ผลที่ได้เมื่อเรียกตามลำดับ (ทดสอบด้วย `app.request(...)` ของ Hono):
+**ลองรันเอง:** สร้างโปรเจกต์เปล่า (`mkdir layered-demo && cd layered-demo && bun init -y && bun add hono`) ใส่ 4 ไฟล์ข้างบนไว้ใน `src/` แล้วเพิ่มไฟล์ทดลอง `src/try.ts` ที่ยิงคำขอเข้า Hono ตรงๆ ด้วย `app.request(...)` (ไม่ต้องเปิด server และไม่ต้องใช้ curl เพราะ `app` ของ Hono ก็คือฟังก์ชันที่รับ Request แล้วคืน Response)
+
+```ts
+import { app } from "./app";
+
+async function call(method: string, path: string) {
+  const res = await app.request(path, { method });
+  console.log(method.padEnd(4), path.padEnd(20), "→", res.status, await res.text());
+}
+
+await call("GET", "/api/laptops");
+await call("POST", "/api/laptops/1/rent");
+await call("POST", "/api/laptops/1/rent");
+await call("POST", "/api/laptops/9/rent");
+```
+
+สั่ง `bun run src/try.ts` ควรเห็น:
 
 ```
-GET  /api/laptops          → 200 {"data":[{"id":1,"model":"Asus","status":"available"}]}
-POST /api/laptops/1/rent   → 200 {"data":{"id":1,"model":"Asus","status":"rented"}}
-POST /api/laptops/1/rent   → 409 {"error":"ALREADY_RENTED"}
-POST /api/laptops/9/rent   → 404 {"error":"NOT_FOUND"}
+GET  /api/laptops         → 200 {"data":[{"id":1,"model":"Asus","status":"available"}]}
+POST /api/laptops/1/rent  → 200 {"data":{"id":1,"model":"Asus","status":"rented"}}
+POST /api/laptops/1/rent  → 409 {"error":"ALREADY_RENTED"}
+POST /api/laptops/9/rent  → 404 {"error":"NOT_FOUND"}
 ```
+
+ครั้งที่ 2 ได้ 409 เพราะครั้งแรกเปลี่ยน `status` ของ object ใน array ไปแล้ว และ array นั้นอยู่ในหน่วยความจำตลอดที่โปรแกรมยังรัน (รันไฟล์ใหม่อีกรอบ ข้อมูลจะกลับเป็นค่าเริ่มต้น)
 
 > 🤓 **สังเกตไหม?** `laptop.service.ts` ไม่รู้จัก Hono เลย ถ้าวันหนึ่งเปลี่ยนจาก Hono เป็นเฟรมเวิร์กอื่น หรืออยากเรียก service จากสคริปต์ ก็ใช้ไฟล์นี้ได้ทันที และ **เขียนเทสต์ service ได้โดยไม่ต้องจำลอง HTTP**
 
@@ -318,7 +361,7 @@ app.route("/api/laptops", laptopRoutes);
 > 1. สร้าง `modules/laptops/`
 > 2. ย้ายสามไฟล์ของ `laptop` เข้าไปด้วย `git mv` (เพื่อให้ Git จำประวัติไฟล์ได้)
 > 3. แก้ `import` ให้ถูก แล้วสร้าง `index.ts`
-> 4. รัน `bunx tsc --noEmit` และเทสต์ ให้ผ่านก่อนย้ายฟีเจอร์ถัดไป
+> 4. รัน `bunx tsc --noEmit` และเทสต์ ให้ผ่านก่อนย้ายฟีเจอร์ถัดไป (โปรเจกต์ต้องมี `typescript` ใน devDependencies ก่อน ถ้ายังไม่มีให้ `bun add -d typescript` เพราะคำสั่ง `tsc` มาจาก package ชื่อ `typescript` ถ้าไม่ได้ติดตั้งไว้ `bunx`/`npx` จะไปหา package ที่ชื่อ `tsc` แทน ดูบทที่ 3 ข้อ 11)
 > 5. ย้ายทีละฟีเจอร์ commit ทีละฟีเจอร์
 
 ---
@@ -533,8 +576,8 @@ Linux ที่ใช้บนเซิร์ฟเวอร์แยกตั�
 
 ## ✏️ แบบฝึกหัด
 
-1. **สร้างแบบ Layered:** ทำโปรเจกต์ Bun + Hono ใหม่ แล้วสร้าง `laptop` ตามหัวข้อ 3.4 ให้เรียกทั้ง 4 คำขอแล้วได้ผลเหมือนในหนังสือ
-2. **ย้ายเป็นแบบโมดูล:** ย้ายเป็น `modules/laptops/` ด้วย `git mv` ตามขั้นตอนหัวข้อ 5 โดยผลลัพธ์ต้องไม่เปลี่ยน
+1. **สร้างแบบ Layered:** ทำโปรเจกต์ Bun + Hono ใหม่ แล้วสร้าง `laptop` ตามหัวข้อ 3.4 ให้เรียกทั้ง 4 คำขอด้วย `src/try.ts` (`bun run src/try.ts`) แล้วได้ผลเหมือนในหนังสือ
+2. **ย้ายเป็นแบบโมดูล:** ย้ายเป็น `modules/laptops/` ด้วย `git mv` ตามขั้นตอนหัวข้อ 5 โดยผลลัพธ์ของ `bun run src/try.ts` ต้องไม่เปลี่ยนแม้แต่ตัวอักษรเดียว (นี่คือวิธีพิสูจน์ว่าการย้ายโครงสร้างไม่ได้เปลี่ยนพฤติกรรม)
 3. **เพิ่มโมดูลที่ 2:** สร้าง `modules/customers/` ที่มี `GET /api/customers` แล้วตั้งใจลอง import repository ของ `laptops` ข้ามโมดูลดู แล้วแก้ให้ผ่านประตู `index.ts` แทน
 4. **วิเคราะห์โครงสร้าง:** เปิดโค้ดของ starter ที่ทำในบทที่ 11–15 แล้ววาดแผนผังว่าตอนนี้เป็นแบบไหน ไฟล์ไหนควรเป็น component ระดับ 1 และไฟล์ไหนเป็นระดับ 2
 5. **จัด frontend ใหม่:** แตก `src/components/` ของโปรเจกต์ React ให้เป็น `features/` + `components/` (ระดับ 1) แล้วตรวจว่าระดับ 1 ไม่ import อะไรจาก `features/` เลย
@@ -552,4 +595,4 @@ Linux ที่ใช้บนเซิร์ฟเวอร์แยกตั�
 
 ---
 
-[← บทเสริม: ภาษาและคำสั่งที่ใช้เขียน React](/react-language) · [🏠 สารบัญ](/) · [🏪 Mini Project: STARTER →](/starter)
+[← บทที่ 16: ทำงานคู่กับ AI](/16-ai-pairing) · [🏠 สารบัญ](/) · [🏪 Mini Project: STARTER →](/starter)

@@ -5,6 +5,8 @@ title: "บทที่ 4: ภาษาและระบบ Type (JavaScript & 
 
 > ⏱ ประมาณ 6 ชั่วโมง · 🧩 ต้องผ่านก่อน: บทที่ 3 · 🛠 ใช้: Node.js, VS Code, Terminal (Bun ถ้าติดตั้งไว้แล้ว)
 
+> 🟨 **ยังไม่เคยเขียน JavaScript?** อ่าน [บทเสริม: JavaScript พื้นฐานใน 30–60 นาที](/js-basics) ก่อน (ตัวแปร, `if`/`===`, loop, arrow function, callback, object/array, destructuring/spread, `map`/`filter`/`reduce`, `import`/`export`, `async`/`await` ทุกตัวอย่างรันได้พร้อมผลที่ควรเห็น) บทนี้ใช้ของเหล่านี้ตั้งแต่ข้อ 8 โดยไม่อธิบายซ้ำ ถ้าเขียน JS เป็นแล้วข้ามได้เลย
+
 > **⚡ สรุป 30 วินาที**
 > - ทุกภาษาต้องตอบคำถามเดียวกัน: **ข้อมูลนี้ชนิดอะไร และตรวจเมื่อไหร่** ตรวจได้ 2 จังหวะ คือ **ก่อนรัน** (static) กับ **ตอนรัน** (runtime)
 > - JavaScript ตรวจตอนรันอย่างเดียว และชอบ **แปลงชนิดให้เงียบๆ** แทนที่จะ error บั๊กจึงหลุดถึงมือลูกค้า
@@ -66,6 +68,8 @@ engine ข้างใน runtime (V8, JavaScriptCore จากบทที่ 3
 ## 2. พื้นฐาน: ภาษาตรวจชนิดข้อมูล "ตอนไหน"
 
 ### ถ้ายังไม่เคยเขียนโปรแกรมเลย: คำศัพท์ 5 คำที่ต้องรู้ก่อน
+
+(ตารางนี้คือศัพท์ขั้นต่ำ ถ้าอยากเห็นแต่ละคำทำงานจริงพร้อมผลที่ควรเห็น ดู [JavaScript พื้นฐาน](/js-basics))
 
 | คำ | แปลว่า | 💡 เปรียบเทียบ |
 |---|---|---|
@@ -327,6 +331,8 @@ Lenovo 16
 สังเกตบรรทัดที่ 2: `add("2", 3)` ได้ `"23"` (ข้อความ) ไม่ใช่ `5` และไม่มี error ใดๆ นี่คือ type coercion แบบเดียวกับที่บิตเจอ (ข้อ 2)
 
 > 💡 **ใช้ `const` เป็นค่าเริ่มต้น** เปลี่ยนเป็น `let` ก็ต่อเมื่อต้องเปลี่ยนค่าจริงๆ (ไม่ใช้ `var` ซึ่งเป็นแบบเก่า)
+
+> 🟨 ข้อถัดๆ ไปใช้ `if`/`===`, `for...of`, template literal (`` `${x}` ``), arrow function (`(l) => l.brand`) และ callback (`list.map(...)`) ถ้าตัวไหนอ่านไม่ออก เปิด [JavaScript พื้นฐาน](/js-basics) ข้อ 2–4 และ 7 ไว้ข้างๆ
 
 ---
 
@@ -854,9 +860,12 @@ TS ไม่ขีดแดงสักเส้น แต่ค่าจริ�
 ```bash
 npm install zod
 ```
+สร้าง `src/zod-demo.ts` (ไฟล์เต็ม รันได้ทันทีในโปรเจกต์ `ts-basic` ของข้อ 9)
 ```ts
+// src/zod-demo.ts
 import { z } from "zod";
 
+// 1) schema = กฎที่ "รันจริง" ตอนรัน (ไม่ถูกลบทิ้งเหมือน type)
 const LaptopSchema = z.object({
   brand: z.string().min(1),
   model: z.string(),
@@ -864,18 +873,27 @@ const LaptopSchema = z.object({
   ramGb: z.number().int().positive(),
 });
 
-type NewLaptop = z.infer<typeof LaptopSchema>;   // ได้ type จาก schema ไม่ต้องเขียนซ้ำ
+// 2) ได้ type จาก schema ไม่ต้องเขียนซ้ำ
+type NewLaptop = z.infer<typeof LaptopSchema>;
 
+// 3) จำลองข้อมูลจากข้างนอก (เหมือน body ที่ส่งมาจากฟอร์ม/API)
+//    ประกาศเป็น unknown = "ยังไม่รู้ว่าเป็นอะไร ห้ามใช้ก่อนตรวจ" (ข้อ ⑧)
+const input: unknown = JSON.parse('{"brand":"Lenovo","model":"T14","serial":"PF-1","ramGb":"สิบหก"}');
+
+// 4) ตรวจ: safeParse ไม่ throw แต่คืนผลว่าผ่านหรือไม่
 const result = LaptopSchema.safeParse(input);
 if (!result.success) {
-  console.log(result.error.issues);   // บอกว่าผิด field ไหน
+  console.log(JSON.stringify(result.error.issues, null, 2));   // บอกว่าผิดช่องไหน
 } else {
-  const laptop = result.data;         // มั่นใจได้ว่าถูกต้อง + มี type
+  const laptop: NewLaptop = result.data;   // ถึงตรงนี้มั่นใจได้ว่าถูกต้อง + มี type
+  console.log("ผ่าน:", laptop.brand, laptop.ramGb);
 }
 ```
-ลองส่งข้อมูลผิดเข้าไป (ให้ `input` เป็น `{ brand: "Lenovo", model: "T14", serial: "PF-1", ramGb: "สิบหก" }` ที่ได้จาก `JSON.parse` และพิมพ์ `JSON.stringify(result.error.issues, null, 2)`)
+```bash
+npx tsx src/zod-demo.ts
+```
 
-**ควรเห็น**
+**ควรเห็น** (`ramGb` เป็นข้อความ `"สิบหก"` จึงไม่ผ่าน)
 ```json
 [
   {
@@ -888,7 +906,17 @@ if (!result.success) {
   }
 ]
 ```
-อ่านได้ว่า: ช่อง `ramGb` (`path`) ต้องเป็น `number` แต่ได้ `string` ส่วนข้อมูลที่ถูกต้องจะได้ `success: true` และ `result.data` ที่มี type ครบ
+อ่านได้ว่า: ช่อง `ramGb` (`path`) ต้องเป็น `number` แต่ได้ `string`
+
+ทีนี้แก้ข้อมูลในบรรทัด `JSON.parse` จาก `"ramGb":"สิบหก"` เป็น `"ramGb":16` (ไม่มีเครื่องหมายคำพูด = ตัวเลข) แล้วรันซ้ำ
+
+**ควรเห็น**
+```
+ผ่าน: Lenovo 16
+```
+ข้อมูลที่ถูกต้องได้ `success: true` และ `result.data` ที่มี type ครบ สังเกตว่า **โค้ดเหมือนเดิมทุกบรรทัด เปลี่ยนแค่ข้อมูล** ผลก็เปลี่ยน นี่คือสิ่งที่ type ทำไม่ได้ เพราะ type หายไปก่อนข้อมูลจะมาถึง
+
+> 🤔 **ทำไมไม่เขียน `JSON.parse(...) as NewLaptop` ให้จบๆ?** เพราะ `as` แค่สั่ง TS ให้เชื่อ (ดู `cast-demo.ts` ด้านบน) ส่วน `unknown` บังคับให้เราต้องตรวจก่อนใช้ ถ้าลองเขียน `input.brand` ตรงๆ TS จะขีดแดง `'input' is of type 'unknown'` (TS18046) ซึ่งคือสิ่งที่เราต้องการ
 
 **ข้อมูลจากฟอร์มเป็นข้อความเสมอ** ถ้าอยากรับ `"16"` แล้วได้เลข `16` ให้สั่งแปลงก่อนตรวจด้วย `z.coerce`
 ```ts

@@ -346,7 +346,7 @@ export const ContactInput = z.object({
 export type ContactInput = z.infer<typeof ContactInput>;   // หน้าเว็บ import type นี้ไปใช้ได้
 ```
 
-`src/middleware/rateLimit.ts` ด่านจำกัดจำนวนครั้ง (กันส่งฟอร์มรัวๆ)
+`src/middleware/rate-limit.ts` ด่านจำกัดจำนวนครั้ง (กันส่งฟอร์มรัวๆ)
 ```ts
 import type { Context } from "hono";
 import { createMiddleware } from "hono/factory";
@@ -395,7 +395,7 @@ import { and, asc, eq } from "drizzle-orm";
 import { db } from "../db";
 import { categories, contactMessages, services } from "../db/schema";
 import { ok, parse } from "../http/response";
-import { rateLimit } from "../middleware/rateLimit";
+import { rateLimit } from "../middleware/rate-limit";
 import { ContactInput, ServiceQuery } from "../validators/public";
 
 export const publicRoutes = new Hono();

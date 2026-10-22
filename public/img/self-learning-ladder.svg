@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" role="img" aria-label="บันไดหาคำตอบ 5 ขั้นภายในราว 30 นาที" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="16">
+<title>บันไดหาคำตอบ 5 ขั้นภายในราว 30 นาที</title>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#0b3c91"/></marker></defs>
+<rect x="1" y="1" width="798" height="398" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="34" font-size="20" text-anchor="middle" fill="#0b3c91" font-weight="bold">บันไดหาคำตอบ: ขึ้นทีละขั้น ติดขั้นไหนนานเกินก็ขึ้นขั้นถัดไป</text>
+
+<!-- ขั้น 1 -->
+<rect x="20" y="290" width="146" height="90" rx="10" fill="#e8effc" stroke="#0b3c91" stroke-width="2"/>
+<circle cx="34" cy="290" r="14" fill="#f59e0b"/>
+<text x="34" y="295.6" text-anchor="middle" fill="#fff" font-weight="bold">1</text>
+<text x="93" y="318" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">อ่าน error ให้จบ</text>
+<text x="93" y="342" font-size="14" text-anchor="middle" fill="#0f172a">+ ทำให้เกิดซ้ำ</text>
+<text x="93" y="366" font-size="13" text-anchor="middle" fill="#64748b">นาทีที่ 0–10</text>
+
+<!-- ขั้น 2 -->
+<rect x="176" y="230" width="146" height="150" rx="10" fill="#e8effc" stroke="#0b3c91" stroke-width="2"/>
+<circle cx="190" cy="230" r="14" fill="#f59e0b"/>
+<text x="190" y="235.6" text-anchor="middle" fill="#fff" font-weight="bold">2</text>
+<text x="249" y="258" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">ถามเครื่อง</text>
+<text x="249" y="282" font-size="14" text-anchor="middle" fill="#0f172a">--help · npm ls</text>
+<text x="249" y="302" font-size="14" text-anchor="middle" fill="#0f172a">Go to Definition</text>
+<text x="249" y="366" font-size="13" text-anchor="middle" fill="#64748b">นาทีที่ 10–15</text>
+
+<!-- ขั้น 3 -->
+<rect x="332" y="170" width="146" height="210" rx="10" fill="#e8effc" stroke="#0b3c91" stroke-width="2"/>
+<circle cx="346" cy="170" r="14" fill="#f59e0b"/>
+<text x="346" y="175.6" text-anchor="middle" fill="#fff" font-weight="bold">3</text>
+<text x="405" y="198" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">เอกสารทางการ</text>
+<text x="405" y="222" font-size="14" text-anchor="middle" fill="#0f172a">Guide · Reference</text>
+<text x="405" y="242" font-size="14" text-anchor="middle" fill="#0f172a">Changelog</text>
+<text x="405" y="366" font-size="13" text-anchor="middle" fill="#64748b">นาทีที่ 15–25</text>
+
+<!-- ขั้น 4 -->
+<rect x="488" y="110" width="146" height="270" rx="10" fill="#e8effc" stroke="#0b3c91" stroke-width="2"/>
+<circle cx="502" cy="110" r="14" fill="#f59e0b"/>
+<text x="502" y="115.6" text-anchor="middle" fill="#fff" font-weight="bold">4</text>
+<text x="561" y="138" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">ค้นให้เป็น</text>
+<text x="561" y="162" font-size="14" text-anchor="middle" fill="#0f172a">"error ตรงตัว"</text>
+<text x="561" y="182" font-size="14" text-anchor="middle" fill="#0f172a">GitHub issues</text>
+<text x="561" y="366" font-size="13" text-anchor="middle" fill="#64748b">นาทีที่ 25–30</text>
+
+<!-- ขั้น 5 -->
+<rect x="644" y="50" width="136" height="330" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<circle cx="658" cy="50" r="14" fill="#16a34a"/>
+<text x="658" y="55.6" text-anchor="middle" fill="#fff" font-weight="bold">5</text>
+<text x="712" y="80" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">เขียนคำถาม</text>
+<text x="712" y="102" font-size="14" text-anchor="middle" fill="#0f172a">ให้ครบ 4 ช่อง</text>
+<text x="712" y="130" font-size="14" text-anchor="middle" fill="#0f172a">มักเจอคำตอบ</text>
+<text x="712" y="150" font-size="14" text-anchor="middle" fill="#0f172a">ระหว่างเขียน 🦆</text>
+<text x="712" y="186" font-size="14" text-anchor="middle" fill="#166534" font-weight="bold">ยังไม่เจอ →</text>
+<text x="712" y="206" font-size="14" text-anchor="middle" fill="#166534" font-weight="bold">ส่งในกล่องถาม</text>
+<text x="712" y="226" font-size="14" text-anchor="middle" fill="#166534" font-weight="bold">ท้ายบท</text>
+<text x="712" y="366" font-size="13" text-anchor="middle" fill="#64748b">ราวนาทีที่ 30</text>
+
+<line x1="60" y1="250" x2="600" y2="70" stroke="#0b3c91" stroke-width="2" stroke-dasharray="6 6" marker-end="url(#an)"/>
+<text x="150" y="200" font-size="14" fill="#0b3c91" transform="rotate(-18 150 200)">ทุกขั้น: จดว่าลองอะไรไปแล้ว ได้ผลอะไร</text>
+</svg>

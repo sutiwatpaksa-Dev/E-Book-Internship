@@ -27,7 +27,7 @@ title: "บทเสริม: ภาษาและคำสั่งที่�
 |---|---|
 | **ทำอะไร** | มีไว้แก้ปัญหาอะไร (พร้อมเปรียบเทียบ) |
 | **ไวยากรณ์** | เขียนยังไง |
-| **ตัวอย่างสั้น** | โค้ดที่ copy ไปลองได้ |
+| **ตัวอย่างสั้น** | โค้ดที่ copy ไปลองได้ (หัวข้อ 1: วางในไฟล์ `playground.ts` ในโฟลเดอร์ทดลอง ต่อท้ายข้อมูลตัวอย่างด้านล่าง แล้วรัน `bun playground.ts`) |
 | **ควรเห็น** | ผลลัพธ์ที่ถูกต้อง (ผลที่ขึ้นว่า "ควรเห็น" ในส่วน JavaScript เรารันจริงด้วย Bun แล้ว) |
 | **ข้อผิดพลาดที่เจอบ่อย** | พลาดแล้วจะเจออะไร |
 
@@ -406,7 +406,11 @@ import LaptopCard from "./components/laptop-card";
 import { useState } from "react";                 // named จากแพ็กเกจ
 ```
 
-> ⚠️ **เจอบ่อย:** `import { LaptopCard } from ...` ทั้งที่ไฟล์ export default → ได้ `undefined` แล้ว React ขึ้น `Element type is invalid: expected a string ... but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.` (เรารันจริงได้ข้อความนี้) / path ผิดตัวพิมพ์เล็กใหญ่ (ดู [บทเสริมจัดโครงสร้าง](/project-structure#2-กฎตั้งชื่อ-ภาษาอังกฤษ-ตัวพิมพ์เล็ก))
+> ⚠️ **เจอบ่อย: สลับ default กับ named** เจอ 2 ด่าน
+> 1. **ด่าน `tsc` / เส้นแดงใน VS Code (เห็นก่อน)** · `import { LaptopCard }` ทั้งที่ไฟล์ `export default` → `TS2614: Module '"./components/laptop-card"' has no exported member 'LaptopCard'. Did you mean to use 'import LaptopCard from "./components/laptop-card"' instead?` · กลับกัน `import useFetch from` ทั้งที่ไฟล์ `export function useFetch` → `TS2613: Module '...' has no default export. Did you mean to use 'import { useFetch } from ...' instead?` ข้อความบอกวิธีแก้มาให้แล้ว
+> 2. **ด่านเบราว์เซอร์ (ถ้าไม่สนเส้นแดงแล้วเปิดเว็บ)** · Vite ไม่ได้ตรวจ type (ลบทิ้งอย่างเดียว บทที่ 4 ข้อ 4) โค้ดจึงไปพังที่เบราว์เซอร์ หน้าขาว และ Console ขึ้น `Uncaught SyntaxError: The requested module '/src/components/laptop-card.tsx' does not provide an export named 'LaptopCard'` (ข้อความนี้มาจาก V8 ตัวเดียวกับที่อยู่ใน Chrome และ Node เราทดลองกับ Node แล้วได้ประโยคเดียวกัน)
+>
+> ส่วน `Element type is invalid ... got: undefined` ที่เห็นในคำตอบเก่าๆ บนเน็ต เกิดเมื่อ import **ผ่าน** แต่ได้ค่า `undefined` มา เช่น import ชื่อจาก `export *`/ไฟล์ CommonJS ที่ไม่มีชื่อนั้น ใน Vite + ESM ล้วนแบบโปรเจกต์เราจะเจอสองข้อความด้านบนแทน · อีกเรื่องที่เจอบ่อยคือ path ผิดตัวพิมพ์เล็กใหญ่ (ดู [บทเสริมจัดโครงสร้าง](/project-structure#2-กฎตั้งชื่อ-ภาษาอังกฤษ-ตัวพิมพ์เล็ก))
 
 ### 1.15 Type ที่เจอใน props: `interface`, `type`, `?`, union, generic, `as const`
 
@@ -800,7 +804,7 @@ const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
 | `Invalid hook call. Hooks can only be called inside of the body of a function component.` (ข้อความยาวกว่านี้ ขึ้นต้นประโยคนี้) | เรียก hook นอก component, ในฟังก์ชันธรรมดา, หรือมี React 2 ชุดในโปรเจกต์ | เรียกใน component/custom hook เท่านั้น ถ้าไม่ได้ทำผิด ลองถามพี่ว่ามี React ซ้ำหรือเปล่า |
 | `Too many re-renders. React limits the number of renders to prevent an infinite loop.` | เรียก `setX(...)` ตอนวาดโดยตรง รวมถึง `onClick={setX(1)}` | เรียกใน handler: `onClick={() => setX(1)}` หรือใน `useEffect` |
 | `Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, ...` | `useEffect` เรียก `setState` โดยไม่มี dependency array หรือ dependency เปลี่ยนทุกรอบ | ใส่ `[]` หรือ dependency ที่เปลี่ยนจริง |
-| `Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component ...` | import ผิดแบบ (default กับ named สลับกัน) หรือไฟล์ไม่ได้ export | ตรวจว่า `export default` ตรงกับ `import X from` และ `export function X` ตรงกับ `import { X }` |
+| `TS2614: Module '"./x"' has no exported member 'X'. Did you mean to use 'import X from "./x"' instead?` (เส้นแดง) หรือในเบราว์เซอร์ `SyntaxError: The requested module '/src/...' does not provide an export named 'X'` (หน้าขาว) | import แบบ `{ X }` แต่ไฟล์ `export default` (กลับกันได้ `TS2613: ... has no default export`) | ทำตามที่ข้อความแนะนำ: `export default` คู่กับ `import X from`, `export function X` คู่กับ `import { X }` (ข้อ 1.14) |
 | `useNavigate() may be used only in the context of a <Router> component.` | ใช้ hook ของ react-router นอก `<BrowserRouter>` | ห่อแอปด้วย router ใน `main.tsx` ([บทที่ 13](/13-router-seo)) |
 | `` The `style` prop expects a mapping from style properties to values, not a string. `` | เขียน `style="color:red"` | `style={{ color: "red" }}` |
 | `` Invalid DOM property `class`. Did you mean `className`? `` (คำเตือน) | เขียน `class` ใน JSX | ใช้ `className` |
@@ -889,4 +893,4 @@ React จำว่า hook ตัวไหนเป็นของ component จ
 
 ---
 
-[← บทที่ 16: ทำงานคู่กับ AI](/16-ai-pairing) · [🏠 สารบัญ](/) · [บทเสริม: จัดโครงสร้างโปรเจกต์ →](/project-structure)
+[← บทที่ 11: สร้างหน้าเว็บด้วย React](/11-react) · [🏠 สารบัญ](/) · [บทที่ 12: ตกแต่งเว็บทุกขนาดจอ →](/12-tailwind)

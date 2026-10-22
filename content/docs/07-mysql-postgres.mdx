@@ -124,7 +124,7 @@ SELECT * FROM customers WHERE name = 0;
 -- 🐬 MySQL:      ได้ "ทุกแถว" ที่ชื่อไม่ได้ขึ้นต้นด้วยตัวเลข (ข้อความถูกแปลงเป็น 0 แล้ว 0 = 0)
 -- 🐘 PostgreSQL: ERROR: operator does not exist: text = integer
 ```
-Postgres ที่ฟ้องทันทีช่วยจับบั๊กได้ตั้งแต่ตอนพัฒนา
+Postgres ที่ฟ้องทันทีช่วยจับบั๊กได้ตั้งแต่ตอนพัฒนา (ตัวอย่างนี้ต้องมีข้อมูลในตารางก่อนถึงจะเห็นความต่าง บนตารางว่าง MySQL จะได้ `Empty set` ซึ่งดูเหมือนไม่มีอะไรผิด ข้อ 7 ขั้นที่ 5 จะให้ลองหลังใส่แถวแรกแล้ว)
 
 > 🔍 **MySQL ไม่ได้เงียบสนิท** สังเกตคำว่า `1 warning` ท้ายผลลัพธ์ พิมพ์ `SHOW WARNINGS;` ต่อทันทีจะเห็นสาเหตุ (`Truncated incorrect DOUBLE value: 'abc'`) และตอน **บันทึก** ข้อมูล MySQL รุ่นใหม่เปิดโหมดเคร่งครัด (strict mode) เป็นค่าเริ่มต้น `INSERT` ค่า `'abc'` ลงคอลัมน์ `INT` จะ error ทันที ความยืดหยุ่นที่เหลือคือตอน **เทียบค่า** แบบตัวอย่างข้างบน
 
@@ -389,6 +389,7 @@ db-compare-postgres-1   postgres:17   "docker-entrypoint.s…"   postgres   25 s
 ถ้า `STATUS` ไม่ใช่ `Up` หรือขึ้น `port is already allocated` (เครื่องมี Postgres/MySQL ตัวอื่นใช้ port อยู่ ดูข้อ 13 ❹) ให้ดู log: `docker compose logs postgres` (ถ้าเห็นบรรทัด `database system is ready to accept connections` แปลว่าพร้อมแล้ว MySQL ใช้เวลาเตรียมตัวนานกว่า รอประมาณ 10–30 วินาที)
 
 ### ขั้นที่ 3: เปิด Terminal 2 หน้าต่างคู่กัน
+**ทั้งสองหน้าต่างต้อง `cd db-compare` ก่อน** เพราะ `docker compose` หาไฟล์ `compose.yaml` จากโฟลเดอร์ที่ยืนอยู่ ถ้าเปิดหน้าต่างใหม่แล้วสั่งเลย จะได้ `no configuration file provided: not found`
 ```bash
 docker compose exec mysql mysql -uroot -psecret --default-character-set=utf8mb4 shop   # ซ้าย 🐬 (ออก: exit)
 docker compose exec postgres psql -U postgres shop                                     # ขวา 🐘 (ออก: \q)
@@ -439,6 +440,22 @@ CREATE TABLE                       (PostgreSQL)
 ERROR 1064 (42000): You have an error in your SQL syntax; ... near 'RETURNING id' at line 1
 🐬  INSERT INTO customers (name) VALUES ('ปิติ');  SELECT LAST_INSERT_ID();     →  1
 ```
+**① (ต่อ) เทียบคอลัมน์ข้อความกับตัวเลข** ตอนนี้ทั้งสองฝั่งมีแถว "ปิติ" แล้ว ลองตัวอย่าง `WHERE name = 0` จากข้อ 3
+```text
+🐬 mysql>  SELECT * FROM customers WHERE name = 0;
++----+--------------+
+| id | name         |
++----+--------------+
+|  1 | ปิติ         |
++----+--------------+
+1 row in set, 1 warning
+🐬 mysql>  SHOW WARNINGS;            →  Warning | 1292 | Truncated incorrect DOUBLE value: 'ปิติ'
+
+🐘 shop=#  SELECT * FROM customers WHERE name = 0;
+ERROR:  operator does not exist: text = integer
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+```
+MySQL แปลง `'ปิติ'` เป็นตัวเลขไม่ได้จึงถือเป็น `0` แล้ว `0 = 0` เป็นจริง แถวนี้จึงหลุดออกมาทั้งที่ไม่มีใครชื่อ "0" (ถ้ามีชื่อที่ขึ้นต้นด้วยตัวเลข เช่น `'7-Eleven'` จะถูกแปลงเป็น `7` และไม่หลุดออกมา ผลจึงขึ้นกับข้อมูล ซึ่งทำให้บั๊กแบบนี้หายากขึ้นอีก) ถ้าเป็น `UPDATE ... WHERE name = 0` แถวที่ไม่ตั้งใจจะโดนแก้ไปด้วย ส่วน Postgres ปฏิเสธตั้งแต่ก่อนอ่านข้อมูลแถวแรก
 **④ ALTER TABLE ใน transaction** (ใช้ `DESCRIBE customers;` ฝั่ง MySQL หรือ `\d customers` ฝั่ง Postgres ดูผล)
 ```text
 🐘  \d customers   → มีแค่ id, name              (ALTER ถูกยกเลิก)
@@ -466,7 +483,7 @@ docker compose down -v       # ลบ volume ด้วย = ข้อมูล�
 ที่เราทำมาในข้อ 7 โปรแกรม `psql`/`mysql` มีอยู่ในคอนเทนเนอร์แล้ว
 
 ### วิธีที่ 2: CLI จากเครื่องเราเอง
-ติดตั้ง client (macOS: `brew install libpq` ได้แค่ client หรือ `brew install postgresql@17` ได้ทั้ง server และ client · Windows/Linux: ติดตั้ง PostgreSQL client) ควรใช้ client รุ่นเท่ากับหรือใหม่กว่า server แล้วต่อผ่าน port ที่เปิดไว้
+ติดตั้ง client (macOS: `brew install libpq` ได้แค่ client หรือ `brew install postgresql@17` ได้ทั้ง server และ client · Linux (Debian/Ubuntu): `sudo apt install postgresql-client` · Windows: โหลดตัวติดตั้งจาก postgresql.org/download/windows ตอนเลือก component ให้ติ๊กแค่ **Command Line Tools** (ไม่ต้องเอา server) แล้วเพิ่มโฟลเดอร์ `C:\Program Files\PostgreSQL\<เลขรุ่น>\bin` ลงใน PATH (Start → พิมพ์ "environment variables" → Path → New) ปิดเปิด Terminal ใหม่แล้วเช็ค `psql --version`) ควรใช้ client รุ่นเท่ากับหรือใหม่กว่า server แล้วต่อผ่าน port ที่เปิดไว้
 
 > 💡 บน Mac ถ้าติด `libpq` แล้วพิมพ์ `psql` ขึ้น `command not found` เป็นเพราะ Homebrew ติดตั้ง `libpq` แบบ keg-only (ไม่เอาคำสั่งไปไว้ใน PATH ให้ เพื่อไม่ชนกับ PostgreSQL ตัวเต็ม) แก้ด้วย `brew link --force libpq` หรือทำตามคำแนะนำที่ `brew info libpq` แสดง
 ```bash
@@ -606,10 +623,11 @@ GRANT
  app_user  |
  postgres  | Superuser, Create role, Create DB, Replication, Bypass RLS
 ```
-ลองต่อด้วย user ใหม่ (เปิดอีกหน้าต่าง)
+ลองต่อด้วย user ใหม่ (เปิดอีกหน้าต่าง แล้ว `cd db-compare`) ใช้ psql ที่อยู่ในคอนเทนเนอร์ จึงไม่ต้องติดตั้งอะไรเพิ่ม
 ```bash
-psql "postgres://app_user:app_pw@localhost:5432/bitcafe" -c "CREATE TABLE t (id int); INSERT INTO t VALUES (1); SELECT * FROM t;"
+docker compose exec postgres psql "postgres://app_user:app_pw@postgres:5432/bitcafe" -c "CREATE TABLE t (id int); INSERT INTO t VALUES (1); SELECT * FROM t;"
 ```
+สังเกตว่า host ใน connection string คือ `postgres` (ชื่อ service) ไม่ใช่ `localhost` เหตุผล: image ของ Postgres ตั้งค่าให้การต่อจาก `localhost` **ภายในคอนเทนเนอร์เดียวกัน** ไม่ต้องตรวจรหัสผ่าน (trust) ถ้าใช้ `localhost` ต่อให้พิมพ์รหัสผิดก็ยังเข้าได้ เราจะพิสูจน์อะไรไม่ได้เลย ส่วนชื่อ `postgres` ถูกแปลงเป็น IP ของคอนเทนเนอร์ในเครือข่าย Docker ซึ่งต้องตรวจรหัสผ่านเหมือนแอปจริง (ถ้าติดตั้ง psql บนเครื่องแล้วตามข้อ 8 ใช้ `psql "postgres://app_user:app_pw@localhost:5432/bitcafe" -c "..."` จากเครื่องเราได้เหมือนกัน เพราะนั่นวิ่งผ่าน port ที่เปิดไว้ ซึ่งตรวจรหัสผ่านเช่นกัน)
 ```text
 CREATE TABLE
 INSERT 0 1
@@ -617,6 +635,10 @@ INSERT 0 1
 ----
   1
 (1 row)
+```
+ลองพิสูจน์ว่ารหัสผ่านถูกตรวจจริง: เปลี่ยน `app_pw` เป็น `WRONG` แล้วสั่งใหม่ ควรเห็น
+```text
+psql: error: connection to server at "postgres" (172.x.x.x), port 5432 failed: FATAL:  password authentication failed for user "app_user"
 ```
 > ⚠️ **กับดัก PostgreSQL 15 ขึ้นไป:** `GRANT ALL ON DATABASE` อย่างเดียว **ไม่พอ** ถ้าไม่ได้ `GRANT ALL ON SCHEMA public` (ในขณะที่เชื่อมต่อ database นั้น) user จะสร้างตารางไม่ได้ และเจอ
 > ```text
@@ -826,6 +848,17 @@ utf8mb4 → chars = 1   (ถูก)
 
 ### ❼ `role "xxx" does not exist`
 ชื่อ user ที่ใช้ใน connection string หรือใน `GRANT` ไม่มีอยู่ ดูรายชื่อด้วย `\du` แล้วสร้างด้วย `CREATE ROLE ...`
+
+### ❽ `ERROR 2002 ... mysqld.sock` (MySQL ยังไม่พร้อม)
+```text
+ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/var/run/mysqld/mysqld.sock' (2)
+```
+**สาเหตุ:** สั่ง `docker compose exec mysql mysql ...` เร็วเกินไป คอนเทนเนอร์ `Up` แล้วแต่ตัว MySQL ข้างในยังเตรียมระบบครั้งแรกไม่เสร็จ (ครั้งแรกใช้ 10–30 วินาที เพราะต้องสร้างไฟล์ข้อมูลและ database `shop`) ข้อความบอกว่าหา "ช่องเสียบ" (socket) ของ server ไม่เจอ เพราะ server ยังไม่ได้สร้างมันขึ้นมา
+1. รอสักครู่แล้วสั่งใหม่
+2. ดู `docker compose logs mysql` จนเห็น `ready for connections` (บรรทัดที่มี `port: 3306`) แปลว่าพร้อมแล้ว
+
+### ❾ `no configuration file provided: not found`
+**สาเหตุ:** สั่ง `docker compose ...` จากโฟลเดอร์ที่ไม่มี `compose.yaml` (มักเป็นหน้าต่าง Terminal ที่เพิ่งเปิดใหม่ ซึ่งเริ่มที่โฟลเดอร์ home) แก้ด้วย `cd db-compare` ก่อน แล้วเช็คด้วย `ls` ว่าเห็น `compose.yaml`
 
 ---
 

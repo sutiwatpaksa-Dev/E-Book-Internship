@@ -3,7 +3,7 @@ navTitle: "10 · Security พื้นฐาน"
 title: "บทที่ 10: Security พื้นฐาน 🔐"
 ---
 
-> ⏱ ประมาณ 4 ชั่วโมง · 🧩 ต้องผ่านก่อน: บทที่ 5 และ 8 · 🛠 ใช้: TypeScript, Express (หรือ Hono), Bun, curl
+> ⏱ ประมาณ 5–6 ชั่วโมง (ถ้าลองทุกตัวอย่าง) · 🧩 ต้องผ่านก่อน: บทที่ 5, 8 และ 8b · 🛠 ใช้: TypeScript, Express (หรือ Hono), Bun, curl
 
 > **⚡ สรุป 30 วินาที**
 > - **ความลับ** (รหัสผ่าน DB, API key) อยู่ใน `.env` เท่านั้น ห้ามเข้า Git ถ้าหลุดต้อง **เปลี่ยนทันที (rotate)**
@@ -75,6 +75,16 @@ DATABASE_URL=postgres://user:password@localhost:5432/dbname
 JWT_SECRET=ใส่ค่าสุ่มยาวอย่างน้อย-32-ตัวอักษร-ห้ามใช้ค่านี้จริง
 ```
 อ่านค่าในโค้ด และ **ตรวจด้วย Zod ตอนเริ่มแอป** ขาดตัวไหนให้หยุดทันทีพร้อมบอกชัดๆ
+
+ลองในโฟลเดอร์ทดลอง `security-demo` (ใช้ต่อทั้งบท):
+```bash
+mkdir security-demo && cd security-demo
+npm init -y
+npm pkg set type=module            # โค้ดในบทนี้ใช้ await นอกฟังก์ชัน ต้องเป็น ESM
+npm install dotenv zod
+npm install -D tsx typescript @types/node
+```
+`env.ts`
 ```ts
 import "dotenv/config";
 import { z } from "zod";
@@ -86,7 +96,32 @@ const Env = z.object({
 });
 
 export const env = Env.parse(process.env);   // ผิด/ขาด → แอปไม่ start พร้อมบอกว่าตัวไหน
+console.log("env ok, port =", env.PORT);
 ```
+รัน `npx tsx env.ts` ตอนที่ยังไม่มีไฟล์ `.env` **ควรเห็น** (ตัดบรรทัด stack ออก)
+```
+ZodError: [
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "DATABASE_URL"
+    ],
+    "message": "Invalid input: expected string, received undefined"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "JWT_SECRET"
+    ],
+    "message": "Invalid input: expected string, received undefined"
+  }
+]
+```
+แอปหยุดตั้งแต่บรรทัดแรกๆ และบอกชื่อตัวแปรที่ขาดครบทุกตัว ดีกว่าไปพังกลางทางตอนมีคนกด login ลองสร้าง `.env` ที่มี 2 ค่าตาม `.env.example` (`JWT_SECRET` ยาว 32 ตัวขึ้นไป) แล้วรันใหม่ ควรเห็น `env ok, port = 3000`
+
+> 💡 `z.url()` เป็นรูปแบบของ **Zod 4** ถ้าเจอตัวอย่างในเน็ตเขียน `z.string().url()` คือแบบ Zod 3 (Zod 4 ยังรับได้แต่ถือว่าเลิกใช้แล้ว) เช็ครุ่นที่ติดตั้งด้วย `npm ls zod`
 
 ### 1.1 🔧 กันไม่ให้ `.env` เข้า Git (ทำก่อน commit ครั้งแรก)
 
@@ -166,11 +201,12 @@ DB_PASSWORD=S3cret-demo-only
 - **Cost / work factor:** ปรับให้ hash **ช้าโดยตั้งใจ** (เช่น 80 มิลลิวินาทีต่อครั้ง) ผู้ใช้จริงไม่รู้สึก แต่คนร้ายที่ต้องเดาล้านครั้งจะช้าลงมหาศาล
 - **Pepper:** (เสริม ไม่บังคับ) ค่าลับที่เก็บแยกจาก DB
 
-**🔧 ลองใช้ bcrypt**
+**🔧 ลองใช้ bcrypt** (ในโฟลเดอร์ `security-demo`)
 ```bash
 npm install bcrypt
 npm install -D @types/bcrypt
 ```
+`hash-demo.ts`
 ```ts
 import bcrypt from "bcrypt";
 
@@ -181,6 +217,10 @@ console.log(hash);   // $2b$12$Kx9... (รันซ้ำได้ค่าไ�
 // ตอน login
 const ok = await bcrypt.compare("somchai1234", hash);   // true
 const no = await bcrypt.compare("wrong", hash);         // false
+console.log(ok, no);
+```
+```bash
+npx tsx hash-demo.ts      # หรือ bun hash-demo.ts ถ้าใช้ Bun
 ```
 **ควรเห็น** (hash ของคุณจะต่างจากนี้ เพราะ salt สุ่ม)
 ```
@@ -192,6 +232,7 @@ true false
 
 ถ้าโปรเจกต์ใช้ Bun จะมีเครื่องมือในตัว ใช้ argon2id (hash สำหรับรหัสผ่านโดยเฉพาะ) เป็นค่าเริ่มต้น
 
+`bun-hash.ts` (รันด้วย `bun bun-hash.ts` เท่านั้น ถ้ารันด้วย `npx tsx` หรือ `node` จะได้ `ReferenceError: Bun is not defined` เพราะ `Bun` เป็นของที่มีเฉพาะใน runtime ของ Bun)
 ```ts
 const h1 = await Bun.password.hash("somchai1234");
 const h2 = await Bun.password.hash("somchai1234");
@@ -213,6 +254,7 @@ h1 == h2 ? false
 
 #### 💥 ลองพังมันดู: ทำไม sha256 ธรรมดาไม่ใช้กับรหัสผ่าน
 
+`sha-demo.ts` (รันด้วย `bun sha-demo.ts`)
 ```ts
 const t = performance.now();
 await Bun.password.hash("x");
@@ -261,6 +303,7 @@ sha256: 60b96b16d71ba5197787622ca6fb60abc0925a5274ffc3a9d1791b3a549c3655
 
 ช่องโหว่ที่เจอบ่อยที่สุดใน OWASP คือ **ไม่เช็คว่าข้อมูลนี้เป็นของคนที่ขอหรือเปล่า** (เรียกว่า IDOR: เปลี่ยนเลข id แล้วเข้าถึงของคนอื่นได้)
 
+โค้ดข้างล่างเป็น **ตัวอย่างให้อ่านเทียบ ไม่ต้องรัน** (เขียนแบบ Hono + Drizzle ที่จะลงมือจริงใน [บทที่ 14](/14-hono-api)–[15](/15-auth) ตาราง `invoices` และ `currentUser` สมมติขึ้น) สิ่งที่ต้องดูคือเงื่อนไขใน `where` ไม่ใช่ไวยากรณ์ ใน Express ก็หลักเดียวกัน ต่างแค่ตอบด้วย `res.status(404).json(...)`
 ```ts
 // ❌ ใครที่ login แล้ว ขอ id ไหนก็ได้
 const invoice = await db.query.invoices.findFirst({
@@ -518,7 +561,7 @@ browser กันไม่ให้เว็บโดเมนหนึ่งเ
 
 #### 💥 ลองพังมันดู: curl ไม่สนใจ CORS
 
-server ที่ตอบ `Access-Control-Allow-Origin` เฉพาะ `http://localhost:5173`
+server ที่ตอบ `Access-Control-Allow-Origin` เฉพาะ `http://localhost:5173` บันทึกเป็น `cors-demo.ts` แล้วสั่ง `bun cors-demo.ts` **เปิดค้างไว้** (server จะไม่พิมพ์อะไรและไม่คืน prompt นั่นคือมันกำลังรอรับ request) จากนั้น **เปิด Terminal หน้าต่างใหม่** เพื่อสั่ง `curl` เสร็จแล้วกลับไปกด Ctrl+C ที่หน้าต่างแรกเพื่อปิด
 ```ts
 const ALLOWED = "http://localhost:5173";
 Bun.serve({ port: 3997, fetch(req) {
@@ -532,16 +575,25 @@ Bun.serve({ port: 3997, fetch(req) {
 curl -si -H "Origin: http://localhost:5173" localhost:3997
 curl -si -H "Origin: https://evil.example"  localhost:3997
 ```
-**ควรเห็น**
+**ควรเห็น** (บรรทัด `Date` เป็นเวลาตอนที่เรารัน)
 ```
 HTTP/1.1 200 OK
+Content-Type: application/json
 Access-Control-Allow-Origin: http://localhost:5173
+Vary: Origin
+Date: Thu, 22 Oct 2026 18:44:30 GMT
+Content-Length: 17
+
 {"secret":"data"}
 
 HTTP/1.1 200 OK
+Content-Type: application/json
+Date: Thu, 22 Oct 2026 18:44:30 GMT
+Content-Length: 17
+
 {"secret":"data"}
 ```
-สังเกต: ทั้งสองครั้ง server **ตอบ 200 และส่งข้อมูลกลับ** ต่างกันแค่บรรทัดแรกมี header `Access-Control-Allow-Origin` เฉพาะโดเมนที่อนุญาต คนที่ใช้ curl เห็นข้อมูลได้เสมอ ส่วนใน browser โค้ดจากเว็บ evil.example จะถูกกันไม่ให้ **อ่านผลลัพธ์** เพราะไม่มี header นี้ บทเรียน: **ข้อมูลที่ต้องปิดบัง ต้องปกป้องด้วย login + สิทธิ์ ไม่ใช่ CORS**
+สังเกต: ทั้งสองครั้ง server **ตอบ 200 และส่งข้อมูลกลับ** ต่างกันแค่คำตอบแรกมี header `Access-Control-Allow-Origin` (และ `Vary`) เฉพาะโดเมนที่อนุญาต คนที่ใช้ curl เห็นข้อมูลได้เสมอ ส่วนใน browser โค้ดจากเว็บ evil.example จะถูกกันไม่ให้ **อ่านผลลัพธ์** เพราะไม่มี header นี้ บทเรียน: **ข้อมูลที่ต้องปิดบัง ต้องปกป้องด้วย login + สิทธิ์ ไม่ใช่ CORS**
 
 **ข้อควรระวัง**
 - เปิด `*` กับ API สาธารณะที่ไม่ใช้ cookie ได้ (เช่นข้อมูลเปิดทั่วไป) แต่ API ที่ใช้ cookie/login ต้องระบุโดเมนชัด
@@ -627,7 +679,7 @@ for (let i = 1; i <= 7; i++) {
 | `X-Frame-Options: DENY` (หรือ CSP `frame-ancestors`) | ไม่ให้เว็บอื่นเอาหน้าเราไปใส่ใน iframe หลอกให้กด (clickjacking) |
 | `Referrer-Policy` | คุมว่า URL ของเราถูกบอกเว็บอื่นแค่ไหนตอนคลิกลิงก์ออกไป |
 
-ตัวอย่างและการตรวจ
+ตัวอย่างและการตรวจ: บันทึกเป็น `headers-demo.ts` สั่ง `bun headers-demo.ts` เปิดค้างไว้ แล้วสั่ง `curl` จาก Terminal หน้าต่างใหม่ (ถ้าเจอ `Failed to start server. Is port 3998 in use?` แปลว่ายังเปิดตัวเก่าค้างไว้ที่อื่น ปิดด้วย Ctrl+C ก่อน)
 ```ts
 Bun.serve({ port: 3998, fetch: () => new Response("hi", { headers: {
   "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
@@ -666,12 +718,38 @@ Referrer-Policy: strict-origin-when-cross-origin
 | คนในทีม | ให้สิทธิ์ production ทุกคน | ให้เฉพาะคนที่ต้องใช้ ถอดเมื่อไม่ต้องใช้แล้ว |
 
 ตัวอย่างใน PostgreSQL (สร้าง user ที่อ่านและเพิ่มข้อมูลได้ แต่ลบตารางไม่ได้) ใช้ชื่อ `app_rw` เพราะ `app_user` ในบทที่ 7 สร้างไว้แล้วและได้สิทธิ์ทั้งหมด (ถ้าสั่ง `CREATE ROLE app_user` ซ้ำจะเจอ `role "app_user" already exists`)
+
+**รันที่ไหน:** ตาราง `rentals`, `laptops`, `customers` อยู่ในกล่อง `laptop-db` ของ [บทที่ 8b](/08b-db-to-backend) (database ชื่อ `postgres`) ไม่ใช่ database `bitcafe` ของบทที่ 7 (ถ้ารันผิดที่จะได้ `ERROR:  relation "rentals" does not exist`) เปิด psql ด้วย user `postgres` ก่อน
+```bash
+docker exec -it laptop-db psql -U postgres
+```
 ```sql
-CREATE ROLE app_rw LOGIN PASSWORD 'ใส่รหัสผ่านสุ่มยาวๆ ที่นี่';
+CREATE ROLE app_rw LOGIN PASSWORD 'rw_demo_pw';   -- งานจริงใช้รหัสสุ่มยาวๆ เก็บใน .env
 GRANT SELECT, INSERT, UPDATE ON rentals, laptops, customers TO app_rw;
 GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO app_rw;
 -- ไม่ให้ DELETE / DROP / สิทธิ์สร้างตาราง ตัว migration ใช้ user อีกตัวที่มีสิทธิ์มากกว่า
 ```
+**ควรเห็น**
+```
+CREATE ROLE
+GRANT
+GRANT
+```
+พิมพ์ `\q` ออก แล้ว **พิสูจน์ด้วยตาตัวเอง** ว่าสิทธิ์ถูกจำกัดจริง โดยต่อเข้าไปในฐานะ `app_rw` แล้วลองทั้งสิ่งที่ควรทำได้และทำไม่ได้
+```bash
+docker exec -it laptop-db psql "postgres://app_rw:rw_demo_pw@localhost:5432/postgres" -c "SELECT count(*) FROM laptops;" -c "DELETE FROM rentals;" -c "DROP TABLE rentals;"
+```
+**ควรเห็น**
+```
+ count
+-------
+     3
+(1 row)
+
+ERROR:  permission denied for table rentals
+ERROR:  must be owner of table rentals
+```
+อ่านได้ตามปกติ แต่ลบข้อมูลและลบตารางไม่ได้ ข้อมูลในตาราง `rentals` ยังอยู่ครบ นี่คือสิ่งที่ least privilege ซื้อให้เรา: ต่อให้โค้ดของแอปมีบั๊กหรือโดน SQL injection คำสั่งที่ทำลายข้อมูลก็ถูกฐานข้อมูลปฏิเสธเอง (จำนวนแถวใน `count` ขึ้นกับข้อมูลของเรา จาก seed บทที่ 8b จะได้ 3)
 > 💡 ทำไมต้องมีบรรทัด `SEQUENCES`: คอลัมน์ `id SERIAL` ไม่ได้นับเลขเอง แต่ไปขอเลขถัดไปจาก **sequence** ซึ่งเป็นอีกวัตถุหนึ่งใน database ถ้าให้สิทธิ์แค่ตาราง INSERT จะพังด้วย `permission denied for sequence rentals_id_seq` นี่คือตัวอย่างว่า least privilege ต้องรู้ว่าระบบทำงานข้างในอย่างไร ไม่ใช่แค่ไล่ตัดสิทธิ์
 > 💡 ประโยชน์ตรงๆ: ถ้า SQL injection หลุดมาสักจุด คนร้ายก็ลบตารางหรืออ่านตาราง `users` ไม่ได้ (ถ้าไม่ได้ให้สิทธิ์)
 
@@ -782,6 +860,20 @@ To address all issues, run:
 
 > 🧯 **เปรียบเทียบ:** เหมือนไฟไหม้เล็กๆ ในครัว ถ้ารีบปิดแก๊สและตะโกนเรียกคน ก็ดับได้ ถ้าเงียบแล้วหวังว่ามันจะดับเอง อาจไหม้ทั้งบ้าน
 > 🤝 สงสัยว่าพลาดอะไรไปก็แจ้ง **ไม่มีใครโดนดุที่แจ้งเร็ว** แต่ทุกคนเดือดร้อนเมื่อมีคนปิดเงียบ
+
+---
+
+## ⚠️ ปัญหาที่เจอบ่อยตอนลองตัวอย่างในบทนี้
+
+| อาการ | สาเหตุ | วิธีแก้ |
+|---|---|---|
+| `Error: Cannot find module 'dotenv'` (หรือ `'zod'`, `'bcrypt'`) | ยังไม่ได้ติดตั้งในโฟลเดอร์ที่รัน หรือรันผิดโฟลเดอร์ | `cd security-demo` แล้ว `npm install dotenv zod` (หรือ `npm install bcrypt`) เช็คด้วย `ls node_modules` |
+| `ReferenceError: Bun is not defined` | รันไฟล์ที่ใช้ `Bun.password` / `Bun.serve` ด้วย `npx tsx` หรือ `node` | รันด้วย `bun ชื่อไฟล์.ts` ของพวกนี้มีเฉพาะใน Bun |
+| `ERROR: Top-level await is currently not supported with the "cjs" output format` | `package.json` ยังเป็น `"type": "commonjs"` | `npm pkg set type=module` |
+| ติดตั้ง `bcrypt` บน Windows แล้วพังตอน build (`gyp ERR!`) | `bcrypt` มีส่วนที่ต้องคอมไพล์ด้วยเครื่องมือ C++ ถ้าเครื่องไม่มี prebuilt ที่ตรงรุ่น จะต้อง build เอง | ใช้ `Bun.password` (ข้อ 2.2) หรือ `bcryptjs` (เขียนด้วย JS ล้วน ใช้ API เดียวกัน: `npm install bcryptjs` แล้ว `import bcrypt from "bcryptjs"`) |
+| `Failed to start server. Is port 3997 in use?` / `EADDRINUSE` | เปิด server ตัวอย่างค้างไว้อีกหน้าต่าง | กลับไปหน้าต่างเดิมกด Ctrl+C หรือหาตัวที่จับ port ด้วย `lsof -i :3997` (Mac/Linux) / `netstat -ano \| findstr :3997` (Windows) |
+| `curl: (7) Failed to connect ... Couldn't connect to server` | ปิด server ไปแล้ว หรือยังไม่ได้เปิด | เปิด server ไว้ในหน้าต่างหนึ่ง แล้ว curl จากอีกหน้าต่าง |
+| `ERROR: relation "rentals" does not exist` ตอน `GRANT` | ต่อผิด database (เช่น `bitcafe` ของบทที่ 7) | ต่อกล่อง `laptop-db` ของบทที่ 8b (ข้อ 4 Least privilege) |
 
 ---
 

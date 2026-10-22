@@ -162,6 +162,8 @@ Docker Compose version v5.4.0
 
 ## 5. 🔧 ลงมือ: Container ตัวแรก
 
+> 🪟 **Windows:** รันในบทนี้ด้วย **Git Bash** ถ้าเจอ `C:/Program Files/Git/...` โผล่ใน path ให้เติม `MSYS_NO_PATHCONV=1` หน้าคำสั่ง ถ้าเจอ `the input device is not a TTY` ให้เติม `winpty` หน้าคำสั่ง (เหตุผลและตัวอย่างอยู่ใน [กล่องนิสัยของ Git Bash บทที่ 0](/00-start#-windows-ใช้-git-bash-เท่านั้น))
+
 **ขั้นที่ 1: ทดสอบระบบ**
 ```bash
 docker run hello-world
@@ -344,7 +346,7 @@ docker run -d --name pg-test -e POSTGRES_PASSWORD=secret \
   -v pgdata:/var/lib/postgresql/data postgres:17
 ```
 - `-v pgdata:/var/lib/postgresql/data` = เสียบ volume ชื่อ `pgdata` ที่โฟลเดอร์ที่ Postgres เก็บข้อมูล
-- `\` ท้ายบรรทัด = คำสั่งยังไม่จบ (PowerShell ใช้ `` ` `` หรือพิมพ์บรรทัดเดียว)
+- `\` ท้ายบรรทัด = คำสั่งยังไม่จบ ขึ้นบรรทัดใหม่ได้ (ใช้ได้ใน Git Bash และ Terminal ของ Mac)
 
 ทำซ้ำ: สร้างตาราง → ลบกล่อง → สร้างใหม่ (ใส่ `-v` เหมือนเดิม) → ตาราง **ยังอยู่** ✅
 
@@ -363,7 +365,15 @@ mkdir site
 echo "<h1>Version 1</h1>" > site/index.html
 docker run -d -p 8080:80 --name bind-web -v "$(pwd)/site:/usr/share/nginx/html:ro" nginx:alpine
 ```
-(Windows PowerShell ใช้ `${PWD}` แทน `$(pwd)` / `:ro` = ในกล่องอ่านได้อย่างเดียว กันโปรแกรมในกล่องแก้ไฟล์เราโดยไม่ตั้งใจ)
+(`:ro` = ในกล่องอ่านได้อย่างเดียว กันโปรแกรมในกล่องแก้ไฟล์เราโดยไม่ตั้งใจ)
+
+🪟 **Windows (Git Bash):** Git Bash แปลง path ที่ขึ้นต้นด้วย `/` ให้เป็น path ของ Windows เอง คำสั่งข้างบนจึงเพี้ยน ให้ปิดการแปลงและส่ง path แบบ Windows แทน:
+
+```bash
+MSYS_NO_PATHCONV=1 docker run -d -p 8080:80 --name bind-web -v "$(pwd -W)/site:/usr/share/nginx/html:ro" nginx:alpine
+```
+
+(`pwd -W` พิมพ์ path แบบ `C:/Users/...` ที่ Docker Desktop เข้าใจ · ดูเหตุผลเต็มใน [บทที่ 0](/00-start#-windows-ใช้-git-bash-เท่านั้น))
 
 เปิด http://localhost:8080 → เห็น **Version 1**
 ตอนนี้ **แก้ไฟล์ในเครื่องเรา** (ไม่ต้องเข้ากล่อง):

@@ -122,10 +122,18 @@ title: "บทที่ 0: ก่อนเริ่ม 🎒"
 ### 🪟 เส้นทาง Windows
 
 1. **VS Code**: ดาวน์โหลด Installer แล้วกด Next ไปเรื่อยๆ แนะนำติ๊ก *"Add to PATH"* และ *"Add 'Open with Code' action"* ถ้ามีตัวเลือก
-2. **Git**: ติดตั้ง **Git for Windows** ตัวเลือกส่วนใหญ่ใช้ค่าเริ่มต้นได้ ขั้นตอนที่ถามเรื่อง default editor แนะนำเลือก **Visual Studio Code** ติดตั้งแล้วจะได้โปรแกรม **Git Bash** ติดมาด้วย (Terminal แบบ Linux ที่คำสั่งตรงกับในคู่มือ)
+2. **Git**: ติดตั้ง **Git for Windows** จาก https://git-scm.com ติดตั้งเสร็จจะได้โปรแกรม **Git Bash** ติดมาด้วย ซึ่งเป็น Terminal ที่เล่มนี้ใช้บน Windows หน้าส่วนใหญ่กด Next ได้เลย แต่มี 4 หน้าที่ควรอ่านก่อนกด:
+
+   | หน้าที่ถาม | เลือก | ทำไม |
+   |---|---|---|
+   | **Choosing the default editor used by Git** | **Use Visual Studio Code as Git's default editor** | เวลา Git ต้องให้เราพิมพ์ข้อความ (เช่น commit message ตอน merge) จะเปิด VS Code ให้ ไม่ใช่ Vim ที่คนใช้ครั้งแรกมักออกไม่เป็น |
+   | **Adjusting your PATH environment** | **Git from the command line and also from 3rd-party software** (Recommended, เป็นค่าเริ่มต้น) | VS Code และโปรแกรมอื่นจะเรียก `git` เจอ |
+   | **Configuring the line ending conversions** | **Checkout Windows-style, commit Unix-style line endings** (ค่าเริ่มต้น, ตั้ง `core.autocrlf=true`) | ไฟล์ที่ commit ขึ้นไปจะใช้ตัวขึ้นบรรทัดแบบ Linux (LF) ซึ่ง server ต้องการ (รายละเอียดในกล่องนิสัยของ Git Bash ด้านล่าง) |
+   | **Configuring the terminal emulator to use with Git Bash** | **Use MinTTY** (ค่าเริ่มต้น) | ใช้ได้ ข้อเสียข้อเดียวคือคำสั่งแบบโต้ตอบบางตัวต้องเติม `winpty` (ดูกล่องด้านล่าง) |
+
 3. **Node.js**: ติดตั้ง LTS ด้วย Installer ตัวเลือกเริ่มต้นจะเพิ่มเข้า PATH ให้อัตโนมัติ (ไม่ต้องติ๊กติดตั้ง tools เพิ่มก็ได้ในตอนนี้)
 4. **Docker Desktop**: ติดตั้งแล้ว restart เครื่องตามที่ถาม โดยทั่วไป Docker Desktop บน Windows ใช้ **WSL 2** เป็นตัวรัน ถ้าติดตั้งแล้วขึ้นว่า WSL ไม่พร้อม ดูหัวข้อแก้ปัญหาด้านล่าง
-5. **Terminal ที่ใช้**: เปิด **Windows Terminal** / **PowerShell** หรือ **Git Bash** ก็ได้ (คำสั่งพื้นฐานอย่าง `cd`, `ls`, `mkdir` ใช้ได้ทั้งหมด)
+5. **Terminal ที่ใช้**: **Git Bash เท่านั้น** (ไม่ใช่ PowerShell หรือ Command Prompt) แล้วตั้งให้ VS Code เปิด Git Bash เป็นค่าเริ่มต้น ทำตามหัวข้อ [🪟 Windows: ใช้ Git Bash เท่านั้น](#-windows-ใช้-git-bash-เท่านั้น) ด้านล่าง ก่อนไปต่อ
 
 ### 🍎 เส้นทาง Mac
 
@@ -133,9 +141,92 @@ title: "บทที่ 0: ก่อนเริ่ม 🎒"
 2. **Git**: เปิด Terminal พิมพ์ `git --version` ถ้ายังไม่มี macOS จะเด้งหน้าต่างขอติดตั้ง **Command Line Tools** ให้กด **Install** รอจนเสร็จ (หรือพิมพ์ `xcode-select --install`)
 3. **Node.js**: ดาวน์โหลด Installer `.pkg` แบบ LTS แล้วกดตามขั้นตอน
 4. **Docker Desktop**: ต้องเลือกไฟล์ให้ตรงกับชิป ดูได้ที่ เมนู Apple (มุมซ้ายบน) → **About This Mac** ถ้าเห็น *Apple M1/M2/...* เลือก **Apple Silicon** ถ้าเห็น *Intel* เลือก **Intel chip** แล้วลาก .app ไปไว้ใน Applications เปิดครั้งแรกอาจขอรหัสผ่านเครื่อง
-5. **Terminal ที่ใช้**: กด `⌘ + Space` พิมพ์ `Terminal`
+5. **Terminal ที่ใช้**: กด `⌘ + Space` พิมพ์ `Terminal` (Mac ใช้ shell ชื่อ **zsh** เป็นค่าเริ่มต้น ไวยากรณ์ที่ใช้ในเล่มนี้เหมือน bash ใช้ได้เลยไม่ต้องตั้งอะไร)
 
-> 💡 **ใช้ VS Code เปิด Terminal ได้เลย** กด ``Ctrl + ` `` (Mac ใช้ ``Ctrl + ` `` เช่นกัน) Terminal จะเปิดอยู่ในโฟลเดอร์โปรเจกต์ให้เลย
+> 💡 **ใช้ VS Code เปิด Terminal ได้เลย** กด ``Ctrl + ` `` (Mac ใช้ ``Ctrl + ` `` เช่นกัน) Terminal จะเปิดอยู่ในโฟลเดอร์โปรเจกต์ให้เลย (บน Windows ต้องตั้งค่าตามหัวข้อถัดไปก่อน ไม่งั้น VS Code จะเปิด PowerShell ให้)
+
+### 🪟 Windows: ใช้ Git Bash เท่านั้น
+
+**Terminal ไม่ใช่ภาษาเดียว** หน้าต่างดำๆ ที่เราพิมพ์คำสั่งคือโปรแกรมชื่อ **shell** ซึ่งอ่านข้อความที่เราพิมพ์แล้วตีความตามไวยากรณ์ของมันเอง Mac และ server Linux (ที่เราจะ deploy ในบท 19-21) ใช้ภาษาตระกูล **bash** ส่วน Windows มี **PowerShell** ซึ่งเป็นอีกภาษาหนึ่งเลย คำสั่งง่ายๆ อย่าง `cd`, `ls`, `mkdir` ดูเหมือนใช้ได้ทั้งคู่ เพราะ PowerShell ทำชื่อเล่น (alias) ไว้ให้ แต่พอเริ่มต่อคำสั่งด้วย `&&` หรือเขียนไฟล์ด้วย `>` ผลจะต่างกันทันที
+
+ทุกคำสั่งในเล่มนี้เขียนเป็น bash ดังนั้นบน Windows ให้ใช้ **Git Bash** (bash ที่มากับ Git for Windows) ที่เดียว ทั้งเล่ม ข้อดีคือ ถ้าคำสั่งไม่ทำงาน เราจะรู้ว่าปัญหาอยู่ที่คำสั่งหรือโค้ดของเรา ไม่ต้องสงสัยว่าเป็นเพราะ shell อ่านคนละภาษา
+
+**ตั้ง Git Bash เป็น Terminal เริ่มต้นของ VS Code** (ทำครั้งเดียว)
+
+1. ติดตั้ง Git for Windows ให้เสร็จก่อน แล้ว **ปิด VS Code ทุกหน้าต่างแล้วเปิดใหม่** (VS Code หา Git Bash ตอนเปิดโปรแกรม ถ้าเปิดค้างไว้ตั้งแต่ก่อนติดตั้งจะไม่เห็นในรายการ)
+2. กด `Ctrl + Shift + P` (เปิด Command Palette) พิมพ์ **Terminal: Select Default Profile** แล้วกด Enter
+3. เลือก **Git Bash**
+4. ปิด Terminal เก่าที่เปิดค้างอยู่ใน VS Code (ไอคอนถังขยะ 🗑 ที่แผง Terminal) แล้วกด ``Ctrl + ` `` เปิดใหม่ การตั้งค่านี้มีผลกับ Terminal ที่เปิด **หลังจาก** ตั้งเท่านั้น
+
+ถ้าชอบแก้ไฟล์ตั้งค่าตรงๆ ผลเหมือนกัน: `Ctrl + Shift + P` → **Preferences: Open User Settings (JSON)** แล้วเพิ่มบรรทัดนี้ในวงเล็บปีกกา
+```json
+"terminal.integrated.defaultProfile.windows": "Git Bash"
+```
+
+นอก VS Code ก็เปิดได้: กดปุ่ม Start พิมพ์ **Git Bash**
+
+**ตรวจว่าอยู่ใน Git Bash จริง** (ทำทุกครั้งที่ไม่แน่ใจ)
+```bash
+echo $SHELL
+```
+**ควรเห็น**
+```
+/usr/bin/bash
+```
+- ถ้าได้ **บรรทัดว่าง** แปลว่ากำลังอยู่ใน PowerShell (PowerShell ไม่มีตัวแปร `SHELL` จึงพิมพ์ค่าว่างออกมา)
+- ดูจากหน้าตา prompt ได้ด้วย: Git Bash จะมีคำว่า **MINGW64** และขึ้นบรรทัดใหม่ด้วย `$` ส่วน PowerShell ขึ้นต้นด้วย `PS`
+```
+bit@LAPTOP-BIT MINGW64 ~
+$                                  ← Git Bash ✅
+
+PS C:\Users\bit>                   ← PowerShell ❌ (เปิด Terminal ใหม่เป็น Git Bash)
+```
+(บน Mac `echo $SHELL` ได้ `/bin/zsh` ซึ่งถูกต้องแล้ว)
+
+> 🪟 **ทำไม PowerShell ถึงทำให้บทหลังๆ พัง** (Windows 10/11 มากับ **Windows PowerShell 5.1** ซึ่งเป็นตัวที่ VS Code เปิดให้ถ้าไม่ได้ตั้งค่า)
+> | ในคู่มือเขียนแบบ bash | ถ้าพิมพ์ใน PowerShell 5.1 | เพราะอะไร |
+> |---|---|---|
+> | `mkdir demo && cd demo` | `The token '&&' is not a valid statement separator in this version.` | `&&` (ทำคำสั่งถัดไปเมื่อคำสั่งแรกสำเร็จ) เพิ่งมีใน PowerShell 7 |
+> | `echo ".env" > .gitignore` | ไม่มี error แต่ Git ไม่สนใจ `.gitignore` นั้นเลย และ `git diff` บอก `Binary files differ` | `>` ใน PowerShell 5.1 เขียนไฟล์เป็น **UTF-16LE** ส่วน Git และเครื่องมือฝั่ง Linux คาดว่าเป็น UTF-8 จึงอ่านไม่ออก (เงียบแบบนี้อันตรายที่สุด) |
+> | `psql -U postgres < backup.sql` | `The '<' operator is reserved for future use.` | PowerShell ไม่มีการป้อนไฟล์เข้าด้วย `<` |
+> | `curl -X POST http://localhost:3000/...` | `A parameter cannot be found that matches parameter name 'X'.` หรือถาม `Uri:` | ใน PowerShell 5.1 `curl` เป็นชื่อเล่นของ `Invoke-WebRequest` ไม่ใช่โปรแกรม curl จริง |
+> | คำสั่งยาวที่ต่อบรรทัดด้วย `\` ท้ายบรรทัด | บรรทัดแรกรันแบบขาดท่อน บรรทัดต่อไปกลายเป็นคำสั่งแยก | PowerShell ต่อบรรทัดด้วย `` ` `` ไม่ใช่ `\` |
+> | `... > /dev/null` | `Could not find a part of the path` | `/dev/null` (ถังทิ้ง output) เป็นของ Linux PowerShell ใช้ `$null` |
+> | `head`, `sed`, `grep`, `which` | `is not recognized as the name of a cmdlet` | เป็นโปรแกรมฝั่ง Linux ซึ่ง Git Bash มีให้ แต่ PowerShell ไม่มี |
+>
+> ใน Git Bash ทุกบรรทัดข้างบนทำงานตามที่หนังสือเขียน มีข้อยกเว้นแค่ไม่กี่คำสั่งที่ **Git Bash ก็ไม่มี** เช่น `lsof` และ `dig` บทที่ใช้คำสั่งพวกนี้จะให้คำสั่งของ Windows ไว้คู่กัน (เช่น `netstat -ano`, `nslookup` ซึ่งเรียกจาก Git Bash ได้)
+
+> 🧩 **นิสัยของ Git Bash ที่ควรรู้ไว้ก่อน** Git Bash คือ bash ที่ทำงานบน Windows ผ่านชั้นแปลงชื่อ **MSYS2** ชั้นนี้ทำให้คำสั่งแบบ Linux ใช้ได้ แต่บางครั้งก็ "ช่วย" มากเกินไป มี 4 เรื่องที่จะเจอในเล่มนี้ ไม่ต้องจำตอนนี้ แค่จำได้ว่ามีกล่องนี้อยู่แล้วกลับมาเปิดเมื่อเจอ
+>
+> **1. path ที่ขึ้นต้นด้วย `/` ถูกแปลงเป็น path ของ Windows** (บท 2, 6, 7) Git Bash เข้าใจว่า `/var/lib/...` คือโฟลเดอร์ในเครื่องเรา เลยแปลงเป็น `C:/Program Files/Git/var/lib/...` ก่อนส่งให้โปรแกรม Windows อย่าง `docker` แต่จริงๆ เราหมายถึง path **ในกล่อง** อาการคือได้ error ที่มีคำว่า `C:/Program Files/Git/` โผล่มาทั้งที่เราไม่ได้พิมพ์ แก้โดยเติม `MSYS_NO_PATHCONV=1` หน้าคำสั่ง (ปิดการแปลงเฉพาะคำสั่งนั้นคำสั่งเดียว)
+> ```bash
+> MSYS_NO_PATHCONV=1 docker exec pg-test ls /var/lib/postgresql
+> ```
+> ถ้าเป็น bind mount (`-v` โฟลเดอร์ในเครื่อง:path ในกล่อง) ให้ใช้ `$(pwd -W)` ซึ่งได้ path ของเครื่องแบบ Windows เช่น `C:/Users/bit/bind-demo` ที่ Docker อ่านออกแน่นอน
+> ```bash
+> MSYS_NO_PATHCONV=1 docker run -d -p 8080:80 -v "$(pwd -W)/site:/usr/share/nginx/html:ro" nginx:alpine
+> ```
+>
+> **2. `the input device is not a TTY` → เติม `winpty` ข้างหน้า** (บท 2, 6, 7) เกิดเมื่อรันคำสั่งที่ต้องโต้ตอบกับคีย์บอร์ด เช่น `docker exec -it ...` หรือ `psql` ในหน้าต่าง Git Bash ที่เปิดจาก Start menu (MinTTY) เพราะ MinTTY ไม่ใช่หน้าต่าง console ของ Windows โปรแกรม Windows จึงหาคีย์บอร์ดไม่เจอ `winpty` (มากับ Git for Windows) ทำหน้าที่เป็นสะพานเชื่อม ส่วน Terminal ใน VS Code มักไม่เจอปัญหานี้
+> ```bash
+> winpty docker exec -it pg-test psql -U postgres
+> ```
+>
+> **3. ตัวขึ้นบรรทัดใหม่ CRLF กับ LF** (บท 1, 21) Windows จบบรรทัดด้วย 2 ตัวอักษร (CRLF) Linux ใช้ตัวเดียว (LF) ถ้าสคริปต์ `.sh` ที่มี CRLF ไปรันบน server หรือในกล่อง Docker จะได้ error แปลกๆ อย่าง `$'\r': command not found` หรือ `bash\r: No such file or directory` ค่า `core.autocrlf=true` ที่ installer ตั้งให้ช่วยได้ระดับหนึ่ง แต่เป็นค่าของเครื่องเราคนเดียว วิธีที่แน่นอนกว่าคือใส่ไฟล์ `.gitattributes` ไว้ใน repo เพราะไฟล์นี้ถูก commit ไปด้วย ทุกคนในทีมจึงได้กติกาเดียวกัน
+> ```
+> * text=auto
+> *.sh text eol=lf
+> ```
+> (มุมขวาล่างของ VS Code บอกว่าไฟล์ที่เปิดอยู่เป็น `CRLF` หรือ `LF` คลิกเพื่อเปลี่ยนได้)
+>
+> **4. `chmod +x` ไม่ถูกบันทึกลง Git** (บท 21, 23) ระบบไฟล์ของ Windows ไม่มีสิทธิ์ "รันได้ (executable)" แบบ Linux Git for Windows จึงปิดการติดตามสิทธิ์นี้ไว้ (`core.filemode=false`) ถ้าแค่ `chmod +x deploy.sh` แล้ว commit พอไปถึง server จะได้ `Permission denied` ให้สั่ง Git ตรงๆ แล้ว commit
+> ```bash
+> git update-index --chmod=+x deploy.sh
+> git ls-files -s deploy.sh
+> ```
+> **ควรเห็น** บรรทัดที่ขึ้นต้นด้วย `100755` (รันได้) ถ้าเป็น `100644` แปลว่ายังเป็นไฟล์ธรรมดา
+
+> 🐧 **แล้ว WSL 2 ล่ะ?** WSL 2 คือ Linux จริงที่รันอยู่ใน Windows (Docker Desktop ใช้เป็นเครื่องยนต์เบื้องหลัง) ใช้เป็น Terminal ได้ดีและไม่มีนิสัย 4 ข้อข้างบน แต่ต้องติดตั้ง Git, Node, SSH key แยกอีกชุดฝั่ง Linux และควรเก็บโปรเจกต์ไว้ใน `~` ของ Linux ไม่ใช่ `/mnt/c/...` จะได้ไม่ช้า เล่มนี้จึง **ไม่บังคับ** ถ้าใช้ WSL อยู่แล้วก็ใช้ต่อได้ เพราะคำสั่ง bash ในเล่มใช้ได้เหมือนกัน แค่อย่าสลับไปมาระหว่าง WSL กับ Git Bash ในโปรเจกต์เดียวกัน
 
 ### ตรวจว่าติดตั้งสำเร็จ
 
@@ -166,21 +257,29 @@ Docker version 2x.x.x, build xxxxxxx
 | อาการที่เห็น | สาเหตุ | วิธีแก้ |
 |---|---|---|
 | `command not found: node` (Mac/Linux) หรือ `'node' is not recognized as an internal or external command` / `The term 'node' is not recognized` (Windows) | ยังไม่ได้ติดตั้ง, หรือ Terminal เปิดไว้ก่อนติดตั้งเลยยังไม่เห็น PATH ใหม่ | 1) ปิด Terminal ทุกหน้าต่างแล้วเปิดใหม่ 2) ลองใหม่ ถ้ายังไม่ได้ ติดตั้งซ้ำ แล้ว restart เครื่อง |
-| เปิด Terminal ใหม่แล้วก็ยังหาไม่เจอ (PATH ผิด) | โฟลเดอร์ที่ลงโปรแกรมไม่อยู่ใน PATH | ดูว่า PATH มีอะไร: Mac `echo $PATH` / PowerShell `$env:Path`. ใช้ `which node` (Mac) หรือ `where node` (Windows) หาตำแหน่ง ถ้าไม่เจอเลยให้ติดตั้งใหม่ และตอนติดตั้งอย่าเอาตัวเลือก "Add to PATH" ออก |
+| เปิด Terminal ใหม่แล้วก็ยังหาไม่เจอ (PATH ผิด) | โฟลเดอร์ที่ลงโปรแกรมไม่อยู่ใน PATH | ดูว่า PATH มีอะไร: `echo $PATH` (Mac และ Git Bash ใช้คำสั่งเดียวกัน) แล้วหาตำแหน่งโปรแกรมด้วย `which node` ถ้าไม่เจอเลยให้ติดตั้งใหม่ และตอนติดตั้งอย่าเอาตัวเลือก "Add to PATH" ออก (ถ้าเผลออยู่ใน PowerShell ให้ใช้ `where.exe node` เพราะ `where` เฉยๆ ใน PowerShell คือคำสั่งกรองข้อมูล `Where-Object` ซึ่งไม่แสดงอะไรเลย ทำให้นึกว่ายังไม่ได้ติดตั้ง) |
 | `Permission denied` ตอนรันสคริปต์หรือเขียนไฟล์ (Mac) | ไม่มีสิทธิ์ในโฟลเดอร์/ไฟล์นั้น | ตรวจว่าอยู่ในโฟลเดอร์ของเราเอง (`~/Desktop/...`) ไม่ใช่โฟลเดอร์ระบบ ไฟล์สคริปต์ที่ต้องรันใช้ `chmod +x ชื่อไฟล์` |
 | `EACCES: permission denied` ตอน `npm install -g` | พยายามเขียนลงโฟลเดอร์ที่ต้องใช้สิทธิ์ผู้ดูแล | **อย่าใช้ `sudo` เป็นนิสัย** แนะนำให้ติดตั้งแพ็กเกจเป็น dependency ของโปรเจกต์ (ไม่ใส่ `-g`) แล้วเรียกผ่าน `npx` หรือ `npm run` |
-| `npm.ps1 cannot be loaded because running scripts is disabled on this system` (PowerShell) | PowerShell ปิดการรันสคริปต์ไว้ตามค่าเริ่มต้น | เปิด PowerShell ปกติ พิมพ์ `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` ตอบ `Y` (หรือเปลี่ยนไปใช้ Git Bash แทน) |
+| `npm.ps1 cannot be loaded because running scripts is disabled on this system` (PowerShell) | กำลังพิมพ์อยู่ใน PowerShell ซึ่งปิดการรันสคริปต์ไว้ตามค่าเริ่มต้น | เปิด Terminal ใหม่เป็น **Git Bash** ตาม [หัวข้อนี้](#-windows-ใช้-git-bash-เท่านั้น) แล้วรันใหม่ (ไม่ต้องแก้ค่าใน PowerShell) |
+| `The token '&&' is not a valid statement separator in this version.` | อยู่ใน PowerShell 5.1 ไม่ใช่ Git Bash | สลับไป Git Bash (ตรวจด้วย `echo $SHELL` ต้องได้ `/usr/bin/bash`) |
+| `The '<' operator is reserved for future use.` | อยู่ใน PowerShell | สลับไป Git Bash |
+| `curl` ถาม `Uri:` หรือขึ้น `A parameter cannot be found that matches parameter name` | ใน PowerShell 5.1 `curl` คือ `Invoke-WebRequest` | สลับไป Git Bash ซึ่งมี curl ตัวจริง |
+| สร้าง `.gitignore` ด้วย `echo ... >` แล้ว Git ไม่สนใจ / `git diff` บอก `Binary files differ` | ไฟล์ถูกเขียนจาก PowerShell 5.1 เป็น UTF-16LE | ลบไฟล์นั้น แล้วสร้างใหม่ใน Git Bash (หรือสร้างใน VS Code ซึ่งบันทึกเป็น UTF-8) |
+| error มี `C:/Program Files/Git/...` โผล่มาทั้งที่ไม่ได้พิมพ์ | Git Bash แปลง path ที่ขึ้นต้นด้วย `/` | เติม `MSYS_NO_PATHCONV=1` หน้าคำสั่ง (ดูกล่องนิสัยของ Git Bash ข้อ 1) |
+| `the input device is not a TTY. If you are using mintty, try prefixing the command with 'winpty'` | หน้าต่าง Git Bash (MinTTY) ไม่ใช่ console ของ Windows | เติม `winpty` หน้าคำสั่ง หรือรันใน Terminal ของ VS Code แทน |
 | `Cannot connect to the Docker daemon` / `error during connect` | Docker Desktop ยังไม่เปิดหรือยังเริ่มไม่เสร็จ | เปิดแอป Docker Desktop รอจนสถานะเป็นพร้อมใช้งาน (Running) แล้วลองใหม่ |
 | Docker บน Windows แจ้งเรื่อง WSL 2 หรือ virtualization | WSL 2 ยังไม่ได้เปิด หรือปิด virtualization ใน BIOS | เปิด PowerShell แบบ Administrator พิมพ์ `wsl --install` แล้ว restart ถ้ายังไม่ได้ ให้เปิด Virtualization (ชื่ออาจเป็น Intel VT-x / AMD-V / SVM) ใน BIOS ตามคู่มือของเครื่อง หรือถามพี่ |
 | `code: command not found` | VS Code ยังไม่ได้ติดตั้งคำสั่ง `code` ใน PATH | เปิด VS Code กด `Cmd/Ctrl + Shift + P` พิมพ์ **Shell Command: Install 'code' command in PATH** (Windows มักตั้งให้ตอนติดตั้ง) |
 | ติดตั้งผ่าน VPN/พร็อกซีบริษัทแล้วโหลดไม่ได้ (`ETIMEDOUT`, `certificate`) | เครือข่ายบล็อกหรือแทรกแซงการดาวน์โหลด | ลองสลับเครือข่าย (เช่น ฮอตสปอตมือถือ) หรือถามพี่ไบต์ ซึ่งรู้ค่า proxy ของบริษัท |
-| ได้ Node เวอร์ชันเก่า (เช่นขึ้นเลขต่ำกว่าที่ติดตั้ง) | มี Node เก่าติดตั้งอยู่ก่อน และอยู่ก่อนใน PATH | ดูว่าตัวไหนถูกเรียก `which -a node` (Mac) / `where node` (Windows) แล้วถอนตัวเก่าออก หรือถามพี่ |
+| ได้ Node เวอร์ชันเก่า (เช่นขึ้นเลขต่ำกว่าที่ติดตั้ง) | มี Node เก่าติดตั้งอยู่ก่อน และอยู่ก่อนใน PATH | ดูว่าตัวไหนถูกเรียก `which -a node` (Mac และ Git Bash) แล้วถอนตัวเก่าออก หรือถามพี่ |
 
 > 🧭 **ขั้นตอนคิดเวลาติดขัด:** (1) อ่านข้อความ error ทั้งหมด อย่าอ่านแค่บรรทัดแรก (2) ก๊อปข้อความ error ไปค้นหา (3) ปิด-เปิด Terminal/โปรแกรมใหม่ (4) ถามพี่ โดยแนบ **ข้อความ error เต็มๆ + คำสั่งที่พิมพ์ + ระบบปฏิบัติการ** การถามแบบนี้ทำให้ได้คำตอบเร็วกว่ามาก
 
 ---
 
 ## 4. 🔧 Terminal เบื้องต้น
+
+> 🪟 **Windows:** ทุกคำสั่งตั้งแต่นี้ไปรันใน **Git Bash** (ตรวจด้วย `echo $SHELL` ต้องได้ `/usr/bin/bash`)
 
 Terminal มีแนวคิดเดียว: **เราอยู่ในโฟลเดอร์หนึ่งเสมอ** และทุกคำสั่งทำงานจากโฟลเดอร์นั้น
 
@@ -200,15 +299,17 @@ code .               # เปิดโฟลเดอร์ปัจจุบั
 ```bash
 pwd
 ```
-**ควรเห็น** โฟลเดอร์ home ของเรา เช่น `/Users/bit` (Mac) หรือ `C:\Users\bit` (Windows PowerShell) หรือ `/c/Users/bit` (Git Bash)
+**ควรเห็น** โฟลเดอร์ home ของเรา เช่น `/Users/bit` (Mac) หรือ `/c/Users/bit` (Git Bash ซึ่งเขียน `C:\Users\bit` แบบ Linux: ไดรฟ์ `C:` กลายเป็น `/c` และใช้ `/` แทน `\`)
 
 ```bash
-cd Desktop
+cd ~
 mkdir playground
 cd playground
 pwd
 ```
-**ควรเห็น** path ที่ลงท้ายด้วย `.../Desktop/playground` เป็นการยืนยันว่าเข้ามาในโฟลเดอร์ที่สร้างแล้ว
+**ควรเห็น** `/Users/bit/playground` (Mac) หรือ `/c/Users/bit/playground` (Git Bash) เป็นการยืนยันว่าเข้ามาในโฟลเดอร์ที่สร้างแล้ว
+
+> 💡 `~` คือชื่อย่อของโฟลเดอร์ home ใช้ได้ทั้ง Mac และ Git Bash เล่มนี้เก็บงานไว้ใต้ `~` แทน Desktop เพราะบน Windows ที่เปิด OneDrive ไว้ Desktop มักถูกย้ายไปอยู่ใน `~/OneDrive/Desktop` ทำให้ `cd Desktop` หาไม่เจอ และ OneDrive ยังพยายาม sync โฟลเดอร์ `node_modules` ที่มีไฟล์เป็นหมื่นไฟล์ด้วย
 
 ```bash
 echo "hello" > hello.txt
@@ -216,16 +317,17 @@ ls
 ```
 **ควรเห็น** `hello.txt` ในรายการ
 
-> 🪟 **Windows ต่างจาก Mac ตรงไหน**
-> | ทำอะไร | Mac / Git Bash | PowerShell |
+> 🪟 **Windows ต่างจาก Mac ตรงไหน** ถ้าใช้ Git Bash แทบไม่ต่างเลย คำสั่งในเล่มพิมพ์ได้ตรงตัว ตารางนี้มีไว้เผื่ออ่านคำตอบในเว็บที่เขียนสำหรับ PowerShell จะได้แปลกลับเป็นแบบที่เราใช้ได้
+> | ทำอะไร | Mac / Git Bash (ที่เราใช้) | PowerShell (ที่อาจเจอในเว็บ) |
 > |---|---|---|
 > | ดูไฟล์ | `ls` | `ls` หรือ `dir` |
 > | ดูเนื้อไฟล์ | `cat hello.txt` | `cat hello.txt` หรือ `type hello.txt` |
 > | หาตำแหน่งโปรแกรม | `which node` | `where.exe node` หรือ `Get-Command node` |
 > | ลบไฟล์ | `rm hello.txt` | `rm hello.txt` หรือ `del hello.txt` |
-> | ตัวแบ่ง path | `/` | `\` (แต่ `/` ก็ใช้ได้ในหลายคำสั่ง) |
+> | ตัวแบ่ง path | `/` เช่น `/c/Users/bit` | `\` เช่น `C:\Users\bit` |
+> | ต่อคำสั่งยาวขึ้นบรรทัดใหม่ | `\` | `` ` `` |
 >
-> ถ้าไม่แน่ใจ ใช้ **Git Bash** หรือ Terminal ใน VS Code จะได้คำสั่งตรงกับในคู่มือมากที่สุด
+> ถ้าคำสั่งในเล่มไม่ทำงานบน Windows ให้ตรวจ `echo $SHELL` ก่อนเป็นอย่างแรก ส่วนใหญ่เป็นเพราะเผลอเปิด PowerShell
 
 > 💡 **ทริคประหยัดนิ้ว**
 > - พิมพ์ชื่อไฟล์แค่บางส่วนแล้วกด `Tab` ระบบเติมให้
@@ -249,7 +351,7 @@ ls
 ขอพิสูจน์ว่าเครื่องมือทั้งหมดทำงานจริง และเห็นภาพ localhost + port ด้วยตาตัวเอง
 
 ```bash
-cd ~/Desktop/playground      # PowerShell: cd $HOME\Desktop\playground
+cd ~/playground
 echo "<h1>Hello Blicktech</h1>" > index.html
 npx --yes serve .
 ```
@@ -314,13 +416,14 @@ Frontend ทำงานในเครื่องผู้ใช้ (Browser) 
 
 ## ✏️ แบบฝึกหัด
 
-1. สร้างโฟลเดอร์ `intern-hello` ใน Desktop ด้วย Terminal เข้าไปข้างใน แล้วสร้างไฟล์ `about.txt` ที่มีข้อความแนะนำตัวหนึ่งบรรทัด
+1. สร้างโฟลเดอร์ `intern-hello` ใน home (`~`) ด้วย Terminal เข้าไปข้างใน แล้วสร้างไฟล์ `about.txt` ที่มีข้อความแนะนำตัวหนึ่งบรรทัด
 2. เปิดโฟลเดอร์นั้นด้วย `code .` แล้วถ่ายภาพหน้าจอ VS Code
 3. เขียนด้วยคำพูดตัวเอง 3 บรรทัด: Browser, Server, Database ทำอะไรเมื่อเราเปิดเว็บสั่งของ
 
 ## ✅ ผ่านด่าน
 
 - [ ] `git`, `node`, `npm`, `docker` ขึ้นเลขเวอร์ชันครบ
+- [ ] (Windows) Terminal ใน VS Code เปิดเป็น Git Bash และ `echo $SHELL` ได้ `/usr/bin/bash`
 - [ ] สร้างโฟลเดอร์ เข้า-ออกโฟลเดอร์ใน Terminal ได้
 - [ ] เปิดโฟลเดอร์ด้วย `code .` ได้
 - [ ] อธิบายได้ว่า Browser → Server → Database แต่ละชิ้นทำอะไร

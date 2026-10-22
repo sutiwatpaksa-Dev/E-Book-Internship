@@ -419,18 +419,25 @@ Prisma เปิด log ด้วย `new PrismaClient({ adapter, log: ["query"]
 
 ## 6. 🔧 ลงมือ: Drizzle ตั้งแต่ศูนย์
 
+**ก่อนเริ่ม: ปิด Postgres ของบทที่ 7 ก่อน** ถ้ายังเปิด stack `db-compare` ไว้ มันจับ port 5432 อยู่ คำสั่ง `docker run` ข้างล่างจะได้ `port is already allocated` (port หนึ่งรับได้ทีละโปรแกรม)
+```bash
+cd db-compare && docker compose down && cd ..     # ปิดอย่างเดียว ข้อมูลใน volume ยังอยู่ (ไม่ใส่ -v)
+```
+ถ้าบทที่ 6 เคยสร้างกล่องชื่อ `pg` ไว้แล้ว `docker run` จะฟ้อง `Conflict. The container name "/pg" is already in use` ให้ `docker rm -f pg` ก่อน (ตาราง `customers` ของบทที่ 6 จะหายไปด้วย ซึ่งดีแล้ว เพราะบทนี้จะสร้างตารางชื่อเดียวกันด้วย migration)
 ```bash
 docker run -d --name pg -e POSTGRES_PASSWORD=secret -p 5432:5432 postgres:17
 
 mkdir drizzle-demo && cd drizzle-demo
 npm init -y
+npm pkg set type=module
 npm install drizzle-orm pg dotenv
 npm install -D drizzle-kit typescript tsx @types/node @types/pg
 ```
-ใส่ `tsconfig.json` + `"type": "module"` ตาม [บทที่ 4](/04-typescript) แล้วสร้าง `.env`:
+`npm pkg set type=module` แก้ `package.json` ให้เป็น `"type": "module"` (ไม่ต้องเปิดไฟล์แก้เอง) เหตุผล: โค้ดบทนี้ใช้ `await` นอกฟังก์ชัน (top-level await) ซึ่งใช้ได้เฉพาะไฟล์แบบ ESM ถ้าลืม จะเจอ error เรื่อง top-level await (ดูตาราง ❺ ในข้อ 9) จากนั้นสร้าง `tsconfig.json` ให้เหมือนใน [บทที่ 4](/04-typescript) ทุกบรรทัด แล้วสร้าง `.env` ที่รากโปรเจกต์:
 ```
 DATABASE_URL=postgres://postgres:secret@localhost:5432/postgres
 ```
+> 💡 **`import "dotenv/config"` ที่จะเห็นบรรทัดแรกของทุกไฟล์ในบทนี้คืออะไร?** Node **ไม่อ่านไฟล์ `.env` เอง** `process.env.DATABASE_URL` จะเป็น `undefined` จนกว่าจะมีใครโหลดไฟล์นั้นเข้ามา บรรทัดนี้สั่ง package `dotenv` ให้อ่าน `.env` (จากโฟลเดอร์ที่เราสั่งรัน) แล้วใส่ค่าลง `process.env` และต้องเป็น **import แรก** ของไฟล์ เพราะ import ถูกรันตามลำดับ ถ้าไฟล์อื่นอ่าน `process.env` ก่อนบรรทัดนี้ จะได้ `undefined` (ทางเลือกที่ไม่ต้องใช้ package: Node 20.6 ขึ้นไปมี `node --env-file=.env ไฟล์.js` แต่บทนี้ใช้ `dotenv` เพราะ `drizzle.config.ts` ก็โหลดค่าด้วยวิธีเดียวกัน)
 > 💡 ถ้า `docker run` ขึ้น `port is already allocated` หรือต่อไม่ได้ ดูวิธีแก้ใน [บทที่ 7 ข้อ 13](/07-mysql-postgres#13--แก้ปัญหาที่เจอบ่อย-troubleshooting) (และอย่าลืมแก้ port ใน `DATABASE_URL` ให้ตรง)
 > (ตัวอย่างในบทนี้รันจริงเมื่อ 22 ต.ค. 2569 กับ `drizzle-orm` 0.45.4, `drizzle-kit` 0.31.11, `pg` 8.23, Node 26 และ `postgres:17` · ถ้า `npm install` ได้ `drizzle-orm` 1.x แล้ว ความสัมพันธ์และ `db.query` จะเขียนต่างไป (ดูกล่อง Drizzle 1.0 ในข้อ 4) จะทำตามบทนี้ให้ติดตั้ง `drizzle-orm@0.45 drizzle-kit@0.31` หรือดู docs ที่ [orm.drizzle.team](https://orm.drizzle.team) ของรุ่นนั้น)
 
@@ -556,6 +563,7 @@ console.log(JSON.stringify(withRentals, null, 2));
 
 process.exit(0);
 ```
+**ทำไมต้องมี `process.exit(0)` ท้ายไฟล์?** `drizzle(url)` สร้าง **pool** (สระ connection ที่ข้อ 9 ❹ อธิบาย) ขึ้นมา pool เก็บ connection ที่ใช้เสร็จแล้วไว้ใช้ซ้ำ และ connection ที่ยังเปิดอยู่ทำให้ Node ยังไม่ยอมจบโปรแกรม ถ้าไม่สั่งจบเอง สคริปต์จะพิมพ์ผลครบแล้ว **ค้างอยู่อีกราว 10 วินาที** (ค่าตั้งต้นที่ pool ของ `pg` รอก่อนปิด connection ที่ว่าง) จึงค่อยจบ `process.exit(0)` คือ "จบโปรแกรมทันที" (`0` = จบแบบปกติ ไม่มี error) ผลข้างเคียงที่ต้องรู้: **โค้ดที่เขียนต่อท้ายหลังบรรทัดนี้จะไม่ถูกรันเลย และไม่มี error บอก** ขั้นที่ 7–8 จึงให้เขียนแยกไฟล์ (เซิร์ฟเวอร์จริงในบทที่ 8b ไม่ต้องมีบรรทัดนี้ เพราะเราอยากให้มันรันค้างไว้รับ request)
 ```bash
 npx tsx src/index.ts
 ```
@@ -674,54 +682,88 @@ seed เสร็จ: 3 ลูกค้า
 
 ตอนนี้ DB มีลูกค้า 3 คน: สมชาย (id 1, `081-111-1111`, เช่า 2 เครื่อง), สมหญิง (id 2, เช่า HP 840) และมานี (id 3, `083-333-3333`, ยังไม่เช่า)
 
-> 🧹 **ก่อนไปขั้นถัดไป** ลบโค้ด insert สมชายใน `src/index.ts` จากขั้นที่ 4 ออก (เก็บบรรทัด import กับ `const db = ...` ไว้) ข้อมูลตอนนี้มาจาก seed แล้ว ถ้ายังปล่อยไว้ รันทีไรจะชนกฎ UNIQUE ของเบอร์โทร แล้วเขียนโค้ดขั้นที่ 7–8 ต่อใน `src/index.ts` แทน
+> 🧹 **ก่อนไปขั้นถัดไป** `src/index.ts` จากขั้นที่ 4 ใช้งานเสร็จแล้ว ไม่ต้องรันอีก (ถ้ารัน จะชนกฎ UNIQUE ของเบอร์โทร เพราะสมชายมาจาก seed แล้ว) ขั้นที่ 7 และ 8 **สร้างไฟล์ใหม่ไฟล์ละขั้น** แต่ละไฟล์มีโครงครบในตัว (import → สร้าง `db` → โค้ด → `process.exit(0)`) อย่าเขียนต่อท้าย `src/index.ts` เพราะโค้ดที่อยู่หลัง `process.exit(0)` จะไม่ถูกรันเลยโดยไม่มี error ใดๆ ซึ่งเป็นบั๊กที่หาเองยากที่สุดแบบหนึ่ง: "ไม่พัง แต่ไม่มีผล"
 
 ### ขั้นที่ 7: transaction
+
+สร้าง `src/step7-tx.ts` ไฟล์นี้มี 3 ส่วน: transaction ที่สำเร็จ, transaction ที่ตั้งใจให้พัง และการตรวจผล
 ```ts
+import "dotenv/config";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { eq } from "drizzle-orm";
+import * as schema from "./db/schema.js";
+
+// logger: true = พิมพ์ SQL ทุกคำสั่งที่ Drizzle ส่งไป จะได้เห็น begin/commit/rollback
+const db = drizzle(process.env.DATABASE_URL!, { schema, logger: true });
+
+// 7.1 transaction ที่สำเร็จ: 2 คำสั่งผ่านทั้งคู่ จึง commit
 await db.transaction(async (tx) => {
   await tx.insert(schema.rentals).values({ customerId: 1, laptop: "Asus", pricePerMonth: 1100 });
   await tx.update(schema.customers).set({ phone: "089-000-0000" }).where(eq(schema.customers.id, 1));
   // ถ้ามี error ตรงไหน ทุกอย่างในนี้ถูกยกเลิกทั้งหมด
 });
-```
-ฝั่งใน transaction ต้องใช้ **`tx`** ไม่ใช่ `db` (ถ้าไปเรียก `db` จะอยู่นอก transaction และไม่ถูกย้อนกลับ)
 
-💥 **ลองพังมันดู:** ทำให้คำสั่งที่ 2 ผิดกฎ (ตั้ง `phone` ของสมชายเป็น `083-333-3333` ซึ่งเป็นเบอร์ของมานีจาก seed) แล้วดูว่า rental ที่เพิ่งใส่หายไปด้วยไหม
-```ts
+// 7.2 💥 ลองพังมันดู: คำสั่งที่ 2 ชนกฎ UNIQUE (083-333-3333 เป็นเบอร์ของมานีจาก seed)
 try {
   await db.transaction(async (tx) => {
-    await tx.insert(schema.rentals).values({ customerId: 1, laptop: "Asus", pricePerMonth: 1100 });
+    await tx.insert(schema.rentals).values({ customerId: 1, laptop: "Acer", pricePerMonth: 900 });
     await tx.update(schema.customers).set({ phone: "083-333-3333" }).where(eq(schema.customers.id, 1));
   });
 } catch (e) {
   console.log("ยกเลิกทั้งหมดแล้ว:", (e as Error).message.split("\n")[0]);
 }
+
+// 7.3 พิสูจน์: ต้องมี Asus (จาก 7.1) แต่ต้องไม่มี Acer (จาก 7.2 ที่ถูก rollback)
+const laptops = await db.select({ laptop: schema.rentals.laptop }).from(schema.rentals);
+console.log(laptops.map((r) => r.laptop));
+
+process.exit(0);
 ```
-เมื่อเปิด `logger: true` (ใส่ `{ schema, logger: true }` ตอนสร้าง `db`) ควรเห็น
+ฝั่งใน transaction ต้องใช้ **`tx`** ไม่ใช่ `db` (ถ้าไปเรียก `db` จะอยู่นอก transaction และไม่ถูกย้อนกลับ)
+
+```bash
+npx tsx src/step7-tx.ts
+```
+ควรเห็น
 ```text
 Query: begin
-Query: insert into "rentals" ... -- params: [1, "Asus", 1100]
+Query: insert into "rentals" ("id", "customer_id", "laptop", "price_per_month") values (default, $1, $2, $3) -- params: [1, "Asus", 1100]
+Query: update "customers" set "phone" = $1 where "customers"."id" = $2 -- params: ["089-000-0000", 1]
+Query: commit
+Query: begin
+Query: insert into "rentals" ("id", "customer_id", "laptop", "price_per_month") values (default, $1, $2, $3) -- params: [1, "Acer", 900]
 Query: update "customers" set "phone" = $1 where "customers"."id" = $2 -- params: ["083-333-3333", 1]
 Query: rollback
-ยกเลิกทั้งหมดแล้ว: Failed query: update "customers" set ...
+ยกเลิกทั้งหมดแล้ว: Failed query: update "customers" set "phone" = $1 where "customers"."id" = $2
+Query: select "laptop" from "rentals"
+[ 'Lenovo T14', 'Dell 5420', 'HP 840', 'Asus' ]
 ```
-`rollback` โผล่เอง และ rental "Asus" ไม่ถูกบันทึก (เช็คด้วย `select().from(schema.rentals)`) ถ้าอยากยกเลิกเองให้เรียก `tx.rollback()` ซึ่งจะ throw error ออกมาจาก `db.transaction` ให้ `catch` ไว้
+อ่านผล: transaction แรกจบด้วย `commit` ส่วนตัวที่สองจบด้วย `rollback` ที่ Drizzle สั่งเองเมื่อเจอ error และบรรทัดสุดท้ายยืนยันว่า **มี Asus แต่ไม่มี Acer** ทั้งที่คำสั่ง insert Acer ผ่านไปแล้วก่อนที่ update จะพัง นี่คือ "ทั้งหมดหรือไม่มีเลย" ของ transaction ถ้าอยากยกเลิกเองให้เรียก `tx.rollback()` ซึ่งจะ throw error ออกมาจาก `db.transaction` ให้ `catch` ไว้
+
+(ถ้ารันไฟล์นี้ซ้ำ ผลบรรทัดสุดท้ายจะมี `'Asus'` เพิ่มทุกครั้ง เพราะ 7.1 สำเร็จทุกรอบ ไม่ใช่บั๊ก)
 
 > 💡 ตัวอย่างนี้ตรงกับ transaction ที่ทำด้วย SQL ในบทที่ 6 ข้อ 8 (เช่า laptop + เปลี่ยนสถานะ) ส่วนเรื่อง "2 คนกดพร้อมกัน" ก็ใช้วิธีเดียวกันได้ ถ้ามีตาราง `laptops` ที่มีคอลัมน์ `status` แบบบทที่ 6 (schema ในบทนี้ยังไม่มี ไม่ต้องรัน แค่ดูหลักคิด) จะเขียนได้ว่า `tx.update(laptops).set({ status: "rented" }).where(and(eq(laptops.serial, "AS-01"), eq(laptops.status, "available"))).returning()` (`and` import จาก `drizzle-orm` เหมือน `eq`) ถ้าได้ array ว่าง = ไม่มีแถวไหนตรงเงื่อนไข คือมีคนเช่าไปก่อน เพราะเราใส่ "ต้องยังว่างอยู่" ไว้ในเงื่อนไขของคำสั่ง update เอง ฐานข้อมูลจึงตัดสินให้ ไม่ใช่โค้ดเราเช็คก่อนแล้วค่อยเขียน
 
-ถึงตรงนี้ transaction แรก (ที่สำเร็จ) ได้เพิ่ม Asus ให้สมชายและเปลี่ยนเบอร์ไปแล้ว ก่อนขั้นที่ 8 ให้รัน `npm run db:seed` อีกครั้ง ข้อมูลจะกลับเป็นชุดเดิม ผลลัพธ์ในขั้นที่ 8 จึงตรงกับในบท นี่คือประโยชน์ของ seed ที่รันซ้ำได้
+ถึงตรงนี้ transaction แรก (ที่สำเร็จ) ได้เพิ่ม Asus ให้สมชายและเปลี่ยนเบอร์ไปแล้ว **ก่อนขั้นที่ 8 ให้รัน `npm run db:seed` อีกครั้ง** ข้อมูลจะกลับเป็นชุดเดิม ผลลัพธ์ในขั้นที่ 8 จึงตรงกับในบท นี่คือประโยชน์ของ seed ที่รันซ้ำได้ (และเพราะขั้นที่ 8 อยู่คนละไฟล์ transaction ของขั้นที่ 7 จะไม่ถูกรันซ้ำมาปนผล)
 
 ### ขั้นที่ 8: relations และ join
 
-ดึงข้อมูลที่สัมพันธ์กันมี 2 แบบ เลือกตามความถนัด
-
-**แบบ A: relational query (`db.query`)** ได้ผลเป็น object ซ้อนกัน ใช้ง่าย เหมาะกับหน้าจอ
+ดึงข้อมูลที่สัมพันธ์กันมี 2 แบบ เลือกตามความถนัด ใส่ทุกแบบไว้ในไฟล์ใหม่ `src/step8-relations.ts` ไฟล์เดียว (สังเกตบรรทัด import ของ `drizzle-orm` ที่มี `count, sum` เพิ่มมาสำหรับแบบ B)
 ```ts
+import "dotenv/config";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { eq, count, sum } from "drizzle-orm";
+import * as schema from "./db/schema.js";
+
+const db = drizzle(process.env.DATABASE_URL!, { schema });
+
+// ----- แบบ A: relational query (db.query) ได้ object ซ้อนกัน -----
 // ลูกค้า 1 คน พร้อม rental
 const one = await db.query.customers.findFirst({
   where: eq(schema.customers.id, 1),
   with: { rentals: true },
 });
+console.log(one?.name, one?.rentals.length, "เครื่อง");
 
 // เลือกเฉพาะคอลัมน์ + กรอง rental ที่แพงกว่า 1250
 const some = await db.query.customers.findMany({
@@ -731,35 +773,15 @@ const some = await db.query.customers.findMany({
   },
 });
 console.log(JSON.stringify(some));
-```
-```text
-[{"name":"สมชาย","rentals":[{"laptop":"Lenovo T14"}]},{"name":"สมหญิง","rentals":[{"laptop":"HP 840"}]},{"name":"มานี","rentals":[]}]
-```
-(คนที่ไม่มี rental ที่เข้าเงื่อนไข ยังอยู่ แค่ `rentals` เป็น array ว่าง)
 
-**แบบ B: join แบบ SQL (`innerJoin` / `leftJoin`)** ได้ผลเป็น "แถวแบน" เหมาะกับรายงานและ GROUP BY
-เพิ่ม `count, sum` ในบรรทัด import เดิมของ `src/index.ts` (ไม่ต้อง import `eq` ซ้ำ ถ้าซ้ำจะเจอ `Identifier 'eq' has already been declared`)
-```ts
-import { eq, count, sum } from "drizzle-orm";   // แก้บรรทัดเดิม
-
+// ----- แบบ B: join แบบ SQL ได้ "แถวแบน" -----
 const rows = await db
   .select({ name: schema.customers.name, laptop: schema.rentals.laptop })
   .from(schema.customers)
   .leftJoin(schema.rentals, eq(schema.rentals.customerId, schema.customers.id));
 console.log(rows);
-```
-```text
-[
-  { name: 'สมชาย', laptop: 'Lenovo T14' },
-  { name: 'สมชาย', laptop: 'Dell 5420' },
-  { name: 'สมหญิง', laptop: 'HP 840' },
-  { name: 'มานี', laptop: null }
-]
-```
-`leftJoin` ให้ฝั่งขวาเป็น `null` ได้ (TS จะรู้ว่า `laptop: string | null`) ส่วน `innerJoin` ตัดคนที่ไม่มีคู่ออก เหมือน JOIN/LEFT JOIN ในบทที่ 6
 
-**สรุปผล (GROUP BY)**
-```ts
+// ----- สรุปผล (GROUP BY) -----
 const summary = await db
   .select({
     name: schema.customers.name,
@@ -771,16 +793,32 @@ const summary = await db
   .groupBy(schema.customers.id, schema.customers.name)
   .orderBy(schema.customers.id);
 console.log(summary);
+
+process.exit(0);
 ```
+```bash
+npx tsx src/step8-relations.ts
+```
+ควรเห็น (4 ก้อน ตามลำดับ `console.log` ในไฟล์)
 ```text
+สมชาย 2 เครื่อง
+[{"name":"สมชาย","rentals":[{"laptop":"Lenovo T14"}]},{"name":"สมหญิง","rentals":[{"laptop":"HP 840"}]},{"name":"มานี","rentals":[]}]
+[
+  { name: 'สมชาย', laptop: 'Lenovo T14' },
+  { name: 'สมชาย', laptop: 'Dell 5420' },
+  { name: 'สมหญิง', laptop: 'HP 840' },
+  { name: 'มานี', laptop: null }
+]
 [
   { name: 'สมชาย', total: 2, price: '2700' },
   { name: 'สมหญิง', total: 1, price: '1300' },
   { name: 'มานี', total: 0, price: null }
 ]
 ```
-⚠️ สังเกต `price` เป็น **string** (`'2700'`) หรือ `null` ไม่ใช่ number เพราะ Postgres คืน `SUM` เป็นชนิด numeric ที่อาจใหญ่เกิน number ของ JS ถ้าจะใช้คำนวณต้องแปลงเอง (`Number(row.price ?? 0)`) หรือใช้ `.mapWith(Number)` ใน Drizzle
-ส่วน `count` ได้ number ปกติ
+อ่านผลทีละก้อน:
+- **แบบ A** (`db.query`) ได้ผลเป็น object ซ้อนกัน ใช้ง่าย เหมาะกับหน้าจอ ในก้อนที่ 2 คนที่ไม่มี rental ที่เข้าเงื่อนไข (มานี) ยังอยู่ แค่ `rentals` เป็น array ว่าง
+- **แบบ B** (`innerJoin` / `leftJoin`) ได้ผลเป็น "แถวแบน" เหมาะกับรายงานและ GROUP BY `leftJoin` ให้ฝั่งขวาเป็น `null` ได้ (TS จะรู้ว่า `laptop: string | null`) ส่วน `innerJoin` ตัดคนที่ไม่มีคู่ออก เหมือน JOIN/LEFT JOIN ในบทที่ 6
+- **GROUP BY** ⚠️ สังเกต `price` เป็น **string** (`'2700'`) หรือ `null` ไม่ใช่ number เพราะ Postgres คืน `SUM` เป็นชนิด numeric ที่อาจใหญ่เกิน number ของ JS ถ้าจะใช้คำนวณต้องแปลงเอง (`Number(row.price ?? 0)`) หรือใช้ `.mapWith(Number)` ใน Drizzle ส่วน `count` ได้ number ปกติ
 
 **เลือกแบบไหน?** ต้องการ "ลูกค้า 1 คน + รายการของเขาเป็นก้อน" → แบบ A · ต้องการตารางสรุป/รายงาน/เงื่อนไขซับซ้อน → แบบ B
 
@@ -964,7 +1002,7 @@ ERROR:  column "line_id" of relation "customers" already exists
 4. ลบ/แก้ไฟล์ migration ที่รันไปแล้ว
 
 **วิธีแก้ (DB ทดลอง/dev ที่ข้อมูลไม่สำคัญ):**
-1. ลบ DB แล้วเริ่มใหม่: `docker compose down -v` (หรือ `DROP DATABASE`) → สร้างใหม่ → `npx drizzle-kit migrate` → `npm run db:seed`
+1. ลบ DB แล้วเริ่มใหม่: กล่อง `pg` ในบทนี้เปิดด้วย `docker run` ไม่ใช่ compose จึงใช้ `docker compose down -v` ไม่ได้ (จะได้ `no configuration file provided`) ให้ใช้ `docker rm -f pg` แล้วสั่ง `docker run ...` จากต้นข้อ 6 ใหม่ (กล่องนี้ไม่ได้ผูก volume ที่ตั้งชื่อไว้ ลบกล่องแล้วข้อมูลหายไปด้วย) ถ้าโปรเจกต์ใช้ compose จึงค่อยใช้ `docker compose down -v` · จากนั้น `npx drizzle-kit migrate` → `npm run db:seed`
 2. หรือย้อนการแก้มือให้ตรง (เช่น `ALTER TABLE customers DROP COLUMN email;`) แล้ว `migrate`
 
 **ถ้าเป็น production:** อย่าลบ! ให้ backup ก่อน (ดู [บทที่ 7 ข้อ 12](/07-mysql-postgres#12--สำรองข้อมูล-backup-และกู้คืน-restore)) แล้วสร้าง migration ที่ "ทำให้ตรงกับของจริง" อย่างระวัง และให้พี่ดูก่อนรัน
@@ -1015,7 +1053,9 @@ timeout exceeded when trying to connect          ← แอปรอ connection 
 FATAL:  sorry, too many clients already          ← ฝั่ง Postgres รับ connection เกินกำหนด (ค่าตั้งต้น max_connections = 100)
 ```
 เราทดลองให้เห็นเองได้: pool ขนาด 2, ยืมไว้ 2 อันไม่คืน แล้วสั่ง query
+สร้างไฟล์ `src/pool-demo.ts` ในโปรเจกต์ `drizzle-demo` แล้วรันด้วย `npx tsx src/pool-demo.ts`
 ```ts
+import "dotenv/config";           // ต้องมี ไม่อย่างนั้น DATABASE_URL เป็น undefined แล้วจะได้ error อื่นแทน
 import pg from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 
@@ -1035,6 +1075,8 @@ await pool.end();
 ```text
 timeout exceeded when trying to connect
 ```
+ถ้าลืมบรรทัด `import "dotenv/config"` จะ**ไม่ได้** timeout แต่ได้ `Error: SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string` แทน เพราะ `connectionString` เป็น `undefined` แล้ว `pg` ไปใช้ค่าตั้งต้น (ต่อ `localhost:5432` ด้วยชื่อ user ของเครื่องเราและไม่มีรหัสผ่าน) พอ Postgres ขอรหัสผ่าน `pg` ก็ไม่มีจะส่ง ข้อความนี้จึงแปลว่า "ไม่ได้ส่งรหัสผ่านไปเลย" ไม่ใช่ "รหัสผิด"
+
 **สาเหตุที่พบบ่อย**
 1. **ยืม connection แล้วไม่คืน** (`pool.connect()` แล้วลืม `client.release()`, โดยเฉพาะตอนเกิด error ให้ใช้ `try/finally`) · ใช้ `db.query...`/`db.select()` ปกติ ORM จัดการคืนให้เอง
 2. **สร้าง pool/client ใหม่ทุก request** (เช่น เรียก `drizzle(...)` ใน handler) แทนที่จะสร้างครั้งเดียวไว้ระดับ module → connection ล้นเร็วมาก ⚠️ แก้: สร้าง `db` ไฟล์เดียว (`src/db/index.ts`) แล้ว import ไปใช้
@@ -1047,13 +1089,14 @@ timeout exceeded when trying to connect
 - กำหนด `max` ของ pool ให้พอเหมาะ (ค่าตั้งต้นของ `pg` คือ 10) · จำนวนแอป x `max` ต้องไม่เกิน `max_connections` ของ Postgres
 - ตั้ง `connectionTimeoutMillis` ให้ error ชัด ไม่ค้างเงียบ
 - ถ้าใช้ serverless ที่เปิดแอปใหม่ทีละมากๆ ให้ใช้ pooler ของบริการ (เช่น PgBouncer / connection pooling ของ Supabase, Neon)
-- ปิด pool ให้เรียบร้อยเมื่อสคริปต์จบ (`await pool.end()` หรือ `process.exit(0)` อย่างในตัวอย่าง) ไม่งั้นสคริปต์อาจค้างไม่จบ
+- ปิด pool ให้เรียบร้อยเมื่อสคริปต์จบ (`await pool.end()` หรือ `process.exit(0)` อย่างในตัวอย่าง) ไม่งั้นสคริปต์จะค้างรอจน pool ปิด connection ที่ว่างเอง (ค่าตั้งต้นของ `pg` คือ 10 วินาที) และถ้ามี connection ที่ยืมแล้วไม่คืน จะค้างไม่จบเลย
 
 ### ❺ ปัญหาอื่นที่เจอบ่อย
 
 | อาการ | แก้ |
 |---|---|
-| `Cannot read properties of undefined` ที่ `process.env.DATABASE_URL` / ต่อ DB ไม่ได้ | ลืม `import "dotenv/config"` หรือไฟล์ `.env` ไม่อยู่ที่รากโปรเจกต์ หรือสะกดชื่อตัวแปรผิด |
+| `DATABASE_URL` เป็น `undefined` จะเห็นอาการ 2 แบบตามวิธีที่สร้าง db: ใช้ `drizzle(process.env.DATABASE_URL!)` จะได้ `DrizzleQueryError: Failed query: ...` ที่มีบรรทัด `cause: TypeError: Cannot read properties of undefined (reading 'query')` · ใช้ `new pg.Pool({ connectionString: process.env.DATABASE_URL })` จะได้ `SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string` | ลืม `import "dotenv/config"` (ต้องเป็น import บรรทัดแรก) หรือไฟล์ `.env` ไม่อยู่ที่รากโปรเจกต์ (ที่ที่สั่ง `npx tsx`) หรือสะกดชื่อตัวแปรผิด เช็คเร็วๆ ด้วย `console.log(process.env.DATABASE_URL)` บรรทัดถัดจาก import |
+| `ERROR: Top-level await is currently not supported with the "cjs" output format` ตอน `npx tsx` | `package.json` ยังเป็น `"type": "commonjs"` (ค่าที่ `npm init -y` ใส่มา) โค้ดที่ใช้ `await` นอกฟังก์ชันจึงรันไม่ได้ แก้ด้วย `npm pkg set type=module` แล้วรันใหม่ |
 | `drizzle-kit` ไม่เจอ schema | ตรวจ path ใน `drizzle.config.ts` (`schema: "./src/db/schema.ts"`) ว่าถูกและรันจากรากโปรเจกต์ |
 | `generate` แล้วบอก "No schema changes" ทั้งที่แก้แล้ว | ลืมบันทึกไฟล์ / แก้ผิดไฟล์ / schema ตรงกับ snapshot อยู่แล้ว |
 | ต่อ DB แล้ว `password authentication failed` / `connection refused` | ดู [บทที่ 7 ข้อ 13](/07-mysql-postgres#13--แก้ปัญหาที่เจอบ่อย-troubleshooting) |

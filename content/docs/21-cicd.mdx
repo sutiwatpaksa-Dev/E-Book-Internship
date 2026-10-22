@@ -14,6 +14,8 @@ title: "บทที่ 21: ให้เครื่องตรวจงาน�
 > **📖 คำใหม่ในบทนี้**
 > [CI / CD](/glossary#ci-cd) · [Pipeline](/glossary#pipeline) · [Secret](/glossary#secret) · [PR / MR](/glossary#pr) · [Health check](/glossary#health-check) · [SSH key](/glossary#ssh-key)
 
+> **🪙 ยังไม่มีเครื่องเช่า?** ข้อ 2, 3, 5 (งาน `check`) และ 6 ทำได้ฟรีทั้งหมด: GitHub Actions **ฟรีไม่จำกัดใน repo สาธารณะ** (repo ส่วนตัวแผน Free ได้ 2,000 นาที/เดือน: [เอกสาร GitHub](https://docs.github.com/en/billing/concepts/product-billing/github-actions) ตรวจเมื่อ 23 ต.ค. 2569) ส่วน `deploy/deploy.sh` ซ้อมรันเองบน VM หรือเครื่องตัวเองได้ (`bash deploy/deploy.sh` หลังทำ [บทที่ 20 ข้อ 9](/20-deploy-vps#9--ซ้อมทั้งบทบนเครื่องตัวเอง-ฟรี)) ที่ต้องมีของจริงคือข้อ 4 และงาน `deploy` เพราะเครื่องกลางของ GitHub อยู่บนอินเทอร์เน็ต ต่อเข้า VM ในเครื่องเราไม่ถึง ให้ **ถามพี่เลี้ยง / บริษัท** ว่ามีเครื่องให้ฝึกไหม ระหว่างนั้นเอางาน `deploy` ออกไปก่อน (หรือคงไว้ แล้วรู้ว่ามันจะแดงตรงขั้น SSH)
+
 ---
 
 ## 📖 เรื่องเล่า
@@ -78,7 +80,7 @@ bun test
 ```
 👀 โค้ดทดสอบชุดนี้ **ไม่ต้องมีฐานข้อมูล** เพราะด่านตรวจ login ตอบ 401 กลับไปก่อนจะถึงโค้ดที่ใช้ฐานข้อมูล จึงรันบนเครื่องกลางได้ง่าย
 🤓 `bun test` ตั้งค่า `NODE_ENV=test` ให้เอง นี่คือเหตุผลที่ไฟล์ `env.ts` ในบทที่ 14 ต้องยอมรับค่า `"test"` (ตอนเขียนคู่มือ เรื่องนี้ทำให้ทดสอบพังจริงมาแล้ว)
-💡 เพิ่ม API หลังบ้านใหม่เมื่อไหร่ **เพิ่มบรรทัดในรายการนี้ทุกครั้ง** (และเขียนกติกานี้ไว้ใน `CLAUDE.md` ด้วย)
+💡 เพิ่ม API หลังบ้านใหม่เมื่อไหร่ **เพิ่มบรรทัดในรายการนี้ทุกครั้ง** (และเขียนกติกานี้ไว้ใน `README.md` หรือ `CONTRIBUTING.md` ให้คนในทีมเห็น ถ้าทีมใช้ AI ช่วยเขียนโค้ด ใส่ใน `CLAUDE.md` ด้วย)
 
 ---
 
@@ -105,8 +107,29 @@ echo "✅ deploy $(git rev-parse --short HEAD) เสร็จ"
 *เรียงลำดับสำคัญ: อัปเดตตารางก่อนเปิดโค้ดใหม่ และถ้าขั้นไหนพังต้องหยุดทันที*
 
 ```bash
-chmod +x deploy/deploy.sh
-git add deploy/deploy.sh && git commit -m "chore: add deploy script"
+git add --chmod=+x deploy/deploy.sh          # บอก Git ว่าไฟล์นี้ "รันได้" (ใช้ได้ทุกระบบ รวม Windows)
+git commit -m "chore: add deploy script"
+git ls-files -s deploy/deploy.sh             # ต้องขึ้นต้นด้วย 100755
+```
+
+> ⚠️ **ทำไมไม่ใช้ `chmod +x` เฉยๆ (สำคัญมากถ้าใช้ Windows)**
+> Linux จำว่าไฟล์ไหน "รันได้" ด้วยสิทธิ์ `x` และ Git เก็บสิทธิ์นี้ไว้ในประวัติด้วย: `100755` = รันได้, `100644` = ไฟล์ธรรมดา แต่ระบบไฟล์ของ Windows ไม่มีสิทธิ์ `x` Git บน Windows จึงตั้ง `core.filemode=false` แล้ว **ไม่สนใจ** `chmod +x` ที่พิมพ์ใน Git Bash เลย ไฟล์ถูกบันทึกเป็น `100644` เงียบๆ พอเครื่องเช่าดึงโค้ดไป:
+> ```
+> bash: line 1: ./deploy/deploy.sh: Permission denied
+> ```
+> (ตอนเขียนคู่มือจำลองด้วย `core.filemode=false` แล้ว clone ไปรันบน Linux ได้ `Permission denied` exit 126 จริง)
+> - **แก้ที่ต้นทาง:** `git add --chmod=+x <ไฟล์>` (ไฟล์ใหม่) หรือ `git update-index --chmod=+x <ไฟล์>` (ไฟล์ที่ commit ไปแล้ว) แล้ว commit จะเห็น `mode change 100644 => 100755`
+> - **กันไว้อีกชั้น:** เรียกด้วย `bash deploy/deploy.sh` แทน `./deploy/deploy.sh` เพราะแบบนี้เราสั่งโปรแกรม `bash` (ซึ่งรันได้อยู่แล้ว) ให้ **อ่าน** ไฟล์ จึงไม่ต้องใช้สิทธิ์ `x` ของไฟล์เลย ไฟล์ workflow ในข้อ 5 และ 7 ใช้วิธีนี้
+
+**อีกกับดักของ Windows: ท้ายบรรทัดแบบ CRLF** Windows จบบรรทัดด้วย 2 ตัวอักษร (`\r\n`) ส่วน Linux ใช้ตัวเดียว (`\n`) ถ้าไฟล์ `.sh` ขึ้น Git ไปเป็น CRLF บรรทัดแรก `#!/usr/bin/env bash` จะกลายเป็น "หาโปรแกรมชื่อ `bash\r`" (ผลจริงตอนลอง):
+```
+env: ‘bash\r’: No such file or directory
+```
+กันด้วยไฟล์ `.gitattributes` ที่ root ของโปรเจกต์ บอก Git ว่าไฟล์ `.sh` ต้องเก็บเป็น LF เสมอ ไม่ว่าใครแก้จากเครื่องไหน
+```bash
+echo '*.sh text eol=lf' >> .gitattributes
+git add .gitattributes && git add --renormalize .    # แปลงไฟล์ที่ขึ้น Git ไปแล้วให้เป็น LF
+git commit -m "chore: force LF for shell scripts"
 ```
 > 🤓 **ทำไมไม่ใส่คำสั่งดึงโค้ด (`git pull`) ไว้ในไฟล์นี้?** ระหว่างที่ไฟล์นี้กำลังทำงาน ถ้ามันไปดึงโค้ดใหม่ที่แก้ตัวมันเองด้วย ผลลัพธ์อาจเพี้ยน จึงดึงโค้ด **ก่อน** แล้วค่อยเรียกไฟล์นี้
 
@@ -121,6 +144,10 @@ git add deploy/deploy.sh && git commit -m "chore: add deploy script"
 ssh-keygen -t ed25519 -f ./ci_deploy_key -N "" -C "github-actions"
 ssh-copy-id -i ./ci_deploy_key.pub bitcafe       # ติด public key ให้ user deploy บน server
 ssh-keyscan -t ed25519 203.0.113.10              # ลายนิ้วมือ server สำหรับ known_hosts
+```
+Git Bash บน Windows บางเครื่องไม่มี `ssh-copy-id` ใช้คำสั่งนี้แทน ทำสิ่งเดียวกันคือ "ส่งข้อความแม่กุญแจไปต่อท้ายไฟล์ `authorized_keys` บนเครื่องเช่า" (ทดสอบแล้วกับเครื่องฝึก)
+```bash
+cat ./ci_deploy_key.pub | ssh bitcafe "mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
 ```
 เก็บค่าที่ **GitHub → โปรเจกต์ → Settings → Secrets and variables → Actions**
 | ชนิด | ชื่อ | ใส่อะไร |
@@ -199,7 +226,7 @@ jobs:
           install -m 700 -d ~/.ssh
           echo "$SSH_KEY" > ~/.ssh/id_ed25519 && chmod 600 ~/.ssh/id_ed25519
           echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          ssh "$TARGET" 'cd ~/bit-cafe && git fetch origin main && git reset --hard origin/main && ./deploy/deploy.sh'
+          ssh "$TARGET" 'cd ~/bit-cafe && git fetch origin main && git reset --hard origin/main && bash deploy/deploy.sh'
 
       - name: Health check
         run: curl -fsS --retry 10 --retry-delay 5 --retry-all-errors "https://${{ vars.DOMAIN }}/api/health"
@@ -293,10 +320,27 @@ deploy:
     - cp "$SSH_KEY" ~/.ssh/id_ed25519 && chmod 600 ~/.ssh/id_ed25519   # ตัวแปรแบบ File = ที่อยู่ไฟล์
     - cp "$SSH_KNOWN_HOSTS" ~/.ssh/known_hosts
   script:
-    - ssh "$SSH_USER@$SSH_HOST" 'cd ~/bit-cafe && git fetch origin main && git reset --hard origin/main && ./deploy/deploy.sh'
+    - ssh "$SSH_USER@$SSH_HOST" 'cd ~/bit-cafe && git fetch origin main && git reset --hard origin/main && bash deploy/deploy.sh'
     - curl -fsS --retry 10 --retry-delay 5 --retry-all-errors "https://$DOMAIN/api/health"
 ```
 ตั้งให้ `main` เป็นแบบป้องกัน (Settings → Repository → Protected branches) รวมงานได้ผ่านคำขอรวมงาน (MR) เท่านั้น และงานตรวจต้องผ่านก่อน (Settings → Merge requests → Pipelines must succeed)
+
+---
+
+## 7.5 ⚠️ ปัญหาที่เจอบ่อย
+
+**งานขึ้นสีแดง ดูตรงไหน:** GitHub → แท็บ **Actions** → คลิกรอบที่แดง → คลิกชื่องาน (`check` / `deploy`) → คลิกขั้นที่มี ❌ แล้วอ่าน error **บรรทัดแรกที่แดง** (บทที่ 9) ไม่ใช่บรรทัดสุดท้าย เพราะบรรทัดท้ายมักเป็นแค่ `Process completed with exit code 1`
+
+| อาการ | สาเหตุ | วิธีแก้ |
+|---|---|---|
+| push แล้วไม่มีอะไรขึ้นในแท็บ Actions | ไฟล์ไม่ได้อยู่ใน `.github/workflows/` (สะกดผิด, ลืมจุดหน้า `.github`) หรือ YAML เยื้องผิด | ตรวจ path ให้ตรงทุกตัวอักษร, ดูแท็บ Actions ว่ามีป้ายเตือน workflow ผิดรูปแบบไหม |
+| `lockfile had changes, but lockfile is frozen` | แก้ `package.json` แล้วไม่ได้ commit `bun.lock` ที่เปลี่ยนตาม | `bun install` ในเครื่อง แล้ว commit `bun.lock` |
+| `Permission denied (publickey)` ในงาน `deploy` | `SSH_KEY` ไม่ครบ (ก๊อปขาดบรรทัด `-----BEGIN/END...`), ใส่ `.pub` แทนดอกที่เก็บไว้, หรือยังไม่ได้ติดแม่กุญแจให้ `deploy` | ก๊อปไฟล์ `ci_deploy_key` ใหม่ทั้งไฟล์, ลอง `ssh -i ./ci_deploy_key bitcafe` จากเครื่องเรา |
+| `Host key verification failed.` | `SSH_KNOWN_HOSTS` ว่าง หรือเป็นของเครื่องเก่า (สร้างเครื่องใหม่แล้วลายนิ้วมือเปลี่ยน) | รัน `ssh-keyscan` ใหม่แล้วใส่ค่าใหม่ |
+| `Connection timed out` ในงาน `deploy` | IP ผิด หรือ Cloud Firewall ไม่ได้เปิด 22 ให้เครื่องกลาง | ตรวจ `SSH_HOST` และ firewall (บทที่ 19) |
+| `./deploy/deploy.sh: Permission denied` | ไฟล์ถูกบันทึกเป็น `100644` (ข้อ 3) | `git update-index --chmod=+x deploy/deploy.sh` แล้ว commit หรือเรียกด้วย `bash deploy/deploy.sh` |
+| `env: 'bash\r': No such file or directory` | ไฟล์ `.sh` เป็น CRLF (ข้อ 3) | เพิ่ม `.gitattributes` แล้ว `git add --renormalize .` |
+| Health check แดง แต่ deploy เขียว | ระบบขึ้นแล้วแต่ตอบไม่ได้ หรือ `vars.DOMAIN` ยังไม่ได้ตั้ง | `ssh bitcafe` แล้ว `dc ps`, `dc logs server` (บทที่ 20 ข้อ 8) |
 
 ---
 
@@ -345,12 +389,12 @@ CI = ตรวจงานอัตโนมัติทุกครั้งท
 
 ## ✏️ แบบฝึกหัด
 
-ทำระบบนี้ให้ Bit Café: เปิดคำขอรวมงานที่ตั้งใจทำให้ทดสอบไม่ผ่าน (เช่น ลบบรรทัด `app.use("/api/admin/*", requireAdmin)`) แคปจอว่าเครื่องจับได้และรวมงานไม่ได้ จากนั้นแก้ให้ผ่าน รวมงาน แล้วแคปจอว่าขึ้นระบบและเช็คเว็บผ่าน
+(ทำได้ฟรีใน repo สาธารณะ ยกเว้นขั้น "ขึ้นระบบ" ที่ต้องมีเครื่องเช่า ถ้ายังไม่มี ให้แคปจองาน `check` แทน แล้วรัน `bash deploy/deploy.sh` บน VM ให้ดูแทนการขึ้นระบบอัตโนมัติ) ทำระบบนี้ให้ Bit Café: เปิดคำขอรวมงานที่ตั้งใจทำให้ทดสอบไม่ผ่าน (เช่น ลบบรรทัด `app.use("/api/admin/*", requireAdmin)`) แคปจอว่าเครื่องจับได้และรวมงานไม่ได้ จากนั้นแก้ให้ผ่าน รวมงาน แล้วแคปจอว่าขึ้นระบบและเช็คเว็บผ่าน
 
 ## ✅ ผ่านด่าน
 
 - [ ] มีโค้ดทดสอบว่า API หลังบ้านทุกตัวได้ 401 และรันด้วย `bun test` ได้
-- [ ] มีไฟล์ `deploy/deploy.sh` ที่หยุดทันทีเมื่อขั้นไหนพัง
+- [ ] มีไฟล์ `deploy/deploy.sh` ที่หยุดทันทีเมื่อขั้นไหนพัง บันทึกใน Git เป็น `100755` และมี `.gitattributes` กัน CRLF
 - [ ] เก็บกุญแจและค่าลับในช่อง Secrets ถูกวิธี
 - [ ] เปิดคำขอรวมงาน → ตรวจอัตโนมัติ / รวมเข้า main → ขึ้นระบบ + เช็คเว็บอัตโนมัติ
 - [ ] ตั้งกติกาให้ `main` และให้ต้องกดอนุมัติก่อนขึ้นระบบได้

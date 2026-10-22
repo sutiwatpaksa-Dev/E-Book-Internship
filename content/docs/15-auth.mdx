@@ -159,7 +159,7 @@ export async function readSessionToken(token: string): Promise<number | null> {
 }
 ```
 
-`src/middleware/requireAdmin.ts` ด่านตรวจหน้า API หลังบ้าน
+`src/middleware/require-admin.ts` ด่านตรวจหน้า API หลังบ้าน
 ```ts
 import { createMiddleware } from "hono/factory";
 import { getCookie } from "hono/cookie";
@@ -192,7 +192,7 @@ import { db } from "../db";
 import { admins } from "../db/schema";
 import { createSessionToken, SESSION_COOKIE, sessionCookieOptions } from "../auth/session";
 import { AppError, ok, parse } from "../http/response";
-import { rateLimit } from "../middleware/rateLimit";
+import { rateLimit } from "../middleware/rate-limit";
 
 const LoginInput = z.object({ email: z.email(), password: z.string().min(1) });
 
@@ -228,7 +228,7 @@ import { z } from "zod";
 import { db } from "../db";
 import { admins, categories, contactMessages, services } from "../db/schema";
 import { AppError, ok, parse } from "../http/response";
-import type { AdminEnv } from "../middleware/requireAdmin";
+import type { AdminEnv } from "../middleware/require-admin";
 
 const IdParam = z.object({ id: z.coerce.number().int().positive() });
 const MessageUpdate = z.object({ isRead: z.boolean() });
@@ -280,7 +280,7 @@ adminRoutes.delete("/categories/:id", async (c) => {
 ```ts
 import { authRoutes } from "./routes/auth";
 import { adminRoutes } from "./routes/admin";
-import { requireAdmin } from "./middleware/requireAdmin";
+import { requireAdmin } from "./middleware/require-admin";
 
 app.route("/api", publicRoutes);
 app.route("/api/admin", authRoutes);         // ① login / logout ประกาศก่อน

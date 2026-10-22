@@ -11,6 +11,7 @@ title: "บทที่ 9: Debugging 🕵️"
 > - อ่าน stack trace: บรรทัดแรก = **เกิดอะไร** · บรรทัดแรกที่เป็นไฟล์ของเรา = **เกิดที่ไหน**
 > - ใช้ **breakpoint** ใน VS Code แทนการเดาด้วย `console.log` อย่างเดียว
 > - ปัญหาหน้าเว็บ/API: เปิด **DevTools แท็บ Network** ดูว่า request ออกไปอะไร และ server ตอบอะไร
+> - ก่อนถาม **หาเองตามบันได**: อ่าน error → ถามเครื่อง (`--help`, `npm ls`) → เอกสารทางการ → ค้นด้วย error ตรงตัว ([บทเสริม: เรียนรู้ด้วยตัวเอง](/self-learning))
 > - ถามคนอื่นให้ได้คำตอบเร็ว: บอก **ทำอะไร คาดว่าจะได้อะไร ได้อะไรจริง ลองอะไรไปแล้ว** และ **ห้ามวางความลับให้ AI**
 
 ---
@@ -220,7 +221,7 @@ Uncaught TypeError: Cannot read properties of undefined (reading 'brand')
 | `X is not defined` | ใช้ตัวแปรที่ยังไม่ได้ประกาศ / ลืม import | ตัวสะกด, บรรทัด import บนสุดของไฟล์ |
 | `Cannot find module 'x'` | ยังไม่ได้ติดตั้ง หรือ path ที่ import ผิด | รัน `npm install` / `bun install`, ตรวจ path |
 | `ECONNREFUSED 127.0.0.1:5432` | DB ยังไม่เปิด หรือ host/port ผิด (ใน Docker ใช้ชื่อ service!) | `docker compose ps`, ค่า `DATABASE_URL` |
-| `EADDRINUSE :::3000` | มีโปรแกรมอื่นใช้ port 3000 อยู่ (อาจเป็นตัวเดิมที่ยังไม่ปิด) | `lsof -i :3000` แล้วปิด process นั้น หรือเปลี่ยน port |
+| `EADDRINUSE :::3000` | มีโปรแกรมอื่นใช้ port 3000 อยู่ (อาจเป็นตัวเดิมที่ยังไม่ปิด) | Mac/Linux: `lsof -i :3000` · Windows: `netstat -ano \| findstr :3000` แล้ว `taskkill /PID <เลข> /F` (ใน PowerShell/CMD) แล้วปิด process นั้น หรือเปลี่ยน port |
 | `relation "x" does not exist` | ยังไม่ได้รัน migration หรือต่อผิด DB | รัน migration, ตรวจว่าต่อ DB ตัวไหน |
 | `Unexpected token < in JSON` (Node รุ่นใหม่: `"<html>" is not valid JSON`) | ได้ HTML (หน้า error) กลับมาแทน JSON | DevTools > Network > Response ของ request นั้น |
 | `401 Unauthorized` | ยังไม่ได้ login / token หมดอายุ / ไม่ได้แนบ token | Network > Headers ดูว่าส่ง cookie/`Authorization` ไปไหม |
@@ -434,6 +435,15 @@ JavaScript Debug Terminal สะดวกแต่ต้องเปิดให
 - [ ] บอก **เวอร์ชัน/branch/commit** และระบบปฏิบัติการ
 - [ ] **หนึ่งเรื่องต่อหนึ่งรายงาน**
 - [ ] ลบ รหัสผ่าน/token/ข้อมูลลูกค้าออกแล้ว
+
+> 🧭 **ก่อนถามคน (หรือ AI) ลองหาเองตามบันไดนี้ก่อน ~30 นาที**
+> 1. อ่าน error ให้จบ รวมส่วน `[cause]` แล้วดึง "ส่วนที่ค้นได้" (ชื่อ error, รหัสอย่าง `TS2345`/`ECONNREFUSED`/`23505`) ตัด path และค่าของเราทิ้ง
+> 2. ถามเครื่อง: `<คำสั่ง> --help`, `npm ls <ชื่อ>` (รุ่นที่ติดตั้งจริง), Go to Definition ดู type ใน `node_modules`
+> 3. เปิดเอกสารทางการของรุ่นที่ใช้ และ release notes ถ้าโค้ดจากเน็ตใช้ไม่ได้
+> 4. ค้นด้วยข้อความ error ในเครื่องหมายคำพูด + ชื่อ library + รุ่น และค้น GitHub issues (รวมที่ปิดแล้ว)
+> 5. กรอกเทมเพลตข้างบน ยังไม่เจอ → ส่งในกล่อง **"ถามพี่เลี้ยง"** ท้ายบท
+>
+> ทั้งหมดนี้พร้อมตัวอย่างที่รันได้ แผนที่เอกสารของทุกเครื่องมือในเล่ม และวิธีจด learning log อยู่ใน [บทเสริม: เรียนรู้ด้วยตัวเอง](/self-learning)
 
 ---
 
@@ -936,9 +946,10 @@ console.log(laptops);                                                   // ข�
 - [ ] ใช้ `curl -i` ยิง API เพื่อแยกว่าบั๊กอยู่ที่หน้าเว็บหรือ API ได้
 - [ ] อ่าน `docker compose logs` เพื่อหาสาเหตุที่ container ดับได้
 - [ ] รู้จักดูและกู้ปัญหา async (`await`, `forEach`, unhandled rejection)
+- [ ] หาคำตอบเองตามบันไดก่อนถาม: อ่าน error ให้จบ, `--help`/`npm ls`, เอกสารทางการ, ค้นด้วย error ตรงตัว ([เรียนรู้ด้วยตัวเอง](/self-learning))
 - [ ] ถามคำถามด้วยเทมเพลตได้ และล้างความลับก่อนวางให้ AI ทุกครั้ง
 - [ ] ไขคดี 3 บั๊กสำเร็จ
 
 ---
 
-[← บทที่ 8c: เก็บรูปภาพคู่กับฐานข้อมูล](/08c-image-storage) · [🏠 สารบัญ](/) · [บทที่ 10: Security →](/10-security)
+[← บทที่ 8c: เก็บรูปภาพคู่กับฐานข้อมูล](/08c-image-storage) · [🏠 สารบัญ](/) · [บทเสริม: เรียนรู้ด้วยตัวเอง](/self-learning) · [บทที่ 10: Security →](/10-security)
