@@ -27,17 +27,17 @@ export const roadmap: RoadmapLevel[] = [
     goal: "เขียน TypeScript และคุยกันผ่าน HTTP เป็น",
     items: [
       { num: "03", title: "Runtime & Package Manager", link: "/03-node-yarn-bun", outcome: "แยกตัวรันกับตัวจัดการ library ได้ เลือกเครื่องมือเป็น", time: "4 ชม." },
-      { num: "04", title: "JavaScript vs TypeScript", link: "/04-typescript", outcome: "ตั้งโปรเจกต์ TS และเขียน type เป็น", time: "5 ชม." },
-      { num: "05", title: "HTTP & REST API", link: "/05-http-api", outcome: "สร้าง API ด้วย TS และแพ็กใส่ Docker ได้", time: "5 ชม." },
+      { num: "04", title: "ภาษาและระบบ Type", link: "/04-typescript", outcome: "เขียน TypeScript เป็น แยกตรวจ type ก่อนรันกับตรวจข้อมูลตอนรัน", time: "6 ชม." },
+      { num: "05", title: "HTTP & รูปแบบ API", link: "/05-http-api", outcome: "เข้าใจ HTTP เลือกรูปแบบ API เป็น สร้าง REST API และแพ็กใส่ Docker ได้", time: "6 ชม." },
     ],
   },
   {
     title: "ด่าน 3 · ข้อมูล",
     goal: "เก็บข้อมูลให้ถูกที่ และต่อจากโค้ดได้",
     items: [
-      { num: "06", title: "SQL vs NoSQL", link: "/06-sql-nosql", outcome: "เขียน SQL พื้นฐาน เข้าใจ transaction", time: "4.5 ชม." },
-      { num: "07", title: "MySQL vs PostgreSQL", link: "/07-mysql-postgres", outcome: "เห็นความต่างจริงของทั้งสองตัว", time: "3 ชม." },
-      { num: "08", title: "Drizzle vs Prisma vs Sequelize", link: "/08-orm", outcome: "ต่อ DB จากโค้ดด้วย ORM และใช้ migration", time: "5 ชม." },
+      { num: "06", title: "ประเภทฐานข้อมูล", link: "/06-sql-nosql", outcome: "แยกประเภทฐานข้อมูลได้ เขียน SQL พื้นฐาน เข้าใจ transaction", time: "5 ชม." },
+      { num: "07", title: "ระบบจัดการฐานข้อมูล (DBMS)", link: "/07-mysql-postgres", outcome: "เลือก engine ที่ที่รัน และเครื่องมือต่อฐานข้อมูลเป็น ดูแล user และ backup ได้", time: "4 ชม." },
+      { num: "08", title: "ORM, Query Builder & Migration", link: "/08-orm", outcome: "เลือกระดับตัวคุยกับฐานข้อมูลเป็น ใช้ Drizzle และ migration ได้", time: "6 ชม." },
       { num: "08b", title: "จากแบบฐานข้อมูลสู่ Backend", link: "/08b-db-to-backend", outcome: "เปลี่ยนผังตารางเป็น API ที่กฎครบ แบ่งชั้นโค้ดเป็น", time: "4 ชม." },
     ],
   },

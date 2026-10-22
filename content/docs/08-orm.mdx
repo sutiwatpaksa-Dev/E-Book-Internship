@@ -1,17 +1,16 @@
 ---
-navTitle: "08 · Drizzle vs Prisma vs Sequelize"
-title: "บทที่ 8: Drizzle vs Prisma vs Sequelize 🌉"
+navTitle: "08 · ORM, Query Builder & Migration"
+title: "บทที่ 8: ORM, Query Builder & Migration 🌉"
 ---
 
-> ⏱ ประมาณ 5 ชั่วโมง · 🧩 ต้องผ่านก่อน: บทที่ 4, 5, 6 · 🛠 ใช้: TypeScript, Docker, PostgreSQL
+> ⏱ ประมาณ 6 ชั่วโมง (แบ่ง 2 วันได้: วันแรกข้อ 1–5 + ข้อ 6 ขั้นที่ 1–5 · วันที่สองที่เหลือ) · 🧩 ต้องผ่านก่อน: บทที่ 4, 5, 6, 7 · 🛠 ใช้: TypeScript, Docker, PostgreSQL
 
 > **⚡ สรุป 30 วินาที**
-> - เขียน SQL เป็นข้อความในโค้ด = ไม่มี type, พิมพ์ผิดไม่รู้, เสี่ยง **SQL injection**
-> - **ORM** แปลงโค้ด TypeScript เป็น SQL ให้ ได้ type ครบและปลอดภัย (แต่ยังต้องรู้ SQL!)
-> - **Migration** = ประวัติการเปลี่ยนโครงสร้าง DB ทุกการเปลี่ยนต้องผ่าน migration และ **ห้ามแก้ไฟล์ที่รันไปแล้ว**
-> - ระวัง **N+1** ดึงข้อมูลที่เกี่ยวข้องพร้อมกันด้วย `with` / `include`
-> - **Seed** = สคริปต์ใส่ข้อมูลตัวอย่าง ให้ทุกคนในทีมมีข้อมูลทดสอบเหมือนกัน
-> - งานใหม่ใช้ **Drizzle หรือ Prisma** · Sequelize รู้จักไว้สำหรับระบบเก่า
+> - โค้ดคุยกับฐานข้อมูลได้ 3 ระดับ: **Driver** (เขียน SQL เอง) → **Query Builder** (ประกอบ SQL ด้วยฟังก์ชัน มี type) → **ORM** (ประกาศตารางครั้งเดียว ได้ type + ความสัมพันธ์ + object พร้อมใช้) ยิ่งสูงยิ่งช่วยเยอะ แต่ยิ่งห่างจาก SQL
+> - ทุกระดับต้อง **ส่งค่าจากผู้ใช้เป็น parameter** ห้ามต่อข้อความ ไม่งั้นโดน **SQL injection** · ORM ทำให้อัตโนมัติ แต่ **ไม่ได้แทนการรู้ SQL**
+> - **Migration** = ประวัติการเปลี่ยนโครงสร้าง DB เป็นไฟล์เรียงลำดับใน Git ทุกการเปลี่ยนต้องผ่าน migration และ **ห้ามแก้ไฟล์ที่รันไปแล้ว** เครื่องมือมี 2 แบบ: สร้าง SQL จาก schema ให้ (Drizzle Kit, Prisma Migrate) หรือเขียน SQL เอง (Flyway, dbmate)
+> - ระวัง **N+1** (query ในลูป) ดึงข้อมูลที่เกี่ยวข้องพร้อมกันด้วย `with` / `include` / `JOIN`
+> - ทีมเราใช้ **Drizzle + Drizzle Kit** ลงมือตั้งแต่ศูนย์ในข้อ 6 · Prisma ลองฉบับย่อ · Sequelize รู้จักไว้สำหรับระบบเก่า
 
 ---
 
@@ -27,9 +26,16 @@ const result = await pool.query(`SELECT * FROM customers WHERE name = '${name}'`
 ```
 หน้าจอแสดง **ลูกค้าทุกคนในระบบ** พร้อมเบอร์โทร 😱 พี่ไบต์บอกว่า *"ถ้าพิมพ์อีกแบบ ตารางหายทั้งตารางได้เลยนะ"*
 
+บิตรีบไปค้นวิธีแก้ เจอชื่อมาเต็มจอ: pg, Kysely, Drizzle, Prisma, TypeORM, Flyway... *"ต้องใช้ตัวไหนครับ ทุกตัวเลยไหม"*
+พี่ไบต์: *"มันอยู่คนละชั้นกัน รู้ก่อนว่าแต่ละชั้นช่วยอะไร แล้วจะเลือกเองได้"*
+
+> 🧭 **บทนี้เรียนแบบ "เข้าใจกลุ่มก่อน แล้วค่อยจับเครื่องมือ"** ข้อ 1–5 อธิบายว่าเครื่องมือฐานข้อมูลแต่ละกลุ่มแก้ปัญหาอะไร มีใครบ้าง เลือกยังไง ข้อ 6 เป็นต้นไปคือลงมือด้วย Drizzle ที่ทีมใช้ ชื่อเครื่องมือเปลี่ยนได้ทุกปี แต่ปัญหาที่มันแก้ยังเหมือนเดิม
+
 ---
 
-## 1. ปัญหาของการเขียน SQL ตรงๆ ในโค้ด
+## 1. ปัญหา 2 ข้อเมื่อโค้ดต้องคุยกับฐานข้อมูล
+
+**ปัญหาที่ 1: ส่งคำสั่งและรับผลยังไงให้ปลอดภัยและมี type**
 
 ```ts
 const result = await pool.query(`SELECT * FROM custmers WHERE name = '${name}'`);
@@ -50,134 +56,121 @@ const result = await pool.query(`SELECT * FROM custmers WHERE name = '${name}'`)
 parameter:   SELECT * FROM customers WHERE name = $1      +      $1 = "' OR '1'='1"
                                                                      └─ ฐานข้อมูลมองเป็น "ชื่อที่แปลกๆ" ค้นแล้วไม่เจอใคร ✅
 ```
-รายละเอียดการโจมตีและวิธีกันอื่นๆ อยู่ใน [บทที่ 10](/10-security)
+รายละเอียดการโจมตีและวิธีกันอื่นๆ อยู่ใน [บทที่ 10](/10-security) → เครื่องมือที่แก้ปัญหานี้คือ **กลุ่มตัวคุยกับฐานข้อมูล** (ข้อ 2)
+
+**ปัญหาที่ 2: โครงสร้างฐานข้อมูลเปลี่ยนไปตามเวลา**
+วันนี้เพิ่มคอลัมน์ `email` พรุ่งนี้เพื่อนเพิ่มตาราง `payments` ถ้าแต่ละคนพิมพ์ `ALTER TABLE` เองในเครื่องตัวเอง ไม่นาน DB ของบิต ของเพื่อน และของ production ก็หน้าตาไม่เหมือนกัน โค้ดที่ผ่านในเครื่องหนึ่งพังอีกเครื่อง → เครื่องมือที่แก้ปัญหานี้คือ **กลุ่ม Migration** (ข้อ 3)
 
 ---
 
-## 2. ORM คืออะไร
+## 2. ตัวคุยกับฐานข้อมูล: Driver, Query Builder, ORM
 
-**ORM (Object-Relational Mapping)** = library ที่ **แปลงระหว่างตารางกับ object ในโค้ด** ให้อัตโนมัติ
+**กลุ่มที่ 1 คืออะไร:** library ที่อยู่ระหว่างโค้ดเรากับฐานข้อมูล รับคำสั่งจากโค้ด ส่งไปให้ DB แล้วเอาผลกลับมาให้ใช้ต่อ แบ่งได้ 3 ระดับ แต่ละระดับ **ซ้อนอยู่บนระดับที่ต่ำกว่า**
 
-> 💡 **เปรียบเทียบ:** ORM = **ล่ามแปลภาษา** 🧑‍🏫 เราพูด TypeScript ล่ามแปลเป็น SQL ให้ฐานข้อมูล และแปลคำตอบกลับมาเป็น object พร้อมใช้
+> 💡 **เปรียบเทียบ:** สั่งอาหารร้านต่างชาติ 🍜 **Driver** = โทรศัพท์ (คุยภาษาร้านเองทุกคำ) · **Query Builder** = แอปสั่งอาหารที่มีเมนูให้กด (ยังเลือกเองทุกอย่าง แต่สะกดผิดไม่ได้) · **ORM** = **ล่ามประจำตัว** 🧑‍🏫 บอกว่า "เอาแบบเมื่อวาน พร้อมเครื่องเคียง" ล่ามแปลเป็นภาษาร้านให้ และแปลคำตอบกลับมาเป็นของพร้อมใช้
 
-```ts
-const found = await db.select().from(customers).where(eq(customers.name, name));
-//    ^ TS รู้ว่าเป็น { id: number; name: string; phone: string | null }[]
-```
-- พิมพ์ชื่อผิด → **เส้นแดงทันที**
-- ผลลัพธ์ **มี type ครบ**
-- ค่าจากผู้ใช้ส่งเป็น parameter อัตโนมัติ → **กัน SQL injection**
+**ข้างในแต่ละระดับมีอะไร**
+
+| ระดับ | ทำให้เรา | เรายังต้องทำเอง |
+|---|---|---|
+| ① **Driver** | เปิด connection, คุยภาษาของ DB (protocol), ส่ง parameter แยกจากคำสั่ง, จัดการ **pool** | เขียน SQL ทั้งประโยค, บอก type ของผลลัพธ์เอง |
+| ② **Query Builder** | ทุกอย่างของ driver + **ประกอบ SQL ด้วยฟังก์ชัน** ที่ชื่อเหมือน SQL, TS เช็คชื่อตาราง/คอลัมน์ให้ | ประกาศ type ของตาราง (หรือใช้เครื่องมือสร้างจาก DB), คิดเรื่องความสัมพันธ์เอง |
+| ③ **ORM** | ทุกอย่างของ query builder + **schema ที่ประกาศครั้งเดียว** ได้ทั้ง type และ SQL, **ความสัมพันธ์** (ดึงลูกค้าพร้อม rental), แปลงแถวเป็น object, มักมีเครื่องมือ migration คู่กัน | เข้าใจว่ามันสร้าง SQL อะไร (ไม่งั้นได้ query ช้าโดยไม่รู้ตัว) |
 
 ![แผนภาพชั้นของ ORM: โค้ด TypeScript, ORM, driver และ pool, ฐานข้อมูล พร้อมตัวอย่างโค้ดที่เขียนกับ SQL ที่ถูกส่งไป](/img/08-orm-layers.svg)
-*ORM แปลโค้ดเป็น SQL (พร้อม parameter) ส่งผ่าน driver ไปยังฐานข้อมูล แล้วแปลแถวที่ได้กลับเป็น object ที่มี type*
+*ORM แปลโค้ดเป็น SQL (พร้อม parameter) ส่งผ่าน driver ไปยังฐานข้อมูล แล้วแปลแถวที่ได้กลับเป็น object ที่มี type · ORM ทุกตัวมี driver อยู่ข้างใต้เสมอ*
+
+**โจทย์เดียวกัน 3 ระดับ:** "หาลูกค้าที่ชื่อตรงกับ `name`"
+```ts
+// ① Driver (pg): เขียน SQL เอง ส่งค่าแยกเป็น $1
+const { rows } = await pool.query("SELECT id, name, phone FROM customers WHERE name = $1", [name]);
+//      ^ rows เป็น any[] พิมพ์ชื่อคอลัมน์ผิดก็ไม่มีใครเตือน
+
+// ② Query Builder (Kysely): ต้องบอก type ของตารางให้มันก่อน
+interface Database {
+  customers: { id: Generated<number>; name: string; phone: string | null };
+}
+const kdb = new Kysely<Database>({ dialect: new PostgresDialect({ pool }) });
+const found2 = await kdb.selectFrom("customers").selectAll().where("name", "=", name).execute();
+//    ^ { id: number; name: string; phone: string | null }[]
+
+// ③ ORM (Drizzle): type มาจาก schema ที่ประกาศครั้งเดียว (ข้อ 6 ขั้นที่ 1)
+const found3 = await db.select().from(customers).where(eq(customers.name, name));
+//    ^ { id: number; name: string; phone: string | null }[]
+```
+ทั้ง 3 แบบส่ง SQL หน้าตาเดียวกันไปที่ฐานข้อมูล (`... WHERE name = $1` + ค่า `name` แยกไป) ที่ต่างคือ **ใครเป็นคนตรวจความถูกต้องก่อนส่ง**: แบบ ① ไม่มีใคร · แบบ ② และ ③ TS ขีดเส้นแดงทันทีที่พิมพ์ชื่อผิด
 
 ### คำศัพท์ที่จะเจอในบทนี้
 
 | คำ | ความหมาย |
 |---|---|
-| **Schema** (ใน ORM) | ไฟล์ที่เราประกาศว่ามีตารางอะไร คอลัมน์อะไร ชนิดอะไร (ORM เอาไปสร้าง type และ SQL) |
-| **Model** | ตัวแทนของ 1 ตารางในโค้ด (Prisma/Sequelize ใช้คำนี้) |
-| **Query builder** | วิธีเขียน query ด้วยฟังก์ชันต่อกัน `select().from().where()` หน้าตาใกล้ SQL |
-| **Driver** | library ที่คุยกับฐานข้อมูลจริง (`pg` สำหรับ Postgres) ORM เรียกใช้อยู่เบื้องหลัง |
+| **Driver** | library ที่คุยกับฐานข้อมูลจริง (`pg` สำหรับ Postgres) ORM และ query builder เรียกใช้อยู่เบื้องหลัง |
 | **Connection pool** | สระ connection ที่เปิดค้างไว้ใช้ซ้ำ (ดูข้อ 9) |
+| **Query builder** | วิธีเขียน query ด้วยฟังก์ชันต่อกัน `select().from().where()` หน้าตาใกล้ SQL |
+| **Schema** (ใน ORM) | ไฟล์ที่เราประกาศว่ามีตารางอะไร คอลัมน์อะไร ชนิดอะไร (ORM เอาไปสร้าง type และ SQL) |
+| **Model / Entity** | ตัวแทนของ 1 ตารางในโค้ด (Prisma/Sequelize เรียก model, TypeORM/MikroORM เรียก entity) |
+| **Relation** | การบอก ORM ว่าตารางไหนโยงกับตารางไหน (1 ลูกค้า มีหลาย rental) เพื่อดึงพร้อมกันได้ |
 | **Migration** | ไฟล์ที่บันทึกการเปลี่ยนโครงสร้างฐานข้อมูล (ข้อ 3) |
 | **Seed** | สคริปต์ใส่ข้อมูลตัวอย่าง (ขั้นที่ 6 ในข้อ 6) |
 
-### ข้อดี-ข้อเสีย: ORM เทียบกับ SQL ดิบ
+### ในกลุ่มนี้มีใครบ้าง
 
-| | ✍️ SQL ดิบ (`pool.query`) | 🌉 ORM |
-|---|---|---|
-| Type safety | ❌ ผลลัพธ์เป็น `any` | ✅ รู้ type จาก schema |
-| พิมพ์ชื่อตาราง/คอลัมน์ผิด | รู้ตอนรันจริง | ✅ เส้นแดงตอนเขียน |
-| SQL injection | ต้องระวังเอง | ✅ ใช้ parameter ให้อัตโนมัติ |
-| เปลี่ยนโครงสร้าง DB | เขียน `ALTER TABLE` และตามแก้ type เอง | ✅ แก้ schema แล้ว generate migration |
-| Query ซับซ้อนมาก (window function, CTE) | ✅ เขียนตรงๆ ง่ายสุด | บางทีเขียนยาก ต้องใช้ SQL ดิบแทรก |
-| รู้ว่ารัน SQL อะไร | ✅ เห็นเต็มตา | ต้องเปิด log ดูเอง |
-| ความเร็ว (ภาพรวมในแอปทั่วไป) | ใกล้เคียงกัน | ใกล้เคียงกัน (ที่ช้าคือ query แย่ๆ ไม่ใช่ตัว ORM) |
-| ต้องเรียนรู้เพิ่ม | น้อย | ต้องเรียนวิธีใช้ของแต่ละตัว |
+**ระดับ ① Driver**
 
-**ข้อเสียที่ต้องรู้**
-- ต้องเรียนวิธีใช้ของแต่ละตัว
-- query ซับซ้อนมาก บางทีเขียน SQL เองง่ายกว่า (ORM ส่วนใหญ่ให้เขียน SQL ดิบได้)
-- ไม่รู้ว่า ORM สร้าง SQL อะไร อาจได้ query ช้าโดยไม่รู้ตัว → **ORM ไม่ได้แทนการรู้ SQL**
+<ToolTable group="orm-driver" />
+
+**ระดับ ② Query Builder**
+
+<ToolTable group="orm-query-builder" />
+
+**ระดับ ③ ORM**
+
+<ToolTable group="orm-orm" />
+
+ตารางนี้ไม่ได้ให้จำทุกตัว ดูแค่ช่อง **ระดับ**: 🟢 ทีมใช้ (ลงมือในบทนี้) · 🔵 ควรรู้จัก (เจอบ่อยในงานจริง) · ⚪ รู้ว่ามี (เจอแล้วบอกได้ว่าอยู่กลุ่มไหนก็พอ)
+
+> 🤔 **ทำไม Drizzle อยู่ 2 ตาราง?** Drizzle มีทั้ง 2 แบบในตัวเดียว `db.select().from()` เป็นแบบ query builder (ได้แถวแบน หน้าตาเหมือน SQL แทบทุกคำ) ส่วน `db.query.customers.findMany({ with })` เป็นแบบ ORM (ได้ object ซ้อนกันพร้อมความสัมพันธ์) ลองทั้งสองแบบในข้อ 6 ขั้นที่ 8
+
+> 🤓 **เกร็ด: ORM มี 2 สไตล์** ถ้าเจอ ORM ตัวใหม่ ดูว่าเป็นแบบไหน
+> - **object ธรรมดา + ฟังก์ชัน query** (Drizzle, Prisma): ผลลัพธ์เป็นข้อมูลเฉยๆ อยากบันทึกต้องสั่ง `insert`/`update` เอง
+> - **object ที่บันทึกตัวเองได้** (Sequelize, TypeORM แบบ Active Record เช่น `customer.save()`) หรือ **ORM จดการแก้แล้วบันทึกทีเดียว** (MikroORM แก้ object หลายตัวแล้วสั่ง `flush()`) สะดวกตอนเขียน แต่ดูยากกว่าว่า SQL ถูกส่งไปตอนไหน
+
+### ตัวในกลุ่มเหมือนกันตรงไหน ต่างกันตรงไหน
+
+| หัวข้อ | ① Driver (`pool.query`) | ② Query Builder | ③ ORM |
+|---|---|---|---|
+| ปลายทาง | ✅ เหมือนกัน: สุดท้ายเป็น SQL + parameter ผ่าน driver | ← | ← |
+| Type ของผลลัพธ์ | ❌ `any` ต้องประกาศเอง | ✅ จาก interface ที่ประกาศ/สร้างให้ | ✅ จาก schema อัตโนมัติ |
+| พิมพ์ชื่อตาราง/คอลัมน์ผิด | รู้ตอนรันจริง | ✅ เส้นแดงตอนเขียน | ✅ เส้นแดงตอนเขียน |
+| SQL injection | ต้องระวังเอง (ใช้ `$1`) | ✅ ใช้ parameter ให้ | ✅ ใช้ parameter ให้ |
+| ดึงข้อมูลที่สัมพันธ์กัน | เขียน `JOIN` เอง | เขียน `join` เอง | ✅ `with` / `include` |
+| เปลี่ยนโครงสร้าง DB | เขียน `ALTER TABLE` และตามแก้ type เอง | เขียน migration เอง แล้วแก้ interface | ✅ แก้ schema แล้ว generate migration |
+| Query ซับซ้อนมาก (window function, CTE) | ✅ เขียนตรงๆ ง่ายสุด | ✅ ส่วนใหญ่ทำได้ | บางทีเขียนยาก ใช้ SQL ดิบแทรก (Drizzle มี `` sql`...` ``, Prisma มี `$queryRaw`) |
+| รู้ว่ารัน SQL อะไร | ✅ เห็นเต็มตา | ✅ เกือบเห็นเต็มตา | ต้องเปิด log ดูเอง |
+| ความเร็ว (ภาพรวมในแอปทั่วไป) | ใกล้เคียงกัน | ใกล้เคียงกัน | ใกล้เคียงกัน (ที่ช้าคือ query แย่ๆ ไม่ใช่ตัว ORM) |
+| ต้องเรียนเพิ่ม | น้อย (รู้ SQL พอ) | ปานกลาง | ต้องเรียนวิธีใช้ของแต่ละตัว |
+
+**ข้อเสียของ ORM ที่ต้องรู้**
+- ต้องเรียนวิธีใช้ของแต่ละตัว และ setup ของบางตัวเปลี่ยนบ่อยตามรุ่น
+- query ซับซ้อนมาก บางทีเขียน SQL เองง่ายกว่า (ORM ส่วนใหญ่ให้เขียน SQL ดิบแทรกได้ แต่ต้องใส่ค่าผ่าน parameter เหมือนเดิม)
+- ไม่รู้ว่า ORM สร้าง SQL อะไร อาจได้ query ช้าโดยไม่รู้ตัว (เช่น N+1 ในข้อ 5) → **ORM ไม่ได้แทนการรู้ SQL**
 
 > 💡 **เคล็ดลับ:** ตอนเรียนให้เปิด log ของ ORM ให้เห็น SQL ที่ถูกส่งไปเสมอ (ทำยังไงดูข้อ 5) จะเริ่มเข้าใจว่าโค้ดแต่ละบรรทัดกลายเป็น SQL อะไร
 
----
-
-## 3. Migration
-
-**Migration** = **ไฟล์บันทึกการเปลี่ยนโครงสร้างฐานข้อมูล** ทีละขั้นตามลำดับ
-
-```
-migrations/
-├── 0001_create_customers.sql
-├── 0002_create_rentals.sql
-└── 0003_add_email_to_customers.sql
-```
-
-> 💡 **เปรียบเทียบ:** migration = **Git ของโครงสร้างฐานข้อมูล** หรือ **บันทึกการต่อเติมบ้าน** 🏗️ ช่างคนใหม่อ่านแล้วสร้างบ้านหน้าตาเดียวกันได้เป๊ะ
-
-**ทำไมสำคัญ**
-- เพื่อนรันคำสั่งเดียวได้ DB โครงสร้างเดียวกับเรา
-- dev / test / production ตรงกันเสมอ
-- รู้ว่าใครเปลี่ยนอะไรเมื่อไหร่ (อยู่ใน Git)
-
-> ⚠️ **กฎเหล็ก 2 ข้อ**
-> 1. **ห้ามแก้โครงสร้างตารางบน production ด้วยมือ** ทุกการเปลี่ยนผ่าน migration
-> 2. migration ที่รันไปแล้ว **ห้ามแก้ไฟล์เดิม** จะเปลี่ยนให้สร้างไฟล์ใหม่
-
-### Flow: schema → migration → ฐานข้อมูล
-
-![ผัง flow ของ migration: แก้ schema.ts, drizzle-kit generate สร้างไฟล์ SQL, drizzle-kit migrate รันกับฐานข้อมูล และ push ที่ข้ามขั้นตอนไว้ทดลอง](/img/08-migration-flow.svg)
-*แก้ schema → generate (สร้างไฟล์ SQL) → migrate (รันกับ DB) → commit ทั้ง schema และไฟล์ migration เข้า Git*
-
-**ทำไมห้ามแก้ไฟล์ migration ที่รันไปแล้ว?** เพราะฐานข้อมูลจำไว้ว่า "ไฟล์ไหนรันไปแล้ว" (ใน Drizzle เก็บไว้ที่ตาราง `drizzle.__drizzle_migrations` พร้อมค่า hash ของไฟล์) ถ้าไปแก้ไฟล์เก่า:
-- เครื่องที่รันไปแล้ว **ไม่รันซ้ำ** → ได้ DB ไม่เหมือนเครื่องที่เพิ่งรัน (โครงสร้างเพี้ยนกันระหว่างคนในทีม)
-- ประวัติ (hash) ไม่ตรงกับของจริง ทำให้ตรวจสอบย้อนหลังไม่ได้
-ทางที่ถูก: สร้าง migration ใหม่ที่แก้ต่อจากของเดิม
-
-### คำสั่ง 3 แบบ: generate / migrate / push
-
-| คำสั่ง (Drizzle) | ทำอะไร | ใช้เมื่อ |
-|---|---|---|
-| `drizzle-kit generate` | อ่าน schema เทียบกับ snapshot เดิม แล้ว **สร้างไฟล์ SQL** (ยังไม่แตะ DB) | ทุกครั้งที่เปลี่ยน schema |
-| `drizzle-kit migrate` | **รันไฟล์ SQL** ที่ยังไม่เคยรันกับ DB จริง และบันทึกว่ารันแล้ว | หลัง generate · ตอน deploy |
-| `drizzle-kit push` | ดัน schema เข้า DB **ตรงๆ ไม่สร้างไฟล์** | ทดลองเร็วๆ ใน DB ส่วนตัวเท่านั้น ⚠️ ห้ามใช้กับ production หรือ DB ที่ใช้ร่วมกัน |
-| `prisma migrate dev` | (Prisma) สร้างไฟล์ + รันให้ในคำสั่งเดียว | ตอนพัฒนา |
-| `prisma migrate deploy` | (Prisma) รันเฉพาะไฟล์ที่มี ไม่สร้างใหม่ | บน production / CI |
-
-> 💡 ทีมเราเลือกใช้ `generate` + `migrate` เป็นหลัก เพราะได้ไฟล์ SQL ให้เพื่อนร่วมทีมรีวิวใน Merge Request ก่อนรันจริง
-
-### เวิร์กโฟลว์เปลี่ยนโครงสร้างทีละขั้น (ใช้ทุกครั้ง)
-1. อัปเดตโค้ดล่าสุด (`git pull`) แล้วรัน `npx drizzle-kit migrate` ให้ DB เราตามทัน migration ของเพื่อน
-2. แก้ `schema.ts` (เช่น เพิ่มคอลัมน์)
-3. `npx drizzle-kit generate` → ได้ไฟล์ใหม่ใน `drizzle/`
-4. **เปิดไฟล์ SQL อ่าน** ว่าตรงกับที่ตั้งใจ (โดยเฉพาะ `DROP` ที่ทำให้ข้อมูลหาย!)
-5. `npx drizzle-kit migrate`
-6. ทดสอบโค้ดที่ใช้โครงสร้างใหม่
-7. `git add` ทั้ง `schema.ts`, ไฟล์ `.sql` และโฟลเดอร์ `drizzle/meta` แล้ว commit
-
-> ⚠️ **เปลี่ยนชื่อคอลัมน์ระวังข้อมูลหาย** ถ้าแค่แก้ชื่อใน schema แล้ว generate เครื่องมืออาจเข้าใจว่า "ลบคอลัมน์เก่า + สร้างคอลัมน์ใหม่" ซึ่งข้อมูลเดิมจะหาย drizzle-kit มักถามว่าเป็น *rename* หรือ *create* ให้อ่านและตอบให้ถูก แล้วดูไฟล์ SQL ว่าเป็น `RENAME COLUMN` (ปลอดภัย) หรือ `DROP` + `ADD` (ข้อมูลหาย)
-
----
-
-## 4. รู้จักทั้ง 3 ตัว
+### เทียบ ORM 3 ตัวด้วยโจทย์เดียวกัน
 
 | | 🌧️ **Drizzle** | 🔺 **Prisma** | 🐢 **Sequelize** |
 |---|---|---|---|
-| บุคลิก | "รู้ SQL ก็ใช้เป็น" | ใช้ง่ายสุด เครื่องมือครบ | รุ่นพี่ที่อยู่มานาน |
+| บุคลิก | "รู้ SQL ก็ใช้เป็น" | ใช้ง่าย เครื่องมือครบ | รุ่นพี่ที่อยู่มานาน |
 | เขียน schema ที่ | ไฟล์ TypeScript | `schema.prisma` (ภาษาของ Prisma) | class TS ที่ extend `Model` |
 | ได้ type ยังไง | อัตโนมัติจาก schema | รัน `prisma generate` | ประกาศเองซ้ำกับคอลัมน์ |
-| Migration | `drizzle-kit generate` + `migrate` | `prisma migrate dev` | `sequelize-cli` เขียนเอง |
-| น้ำหนัก | เบามาก | หนักกว่า มี **Prisma Studio** | ปานกลาง |
-| จุดเด่น | ใกล้ SQL, เร็ว, เหมาะ serverless | มือใหม่เริ่มง่าย เอกสารดีมาก | ตัวอย่างเก่าเยอะ หลายฐานข้อมูล |
-| จุดด้อย | ต้องรู้ SQL พอสมควร | ซ่อน SQL มาก, setup เปลี่ยนตามเวอร์ชันบ่อย | TS ไม่ใช่จุดแข็ง, pattern เก่า |
+| Migration | `drizzle-kit generate` + `migrate` | `prisma migrate dev` / `deploy` | `sequelize-cli` เขียน `up`/`down` เอง |
+| น้ำหนัก | เบามาก (ไม่มี dependency เพิ่ม) | หนักกว่า มี **Prisma Studio** | ปานกลาง |
+| จุดเด่น | ใกล้ SQL, มีทั้งแบบ query builder และ ORM, เหมาะ serverless | มือใหม่เริ่มง่าย เอกสารดีมาก | ตัวอย่างเก่าเยอะ หลายฐานข้อมูล |
+| จุดด้อย | ต้องรู้ SQL พอสมควร | ซ่อน SQL มาก, setup เปลี่ยนตามรุ่นบ่อย | TS ไม่ใช่จุดแข็ง, pattern เก่า |
 | เหมาะกับ | โปรเจกต์ TS ใหม่ที่อยากคุม SQL | ทีมที่อยากเริ่มเร็ว | ดูแลระบบเก่า |
 
-### โจทย์เดียวกัน เขียน 3 แบบเทียบกัน
-
-โจทย์: "มีตาราง customers กับ rentals (1 ลูกค้า มีหลาย rental) → เพิ่มสมชายพร้อม rental 1 รายการ → ดึงลูกค้าทุกคนพร้อม rental"
+โจทย์: "มีตาราง customers กับ rentals (1 ลูกค้า มีหลาย rental) → เพิ่มสมชายพร้อม rental 1 รายการ → ดึงลูกค้าทุกคนพร้อม rental" (โค้ดในหัวข้อนี้ไว้อ่านเทียบ ยังไม่ต้องรัน ของจริงลงมือในข้อ 6–7)
 
 **① ประกาศโครงสร้าง (schema)**
 
@@ -271,11 +264,109 @@ await Customer.findAll({ include: "rentals" });   // ใช้ชื่อ alias
 ```
 (Sequelize เพิ่ม `createdAt`/`updatedAt` ให้ทุกแถวเองโดยค่าตั้งต้น)
 
-**สังเกต:** Drizzle/Prisma/Sequelize แต่ละตัวคิดต่างกันที่ "จุดประกาศ" แต่โจทย์เดียวกันได้ผลเดียวกัน ความรู้ SQL ที่เรียนบทที่ 6 (PK/FK/JOIN) ใช้ได้กับทุกตัว
+**สังเกต:** แต่ละตัวคิดต่างกันที่ "จุดประกาศ" แต่โจทย์เดียวกันได้ผลเดียวกัน ความรู้ SQL ที่เรียนบทที่ 6 (PK/FK/JOIN) ใช้ได้กับทุกตัว
+
+---
+
+## 3. Migration
+
+**กลุ่มที่ 2 คืออะไร:** **Migration** = **ไฟล์บันทึกการเปลี่ยนโครงสร้างฐานข้อมูล** ทีละขั้นตามลำดับ ส่วน **migration tool** คือโปรแกรมที่ช่วยสร้างไฟล์พวกนี้ และรันไฟล์ที่ยังไม่เคยรันกับ DB แต่ละตัว
+
+```
+migrations/
+├── 0001_create_customers.sql
+├── 0002_create_rentals.sql
+└── 0003_add_email_to_customers.sql
+```
+
+> 💡 **เปรียบเทียบ:** migration = **Git ของโครงสร้างฐานข้อมูล** หรือ **บันทึกการต่อเติมบ้าน** 🏗️ ช่างคนใหม่อ่านแล้วสร้างบ้านหน้าตาเดียวกันได้เป๊ะ
+
+**ทำไมสำคัญ**
+- เพื่อนรันคำสั่งเดียวได้ DB โครงสร้างเดียวกับเรา
+- dev / test / production ตรงกันเสมอ
+- รู้ว่าใครเปลี่ยนอะไรเมื่อไหร่ (อยู่ใน Git)
+
+**ข้างใน migration tool ทุกตัวมี 3 ส่วน**
+1. **ไฟล์ migration เรียงลำดับ** (ใช้เลขหรือวันเวลานำหน้าชื่อ) อยู่ใน Git
+2. **ตารางประวัติในฐานข้อมูล** จดว่าไฟล์ไหนรันไปแล้ว เช่น `drizzle.__drizzle_migrations` (Drizzle), `_prisma_migrations` (Prisma), `flyway_schema_history` (Flyway), `knex_migrations` (Knex)
+3. **คำสั่งรัน** ที่เทียบ (1) กับ (2) แล้วรันเฉพาะไฟล์ที่ยังไม่มีในประวัติ ตามลำดับ
+
+> ⚠️ **กฎเหล็ก 2 ข้อ**
+> 1. **ห้ามแก้โครงสร้างตารางบน production ด้วยมือ** ทุกการเปลี่ยนผ่าน migration
+> 2. migration ที่รันไปแล้ว **ห้ามแก้ไฟล์เดิม** จะเปลี่ยนให้สร้างไฟล์ใหม่
+
+**ทำไมห้ามแก้ไฟล์ migration ที่รันไปแล้ว?** เพราะตารางประวัติจำไว้ว่า "ไฟล์ไหนรันไปแล้ว" (Drizzle จดค่า hash ของไฟล์ไว้ด้วย) ถ้าไปแก้ไฟล์เก่า:
+- เครื่องที่รันไปแล้ว **ไม่รันซ้ำ** → ได้ DB ไม่เหมือนเครื่องที่เพิ่งรัน (โครงสร้างเพี้ยนกันระหว่างคนในทีม)
+- ประวัติไม่ตรงกับของจริง ทำให้ตรวจสอบย้อนหลังไม่ได้ (บางตัวจับได้และฟ้อง เช่น Prisma เตือนว่าไฟล์ที่รันแล้วถูกแก้)
+ทางที่ถูก: สร้าง migration ใหม่ที่แก้ต่อจากของเดิม
+
+**ในกลุ่มนี้มีใครบ้าง**
+
+<ToolTable group="orm-migration" />
+
+**ตัวในกลุ่มเหมือนกันตรงไหน ต่างกันตรงไหน**
+
+| หัวข้อ | เหมือนกัน / ต่างกัน |
+|---|---|
+| ไฟล์เรียงลำดับ + ตารางประวัติ + รันเฉพาะที่ยังไม่รัน | ✅ เหมือนกันทุกตัว |
+| ได้ไฟล์มายังไง | **สร้างให้จาก schema** (Drizzle Kit, Prisma Migrate, TypeORM): แก้ schema แล้วเครื่องมือเทียบกับของเดิม เขียน SQL ให้ · **เขียนเอง** (Flyway, dbmate, Knex, Kysely, sequelize-cli): เราเขียน SQL หรือโค้ดเองทุกบรรทัด |
+| ย้อนกลับ (down / rollback) | Knex, dbmate, TypeORM มีขากลับ (`down`) · **Drizzle Kit และ Prisma Migrate ไม่มีคำสั่งย้อน** migration ที่รันแล้ว ทางที่ใช้คือสร้าง migration ใหม่ที่แก้กลับ (เดินหน้าแก้ ไม่ถอยหลัง) |
+| ผูกกับภาษา/ORM ไหม | Drizzle Kit / Prisma Migrate ผูกกับ ORM ของตัวเอง · Flyway, dbmate ใช้ได้กับทุกภาษา (ไฟล์เป็น SQL ล้วน) |
+
+> 💡 **ไฟล์ที่ "สร้างให้" ก็ยังต้องอ่าน** เครื่องมือเดาจากความต่างของ schema ซึ่งเดาผิดได้ (เช่น เปลี่ยนชื่อคอลัมน์แล้วมันเข้าใจว่า "ลบ + สร้างใหม่") เครื่องมือที่สร้าง **ไฟล์ SQL ให้อ่านก่อนรัน** จึงสำคัญมาก และเลือกผสมได้ด้วย เช่น ใช้ `drizzle-kit generate` สร้าง SQL แล้วให้เครื่องมืออื่นรัน
+
+### Flow: schema → migration → ฐานข้อมูล
+
+![ผัง flow ของ migration: แก้ schema.ts, drizzle-kit generate สร้างไฟล์ SQL, drizzle-kit migrate รันกับฐานข้อมูล และ push ที่ข้ามขั้นตอนไว้ทดลอง](/img/08-migration-flow.svg)
+*แก้ schema → generate (สร้างไฟล์ SQL) → migrate (รันกับ DB) → commit ทั้ง schema และไฟล์ migration เข้า Git*
+
+### คำสั่ง 3 แบบ: generate / migrate / push
+
+| คำสั่ง (Drizzle) | ทำอะไร | ใช้เมื่อ |
+|---|---|---|
+| `drizzle-kit generate` | อ่าน schema เทียบกับ snapshot เดิม แล้ว **สร้างไฟล์ SQL** (ยังไม่แตะ DB) | ทุกครั้งที่เปลี่ยน schema |
+| `drizzle-kit migrate` | **รันไฟล์ SQL** ที่ยังไม่เคยรันกับ DB จริง และบันทึกว่ารันแล้ว | หลัง generate · ตอน deploy |
+| `drizzle-kit push` | ดัน schema เข้า DB **ตรงๆ ไม่สร้างไฟล์** | ทดลองเร็วๆ ใน DB ส่วนตัวเท่านั้น ⚠️ ห้ามใช้กับ production หรือ DB ที่ใช้ร่วมกัน |
+| `prisma migrate dev` | (Prisma 7) สร้างไฟล์ + รันให้ในคำสั่งเดียว | ตอนพัฒนา |
+| `prisma migrate deploy` | (Prisma 7) รันเฉพาะไฟล์ที่มี ไม่สร้างใหม่ | บน production / CI |
+
+### เวิร์กโฟลว์เปลี่ยนโครงสร้างทีละขั้น (ใช้ทุกครั้ง)
+1. อัปเดตโค้ดล่าสุด (`git pull`) แล้วรัน `npx drizzle-kit migrate` ให้ DB เราตามทัน migration ของเพื่อน
+2. แก้ `schema.ts` (เช่น เพิ่มคอลัมน์)
+3. `npx drizzle-kit generate` → ได้ไฟล์ใหม่ใน `drizzle/`
+4. **เปิดไฟล์ SQL อ่าน** ว่าตรงกับที่ตั้งใจ (โดยเฉพาะ `DROP` ที่ทำให้ข้อมูลหาย!)
+5. `npx drizzle-kit migrate`
+6. ทดสอบโค้ดที่ใช้โครงสร้างใหม่
+7. `git add` ทั้ง `schema.ts`, ไฟล์ `.sql` และโฟลเดอร์ `drizzle/meta` แล้ว commit
+
+> ⚠️ **เปลี่ยนชื่อคอลัมน์ระวังข้อมูลหาย** ถ้าแค่แก้ชื่อใน schema แล้ว generate เครื่องมืออาจเข้าใจว่า "ลบคอลัมน์เก่า + สร้างคอลัมน์ใหม่" ซึ่งข้อมูลเดิมจะหาย drizzle-kit มักถามว่าเป็น *rename* หรือ *create* ให้อ่านและตอบให้ถูก แล้วดูไฟล์ SQL ว่าเป็น `RENAME COLUMN` (ปลอดภัย) หรือ `DROP` + `ADD` (ข้อมูลหาย)
+
+---
+
+## 4. เลือกยังไง และทีมเราใช้อะไร
+
+**คำถาม 4 ข้อก่อนเลือก**
+1. **โปรเจกต์มีอยู่แล้วหรือเปล่า?** ถ้ามี ใช้ตามเดิม ห้ามเพิ่ม ORM ตัวที่สองหรือ migration tool ตัวที่สองเข้าไปจัดการตารางชุดเดียวกัน (ประวัติจะแยกเป็น 2 ชุด ไม่มีใครรู้ว่าอันไหนจริง) ดูว่าใช้อะไรจาก `package.json` (`drizzle-orm`, `@prisma/client`, `sequelize`, `typeorm`, `kysely`, `knex`) และไฟล์ในโปรเจกต์ (`drizzle.config.ts` + `drizzle/` = Drizzle · `prisma/schema.prisma` + `prisma/migrations/` = Prisma · ไฟล์ชื่อ `V1__...sql` = Flyway)
+2. **ทีมรู้ SQL แค่ไหน และ query ซับซ้อนแค่ไหน?** งานรายงานเยอะ query ซับซ้อน → ตัวที่ใกล้ SQL (driver, query builder, Drizzle) · งาน CRUD ธรรมดาและอยากเริ่มเร็ว → ORM ไหนก็ได้
+3. **ใช้ฐานข้อมูลอะไร และ deploy ที่ไหน?** ไม่ใช่ทุกตัวรองรับทุกฐานข้อมูล (เช่น Prisma 8 รุ่นทดสอบรองรับแค่ PostgreSQL กับ MongoDB) และบางที่ (serverless / edge) ต้องใช้ driver แบบพิเศษ ดูหน้า "supported databases / drivers" ของตัวนั้นก่อน
+4. **รุ่นนิ่งหรือยัง?** ORM ที่กำลังเปลี่ยนรุ่นใหญ่ (ดูกล่องข้างล่าง) ให้ใช้รุ่นนิ่งและ **ล็อกเลขรุ่น** ใน `package.json` ไม่งั้นติดตั้งวันหลังอาจได้ API คนละแบบ
+
+> **แนวทางของทีม Blicktech**
+> - งาน STARTER และตัวอย่างในคู่มือใช้ **Drizzle** (ระดับ ORM + query builder ในตัวเดียว) คู่กับ **Drizzle Kit** ทำ migration แบบ `generate` + `migrate` เพราะได้ไฟล์ SQL ให้เพื่อนร่วมทีมรีวิวใน Merge Request ก่อนรันจริง (`push` ใช้แค่ทดลองใน DB ส่วนตัว)
+> - เว็บคู่มือนี้เองก็ใช้ Drizzle + `pg` และมีคำสั่ง `db:generate` / `db:migrate` แบบเดียวกับข้อ 6
+> - **Prisma** เจอในแบบฝึกแรก (Todo) และงานอื่นได้ ข้อ 7 มีให้ลองฉบับย่อ · **Sequelize / TypeORM** รู้จักไว้สำหรับระบบเก่า (ข้อ 8)
+
+> 📰 **ตัวอย่างว่าทำไมต้องเรียนเป็นกลุ่ม (ต.ค. 2569)** ORM 2 ตัวหลักกำลังเปลี่ยนรุ่นใหญ่พร้อมกัน
+> - **Drizzle 1.0** ยังเป็นรุ่นทดสอบ (RC) `npm install drizzle-orm` ยังได้ 0.45 ที่บทนี้ใช้ เมื่อ 1.0 ออกจริงจะเปลี่ยน: ประกาศความสัมพันธ์ที่เดียวด้วย `defineRelations`, `where` ใน `db.query` เป็น object (เช่น `{ id: 1 }`), โฟลเดอร์ migration แยกเป็นโฟลเดอร์ละ migration ไม่มี `_journal.json` (แปลงของเก่าด้วย `drizzle-kit up`) ([คู่มืออัปเกรด](https://orm.drizzle.team/docs/upgrade-v1))
+> - **Prisma 8** เป็น RC แล้วและคาดว่าออกจริงใน ต.ค. 2569 เปลี่ยนเยอะมาก: ไม่สร้าง `PrismaClient` ให้แล้ว, `schema.prisma` เปลี่ยนชื่อเป็น `contract.prisma`, `migrate dev` / `deploy` เปลี่ยนเป็น `migration plan` / `db migrate` · เอกสารหลักของ prisma.io เป็นรุ่น 8 แล้ว (รุ่น 7 อยู่ที่ [prisma.io/docs/orm/v7](https://www.prisma.io/docs/orm/v7)) และ `npx prisma` แบบไม่ระบุรุ่นได้ CLI รุ่น 8 ([สถานะรุ่น](https://www.prisma.io/docs/orm/release-status))
+>
+> ใครจำแค่คำสั่ง ต้องเรียนใหม่ แต่ใครเข้าใจว่า **schema → type → SQL + parameter → migration ที่รีวิวได้** ย้ายรุ่นหรือย้ายตัวได้ทันที เพราะสิ่งที่แต่ละตัวแก้ยังเป็นปัญหาเดิมในข้อ 1
 
 ---
 
 ## 5. ปัญหา N+1 (ต้องรู้!)
+
+ปัญหานี้เกิดได้กับ **ทุกระดับ** ในข้อ 2 แต่เจอบ่อยสุดกับ ORM เพราะ query ถูกซ่อนอยู่หลังฟังก์ชันที่ดูไม่มีพิษภัย
 
 อยากแสดงลูกค้าทุกคนพร้อมรายการเช่า:
 ```ts
@@ -288,6 +379,8 @@ for (const c of all) {
 
 > 💡 เหมือนไปซูเปอร์มาร์เก็ต **ซื้อของทีละชิ้น ขับกลับบ้าน แล้วออกไปซื้อชิ้นต่อไป** 🚗🚗🚗 แทนที่จะจดรายการแล้วซื้อทีเดียว
 
+**ทำไมช้า?** แต่ละ query ต้องส่งข้ามเครือข่ายไปหาฐานข้อมูลแล้วรอคำตอบกลับมา (ไป-กลับ 1 รอบ) ถึง query เดียวจะเร็ว แต่ 101 รอบต่อ 1 หน้าจอ เวลารอก็บวกกันเป็น 101 เท่า และกิน connection ใน pool นานขึ้นด้วย
+
 ![เปรียบเทียบ N+1 (ถาม DB 101 รอบ) กับการดึงพร้อมกันด้วย with หรือ include (1–2 query)](/img/08-n-plus-one.svg)
 *ซ้าย: ถามทีละคน รอบเพิ่มตามจำนวนคน · ขวา: บอก ORM ว่าจะเอา rentals ด้วย ให้ดึงมาทีเดียว*
 
@@ -295,8 +388,9 @@ for (const c of all) {
 ```ts
 await db.query.customers.findMany({ with: { rentals: true } });      // Drizzle
 await prisma.customer.findMany({ include: { rentals: true } });      // Prisma
-await Customer.findAll({ include: Rental });                         // Sequelize
+await Customer.findAll({ include: "rentals" });                      // Sequelize (ชื่อ alias จาก hasMany)
 ```
+ถ้าใช้ driver หรือ query builder ก็ใช้หลักเดียวกัน: เขียน `JOIN` ครั้งเดียว หรือดึงลูก 1 ครั้งด้วย `WHERE customer_id IN (...)`
 
 ### 🔧 จับ N+1 ด้วย log: เห็นกับตา
 
@@ -321,6 +415,8 @@ Prisma เปิด log ด้วย `new PrismaClient({ adapter, log: ["query"]
 
 ---
 
+> 🔧 **จากนี้คือการลงมือ** เริ่มด้วย **Drizzle** ที่ทีมใช้ ตั้งแต่ศูนย์จนครบ migration, seed, transaction และ join (ข้อ 6) แล้วลอง **Prisma** ฉบับย่อ (ข้อ 7) สังเกตว่าแนวคิดจากข้อ 2–5 ใช้ได้กับทั้งสองตัว ต่างกันแค่หน้าตาคำสั่ง
+
 ## 6. 🔧 ลงมือ: Drizzle ตั้งแต่ศูนย์
 
 ```bash
@@ -335,8 +431,8 @@ npm install -D drizzle-kit typescript tsx @types/node @types/pg
 ```
 DATABASE_URL=postgres://postgres:secret@localhost:5432/postgres
 ```
-> 💡 ถ้า `docker run` ขึ้น `port is already allocated` หรือต่อไม่ได้ ดูวิธีแก้ใน [บทที่ 7 ข้อ 11](/07-mysql-postgres) (และอย่าลืมแก้ port ใน `DATABASE_URL` ให้ตรง)
-> (ตัวอย่างในบทนี้ทดสอบกับ `drizzle-orm` 0.45 และ `drizzle-kit` 0.31 · ถ้าติดตั้งรุ่นที่ใหม่กว่ามากและ API ไม่ตรง ให้ดู docs ที่ [orm.drizzle.team](https://orm.drizzle.team) ของรุ่นนั้น)
+> 💡 ถ้า `docker run` ขึ้น `port is already allocated` หรือต่อไม่ได้ ดูวิธีแก้ใน [บทที่ 7 ข้อ 13](/07-mysql-postgres#13--แก้ปัญหาที่เจอบ่อย-troubleshooting) (และอย่าลืมแก้ port ใน `DATABASE_URL` ให้ตรง)
+> (ตัวอย่างในบทนี้รันจริงเมื่อ 22 ต.ค. 2569 กับ `drizzle-orm` 0.45.4, `drizzle-kit` 0.31.11, `pg` 8.23, Node 26 และ `postgres:17` · ถ้า `npm install` ได้ `drizzle-orm` 1.x แล้ว ความสัมพันธ์และ `db.query` จะเขียนต่างไป (ดูกล่อง Drizzle 1.0 ในข้อ 4) จะทำตามบทนี้ให้ติดตั้ง `drizzle-orm@0.45 drizzle-kit@0.31` หรือดู docs ที่ [orm.drizzle.team](https://orm.drizzle.team) ของรุ่นนั้น)
 
 ### ขั้นที่ 1: schema `src/db/schema.ts`
 ```ts
@@ -472,13 +568,29 @@ npx tsx src/index.ts
     "name": "สมชาย",
     "phone": "081-111-1111",
     "rentals": [
-      { "id": 1, "customerId": 1, "laptop": "Lenovo T14", "pricePerMonth": 1500 },
-      { "id": 2, "customerId": 1, "laptop": "Dell 5420", "pricePerMonth": 1200 }
+      {
+        "id": 1,
+        "customerId": 1,
+        "laptop": "Lenovo T14",
+        "pricePerMonth": 1500
+      },
+      {
+        "id": 2,
+        "customerId": 1,
+        "laptop": "Dell 5420",
+        "pricePerMonth": 1200
+      }
     ]
   }
 ]
 ```
-(รันซ้ำอีกรอบจะ error `duplicate key value violates unique constraint "customers_phone_unique"` เพราะเบอร์โทร `UNIQUE` ไม่ใช่บั๊ก)
+สังเกต: ฐานข้อมูลเก็บชื่อคอลัมน์ `customer_id` แต่ในผลลัพธ์เป็น `customerId` ตามชื่อใน schema นี่คืองาน "แปลงแถวเป็น object" ของ ORM ในข้อ 2
+
+รันซ้ำอีกรอบจะ error เพราะเบอร์โทร `UNIQUE` (ไม่ใช่บั๊ก) ฝึกอ่าน error ของ Drizzle: บรรทัดแรกบอกแค่ว่า query ไหนพัง สาเหตุจริงอยู่บรรทัด `cause:`
+```text
+DrizzleQueryError: Failed query: insert into "customers" ("id", "name", "phone") values (default, $1, $2) returning "id", "name", "phone"
+  cause: error: duplicate key value violates unique constraint "customers_phone_unique"
+```
 
 💥 **ลองพังมันดู:** พิมพ์ `schema.customers.nmae` หรือใส่ `pricePerMonth: "แพง"` แล้วดูเส้นแดง
 ```text
@@ -595,7 +707,7 @@ Query: rollback
 ```
 `rollback` โผล่เอง และ rental "Asus" ไม่ถูกบันทึก (เช็คด้วย `select().from(schema.rentals)`) ถ้าอยากยกเลิกเองให้เรียก `tx.rollback()` ซึ่งจะ throw error ออกมาจาก `db.transaction` ให้ `catch` ไว้
 
-> 💡 ตัวอย่างนี้ตรงกับ transaction ที่ทำด้วย SQL ในบทที่ 6 ข้อ 4 (เช่า laptop + เปลี่ยนสถานะ) ส่วนเรื่อง "2 คนกดพร้อมกัน" ก็ใช้วิธีเดียวกันได้ ถ้ามีตาราง `laptops` ที่มีคอลัมน์ `status` แบบบทที่ 6 (schema ในบทนี้ยังไม่มี ไม่ต้องรัน แค่ดูหลักคิด) จะเขียนได้ว่า `tx.update(laptops).set({ status: "rented" }).where(and(eq(laptops.serial, "AS-01"), eq(laptops.status, "available"))).returning()` (`and` import จาก `drizzle-orm` เหมือน `eq`) ถ้าได้ array ว่าง = ไม่มีแถวไหนตรงเงื่อนไข คือมีคนเช่าไปก่อน เพราะเราใส่ "ต้องยังว่างอยู่" ไว้ในเงื่อนไขของคำสั่ง update เอง ฐานข้อมูลจึงตัดสินให้ ไม่ใช่โค้ดเราเช็คก่อนแล้วค่อยเขียน
+> 💡 ตัวอย่างนี้ตรงกับ transaction ที่ทำด้วย SQL ในบทที่ 6 ข้อ 8 (เช่า laptop + เปลี่ยนสถานะ) ส่วนเรื่อง "2 คนกดพร้อมกัน" ก็ใช้วิธีเดียวกันได้ ถ้ามีตาราง `laptops` ที่มีคอลัมน์ `status` แบบบทที่ 6 (schema ในบทนี้ยังไม่มี ไม่ต้องรัน แค่ดูหลักคิด) จะเขียนได้ว่า `tx.update(laptops).set({ status: "rented" }).where(and(eq(laptops.serial, "AS-01"), eq(laptops.status, "available"))).returning()` (`and` import จาก `drizzle-orm` เหมือน `eq`) ถ้าได้ array ว่าง = ไม่มีแถวไหนตรงเงื่อนไข คือมีคนเช่าไปก่อน เพราะเราใส่ "ต้องยังว่างอยู่" ไว้ในเงื่อนไขของคำสั่ง update เอง ฐานข้อมูลจึงตัดสินให้ ไม่ใช่โค้ดเราเช็คก่อนแล้วค่อยเขียน
 
 ถึงตรงนี้ transaction แรก (ที่สำเร็จ) ได้เพิ่ม Asus ให้สมชายและเปลี่ยนเบอร์ไปแล้ว ก่อนขั้นที่ 8 ให้รัน `npm run db:seed` อีกครั้ง ข้อมูลจะกลับเป็นชุดเดิม ผลลัพธ์ในขั้นที่ 8 จึงตรงกับในบท นี่คือประโยชน์ของ seed ที่รันซ้ำได้
 
@@ -676,17 +788,25 @@ console.log(summary);
 
 ## 7. 🔧 Prisma ฉบับย่อ
 
-> ⚠️ Prisma เปลี่ยนวิธี setup ค่อนข้างบ่อย ถ้าไม่ตรงให้ยึด **Quickstart ใน prisma.io/docs** ของเวอร์ชันที่ติดตั้ง
-> ตัวอย่างนี้ทดสอบกับ Prisma 7 (`@prisma/client` 7.x) ให้ติดตั้ง `prisma@7` ให้เวอร์ชันตรงกับ client เพราะรุ่น `latest` ของแพ็กเกจ CLI อาจกระโดดไปรุ่นใหม่กว่า client ได้
+> ⚠️ Prisma เปลี่ยนวิธี setup ค่อนข้างบ่อย ถ้าไม่ตรงให้ยึด **Quickstart ใน [เอกสาร Prisma 7](https://www.prisma.io/docs/orm/v7)** ของรุ่นที่ติดตั้ง
+> ตัวอย่างนี้รันจริงเมื่อ 22 ต.ค. 2569 กับ Prisma 7.10.1 · **ต้องใส่ `@7` ทุกแพ็กเกจ** เพราะตอนนี้ `npm install prisma` / `npx prisma` แบบไม่ระบุรุ่นได้ CLI รุ่น 8 (RC) ที่ใช้คำสั่งคนละชุด (ดูกล่องในข้อ 4)
 
+ใช้ฐานข้อมูลตัวเดิมจากข้อ 6 ได้ แต่ **สร้าง database ใหม่แยก** เพราะ database `postgres` มีตาราง `customers` ของ Drizzle อยู่แล้ว ถ้าใช้ตัวเดียวกัน Prisma จะเจอตารางที่ไม่ได้สร้างเอง (drift ในข้อ 9) แล้วขอ reset ซึ่ง **ลบข้อมูลทั้งหมด**
+```bash
+docker exec -it pg psql -U postgres -c "CREATE DATABASE prisma_demo;"
+```
 ```bash
 mkdir prisma-demo && cd prisma-demo
 npm init -y
-npm install @prisma/client @prisma/adapter-pg pg dotenv
+npm install @prisma/client@7 @prisma/adapter-pg@7 pg dotenv
 npm install -D prisma@7 typescript tsx @types/node @types/pg
 npx prisma init --datasource-provider postgresql --output ../src/generated/prisma
 ```
-คำสั่ง `init` สร้าง `prisma/schema.prisma`, ไฟล์ config ของ Prisma (`prisma.config.ts` — บางรุ่นตั้งชื่อ `prisma7.config.ts`) และ `.env` (แก้ `DATABASE_URL` ให้ตรง และตรวจว่า config โหลด `dotenv/config` แล้ว)
+ใส่ `tsconfig.json` + `"type": "module"` เหมือนข้อ 6 (Prisma 7 เป็น ESM) แล้วดูว่า `init` สร้างอะไร:
+- `prisma/schema.prisma`: มี `generator client` (provider `prisma-client`, ระบุ `output`) กับ `datasource db`
+- ไฟล์ config ของ Prisma: 7.10.1 ตั้งชื่อ `prisma7.config.ts` (เอกสารบางหน้าและรุ่นก่อนเรียก `prisma.config.ts`) ข้างในมี `import "dotenv/config"` และบอกที่อยู่ schema, migrations, `DATABASE_URL`
+- `.env`: แก้เป็น `DATABASE_URL="postgres://postgres:secret@localhost:5432/prisma_demo"` (Prisma 7 ไม่อ่าน `.env` เอง ต้องพึ่ง `dotenv/config` ในไฟล์ config)
+- (7.10 ขึ้นไป) โฟลเดอร์ skill สำหรับผู้ช่วย AI เช่น `.claude/skills/` ไม่ได้ใช้ลบทิ้งได้ หรือใส่ `--no-skills` ตอน `init`
 
 **schema** ต่อท้าย `prisma/schema.prisma`
 ```prisma
@@ -724,7 +844,9 @@ prisma/migrations/
 
 Your database is now in sync with your schema.
 ```
-(ชื่อโฟลเดอร์ขึ้นต้นด้วยวันเวลาที่รัน ต่างจากนี้ไม่ผิด)
+(ชื่อโฟลเดอร์ขึ้นต้นด้วยวันเวลาที่รัน ต่างจากนี้ไม่ผิด · ถ้ามีกล่อง `Update available 7.10.1 -> 8.0.0-rc...` ต่อท้าย ไม่ต้องทำตาม เพราะเป็นรุ่นใหญ่ที่คำสั่งเปลี่ยนหมด)
+
+ทำไมต้องสั่ง `prisma generate` แยก? ตั้งแต่ Prisma 7 คำสั่ง `migrate dev` **ไม่สร้าง client ให้อัตโนมัติแล้ว** ถ้าลืม จะ import `./generated/prisma/client.js` ไม่เจอ หรือ type ไม่อัปเดตตาม schema ใหม่ เปิดไฟล์ `prisma/migrations/.../migration.sql` ดูด้วย จะเห็น `CREATE TABLE` หน้าตาคล้ายของ Drizzle เพราะสุดท้ายทุกตัวก็ส่ง SQL ชุดเดียวกัน
 
 **ใช้งาน** `src/index.ts`
 ```ts
@@ -770,11 +892,11 @@ export default defineConfig({
   migrations: { path: "prisma/migrations", seed: "tsx prisma/seed.ts" },
 });
 ```
-แล้วรัน `npx prisma db seed` ควรเห็น `The seed command has been executed.`
+แล้วรัน `npx prisma db seed` ควรเห็น `🌱  The seed command has been executed.` (ตั้งแต่ Prisma 7 `migrate dev` / `migrate reset` ไม่รัน seed ให้เองแล้ว ต้องสั่งเองทุกครั้ง)
 
 ---
 
-## 8. Sequelize ฉบับรู้จัก
+## 8. ORM ในระบบเก่า: Sequelize และ TypeORM ฉบับรู้จัก
 
 ไม่ต้องลงมือ อ่านให้รู้หน้าตาเผื่อเจอในระบบเก่า
 ```ts
@@ -799,9 +921,19 @@ const c = await Customer.findOne({ where: { name: "สมชาย" } });
 👀 ต้องเขียนข้อมูลเดียวกัน **2 รอบ** แก้ที่หนึ่งลืมอีกที่ = บั๊ก นี่คือเหตุผลที่ทีมเลือก Drizzle/Prisma
 
 ข้อควรรู้เมื่อเจอ Sequelize ในระบบเก่า:
-- ความสัมพันธ์ต้องประกาศเอง (`hasMany` / `belongsTo`) แล้วถึงใช้ `include` ได้ (ดูตัวอย่างเทียบในข้อ 4)
+- ความสัมพันธ์ต้องประกาศเอง (`hasMany` / `belongsTo`) แล้วถึงใช้ `include` ได้ (ดูตัวอย่างเทียบในข้อ 2)
 - `sequelize.sync()` สร้างตารางจาก model ให้ได้ แต่ **ไม่ใช่ migration** (ใช้ทดลองเท่านั้น ระบบจริงใช้ `sequelize-cli` migration)
 - เพิ่มคอลัมน์ `createdAt` / `updatedAt` ให้เองทุกตาราง (ปิดได้ด้วย `timestamps: false`)
+
+**ถ้าเจอ TypeORM** หน้าตาจะเป็น class ที่มี decorator (`@` นำหน้า) ประกาศคอลัมน์
+```ts
+@Entity("customers")
+export class Customer {
+  @PrimaryGeneratedColumn() id!: number;
+  @Column() name!: string;
+}
+```
+เห็น `@Entity` / `@Column` = TypeORM · จัดเข้ากรอบเดิมได้ทันที: ระดับ ORM, ประกาศตารางด้วย class, migration สร้างจาก entity ได้ (`typeorm migration:generate`) และมีขากลับ `down` ให้ด้วย
 
 ---
 
@@ -817,7 +949,13 @@ const c = await Customer.findOne({ where: { name: "สมชาย" } });
 column "email" of relation "customers" already exists
 relation "customers" already exists
 ```
-(drizzle-kit บางเวอร์ชันอาจจบด้วย exit code 1 โดยแสดงข้อความสั้นหรือไม่แสดงเลย ถ้าไม่เห็น error ให้เปิดไฟล์ SQL ล่าสุดแล้วรันตรงๆ ใน psql จะเห็นข้อความเต็มของ Postgres)
+⚠️ drizzle-kit 0.31 ที่ทดสอบ **ไม่แสดงข้อความ error เลย** ขึ้นแค่ `applying migrations...` ค้างไว้แล้วจบด้วย exit code 1 (เช็คด้วย `echo $?` ได้ `1`) ถ้าเจอแบบนี้ ให้เปิดไฟล์ SQL ล่าสุดแล้วรันตรงๆ ใน psql จะเห็นข้อความเต็มของ Postgres เช่น
+```bash
+docker exec -i pg psql -U postgres < drizzle/0002_xxx.sql
+```
+```text
+ERROR:  column "line_id" of relation "customers" already exists
+```
 
 **สาเหตุที่พบบ่อย**
 1. เพื่อน (หรือเรา) **แก้โครงสร้างด้วยมือ** ใน DB (psql/GUI) แทนที่จะผ่าน migration
@@ -829,7 +967,7 @@ relation "customers" already exists
 1. ลบ DB แล้วเริ่มใหม่: `docker compose down -v` (หรือ `DROP DATABASE`) → สร้างใหม่ → `npx drizzle-kit migrate` → `npm run db:seed`
 2. หรือย้อนการแก้มือให้ตรง (เช่น `ALTER TABLE customers DROP COLUMN email;`) แล้ว `migrate`
 
-**ถ้าเป็น production:** อย่าลบ! ให้ backup ก่อน (ดู [บทที่ 7 ข้อ 9](/07-mysql-postgres)) แล้วสร้าง migration ที่ "ทำให้ตรงกับของจริง" อย่างระวัง และให้พี่ดูก่อนรัน
+**ถ้าเป็น production:** อย่าลบ! ให้ backup ก่อน (ดู [บทที่ 7 ข้อ 12](/07-mysql-postgres#12--สำรองข้อมูล-backup-และกู้คืน-restore)) แล้วสร้าง migration ที่ "ทำให้ตรงกับของจริง" อย่างระวัง และให้พี่ดูก่อนรัน
 
 **กันไว้ก่อน:** ห้ามแก้โครงสร้างด้วยมือ · ทุกคนรัน `migrate` หลัง `git pull` · ใส่ `migrate` เป็นขั้นตอนใน deploy
 
@@ -918,65 +1056,86 @@ timeout exceeded when trying to connect
 | `Cannot read properties of undefined` ที่ `process.env.DATABASE_URL` / ต่อ DB ไม่ได้ | ลืม `import "dotenv/config"` หรือไฟล์ `.env` ไม่อยู่ที่รากโปรเจกต์ หรือสะกดชื่อตัวแปรผิด |
 | `drizzle-kit` ไม่เจอ schema | ตรวจ path ใน `drizzle.config.ts` (`schema: "./src/db/schema.ts"`) ว่าถูกและรันจากรากโปรเจกต์ |
 | `generate` แล้วบอก "No schema changes" ทั้งที่แก้แล้ว | ลืมบันทึกไฟล์ / แก้ผิดไฟล์ / schema ตรงกับ snapshot อยู่แล้ว |
-| ต่อ DB แล้ว `password authentication failed` / `connection refused` | ดู [บทที่ 7 ข้อ 11](/07-mysql-postgres) |
+| ต่อ DB แล้ว `password authentication failed` / `connection refused` | ดู [บทที่ 7 ข้อ 13](/07-mysql-postgres#13--แก้ปัญหาที่เจอบ่อย-troubleshooting) |
 
 ---
 
 ## 🧠 เช็คความเข้าใจ
 
 <details>
-<summary>1. ทำไม ORM กัน SQL injection ได้?</summary>
+<summary>1. เพื่อนบอกว่า "ย้ายจาก pg มาใช้ Kysely" กับ "ย้ายจาก Prisma มาใช้ Drizzle" สองประโยคนี้ต่างกันยังไง?</summary>
+
+ประโยคแรกคือ **ขึ้นระดับ** จาก driver (เขียน SQL เอง) เป็น query builder (ประกอบ SQL ด้วยฟังก์ชัน มี type) และ Kysely ก็ยังใช้ `pg` อยู่ข้างใต้ ประโยคที่สองคือ **เปลี่ยนตัวในระดับเดียวกัน** (ORM ทั้งคู่) ต่างกันที่วิธีประกาศ schema และวิธีทำ migration
+
+</details>
+
+<details>
+<summary>2. ทำไม ORM กัน SQL injection ได้?</summary>
 
 ส่งค่าจากผู้ใช้เป็น parameter แยกจากคำสั่ง ฐานข้อมูลจึงมองเป็น "ข้อมูล" เสมอ ไม่ใช่ "คำสั่ง"
 
 </details>
 
 <details>
-<summary>2. เพื่อนเพิ่มคอลัมน์ใน DB เครื่องตัวเองด้วยมือ แล้ว push โค้ดที่ใช้คอลัมน์นั้น เกิดอะไร?</summary>
+<summary>3. เพื่อนเพิ่มคอลัมน์ใน DB เครื่องตัวเองด้วยมือ แล้ว push โค้ดที่ใช้คอลัมน์นั้น เกิดอะไร?</summary>
 
 เครื่องคนอื่นและ production ไม่มีคอลัมน์นั้น โค้ด error ตอนรัน ต้องทำเป็น migration แล้ว commit ไปด้วย
 
 </details>
 
 <details>
-<summary>3. หน้ารายการลูกค้า 50 คนช้ามาก log มี query 51 ครั้ง คืออะไร?</summary>
+<summary>4. หน้ารายการลูกค้า 50 คนช้ามาก log มี query 51 ครั้ง คืออะไร?</summary>
 
 N+1 แก้ด้วย `with` (Drizzle) / `include` (Prisma, Sequelize)
 
 </details>
 
 <details>
-<summary>4. migration ไฟล์ `0001_...sql` รันไปแล้วแต่พบว่าตั้งชื่อคอลัมน์ผิด จะแก้ยังไง?</summary>
+<summary>5. migration ไฟล์ `0001_...sql` รันไปแล้วแต่พบว่าตั้งชื่อคอลัมน์ผิด จะแก้ยังไง?</summary>
 
 ห้ามแก้ไฟล์ `0001` ให้แก้ `schema.ts` แล้ว `generate` เป็นไฟล์ใหม่ (`0002`) ที่เปลี่ยนชื่อคอลัมน์ แล้ว `migrate` (อ่านไฟล์ SQL ว่าเป็น `RENAME` ไม่ใช่ `DROP` + `ADD`)
 
 </details>
 
 <details>
-<summary>5. `generate` กับ `migrate` ต่างกันยังไง? ทำไมแยก 2 คำสั่ง?</summary>
+<summary>6. `generate` กับ `migrate` ต่างกันยังไง? ทำไมแยก 2 คำสั่ง?</summary>
 
 `generate` สร้างไฟล์ SQL จากความต่างของ schema (ยังไม่แตะ DB) `migrate` เอาไฟล์ไปรันกับ DB จริง แยกกันเพื่อให้เรา (และเพื่อนร่วมทีม) อ่านรีวิว SQL ก่อนรัน และให้ทุกสภาพแวดล้อมรันไฟล์ชุดเดียวกัน
 
 </details>
 
 <details>
-<summary>6. เรียก `db.insert(...)` ข้างใน `db.transaction(async (tx) => ...)` ผิดตรงไหน?</summary>
+<summary>7. เรียก `db.insert(...)` ข้างใน `db.transaction(async (tx) => ...)` ผิดตรงไหน?</summary>
 
 ต้องใช้ `tx.insert(...)` ถ้าใช้ `db` คำสั่งนั้นจะรันนอก transaction ไม่ถูก rollback เมื่อเกิด error
 
 </details>
 
 <details>
-<summary>7. โค้ดเรียก `drizzle(...)` ภายใน handler ของทุก request แล้วเจอ `sorry, too many clients already` เกิดจากอะไร แก้ยังไง?</summary>
+<summary>8. โค้ดเรียก `drizzle(...)` ภายใน handler ของทุก request แล้วเจอ `sorry, too many clients already` เกิดจากอะไร แก้ยังไง?</summary>
 
 สร้าง pool/connection ใหม่ทุก request จนเกิน `max_connections` ของ Postgres แก้โดยสร้าง `db` ครั้งเดียวระดับ module แล้ว import ใช้ซ้ำ
 
 </details>
 
 <details>
-<summary>8. `SUM(price_per_month)` ผ่าน Drizzle ได้ค่าเป็น string และมานี (ไม่มี rental) ได้ `null` ควรจัดการยังไง?</summary>
+<summary>9. `SUM(price_per_month)` ผ่าน Drizzle ได้ค่าเป็น string และมานี (ไม่มี rental) ได้ `null` ควรจัดการยังไง?</summary>
 
 แปลงเอง `Number(row.price ?? 0)` (หรือ `.mapWith(Number)` และ `COALESCE` ใน SQL) เพราะ `SUM` ของ numeric คืนเป็น string และ `SUM` ของแถวว่างเป็น NULL
+
+</details>
+
+<details>
+<summary>10. deploy migration ขึ้น production แล้วพบว่าผิด ทีมใช้ Drizzle Kit อยากสั่ง "ย้อนกลับ" ทำยังไง?</summary>
+
+Drizzle Kit (และ Prisma Migrate) ไม่มีคำสั่งย้อน migration ที่รันแล้ว ให้เขียน **migration ใหม่ที่แก้กลับ** (เช่น แก้ schema คืน แล้ว `generate` ได้ไฟล์ใหม่) แล้ว `migrate` ตามปกติ ประวัติจะครบทุกขั้นและทุกเครื่องเดินตามได้ ส่วนเครื่องมือที่มี `down` (Knex, dbmate) ก็ยังต้องระวัง เพราะขากลับของ `DROP COLUMN` เอาข้อมูลที่หายไปคืนมาไม่ได้
+
+</details>
+
+<details>
+<summary>11. เจอโปรเจกต์ที่มีโฟลเดอร์ `migrations/` เต็มไปด้วยไฟล์ `V1__init.sql`, `V2__add_email.sql` ใช้เครื่องมืออะไร และควรเพิ่ม Drizzle Kit เข้าไปสร้างตารางใหม่ไหม?</summary>
+
+ชื่อไฟล์แบบนี้เป็นของ Flyway (กลุ่ม migration แบบเขียน SQL เอง) **ไม่ควรเพิ่ม migration tool ตัวที่สอง** เพราะจะมีประวัติ 2 ชุดที่ไม่รู้จักกัน ให้เขียนไฟล์ `V3__...sql` ต่อตามระบบเดิม (ถ้าอยากได้ type ใน TS ใช้ ORM หรือ query builder คู่กันได้ แต่ให้ Flyway เป็นคนเดียวที่เปลี่ยนโครงสร้าง)
 
 </details>
 
@@ -991,9 +1150,11 @@ N+1 แก้ด้วย `with` (Drizzle) / `include` (Prisma, Sequelize)
 1. เปิด `logger: true` แล้วเขียนโค้ด N+1 แบบตั้งใจ (วนลูป query) เทียบ log กับแบบ `with` นับจำนวน query
 2. ทำให้เกิด migration drift ในเครื่องตัวเอง (เพิ่มคอลัมน์ด้วย psql ก่อน แล้วเพิ่มใน schema + `generate` + `migrate`) อ่าน error และแก้ให้หาย
 3. ทำให้เกิด `timeout exceeded when trying to connect` ด้วย pool ขนาด 2 แล้วแก้ด้วยการคืน connection
+4. เขียน query "ลูกค้าพร้อมจำนวน rental" 3 แบบ: `pool.query` ของ `pg` ตรงๆ, `db.select()` ของ Drizzle และ `db.query` ของ Drizzle เทียบ SQL ใน log และ type ของผลลัพธ์ แล้วเขียน 3 บรรทัดว่าแต่ละระดับช่วยอะไรเพิ่ม
 
 ## ✅ ผ่านด่าน
 
+- [ ] แยกได้ว่าเครื่องมือที่เจอเป็น driver / query builder / ORM / migration tool และบอกได้ว่าแต่ละระดับให้อะไรเพิ่ม
 - [ ] อธิบาย SQL injection และวิธีป้องกันได้
 - [ ] อธิบายว่า ORM และ migration คืออะไร ทำไมต้องใช้ (รวมข้อดี/ข้อเสียเทียบกับ SQL ดิบ)
 - [ ] ตั้งโปรเจกต์ Drizzle, สร้าง migration, query ได้
@@ -1005,4 +1166,4 @@ N+1 แก้ด้วย `with` (Drizzle) / `include` (Prisma, Sequelize)
 
 ---
 
-[← บทที่ 7: MySQL vs PostgreSQL](/07-mysql-postgres) · [🏠 สารบัญ](/) · [บทที่ 8b: จากแบบฐานข้อมูลสู่ Backend →](/08b-db-to-backend)
+[← บทที่ 7: ระบบจัดการฐานข้อมูล (DBMS)](/07-mysql-postgres) · [🏠 สารบัญ](/) · [บทที่ 8b: จากแบบฐานข้อมูลสู่ Backend →](/08b-db-to-backend)

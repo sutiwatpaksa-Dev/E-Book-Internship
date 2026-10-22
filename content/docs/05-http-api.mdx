@@ -1,15 +1,15 @@
 ---
-navTitle: "05 · HTTP & REST API"
-title: "บทที่ 5: HTTP & REST API 🍽️"
+navTitle: "05 · HTTP & รูปแบบ API"
+title: "บทที่ 5: HTTP & รูปแบบ API 🍽️"
 ---
 
-> ⏱ ประมาณ 5 ชั่วโมง · 🧩 ต้องผ่านก่อน: บทที่ 2 และ 4 · 🛠 ใช้: Node.js, TypeScript, Docker, VS Code (REST Client)
+> ⏱ ประมาณ 6 ชั่วโมง · 🧩 ต้องผ่านก่อน: บทที่ 2 และ 4 · 🛠 ใช้: Node.js, TypeScript, Docker, VS Code (REST Client), curl, DevTools ของเบราว์เซอร์
 
 > **⚡ สรุป 30 วินาที**
-> - HTTP คือ **ภาษาที่ client กับ server ใช้คุยกัน**: ส่ง **request** ไป ได้ **response** กลับ
-> - **Method** บอกว่าจะทำอะไร (`GET` ดู, `POST` สร้าง, `PATCH` แก้, `DELETE` ลบ)
-> - **Status code** บอกผลลัพธ์ (2xx สำเร็จ, 4xx ฝั่ง client ผิด, 5xx ฝั่ง server พัง)
-> - บทนี้สร้าง **API ระบบเช่าโน้ตบุ๊คด้วย TypeScript** และแพ็กใส่ Docker
+> - HTTP คือ **ภาษากลางที่ client กับ server ใช้คุยกัน**: ส่ง **request** ไป ได้ **response** กลับ · **Method** บอกว่าจะทำอะไร (`GET` ดู, `POST` สร้าง, `PATCH` แก้, `DELETE` ลบ) · **Status code** บอกผล (2xx สำเร็จ, 4xx client ผิด, 5xx server พัง)
+> - บนภาษาเดียวกันนี้ มี **รูปแบบ API** หลายแบบ: REST, GraphQL, gRPC, tRPC และแบบ realtime (WebSocket, SSE) แต่ละแบบแก้ปัญหาต่างกัน ไม่มีแบบไหน "ดีที่สุด"
+> - เครื่องมืออีก 2 กลุ่มที่ต้องแยกให้ออก: **ตัวเรียก/ทดสอบ API** (curl, ไฟล์ `.http`, Postman, Bruno, DevTools) กับ **framework ฝั่ง server** (Express, Hono, Fastify, NestJS …)
+> - ทีมเราใช้ **REST + JSON บน Hono** · บทนี้ฝึกหลักการด้วย Express สร้าง **Laptop API ด้วย TypeScript** แล้วแพ็กใส่ Docker (บทที่ 8b ต่อยอดให้ใช้ฐานข้อมูลจริง)
 
 ---
 
@@ -26,11 +26,39 @@ title: "บทที่ 5: HTTP & REST API 🍽️"
 บิต: *"ก็...อ่าน message เอา?"*
 พี่ไบต์: *"ถ้า message เป็นภาษาไทย แล้วทีมแอปเป็นคนญี่ปุ่นล่ะ?"* 😅
 
-HTTP มีภาษากลางที่ตกลงกันไว้ทั้งโลกแล้ว บทนี้จะพาไปรู้จัก
+สัปดาห์ต่อมา บิตอ่านบทความหัวข้อ "เลิกใช้ REST ได้แล้ว ไปใช้ GraphQL" เลยถามพี่ไบต์:
+*"ถ้าเปลี่ยนไปใช้ GraphQL ก็ไม่ต้องสนเรื่อง HTTP แล้วใช่ไหมครับ?"*
+พี่ไบต์: *"แล้ว GraphQL ส่งข้อมูลผ่านอะไรล่ะ?"*
+บิต: *"...ผ่าน GraphQL?"* 🤔
+
+คำตอบคือ **GraphQL ก็ส่งผ่าน HTTP** (ปกติเป็น `POST` ไปที่ `/graphql`) บิตเอาของคนละชั้นมาเทียบกัน HTTP คือ **ภาษา** ส่วน REST กับ GraphQL คือ **รูปแบบการตั้งคำถาม** ที่ใช้ภาษานั้น อ่านบทนี้จบจะแยกได้ว่าอะไรอยู่ชั้นไหน และเจอชื่อใหม่เมื่อไหร่ก็จัดกลุ่มเองได้
+
+> 🧭 **บทนี้เรียนแบบ "เข้าใจกลุ่มก่อน แล้วค่อยจับเครื่องมือ"** ข้อ 1–4 คือพื้นฐาน HTTP ที่ทุกรูปแบบใช้ร่วมกัน ข้อ 5–10 อธิบายเครื่องมือ 3 กลุ่ม (รูปแบบ API · ตัวเรียก/ทดสอบ · framework ฝั่ง server) ว่าแก้ปัญหาอะไร มีใครบ้าง เลือกยังไง ข้อ 11 เป็นต้นไปคือลงมือ ชื่อเครื่องมือเปลี่ยนได้ทุกปี แต่ HTTP กับปัญหาที่แต่ละกลุ่มแก้ยังเหมือนเดิม
 
 ---
 
-## 1. HTTP: การสั่งอาหารในร้าน
+## 1. ปัญหา 3 ข้อเวลาให้โปรแกรมคุยกัน
+
+**ปัญหาที่ 1: ต้องมีภาษากลาง**
+หน้าเว็บเขียนด้วย JavaScript แอปมือถือเขียนด้วย Swift หรือ Kotlin server เขียนด้วยอะไรก็ได้ ถ้าต่างคนต่างพูดภาษาตัวเองจะไม่มีใครเข้าใจกัน → ภาษากลางที่ทั้งโลกตกลงกันคือ **HTTP** (ข้อ 2–4)
+
+**ปัญหาที่ 2: ภาษาเดียวกัน ยังต้องตกลง "รูปแบบ"**
+พูดภาษาไทยเหมือนกัน แต่จดหมาย แบบฟอร์ม กับแชต ก็จัดหน้าไม่เหมือนกัน API ก็เช่นกัน ต้องตกลงว่า URL หมายถึงอะไร ข้อมูลส่งเป็นแบบไหน server ส่งหาเราเองได้ไหม → นี่คือกลุ่ม **รูปแบบ API** (ข้อ 5–6)
+
+**ปัญหาที่ 3: ต้องมีเครื่องมือทั้งสองฝั่ง**
+ฝั่งเรียกต้องมีอะไรสักอย่างแต่งคำขอแล้วส่งไป (ตอนพัฒนาเราใช้ **เครื่องมือเรียก/ทดสอบ API** ข้อ 7) ฝั่งรับต้องมีโปรแกรมเปิดรอคำขอ แยกว่าคำขอไหนไปทำอะไร (**framework ฝั่ง server** ข้อ 8)
+
+```
+ [client: หน้าเว็บ / แอป / curl / Postman]     ← กลุ่ม 2: ตัวเรียก/ทดสอบ
+            │  ภาษา: HTTP (ข้อ 2–4)
+            │  รูปแบบ: REST / GraphQL / ...      ← กลุ่ม 1: รูปแบบ API
+            ▼
+ [server: Express / Hono / ...]                ← กลุ่ม 3: framework
+```
+
+---
+
+## 2. HTTP: การสั่งอาหารในร้าน
 
 > 💡 **เปรียบเทียบ**
 > - **Client** = ลูกค้า 🧑 · **Server** = ครัว 👨‍🍳 · **API** = เมนู 📜
@@ -78,9 +106,11 @@ Content-Type: application/json              ← headers
 
 { "id": 7, "brand": "Lenovo", "model": "T14" }   ← body
 ```
-บรรทัดแรกของ response เรียก **status line** ประกอบด้วย เวอร์ชัน HTTP · **เลข status** (ให้โปรแกรมอ่าน) · **ข้อความ status** (ให้คนอ่าน)
+บรรทัดแรกของ response เรียก **status line** ประกอบด้วย เวอร์ชัน HTTP · **เลข status** (ให้โปรแกรมอ่าน) · **ข้อความ status** (ให้คนอ่าน) โปรแกรมจึงควรตัดสินใจจาก **เลข** เสมอ ไม่ใช่จากข้อความ
 
-> 💡 **HTTP ไม่จำอะไรเลย (stateless):** ทุก request เป็นเรื่องใหม่ server ไม่รู้ว่าคุณเคยมาแล้ว จึงต้องแนบ "บัตรประจำตัว" (cookie หรือ token) มากับทุก request ดูหัวข้อ 7 และ [บทที่ 15](/15-auth)
+> 💡 **HTTP ไม่จำอะไรเลย (stateless):** ทุก request เป็นเรื่องใหม่ server ไม่รู้ว่าคุณเคยมาแล้ว จึงต้องแนบ "บัตรประจำตัว" (cookie หรือ token) มากับทุก request ดูข้อ 13 และ [บทที่ 15](/15-auth)
+
+> 🤓 **HTTP/1.1, HTTP/2, HTTP/3 ต่างกันยังไง?** ต่างกันที่ **วิธีขนส่ง** ไม่ใช่ความหมาย HTTP/1.1 ส่งเป็นข้อความแบบที่เห็นข้างบน HTTP/2 แปลงเป็น binary และส่งหลาย request พร้อมกันในสายเดียวได้ HTTP/3 เปลี่ยนไปวิ่งบน QUIC แทน TCP แต่ **method, status code, header ยังเป็นชุดเดียวกัน** (นิยามรวมอยู่ใน [RFC 9110](https://www.rfc-editor.org/rfc/rfc9110.html)) สิ่งที่เรียนในบทนี้จึงใช้ได้กับทุกเวอร์ชัน (HTTP/2 ส่งมาแค่เลข status ไม่มีข้อความอย่าง `OK` ต่อท้าย ([RFC 9113 ข้อ 8.3.2](https://www.rfc-editor.org/rfc/rfc9113.html#section-8.3.2)) อีกเหตุผลที่ต้องดูเลข) ([MDN: Evolution of HTTP](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Evolution_of_HTTP))
 
 ### ส่วนประกอบของ URL
 
@@ -150,14 +180,14 @@ Headers คือ "หมายเหตุหน้าใบสั่ง" เ�
 | `Accept` | request | client อยากได้ชนิดไหนกลับ เช่น `application/json` |
 | `Authorization` | request | บัตรประจำตัว เช่น `Bearer eyJhbGci...` (token) |
 | `Cookie` / `Set-Cookie` | request / response | ให้ server ฝากข้อมูลไว้ที่เบราว์เซอร์ แล้วเบราว์เซอร์ส่งกลับมาเองทุกครั้ง |
-| `Access-Control-Allow-Origin` | response | อนุญาตเว็บอื่นเรียก API นี้จากเบราว์เซอร์ (CORS ดูหัวข้อ 7) |
+| `Access-Control-Allow-Origin` | response | อนุญาตเว็บอื่นเรียก API นี้จากเบราว์เซอร์ (CORS ดูข้อ 13) |
 | `Content-Length` | ทั้งคู่ | body ยาวกี่ byte |
 
 > 💡 **ข้อเดียวที่มือใหม่พลาดบ่อยที่สุด:** ส่ง JSON ต้องใส่ `Content-Type: application/json` เสมอ ไม่งั้น server ไม่รู้ว่าต้องอ่าน body เป็น JSON (ลองดูในหัวข้อ "ลองพังมันดู")
 
 ---
 
-## 2. Method: บอกว่าจะทำอะไร
+## 3. Method: บอกว่าจะทำอะไร
 
 | Method | ทำอะไร | ตัวอย่าง | มี body? |
 |---|---|---|---|
@@ -167,17 +197,19 @@ Headers คือ "หมายเหตุหน้าใบสั่ง" เ�
 | `PUT` | แทนที่ทั้งก้อน | `PUT /laptops/5` | ✅ |
 | `DELETE` | ลบ | `DELETE /laptops/5` | ❌ |
 
-> ⚠️ `GET` ต้อง **ไม่เปลี่ยนข้อมูล** เด็ดขาด เพราะ browser และระบบ cache อาจเรียกซ้ำเองได้
+> ⚠️ `GET` ต้อง **ไม่เปลี่ยนข้อมูล** เด็ดขาด เพราะ browser และระบบ cache อาจเรียกซ้ำเองได้ และ **ไม่ควรมี body** (ความหมายของ body ใน `GET` ไม่ได้นิยามไว้ บาง server ปฏิเสธเลย ตาม [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods/GET)) อยากส่งเงื่อนไขค้นหาให้ใส่ใน query
+
+ยังมีอีก 2 method ที่เจอบ่อยแม้ไม่ได้เขียนเอง: **`HEAD`** = เหมือน `GET` แต่ขอแค่ headers ไม่เอา body · **`OPTIONS`** = ถามว่าทำอะไรได้บ้าง เบราว์เซอร์ใช้ถามก่อนเรื่อง CORS (ข้อ 13)
 
 ### สองคำที่ควรรู้: Safe และ Idempotent
 
 ![ตารางแสดงว่า method ไหน safe และ idempotent](/img/05-methods-safety.svg)
 *Safe = เรียกแล้วไม่เปลี่ยนข้อมูล · Idempotent = เรียกซ้ำกี่ครั้งผลสุดท้ายเท่ากับเรียกครั้งเดียว*
 
-- **Safe (ปลอดภัย):** แค่ดู ไม่เปลี่ยนอะไร → `GET`
+- **Safe (ปลอดภัย):** แค่ดู ไม่เปลี่ยนอะไร → `GET` (รวมถึง `HEAD` และ `OPTIONS`) · method ที่ safe ทุกตัว idempotent ด้วยเสมอ
 - **Idempotent (ยิงซ้ำผลเท่าเดิม):** `DELETE /laptops/5` สองครั้ง เครื่อง 5 ก็หายอยู่ดี (ครั้งที่สองอาจได้ `404` แต่ข้อมูลสุดท้ายเหมือนกัน) · `PUT` ใส่ค่าเดิมซ้ำก็ได้ผลเดิม
 - **`POST` ไม่ idempotent:** ยิงสองครั้งได้ของใหม่สองชิ้น! นี่คือเหตุผลที่ปุ่ม "สั่งซื้อ" ควรถูกปิดหลังกดครั้งแรก ไม่งั้นเน็ตช้าแล้วลูกค้ากดซ้ำ จะได้ออเดอร์ซ้ำ
-- **`PATCH`:** ขึ้นกับวิธีเขียน ("ตั้งสถานะเป็น rented" ซ้ำได้ผลเดิม แต่ "เพิ่มจำนวน +1" ซ้ำไม่ได้ผลเดิม)
+- **`PATCH`:** มาตรฐาน **ไม่รับประกัน** ว่า idempotent ขึ้นกับวิธีเขียน ("ตั้งสถานะเป็น rented" ซ้ำได้ผลเดิม แต่ "เพิ่มจำนวน +1" ซ้ำไม่ได้ผลเดิม) ([MDN: PATCH](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods/PATCH))
 
 > 💡 **ทำไมต้องสนใจ?** เน็ตหลุดกลางทางแล้วระบบ/ผู้ใช้ "ลองใหม่" ถ้าเป็น method ที่ idempotent ก็ลองใหม่ได้ปลอดภัย ส่วน `POST` ต้องระวังเป็นพิเศษ
 
@@ -185,7 +217,7 @@ Headers คือ "หมายเหตุหน้าใบสั่ง" เ�
 
 ---
 
-## 3. Status code: บอกผลลัพธ์
+## 4. Status code: บอกผลลัพธ์
 
 จำแค่หลักแรกก่อน:
 
@@ -195,7 +227,7 @@ Headers คือ "หมายเหตุหน้าใบสั่ง" เ�
 | กลุ่ม | ความหมาย | 💡 ในร้านอาหาร |
 |---|---|---|
 | **2xx** ✅ | สำเร็จ | "อาหารมาแล้วครับ" |
-| **3xx** ↪️ | ย้ายไปที่อื่น | "ร้านย้ายสาขาแล้ว" |
+| **3xx** ↪️ | ไปเอาที่อื่น หรือใช้ของเดิมที่มีอยู่ (`304 Not Modified`) | "ร้านย้ายสาขาแล้ว" / "จานเดิมที่โต๊ะยังกินได้" |
 | **4xx** 🙅 | **client ผิด** | "เมนูนี้ไม่มีครับ" / "สั่งไม่ครบ" |
 | **5xx** 🔥 | **server พัง** | "ครัวไฟไหม้" |
 
@@ -234,9 +266,78 @@ Headers คือ "หมายเหตุหน้าใบสั่ง" เ�
 
 ---
 
-## 4. REST: วิธีตั้งชื่อ endpoint ให้ทุกคนเดาได้
+## 5. กลุ่มที่ 1: รูปแบบ API (ตกลงกันว่าจะคุยแบบไหน)
 
-**REST** คือแนวทางออกแบบ API ที่นิยมที่สุด หลักง่ายๆ คือ **URL เป็นคำนาม (สิ่งของ) ส่วน method เป็นคำกริยา**
+**คืออะไร:** ข้อตกลงว่าคำขอกับคำตอบหน้าตาแบบไหน URL หมายถึงอะไร ข้อมูลส่งเป็นอะไร และใครเริ่มคุยก่อน
+💡 HTTP = **ภาษาไทย** 🗣️ รูปแบบ API = **รูปแบบเอกสาร** (จดหมาย แบบฟอร์ม แชต) ภาษาเดียวกันแต่จัดหน้าคนละแบบ เหมาะกับงานคนละอย่าง
+
+**ข้างในทุกรูปแบบ ตอบคำถาม 4 ข้อนี้**
+1. **ส่งผ่านอะไร:** HTTP ธรรมดา · HTTP/2 · หรือสายที่เปิดค้างไว้
+2. **ข้อมูลหน้าตาแบบไหน:** JSON (ข้อความ คนอ่านได้) · Protocol Buffers (binary เล็กกว่าแต่คนอ่านไม่ออก) · XML
+3. **สัญญาอยู่ที่ไหน:** ใครบอกว่ามีคำสั่งอะไร รับและตอบอะไร เช่น เอกสาร OpenAPI · GraphQL schema · ไฟล์ `.proto` · type ของ TypeScript
+4. **ใครเริ่มคุย:** client ถามแล้ว server ตอบ (request-response) หรือ server ส่งมาเองได้ (realtime)
+
+**ในกลุ่มนี้มีใครบ้าง**
+
+<ToolTable group="api-style" />
+
+ตารางนี้ไม่ได้ให้จำทุกตัว ดูแค่ช่อง **ระดับ**: 🟢 ทีมใช้ (ลงมือในบทนี้) · 🔵 ควรรู้จัก (เจอบ่อยในงานจริง) · ⚪ รู้ว่ามี (เจอแล้วบอกได้ว่าอยู่กลุ่มไหนก็พอ)
+
+### แต่ละแบบเกิดมาแก้ปัญหาอะไร
+
+**REST: ใช้ของที่ HTTP มีให้ครบ** แนวคิดมาจากวิทยานิพนธ์ของ Roy Fielding ปี 2000 ([ต้นฉบับ](https://roy.gbiv.com/pubs/dissertation/top.htm)) มอง URL เป็น **สิ่งของ** (`/laptops/5`) แล้วใช้ method เป็นคำกริยา ผลลัพธ์บอกด้วย status code ข้อดีคือ **อะไรที่พูด HTTP เป็นก็เรียกได้** ทั้ง browser, curl, ทุกภาษา และใช้ cache ของ HTTP ได้ (ข้อ 6 ลงรายละเอียด) ในงานจริงคำว่า "REST API" มักหมายถึง API ที่ใช้ HTTP + JSON + URL แบบสิ่งของ แม้จะไม่ได้ทำครบทุกข้อในต้นฉบับ ([MDN: REST](https://developer.mozilla.org/en-US/docs/Glossary/REST))
+
+**GraphQL: ให้ client เลือกเองว่าอยากได้ช่องไหน** สมมติหน้าจอหนึ่งต้องโชว์เครื่อง + คนที่เช่า + ประวัติการเช่า แบบ REST อาจต้องยิง 3 ครั้ง และแต่ละครั้งได้ช่องที่ไม่ใช้ติดมาด้วย GraphQL แก้ด้วยการมี **URL เดียว** (ปกติ `/graphql`) แล้ว client ส่ง query บอกรูปร่างที่อยากได้
+```
+POST /graphql
+{ "query": "{ laptop(id: 5) { brand status renter { name } } }" }
+```
+ได้กลับมาเท่าที่ขอพอดี ราคาที่ต้องจ่าย: cache แบบ HTTP ยากขึ้น ต้องคุมไม่ให้ใคร query ลึกจนเครื่องหนัก และ **error บางแบบยังตอบ `200`** ต้องอ่านช่อง `errors` ในคำตอบ ([graphql.org: Serving over HTTP](https://graphql.org/learn/serving-over-http/))
+
+**gRPC: ให้ service คุยกันเร็วและ type ตรงกันข้ามภาษา** เขียน "สัญญา" ไว้ในไฟล์ `.proto` แล้วให้เครื่องมือสร้างโค้ด client และ server ให้ทุกภาษา (server เป็น Go, client เป็น Java ก็ได้) ข้อมูลเป็น Protocol Buffers วิ่งบน HTTP/2 รองรับการส่งข้อมูลต่อเนื่อง (streaming) ทั้งสองทาง เหมาะกับ service หลังบ้านคุยกันเอง แต่ **browser เรียกตรงไม่ได้** ต้องผ่าน [gRPC-Web](https://grpc.io/docs/platforms/web/basics/) ([gRPC: Core concepts](https://grpc.io/docs/what-is-grpc/core-concepts/))
+```proto
+service LaptopService {
+  rpc GetLaptop (GetLaptopRequest) returns (Laptop);
+}
+```
+
+**tRPC (และ RPC แบบอื่น): เรียก server เหมือนเรียกฟังก์ชัน** RPC = Remote Procedure Call คิดเป็น "ฟังก์ชัน" แทน "สิ่งของ" tRPC เหมาะเมื่อ **หน้าเว็บและ server เป็น TypeScript ทั้งคู่** เรียกฟังก์ชันฝั่ง server แล้วได้ type ตรงกันทันที ไม่ต้องเขียน schema แยกหรือ generate โค้ด แลกกับการที่ client ภาษาอื่นใช้ประโยชน์จาก type ไม่ได้ ([tRPC docs](https://trpc.io/docs)) Hono ก็มีแนวคิดคล้ายกัน ([Hono RPC](https://hono.dev/docs/guides/rpc): server ส่งออก type ของแอป แล้ว client `hc` ใช้ type นั้น) ข้างในยังเป็น endpoint HTTP ธรรมดาที่ curl เรียกได้
+
+### Realtime: เมื่อ server ต้องเป็นฝ่ายเริ่มคุย
+
+แบบข้างบนทั้งหมด **client ต้องถามก่อน** server ถึงตอบได้ ถ้าอยากรู้ทันทีว่ามีข้อความใหม่ทำยังไง?
+
+| วิธี | ทำงานยังไง | 💡 เปรียบเทียบ | เหมาะกับ |
+|---|---|---|---|
+| **Polling** | client ถามซ้ำทุก N วินาที ("มีอะไรใหม่ไหม") | โทรถามร้านทุก 5 นาทีว่าอาหารเสร็จยัง | ไม่ต้องทันที เขียนง่ายสุด ใช้ REST เดิมได้ |
+| **SSE** (Server-Sent Events) | client เปิด request ค้างไว้ server ทยอยส่งข้อความมาเรื่อยๆ **ทางเดียว** (`Content-Type: text/event-stream`) หลุดแล้ว browser ต่อใหม่เอง | ร้านมีจอเรียกคิว เรามองอย่างเดียว | แจ้งเตือน แสดงความคืบหน้า ข้อความที่ทยอยออกมา |
+| **WebSocket** | เริ่มจาก HTTP แล้วขอ "อัปเกรด" (`101 Switching Protocols`) กลายเป็นสายเปิดค้าง **ส่งได้ทั้งสองทาง** | โทรศัพท์ที่ไม่วางสาย | แชต เกมหลายผู้เล่น แก้เอกสารพร้อมกัน |
+| **Webhook** | server **ของคนอื่น** ยิง HTTP `POST` มาหา server เราเมื่อมีเหตุการณ์ | ร้านโทรมาบอกเองเมื่อของพร้อม | ระบบชำระเงิน แจ้งว่าจ่ายแล้ว (server คุยกับ server) |
+
+แหล่งอ้างอิง: [MDN: Using server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events) · [MDN: WebSocket API](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) · [MDN: Protocol upgrade](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Protocol_upgrade_mechanism)
+
+> 💡 **เลือกแบบเบาที่สุดที่พอ:** สายที่เปิดค้างกินทรัพยากร server ต่อผู้ใช้ 1 คน ถ้าแค่ "ส่งทางเดียว" ใช้ SSE ก็พอ ถ้า "ช้าไป 10 วินาทีไม่เป็นไร" polling ง่ายและพังยากที่สุด WebSocket ใช้เมื่อต้องคุยสองทางถี่ๆ จริงๆ
+>
+> ⚠️ SSE บน HTTP/1.1 เบราว์เซอร์เปิดได้ประมาณ **6 สายต่อโดเมน** รวมทุกแท็บ (HTTP/2 ไม่ค่อยติดปัญหานี้) เปิดหลายแท็บแล้วหน้าเว็บค้างได้ ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events))
+
+### ตัวในกลุ่มเหมือนกันตรงไหน ต่างกันตรงไหน
+
+| หัวข้อ | REST | GraphQL | gRPC | tRPC | WebSocket / SSE |
+|---|---|---|---|---|---|
+| วิ่งบน HTTP ไหม | ✅ | ✅ (ปกติ `POST /graphql`) | ✅ HTTP/2 | ✅ | ✅ เริ่มจาก HTTP แล้วเปิดค้าง |
+| URL หมายถึง | สิ่งของ (`/laptops/5`) | URL เดียวทั้งระบบ | ฟังก์ชันใน service | ฟังก์ชัน (procedure) | ช่องทางเดียวที่เปิดค้าง |
+| ข้อมูล | JSON (ส่วนใหญ่) | JSON | Protocol Buffers | JSON | ตกลงกันเอง (มักเป็น JSON) |
+| สัญญา | OpenAPI (ไม่บังคับ) | schema (บังคับ) | ไฟล์ `.proto` (บังคับ) | type ของ TypeScript | ตกลงกันเอง |
+| บอกผลด้วย | HTTP status code | ช่อง `errors` (อาจได้ `200`) | status ของ gRPC เอง | แปลงเป็น HTTP status ให้ | ตกลงกันเอง |
+| browser เรียกตรงได้ | ✅ | ✅ | ❌ ต้องผ่าน gRPC-Web | ✅ | ✅ |
+
+> 🎯 **กลับไปที่เรื่องเล่า:** เกือบทุกรูปแบบในตารางวิ่งบน HTTP ทั้งนั้น ความรู้เรื่อง request, header, status, CORS ในบทนี้ใช้ได้หมด "เปลี่ยนจาก REST เป็น GraphQL" มีความหมาย (เปลี่ยนรูปแบบ) แต่ "เปลี่ยนจาก HTTP เป็น GraphQL" ไม่มีความหมาย
+
+---
+
+## 6. REST ละเอียด: ตั้งชื่อ endpoint ให้ทุกคนเดาได้
+
+**REST** คือรูปแบบ API ที่นิยมที่สุด และเป็นแบบที่ทีมเราใช้ หลักง่ายๆ คือ **URL เป็นคำนาม (สิ่งของ) ส่วน method เป็นคำกริยา**
 
 ![แผนที่ REST: URL เป็นคำนาม method เป็นคำกริยา](/img/05-rest-map.svg)
 *มี 2 ระดับหลัก: ทั้งกอง `/laptops` และชิ้นเดียว `/laptops/5` แต่ละระดับใช้ method ต่างกัน*
@@ -301,10 +402,141 @@ client เขียนโค้ดจัดการ error ง่ายขึ้
 - **ห้ามส่งรายละเอียดภายใน** เช่น stack trace, ข้อความ SQL, path ของไฟล์ ออกไปให้ client เก็บไว้ที่ log ฝั่ง server (บทที่ 10, 14)
 
 > 💡 หน้าตาจะเป็นแบบไหนก็ได้ ขอแค่ **ทั้งระบบใช้แบบเดียวกัน** (บทที่ 14 ใช้โครงที่ห่อชั้นนอกเป็น `{ success, error: { code, message, details } }` ซึ่งใช้หลักคิดเดียวกัน) และต้องส่ง **status code ที่ถูกต้องควบคู่เสมอ**
+>
+> 🤓 มีมาตรฐานกลางด้วยชื่อ **Problem Details** ([RFC 9457](https://www.rfc-editor.org/rfc/rfc9457.html)) ใช้ `Content-Type: application/problem+json` และช่อง `type`, `title`, `status`, `detail`, `instance` ถ้าเจอ API ของคนอื่นตอบแบบนี้ จะได้รู้ว่าเป็นรูปแบบมาตรฐาน ไม่ใช่ของแปลก
 
 ---
 
-## 5. 🔧 ลงมือ: สร้าง Laptop API
+## 7. กลุ่มที่ 2: เครื่องมือเรียกและทดสอบ API
+
+**คืออะไร:** โปรแกรมที่ช่วย **แต่งใบสั่ง HTTP ส่งไป แล้วโชว์คำตอบให้ดู** ใช้ตอนลอง API ก่อนมีหน้าเว็บ ตอนหาบั๊กว่าพังที่หน้าเว็บหรือที่ server และตอนลองเอกสาร API ของคนอื่น
+💡 = **โทรสั่งอาหารเองโดยไม่ต้องผ่านพนักงานหน้าร้าน** ถ้าโทรสั่งตรงแล้วครัวทำได้ แปลว่าปัญหาอยู่ที่หน้าร้าน (หน้าเว็บ) ไม่ใช่ครัว (server)
+
+**ข้างในทุกตัวมีของเหมือนกัน**
+1. ช่องใส่ **method + URL, headers, body** (ส่วนประกอบเดียวกับข้อ 2)
+2. แสดง **status, headers, body** ที่ได้กลับมา
+3. **ตัวแปร** เช่น `baseUrl`, token ให้สลับเครื่อง dev / server จริงได้โดยไม่แก้ทุก request
+4. **เก็บ request เป็นชุด** (collection) ไว้รันซ้ำ
+
+ต่างกันแค่ 2 เรื่อง: **หน้าตา** (พิมพ์คำสั่ง / เขียนไฟล์ข้อความ / คลิกในแอป) และ **request ถูกเก็บที่ไหน** (ไฟล์ใน repo ที่อยู่ใน Git / บัญชี cloud ของแอป)
+
+**ในกลุ่มนี้มีใครบ้าง**
+
+<ToolTable group="api-client" />
+
+ระดับ: 🟢 ทีมใช้ (ลงมือในบทนี้) · 🔵 ควรรู้จัก · ⚪ รู้ว่ามี
+
+**ตัวในกลุ่มเหมือนกันตรงไหน ต่างกันตรงไหน**
+
+| หัวข้อ | curl | ไฟล์ `.http` (REST Client) | แอป (Postman, Bruno, Hoppscotch) | DevTools ของ browser |
+|---|---|---|---|---|
+| แต่ง request เอง | ✅ พิมพ์ | ✅ เขียนไฟล์ | ✅ คลิก | ⚠️ ส่วนใหญ่ใช้ **ดู** สิ่งที่หน้าเว็บส่ง |
+| เก็บใน Git ให้ทีมรันตาม | ✅ (เป็น script) | ✅ | Bruno ✅ (เป็นไฟล์) · Postman เก็บในบัญชี/workspace | ❌ |
+| ใช้บน server ที่ไม่มีหน้าจอ | ✅ | ❌ | มี CLI บางตัว | ❌ |
+| เห็นสิ่งที่หน้าเว็บส่ง **จริงๆ** (รวม cookie) | ❌ | ❌ | ❌ | ✅ |
+
+> 💡 **DevTools คือเพื่อนที่ใช้บ่อยที่สุดตอนทำเว็บ:** กด F12 → แท็บ **Network** เห็นทุก request ที่หน้าเว็บส่งจริง คลิกดู Headers / Response ได้ และคลิกขวา → **Copy → Copy as cURL** เอาไปยิงซ้ำใน Terminal ได้ทันที ([Chrome DevTools: Network reference](https://developer.chrome.com/docs/devtools/network/reference))
+>
+> ⚠️ คำสั่งที่ได้จาก Copy as cURL **ติด cookie หรือ token ของคุณมาด้วย** อย่าวางในแชตกลุ่มหรือ commit ลง Git ลบ header พวกนั้นออกก่อนแชร์
+
+---
+
+## 8. กลุ่มที่ 3: Framework ฝั่ง server
+
+**คืออะไร:** library ที่เปิด port รอรับ HTTP request แล้วส่งต่อให้ฟังก์ชันของเรา (เรียกว่า **handler**) ตาม method + path จากนั้นช่วยส่ง response กลับ
+💡 = **พนักงานรับออเดอร์** ดูใบสั่งแล้วส่งให้พ่อครัวที่ถูกคน เราเขียนแค่ "พ่อครัว" (handler)
+
+runtime (Node, Bun) เปิด server ได้เองอยู่แล้ว แต่ต้องแยก path เอง อ่าน body เอง ตั้ง header เอง framework ทำส่วนซ้ำๆ นี้ให้
+
+**ข้างในทุกตัวมี 4 อย่าง**
+1. **Router:** จับคู่ method + path → handler (`GET /laptops/:id` → ฟังก์ชันหาเครื่อง)
+2. **ตัวอ่าน request:** path param, query, headers, body ที่เป็น JSON
+3. **Middleware:** โค้ดที่ทำก่อน/หลังทุก request เช่น เขียน log, ใส่ header CORS, ตรวจ token
+4. **ตัวช่วยตอบ + จัดการ error:** ตั้ง status, ส่ง JSON, จุดรวมจับ error ที่หลุดมา
+
+หน้าตาโค้ดต่างกันนิดเดียว เพราะทำ 4 อย่างเดียวกัน
+```ts
+// Express (บทนี้)
+app.get("/laptops/:id", (req, res) => { res.json({ id: req.params.id }); });
+
+// Hono (บทที่ 14 · ทีมใช้)
+app.get("/laptops/:id", (c) => c.json({ id: c.req.param("id") }));
+```
+(ตารางเทียบทีละบรรทัดอยู่ใน [บทที่ 14](/14-hono-api))
+
+**ในกลุ่มนี้มีใครบ้าง** (ฝั่ง JavaScript / TypeScript)
+
+<ToolTable group="api-framework" />
+
+ระดับ: 🟢 ทีมใช้ (Hono ลงมือในบทที่ 14) · 🔵 ควรรู้จัก (Express คือตัวที่บทนี้ใช้ฝึก) · ⚪ รู้ว่ามี
+
+**ตัวในกลุ่มเหมือนกันตรงไหน ต่างกันตรงไหน**
+
+| หัวข้อ | เหมือนกัน / ต่างกัน |
+|---|---|
+| แนวคิด | ✅ เหมือนกัน: router + middleware + handler + error handler |
+| รันบน runtime ไหน | ⚠️ ต่างกัน: Express, Fastify, NestJS, Koa เขียนมาเพื่อ Node (Bun บอกว่า library HTTP หลักของ Node [ควรรันได้โดยไม่ต้องแก้](https://bun.com/docs/guides/ecosystem/express)) · Hono, Elysia ใช้มาตรฐานเว็บ (`Request` / `Response`) จึงย้าย runtime ได้ |
+| ตรวจข้อมูลที่ส่งมา | Express / Koa ไม่มีในตัว ใส่ Zod เอง (บทนี้) · Fastify ใช้ JSON Schema ในตัว · Elysia มี `t` ในตัวและรับ Zod ได้ · Hono ทีมเราใช้คู่กับ Zod (บทที่ 14) |
+| ขนาดโครง | Express, Hono, Koa, Fastify เล็ก เลือกโครงโฟลเดอร์เอง · NestJS โครงใหญ่ มีกฎว่าโค้ดต้องอยู่ตรงไหน (module, controller, provider) เหมาะทีมใหญ่ |
+
+---
+
+## 9. เจอเครื่องมือใหม่ จัดกลุ่มเองได้
+
+ทุกปีมีชื่อใหม่ ไม่ต้องจำ ให้ถาม 3 ข้อนี้
+
+| ถามว่า | ถ้าใช่ |
+|---|---|
+| มันบอกว่า **คำขอกับคำตอบต้องหน้าตาแบบไหน** (มีคำว่า spec, protocol, query language, schema) | **รูปแบบ API** (กลุ่ม 1) |
+| มันมีปุ่ม/คำสั่ง **"ส่ง request"** แล้วโชว์ status กับ body ให้ดู | **ตัวเรียก/ทดสอบ** (กลุ่ม 2) |
+| มันมีคำสั่งแบบ `app.get("/path", handler)` แล้ว **เปิด port รอรับ** | **framework ฝั่ง server** (กลุ่ม 3) |
+
+บางตัวคร่อมกลุ่ม เช่น **tRPC** เป็นทั้งรูปแบบ (RPC) และ library ที่ติดตั้งทั้งสองฝั่ง · **Postman** เป็นตัวเรียกเป็นหลัก แต่ทำเอกสารและ server ปลอม (mock) ได้ด้วย ไม่เป็นไร ให้ถามว่า **"งานหลักของมันคืออะไร"**
+
+**ไม่ใช่แค่ JavaScript** ทุกภาษามี framework ฝั่ง server ที่ทำ 4 อย่างเดียวกัน (router, ตัวอ่าน request, middleware, error handler) ส่วนรูปแบบ API และตัวเรียก/ทดสอบใช้ร่วมกันได้ทุกภาษา เพราะคุยกันด้วย HTTP
+
+| ภาษา | Framework ฝั่ง server ที่เจอบ่อย |
+|---|---|
+| JavaScript / TypeScript | Express, Hono, Fastify, NestJS, Elysia |
+| Python | FastAPI, Django, Flask |
+| PHP | Laravel, Symfony |
+| Go | `net/http` (มาในตัว), Gin, Echo |
+| Java / Kotlin | Spring Boot |
+| C# | ASP.NET Core |
+| Ruby | Ruby on Rails, Sinatra |
+
+> 💡 API ที่เขียนด้วย Python เรียกด้วย curl หรือไฟล์ `.http` ได้เหมือนกันทุกอย่าง เพราะเครื่องมือกลุ่ม 2 ไม่สนว่าฝั่ง server เขียนด้วยอะไร สนแค่ว่าพูด HTTP ถูกไหม
+
+---
+
+## 10. เลือกยังไง และทีมเราใช้อะไร
+
+**คำถาม 4 ข้อก่อนเลือกรูปแบบ API**
+1. **มี API เดิมอยู่แล้วไหม?** ถ้ามี ใช้รูปแบบเดิม การมีสองแบบในระบบเดียวเพิ่มงานให้ทุกคน
+2. **ใครเป็นคนเรียก?** คนนอก/หลายภาษา/ไม่รู้ว่าจะเป็นใคร → แบบที่ใครก็เรียกได้ (REST) · เราเขียนเองทั้งสองฝั่ง → มีทางเลือกมากขึ้น
+3. **server ต้องเป็นฝ่ายเริ่มคุยไหม?** ไม่ต้อง → request-response · ต้อง → เลือก polling / SSE / WebSocket ตามตารางในข้อ 5
+4. **ทีมคุ้นและเครื่องมือรองรับไหม?** ตัวเลือกที่เก่งกว่านิดหน่อย ไม่คุ้มถ้าทั้งทีมต้องเรียนใหม่
+
+| สถานการณ์ | มักเลือก | เพราะ |
+|---|---|---|
+| เว็บ แอปมือถือ หรือให้บริษัทอื่นเรียก | **REST + JSON** | ทุกภาษาทุกเครื่องมือเรียกได้ ใช้ status code และ cache ของ HTTP เต็มที่ |
+| หลายหน้าจอ หลาย client อยากได้ข้อมูลซ้อนกันคนละรูปแบบ | GraphQL | client เลือกช่องเอง ลดการยิงหลายครั้ง |
+| service หลังบ้านจำนวนมากคุยกันเอง หลายภาษา | gRPC | สัญญาเข้ม สร้างโค้ดให้ทุกภาษา ข้อมูลเล็ก |
+| หน้าเว็บ + server เป็น TypeScript ใน repo เดียว ไม่มีคนนอกเรียก | tRPC หรือ Hono RPC | type ตรงกันทั้งสองฝั่งโดยไม่ต้องเขียนสัญญาแยก |
+| server ต้องแจ้งเตือน client ทางเดียว | SSE | ง่ายกว่า WebSocket ต่อใหม่เองเมื่อหลุด |
+| คุยสองทางถี่ๆ (แชต เกม) | WebSocket | สายเดียวเปิดค้าง ส่งได้ทั้งสองทาง |
+
+> **แนวทางของทีม Blicktech**
+> - **API ของทีมเป็น REST + JSON** สร้างด้วย **Hono บน Bun** ตรวจข้อมูลด้วย **Zod** ([บทที่ 14](/14-hono-api), งาน STARTER)
+> - **บทนี้ฝึกด้วย Express** เพราะมีตัวอย่างในเน็ตมากที่สุด หลักการ (route, middleware, status code) ใช้กับ Hono ได้ทั้งหมด (เหตุผลเต็มอยู่ใน [บทที่ 3](/03-node-yarn-bun))
+> - **ทดสอบ API ในคู่มือนี้** ใช้ไฟล์ `.http` (REST Client ติดตั้งไว้ตั้งแต่บทที่ 0) เพราะเก็บใน Git ได้ และใช้ `curl` เมื่ออยู่บน server หรืออยากเห็น header ละเอียด
+> - **GraphQL, gRPC, WebSocket** รู้ไว้ให้จัดกลุ่มเป็นและอ่านโค้ดคนอื่นออก ถ้างานไหนดูเหมือนต้องใช้ คุยกับพี่เลี้ยงก่อนเลือก
+
+---
+
+> 🔧 **จากนี้คือการลงมือ** สร้าง REST API ด้วย Express แล้วเรียกด้วยเครื่องมือกลุ่ม 2 ทั้ง 3 แบบ (ไฟล์ `.http`, `curl`, DevTools) สังเกตว่าทุกเครื่องมือเห็น request/response หน้าตาเดียวกับข้อ 2
+
+## 11. 🔧 ลงมือ: สร้าง Laptop API
 
 **ขั้นที่ 1: เตรียมโปรเจกต์**
 ```bash
@@ -313,7 +545,8 @@ npm init -y
 npm install express zod
 npm install -D typescript tsx @types/node @types/express
 ```
-ใส่ `tsconfig.json`, `"type": "module"` และ `scripts` ตาม [บทที่ 4 ข้อ 3](/04-typescript)
+ใส่ `tsconfig.json`, `"type": "module"` และ `scripts` (`dev`, `build`, `start`, `typecheck`) ตามหัวข้อ "โปรเจกต์ TypeScript ตั้งแต่ศูนย์" ใน [บทที่ 4](/04-typescript)
+(ทดสอบกับ `express` 5 และ `zod` 4 · Express 5 ต้องใช้ Node 18 ขึ้นไป)
 
 **ขั้นที่ 2: เขียน `src/index.ts`**
 ```ts
@@ -378,7 +611,7 @@ app.listen(3000, () => console.log("🚀 API on http://localhost:3000"));
 อ่านโค้ดทีละส่วน:
 - `app.get("/laptops/:id", ...)` : `:id` คือ **path param** ค่าที่ส่งมาอยู่ใน `req.params.id` (เป็นข้อความเสมอ จึงต้อง `Number(...)`)
 - `req.body` คือ body ที่ client ส่งมา ต้องผ่าน `express.json()` ก่อนถึงจะเป็น object
-- `safeParse` คือ Zod ตรวจ body ([บทที่ 4 ข้อ 5](/04-typescript)) ผิดก็ตอบ `400`
+- `safeParse` คือ Zod ตรวจ body (เรื่อง "TypeScript ไม่ได้ตรวจข้อมูลตอนรัน" ใน [บทที่ 4](/04-typescript)) ผิดก็ตอบ `400` · type ของ TypeScript หายไปตอนรัน ข้อมูลจากเน็ตจึงต้องตรวจด้วยโค้ดจริงเสมอ
 - ทุกจุดที่ตอบเสร็จใช้ `return;` เพื่อไม่ให้โค้ดตอบซ้ำสองรอบ
 
 **ขั้นที่ 3: รัน**
@@ -473,8 +706,20 @@ curl -s -X POST http://localhost:3000/laptops \
 | `-i` | แสดง status + headers ของ response |
 | `-v` | แสดงทุกขั้นตอน (DNS, ต่อสาย, request, response) เหมาะตอนหาสาเหตุ |
 | `-s -o /dev/null -w "%{http_code}\n"` | ไม่แสดง body แสดงแค่เลข status |
+| `--json '...'` | ทางลัด: ใส่ body + `Content-Type: application/json` + `Accept: application/json` ให้ในครั้งเดียว (curl 7.82 ขึ้นไป) |
 
-> 💡 ทางเลือกอื่น: **Postman**, **Bruno**, **Thunder Client** (extension ใน VS Code) ทำงานเหมือนกัน แค่คลิกแทนพิมพ์ ใช้ไฟล์ `.http` ได้เปรียบตรงที่ **เก็บใน Git ได้** ให้เพื่อนร่วมทีมรันตามได้
+> 💡 ทางเลือกอื่นในกลุ่มเดียวกัน (ข้อ 7): **Postman**, **Bruno**, **Hoppscotch**, **Thunder Client** ทำงานเหมือนกัน แค่คลิกแทนพิมพ์ ไฟล์ `.http` ได้เปรียบตรงที่ **เก็บใน Git ได้** ให้เพื่อนร่วมทีมรันตามได้
+
+### ส่องด้วย DevTools ของ browser
+
+1. เปิด http://localhost:3000/laptops ใน Chrome (หรือ Edge, Firefox)
+2. กด **F12** → แท็บ **Network** → กด reload หน้า
+3. คลิกแถว `laptops` ดูแท็บ **Headers** (method, status, headers ทั้งขาไปขากลับ) และ **Response** (body)
+4. คลิกขวาที่แถวนั้น → **Copy → Copy as cURL** แล้ววางใน Terminal รันได้ทันที
+
+**ควรเห็น:** ในแท็บ Headers มี `Request Method: GET` และ `Status Code: 200 OK` ส่วน Response เป็น JSON array ของเครื่อง (ถ้ายังไม่ได้เพิ่มเครื่องจะเป็น `[]`)
+
+สังเกตว่า request ที่ browser ส่งมี header มากกว่าที่เราพิมพ์เองใน curl มาก (`User-Agent`, `Accept-Language` …) นี่คือเหตุผลที่บางบั๊ก "เปิดใน browser พัง แต่ curl ไม่พัง" ให้ Copy as cURL มาเทียบทีละ header
 
 ### ขั้นต่อยอด: ดัก route ที่ไม่มี และ error ที่หลุดมา
 
@@ -507,6 +752,8 @@ HTTP/1.1 400 Bad Request
 {"error":"JSON ไม่ถูกต้อง"}
 ```
 > 💡 ฟังก์ชันที่มี **4 parameter** (`err, req, res, next`) คือ error handler ของ Express ต้องมีครบ 4 ตัวแม้ไม่ใช้ `next` ไม่งั้น Express ไม่รู้ว่าเป็นตัวจัดการ error
+>
+> 💡 ใน **Express 5** ถ้า handler เป็น `async` แล้ว `await` พัง (promise ถูก reject) Express ส่ง error มาที่ตัวจัดการนี้ให้เอง ไม่ต้องเขียน `try/catch` ทุก handler (Express 4 ทำไม่ได้ ตัวอย่างเก่าในเน็ตจึงมี `try/catch` เต็มไปหมด) ([Express: Migrating to 5](https://expressjs.com/en/guide/migrating-5.html)) บทที่ 8b จะได้ใช้ตอนต่อฐานข้อมูล
 
 ### 💥 ลองพังมันดู
 รันคำสั่งเหล่านี้ (ก่อนเพิ่มโค้ดต่อยอดข้างบนก็ได้ จะเห็นว่าอะไรเปลี่ยน) แล้วดูว่า status และ body เป็นอะไร
@@ -545,11 +792,11 @@ curl http://localhost:3000/laptops
 ```
 curl: (7) Failed to connect to localhost port 3000 after 1 ms: Couldn't connect to server
 ```
-นี่คือ "ไม่มีใครรอรับสายอยู่" ไม่ใช่ error ของโค้ดเรา (ใน Node จะเห็นเป็น `ECONNREFUSED`)
+(ตัวเลข ms และถ้อยคำอาจต่างเล็กน้อยตามเวอร์ชัน curl) นี่คือ "ไม่มีใครรอรับสายอยู่" ไม่ใช่ error ของโค้ดเรา และ **ไม่มี status code** เพราะยังไม่ได้คุย HTTP กันเลย (ใน Node จะเห็นเป็น `ECONNREFUSED`)
 
 ---
 
-## 6. 🔧 แพ็ก API ใส่ Docker
+## 12. 🔧 แพ็ก API ใส่ Docker
 
 ต่อยอดจาก [บทที่ 2](/02-docker) คราวนี้เป็นแอป TypeScript จริง
 
@@ -593,18 +840,23 @@ docker run -d -p 3000:3000 --name api laptop-api
 
 ---
 
-## 7. CORS และ Cookie/Token: ของที่เบราว์เซอร์เกี่ยวข้อง
+## 13. CORS และ Cookie/Token: ของที่เบราว์เซอร์เกี่ยวข้อง
 
 ### CORS อธิบายแบบง่าย
 
-ลองนึกภาพ: หน้าเว็บของเรา (`localhost:5173`) พยายามเรียก API ที่อยู่ `localhost:3000` เบราว์เซอร์ถือว่านี่คือ **"คนละเว็บ" (คนละ origin)** (origin = โปรโตคอล + โดเมน + port) เพื่อป้องกันเว็บแปลกปลอมแอบเรียก API ของธนาคารด้วยบัญชีของคุณ เบราว์เซอร์จึง **"ถามก่อน"**
+ลองนึกภาพ: หน้าเว็บของเรา (`localhost:5173`) พยายามเรียก API ที่อยู่ `localhost:3000` เบราว์เซอร์ถือว่านี่คือ **"คนละเว็บ" (คนละ origin)** (origin = โปรโตคอล + โดเมน + port) ค่าเริ่มต้นของเบราว์เซอร์คือ **ไม่ยอมให้โค้ดของเว็บหนึ่งอ่านคำตอบจากอีก origin** (ไม่งั้นเว็บแปลกปลอมจะแอบอ่านข้อมูลบัญชีธนาคารที่คุณ login ค้างไว้ได้) ยกเว้น server ของ origin นั้นบอกว่าอนุญาต
+
+คำขอแบ่งเป็น 2 แบบ ([MDN: CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS))
+- **คำขอธรรมดา** (`GET`/`HEAD`/`POST` ที่ส่งแบบฟอร์มหรือข้อความล้วน ไม่มี header พิเศษ): ส่งไปเลย แต่ถ้า server ไม่ตอบ header อนุญาต เบราว์เซอร์จะ **ไม่ให้โค้ดอ่านคำตอบ**
+- **คำขออื่นๆ** (ส่ง JSON, มี `Authorization`, ใช้ `PATCH`/`DELETE`): เบราว์เซอร์ **"ถามก่อน"** ด้วย `OPTIONS` (เรียกว่า **preflight**) ได้รับอนุญาตแล้วจึงส่งคำขอจริง API แบบ JSON ส่วนใหญ่จึงเจอ preflight
 
 ![ลำดับ CORS preflight: เบราว์เซอร์ส่ง OPTIONS ถามก่อน server ตอบอนุญาต แล้วจึงส่งคำขอจริง](/img/05-cors-preflight.svg)
 *เบราว์เซอร์ส่ง OPTIONS (preflight) ถามก่อน server ตอบ header อนุญาต เบราว์เซอร์จึงส่งคำขอจริง*
 
 - **CORS (Cross-Origin Resource Sharing)** = กติกาที่ **server** บอกเบราว์เซอร์ว่า "เว็บ origin ไหนเรียกฉันได้" ผ่าน header `Access-Control-Allow-Origin`
 - **คนที่บล็อกคือเบราว์เซอร์** ไม่ใช่ server (curl, Postman, แอปมือถือ ไม่มีเรื่อง CORS)
-- **ที่แก้คือฝั่ง server** (ใส่ header) ไม่ใช่ฝั่งหน้าเว็บ ห้ามแก้ด้วยการปิดความปลอดภัยของเบราว์เซอร์หรือใส่ `*` ทุกที่ (อนุญาตให้ทุกเว็บ) ในงานจริงที่มี login (ดู [บทที่ 10](/10-security))
+- **ที่แก้คือฝั่ง server** (ใส่ header) ไม่ใช่ฝั่งหน้าเว็บ ห้ามแก้ด้วยการปิดความปลอดภัยของเบราว์เซอร์หรือใส่ `*` ทุกที่ (อนุญาตให้ทุกเว็บ) ในงานจริงที่มี login (ดู [บทที่ 10](/10-security)) และถ้าคำขอแนบ cookie มาด้วย เบราว์เซอร์ **ไม่ยอมรับ `*`** ต้องระบุ origin ตรงตัว
+- **CORS ไม่ได้กันทุกอย่าง:** คำขอธรรมดายังไปถึง server ได้ (แค่อ่านคำตอบไม่ได้) การกันเว็บอื่นแอบส่งคำสั่งแทนผู้ใช้ (CSRF) เป็นอีกเรื่องหนึ่ง อยู่ใน [บทที่ 10](/10-security)
 
 ลองดู header ที่ server ตอบตอนเบราว์เซอร์ถาม preflight (ตัวอย่างเขียน middleware เองให้เห็นกลไก งานจริงใช้ library เช่น `cors` ของ Express หรือ middleware ของ Hono ใน [บทที่ 14](/14-hono-api))
 ```ts
@@ -649,7 +901,7 @@ HTTP ไม่จำว่าคุณคือใคร จึงต้อง�
 
 ---
 
-## 8. 📚 อ่านเอกสาร API ให้เป็น
+## 14. 📚 อ่านเอกสาร API ให้เป็น
 
 เวลาต้องเรียก API ของคนอื่น (เช่น ระบบชำระเงิน, แผนที่) เปิดเอกสารแล้วหา 6 อย่างนี้ตามลำดับ
 
@@ -668,11 +920,11 @@ HTTP ไม่จำว่าคุณคือใคร จึงต้อง�
 
 ---
 
-## 9. ⚠️ แก้ปัญหาที่เจอบ่อย
+## 15. ⚠️ แก้ปัญหาที่เจอบ่อย
 
 | อาการ | เกิดจากอะไร | วิธีแก้ |
 |---|---|---|
-| Console ในเบราว์เซอร์ขึ้น `blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource` | หน้าเว็บคนละ origin กับ API แต่ server ไม่บอกว่าอนุญาต | แก้ **ฝั่ง server** ให้ส่ง `Access-Control-Allow-Origin` (และตอบ `OPTIONS`) หรือใช้ proxy ตอน dev ดูหัวข้อ 7 |
+| Console ในเบราว์เซอร์ขึ้น `blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource` | หน้าเว็บคนละ origin กับ API แต่ server ไม่บอกว่าอนุญาต | แก้ **ฝั่ง server** ให้ส่ง `Access-Control-Allow-Origin` (และตอบ `OPTIONS`) หรือใช้ proxy ตอน dev ดูข้อ 13 |
 | เรียกแล้วได้ `404` ทั้งที่ server รันอยู่ | URL/path ผิด (พิมพ์ผิด, ลืม `/api`, พหูพจน์) หรือไม่มี ID นั้นจริง | เช็คตัวสะกด · ดูว่า `404` มาจาก "ไม่มี route" (ข้อความ `Cannot GET /xxx`) หรือ "ไม่มีข้อมูล" (ข้อความของเราเอง) |
 | ใช้ method ผิด เช่น `PUT /laptops` ได้ `404` (Express) หรือ `405 Method Not Allowed` (framework ที่รู้ว่า path มีแต่ไม่รับ method นั้น) | path ถูก แต่ไม่ได้เขียน handler ของ method นั้น | เพิ่ม handler ที่ method นั้น หรือเรียกด้วย method ที่ถูก (เช็ค header `Allow` ที่ server ตอบถ้ามี) |
 | `415 Unsupported Media Type` | ส่ง body เป็นชนิดที่ server ไม่รับ (เช่น ส่งข้อความล้วนแต่ API รับ JSON) | ส่ง `Content-Type: application/json` พร้อม body เป็น JSON จริง · (Express ที่เราทำจะไม่ตอบ 415 แต่จะมอง body ว่าว่างแล้วตอบ `400`) |
@@ -684,6 +936,8 @@ HTTP ไม่จำว่าคุณคือใคร จึงต้อง�
 | `SyntaxError: ... in JSON at position N` / `Unexpected token` | body ที่ส่ง (หรือที่ได้รับ) ไม่ใช่ JSON ที่ถูกต้อง | เช็คว่าชื่อ key มี `"` ครอบ ไม่มี comma ท้ายสุด ใช้ `"` ไม่ใช่ `'` · ถ้าได้รับกลับมาเป็น `<!DOCTYPE html>` แปลว่า server ตอบหน้า HTML (มักเป็น error page) ให้ดู status |
 | `req.body` เป็น `undefined` | ลืม `app.use(express.json())` หรือ client ไม่ส่ง `Content-Type: application/json` | เพิ่ม middleware และใส่ header ให้ถูก |
 | แก้โค้ดแล้ว API ยังตอบแบบเก่า | server ตัวเก่ายังรันอยู่ หรือเรียกผิด port | หยุดของเก่า (`Ctrl+C`) แล้วรันใหม่ · เช็ค port |
+| หน้าเว็บพัง แต่ยิงด้วย curl / `.http` ได้ปกติ | หน้าเว็บส่ง request ไม่เหมือนที่เราคิด (ลืม header, URL ผิด, cookie ไม่ติด) หรือติด CORS | เปิด DevTools → Network ดู request ที่ส่งจริง แล้ว **Copy as cURL** มาเทียบกับคำสั่งที่ใช้ได้ทีละ header |
+| เรียก GraphQL API ได้ `200` แต่ไม่มีข้อมูล | GraphQL ส่ง error ในช่อง `errors` ของ body ได้ แม้ status เป็น `200` | อ่านช่อง `errors` ทุกครั้ง อย่าดูแค่ status (ข้อ 5) |
 
 ---
 
@@ -745,6 +999,34 @@ server ทำงานปกติ แต่ไม่ได้ส่ง `Access-
 
 </details>
 
+<details>
+<summary>9. เพื่อนบอกว่า "โปรเจกต์นี้เลิกใช้ HTTP แล้ว เปลี่ยนเป็น GraphQL" ประโยคนี้ผิดตรงไหน?</summary>
+
+GraphQL เป็น **รูปแบบ API** ที่วิ่งบน HTTP (ปกติ `POST /graphql`) ไม่ใช่สิ่งที่มาแทน HTTP ที่ถูกคือ "เปลี่ยนจาก REST เป็น GraphQL" เรื่อง header, CORS, token ยังใช้เหมือนเดิม
+
+</details>
+
+<details>
+<summary>10. หน้าเว็บต้องโชว์ความคืบหน้าการประมวลผลไฟล์ที่ server ส่งมาเรื่อยๆ ผู้ใช้ไม่ต้องส่งอะไรกลับ ควรใช้อะไร เพราะอะไร?</summary>
+
+**SSE** เพราะข้อมูลไหลทางเดียวจาก server → client วิ่งบน HTTP ธรรมดา และเบราว์เซอร์ต่อใหม่เองเมื่อหลุด WebSocket ก็ทำได้แต่หนักเกินจำเป็น (เปิดสองทางทั้งที่ใช้ทางเดียว) ถ้าช้าไปหลายวินาทีไม่เป็นไร polling ก็พอ
+
+</details>
+
+<details>
+<summary>11. Bruno, Hono, gRPC อยู่กลุ่มไหนบ้าง?</summary>
+
+**Bruno** = ตัวเรียก/ทดสอบ API (มีปุ่มส่ง request) · **Hono** = framework ฝั่ง server (มี `app.get(...)` เปิด port รอรับ) · **gRPC** = รูปแบบ API (กำหนดว่าคำขอ/คำตอบหน้าตาแบบไหนผ่านไฟล์ `.proto`)
+
+</details>
+
+<details>
+<summary>12. ทำไมทีมเลือก REST สำหรับ API ของเว็บ แทนที่จะใช้ gRPC ที่ข้อมูลเล็กและเร็วกว่า?</summary>
+
+browser เรียก gRPC ตรงไม่ได้ (ต้องผ่าน gRPC-Web) และ REST เรียกได้จากทุกเครื่องมือทุกภาษา ใช้ status code กับ cache ของ HTTP ได้เต็มที่ ทดสอบด้วย curl หรือไฟล์ `.http` ได้ทันที ข้อดีเรื่องความเร็วของ gRPC เห็นชัดตอน service หลังบ้านคุยกันจำนวนมาก ซึ่งไม่ใช่โจทย์ของเว็บทั่วไป
+
+</details>
+
 ---
 
 ## ✏️ แบบฝึกหัด
@@ -755,17 +1037,23 @@ server ทำงานปกติ แต่ไม่ได้ส่ง `Access-
 - เพิ่ม `?page=` และ `?limit=` ให้ `GET /laptops` แล้วตอบรูปแบบ `{ items, page, limit, total }`
 - ให้ทุก error ใช้รูปแบบ `{ error, details? }` เหมือนกัน (รวม 404 ของ route ที่ไม่มี และ 500)
 - เขียนไฟล์ `.http` ที่เก็บ request ทุกแบบรวมถึง `@baseUrl` และกรณีพัง เช่น JSON ผิด, ลืม `Content-Type`
+- เปิดเว็บที่ใช้ประจำ (เช่น เว็บข่าว) แล้วดูแท็บ Network หา request ที่ตอบเป็น JSON 1 ตัว จดว่า method, status, `Content-Type` เป็นอะไร และเดาว่าเว็บนั้นใช้รูปแบบ API แบบไหน (URL เป็นสิ่งของ = REST · ยิงไป `/graphql` = GraphQL)
+
+**ฝึกจัดกลุ่ม:** ค้นชื่อเหล่านี้ทีละตัวในเว็บทางการ แล้วบอกว่าอยู่กลุ่มไหน (รูปแบบ API / ตัวเรียก-ทดสอบ / framework ฝั่ง server) ด้วยคำถามในข้อ 9: **HTTPie**, **FastAPI**, **Socket.IO**, **Insomnia**, **AdonisJS**
 
 ## ✅ ผ่านด่าน
 
+- [ ] แยกได้ว่า HTTP (ภาษา) กับ REST / GraphQL / gRPC (รูปแบบ) อยู่คนละชั้น และบอกได้ว่าแต่ละรูปแบบแก้ปัญหาอะไร
+- [ ] เลือกได้ว่างานไหนใช้ polling, SSE หรือ WebSocket พร้อมเหตุผล
+- [ ] จัดกลุ่มเครื่องมือที่ไม่เคยเห็นได้ว่าเป็นรูปแบบ API, ตัวเรียก/ทดสอบ หรือ framework ฝั่ง server
 - [ ] อธิบายส่วนประกอบของ request/response ได้ (start line, headers, body)
 - [ ] อธิบายส่วนประกอบของ URL, path param และ query param ได้
 - [ ] เลือก method และ status code ได้ถูก รู้ว่า `GET` ห้ามเปลี่ยนข้อมูล
 - [ ] ตั้งชื่อ endpoint แบบ REST ได้ และตอบ error รูปแบบเดียวกัน
 - [ ] อธิบาย CORS ด้วยคำพูดง่ายๆ ได้ ว่าใครบล็อก และแก้ที่ไหน
-- [ ] ทดสอบ API ด้วย `.http` หรือ `curl` ได้
+- [ ] ทดสอบ API ด้วย `.http` หรือ `curl` ได้ และใช้ DevTools → Network ดู request ที่หน้าเว็บส่งจริงได้
 - [ ] สร้าง API ด้วย TS + Zod และรันใน Docker ได้
 
 ---
 
-[← บทที่ 4: TypeScript](/04-typescript) · [🏠 สารบัญ](/) · [บทที่ 6: SQL vs NoSQL →](/06-sql-nosql)
+[← บทที่ 4: ภาษาและระบบ Type](/04-typescript) · [🏠 สารบัญ](/) · [บทที่ 6: ประเภทฐานข้อมูล →](/06-sql-nosql)
