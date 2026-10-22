@@ -5,9 +5,9 @@ import { useState } from "react";
 import { useAdmin } from "@/hooks/use-admin";
 import { AdminFiles } from "./admin-files";
 import { AdminOverview } from "./admin-overview";
+import { AdminQuestions } from "./admin-questions";
 import { AdminUsers } from "./admin-users";
 import { Button } from "./button";
-import { EmptyState } from "./empty-state";
 import { ErrorText } from "./error-text";
 
 type TabId = "overview" | "users" | "files" | "questions";
@@ -19,10 +19,11 @@ const TABS: { id: TabId; label: string; icon: LucideIcon }[] = [
 ];
 
 // หลังบ้านพี่เลี้ยง: เมนูแท็บซ้าย (มือถือเป็นแถบเลื่อนด้านบน) + เนื้อหาของแท็บที่เลือก
-export function AdminPanel() {
+export function AdminPanel({ titles }: { titles: Record<string, string> }) {
   const admin = useAdmin();
   const [tab, setTab] = useState<TabId>("overview");
   const active = TABS.find((t) => t.id === tab)!;
+  const waiting = admin.questions.filter((q) => !q.answer).length;
 
   return (
     <div className="flex flex-col gap-6 md:flex-row">
@@ -40,6 +41,11 @@ export function AdminPanel() {
           >
             <t.icon className="size-4" />
             {t.label}
+            {t.id === "questions" && waiting > 0 && (
+              <span aria-label={`รอตอบ ${waiting} ข้อ`} className="ms-auto rounded-full bg-orange-500 px-1.5 text-[11px] font-bold text-white">
+                {waiting}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -64,11 +70,7 @@ export function AdminPanel() {
         {tab === "overview" && <AdminOverview admin={admin} />}
         {tab === "users" && <AdminUsers admin={admin} />}
         {tab === "files" && <AdminFiles admin={admin} />}
-        {tab === "questions" && (
-          <EmptyState icon={MessageCircle} title="เร็วๆ นี้">
-            ช่องให้น้องส่งคำถามถึงพี่เลี้ยงจากหน้าคู่มือ ยังไม่มีระบบหลังบ้านรองรับ ระหว่างนี้ให้น้องถามผ่านช่องทางของทีมตามปกติ
-          </EmptyState>
-        )}
+        {tab === "questions" && <AdminQuestions admin={admin} titles={titles} />}
       </div>
     </div>
   );

@@ -11,6 +11,8 @@ const KNOWN: Record<string, [ContentfulStatusCode, string]> = {
   CANNOT_CHANGE_SELF: [400, "ปิดหรือลดสิทธิ์บัญชีตัวเองไม่ได้"],
   FILE_SIZE: [413, "ไฟล์ต้องไม่ว่างและไม่เกิน 4 MB"],
   NOT_PDF: [415, "ไฟล์นี้ไม่ใช่ PDF"],
+  TOO_MANY_OPEN_QUESTIONS: [429, "มีคำถามรอตอบครบ 10 ข้อแล้ว รอพี่เลี้ยงตอบก่อนแล้วค่อยถามเพิ่ม"],
+  QUESTION_NOT_FOUND: [404, "ไม่พบคำถามนี้"],
 };
 
 export function errorHandler(err: Error, c: Context) {

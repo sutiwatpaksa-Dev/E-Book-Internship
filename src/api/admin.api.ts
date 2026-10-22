@@ -1,4 +1,4 @@
-import type { FileInfo, IssuedPin, Role, User } from "@/types";
+import type { AdminQuestion, FileInfo, IssuedPin, Role, User } from "@/types";
 import { jsonBody, request } from "./client";
 
 export const adminApi = {
@@ -10,4 +10,6 @@ export const adminApi = {
   getRequirementInfo: () => request<FileInfo | null>("/admin/requirement"),
   uploadRequirement: (file: File) =>
     request<FileInfo>("/admin/requirement", { method: "PUT", headers: { "Content-Type": "application/pdf" }, body: file }),
+  listQuestions: () => request<AdminQuestion[]>("/admin/questions"),
+  answerQuestion: (id: number, answer: string) => request<null>(`/admin/questions/${id}/answer`, jsonBody("PUT", { answer })),
 };

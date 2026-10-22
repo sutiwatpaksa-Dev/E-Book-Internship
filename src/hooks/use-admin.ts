@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "@/api/admin.api";
 import { filesApi } from "@/api/files.api";
-import type { FileInfo, Role, User } from "@/types";
+import type { AdminQuestion, FileInfo, Role, User } from "@/types";
 
 // ข้อมูลและคำสั่งทั้งหมดของหลังบ้าน แยกจากหน้าตา: component แค่เรียกใช้ ไม่เรียก API เอง
 export function useAdmin() {
   const [users, setUsers] = useState<User[]>([]);
   const [pdf, setPdf] = useState<FileInfo | null>(null);
+  const [questions, setQuestions] = useState<AdminQuestion[]>([]);
   const [exampleRepo, setExampleRepo] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -27,9 +28,10 @@ export function useAdmin() {
 
   const reload = () =>
     run(async () => {
-      const [u, p] = await Promise.all([adminApi.listUsers(), adminApi.getRequirementInfo()]);
+      const [u, p, q] = await Promise.all([adminApi.listUsers(), adminApi.getRequirementInfo(), adminApi.listQuestions()]);
       setUsers(u);
       setPdf(p);
+      setQuestions(q);
     });
 
   useEffect(() => {
@@ -43,6 +45,7 @@ export function useAdmin() {
   return {
     users,
     pdf,
+    questions,
     exampleRepo,
     loading,
     error,
@@ -65,6 +68,16 @@ export function useAdmin() {
         await adminApi.updateUser(u.id, changes);
         await reload();
       }),
+    // คืน true เมื่อส่งสำเร็จ ให้ฟอร์มรู้ว่าปิดช่องเขียนได้
+    answerQuestion: async (id: number, answer: string) => {
+      let ok = false;
+      await run(async () => {
+        await adminApi.answerQuestion(id, answer);
+        setQuestions(await adminApi.listQuestions());
+        ok = true;
+      });
+      return ok;
+    },
     uploadRequirement: (file: File) =>
       run(async () => {
         setPdf(await adminApi.uploadRequirement(file));

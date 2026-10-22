@@ -14,6 +14,10 @@ describe("gate", () => {
     expect(gate("/starter/timeline", "intern")).toBe("allow");
     expect(gate("/starter/timeline", "dev")).toBe("allow");
   });
+  test("คำถามของฉันต้อง login", () => {
+    expect(gate("/questions", null)).toBe("login");
+    expect(gate("/questions", "intern")).toBe("allow");
+  });
   test("หน้า Dev เฉพาะพี่เลี้ยง", () => {
     expect(gate("/dev/admin", null)).toBe("login");
     expect(gate("/dev/admin", "intern")).toBe("forbidden");

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/layouts/docs/page";
 import { requiredLinks } from "@/data/roadmap";
 import { source } from "@/lib/source";
+import { AskQuestion } from "./ask-question";
 import { MarkDoneButton } from "./mark-done-button";
 import { getMDXComponents } from "./mdx";
 
@@ -20,6 +21,8 @@ export function DocPage({ slugs }: { slugs: string[] | undefined }) {
       <DocsBody>
         <MDX components={getMDXComponents()} />
       </DocsBody>
+      {/* หน้าแรกเป็นแผนที่ ไม่ใช่บทเรียน จึงไม่มีกล่องถาม */}
+      {page.url !== "/" && <AskQuestion pageUrl={page.url} />}
     </DocsPage>
   );
 }

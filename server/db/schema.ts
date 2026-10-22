@@ -1,4 +1,4 @@
-import { boolean, customType, integer, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, customType, index, integer, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
 
 const bytea = customType<{ data: Buffer }>({ dataType: () => "bytea" });
 
@@ -36,3 +36,24 @@ export const files = pgTable("files", {
   updatedBy: integer("updated_by").references(() => users.id),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// คำถามจากน้องถึงพี่เลี้ยง เห็นกันแค่คนถามกับพี่เลี้ยง (ไม่มีหน้ารวมให้น้องคนอื่นเห็น)
+export const questions = pgTable(
+  "questions",
+  {
+    id: serial("id").primaryKey(),
+    askedBy: integer("asked_by")
+      .notNull()
+      .references(() => users.id),
+    // หน้าที่น้องกดถาม (เช่น /08b-db-to-backend) พี่เลี้ยงเปิดไปดูบริบทได้
+    pageUrl: text("page_url").notNull(),
+    body: text("body").notNull(),
+    // ยังไม่มีคำตอบ = รอตอบ (ไม่ต้องมีคอลัมน์สถานะแยก ค่าจะได้ไม่ขัดกันเอง)
+    answer: text("answer"),
+    answeredBy: integer("answered_by").references(() => users.id),
+    answeredAt: timestamp("answered_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  // หน้าของน้องค้นด้วย "คำถามของฉัน" ทุกครั้ง
+  (t) => [index("questions_asked_by_idx").on(t.askedBy)],
+);

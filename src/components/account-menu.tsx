@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, FileText, LogIn, LogOut, Package, Settings } from "lucide-react";
+import { ChevronDown, FileText, LogIn, LogOut, MessageCircle, Package, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -93,6 +93,9 @@ export function AccountMenu() {
               <Settings className="size-4" /> หลังบ้านพี่เลี้ยง
             </Link>
           )}
+          <Link role="menuitem" href="/questions" className={itemClass}>
+            <MessageCircle className="size-4" /> คำถามของฉัน
+          </Link>
           <a role="menuitem" href={REQUIREMENT_PDF_URL} target="_blank" rel="noopener" className={itemClass}>
             <FileText className="size-4" /> เอกสาร Requirement
           </a>
