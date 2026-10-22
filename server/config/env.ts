@@ -11,10 +11,23 @@ const schema = z.object({
   EXAMPLE_REPO_URL: z.string().url().optional(),
 });
 
+// บอก "รูปร่าง" ของค่าที่ผิด ไม่บอกค่าจริง (อาจเป็นความลับ): พอให้รู้ว่าว่าง ติดอะไรมาหัวท้าย หรือมีอักขระแปลก
+function describe(value: string | undefined) {
+  if (value === undefined) return "ไม่ได้ตั้ง";
+  if (value === "") return "ค่าว่าง";
+  const head = value.split("://")[0].slice(0, 15);
+  const odd = [
+    /\s/.test(value) && "มีช่องว่าง/ขึ้นบรรทัด",
+    /['"]/.test(value) && "มีเครื่องหมายคำพูด",
+    /[^\x20-\x7e]/.test(value) && "มีอักขระที่มองไม่เห็นหรือไม่ใช่ ASCII",
+  ].filter(Boolean);
+  return `ยาว ${value.length} ตัว ขึ้นต้น "${head}"${odd.length ? ` · ${odd.join(" · ")}` : ""}`;
+}
+
 const parsed = schema.safeParse(process.env);
 if (!parsed.success) {
-  // บอกแค่ชื่อตัวแปรที่ขาดหรือผิดรูปแบบ ไม่พิมพ์ค่าออกมา (อาจเป็นความลับ)
-  const keys = [...new Set(parsed.error.issues.map((i) => i.path.join(".")))];
-  throw new Error(`ENV_INVALID: ${keys.join(", ")}`);
+  const keys = [...new Set(parsed.error.issues.map((i) => String(i.path[0])))];
+  const detail = keys.map((k) => `${k} (${describe(process.env[k])})`);
+  throw new Error(`ENV_INVALID: ${detail.join(", ")}`);
 }
 export const env = parsed.data;
