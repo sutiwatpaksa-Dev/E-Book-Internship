@@ -39,6 +39,9 @@ export function ToolTable({ group }: { group: ToolGroupId }) {
           ))}
         </tbody>
       </table>
+      <p className="border-t px-3 py-2 text-xs text-fd-muted-foreground">
+        ข้อมูลจากเอกสารทางการของแต่ละตัว (กดชื่อเพื่อเปิด) · ตรวจล่าสุด {g.checkedAt}
+      </p>
     </div>
   );
 }
