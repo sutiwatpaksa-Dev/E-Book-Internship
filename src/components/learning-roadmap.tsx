@@ -1,46 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { roadmap, type RoadmapItem } from "@/data/roadmap";
+import { requiredLinks, roadmap, type RoadmapItem } from "@/data/roadmap";
+import { useProgress } from "@/hooks/use-progress";
 import { useSession } from "@/hooks/use-session";
 import { gate } from "@/lib/page-access";
 
-// ติ๊ก "ผ่านแล้ว" เก็บในเบราว์เซอร์ของแต่ละคน (ไม่ส่งขึ้น server) ล้างเบราว์เซอร์แล้วหายได้
-const STORAGE_KEY = "bt-roadmap-done";
-const required = roadmap.flatMap((l) => l.items.filter((i) => !i.extra));
-
-function useDoneSet() {
-  const [done, setDone] = useState<Set<string>>(new Set());
-  useEffect(() => {
-    try {
-      setDone(new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]")));
-    } catch {}
-  }, []);
-  const toggle = (link: string) =>
-    setDone((prev) => {
-      const next = new Set(prev);
-      if (next.has(link)) next.delete(link);
-      else next.add(link);
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify([...next]));
-      } catch {}
-      return next;
-    });
-  return { done, toggle };
-}
-
 export function LearningRoadmap() {
   const { role } = useSession();
-  const { done, toggle } = useDoneSet();
-  const doneCount = required.filter((i) => done.has(i.link)).length;
-  const percent = Math.round((doneCount / required.length) * 100);
+  const { done, toggle } = useProgress();
+  const doneCount = requiredLinks.filter((link) => done.has(link)).length;
+  const percent = Math.round((doneCount / requiredLinks.length) * 100);
 
   return (
     <div className="not-prose my-6">
       <div role="status" className="flex items-center gap-3 text-sm">
         <span>
-          ผ่านแล้ว <b>{doneCount}</b> / {required.length} บท
+          ผ่านแล้ว <b>{doneCount}</b> / {requiredLinks.length} บท
         </span>
         <span className="h-2 flex-1 overflow-hidden rounded-full bg-fd-muted">
           <span className="block h-full bg-(--rm-done) transition-all duration-300" style={{ width: `${percent}%` }} />
