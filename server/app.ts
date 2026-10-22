@@ -19,8 +19,11 @@ app.get("/health", async (c) => {
     await db.execute(sql`select 1 from users limit 1`);
     return c.json({ ok: true, db: "ok" });
   } catch (e) {
-    const missingTable = /relation .* does not exist/.test(String((e as Error).cause ?? e));
-    return c.json({ ok: false, db: missingTable ? "ยังไม่ได้ migrate (ไม่มีตาราง users)" : "ต่อฐานข้อมูลไม่ได้" }, 503);
+    // drizzle ห่อ error ของ pg ไว้ใน cause · ส่งออกแค่รหัส (เช่น 42P01, 28P01, ENOTFOUND) ไม่มีค่าลับ
+    const err = ((e as Error).cause ?? e) as { code?: string; message?: string };
+    console.error("health check failed:", err.code, err.message);
+    const missingTable = err.code === "42P01"; // undefined_table
+    return c.json({ ok: false, db: missingTable ? "ยังไม่ได้ migrate (ไม่มีตาราง users)" : "ต่อฐานข้อมูลไม่ได้", code: err.code ?? null }, 503);
   }
 });
 app.route("/auth", authRoutes);
