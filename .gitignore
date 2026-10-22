@@ -24,3 +24,6 @@ Handoff.archive-*.md
 
 # ค่าที่ Vercel CLI ผูกโปรเจกต์ในเครื่อง
 .vercel/
+
+# next dev สร้างไฟล์นี้ให้เองทุกครั้งที่รัน (คำแนะนำสำหรับ AI agent) ไม่เก็บใน repo
+/AGENTS.md
