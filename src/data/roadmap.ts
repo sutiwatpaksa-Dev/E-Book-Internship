@@ -26,7 +26,7 @@ export const roadmap: RoadmapLevel[] = [
     title: "ด่าน 2 · ภาษาและ API",
     goal: "เขียน TypeScript และคุยกันผ่าน HTTP เป็น",
     items: [
-      { num: "03", title: "Node vs Yarn vs Bun", link: "/03-node-yarn-bun", outcome: "เข้าใจ runtime, package, lock file", time: "4 ชม." },
+      { num: "03", title: "Runtime & Package Manager", link: "/03-node-yarn-bun", outcome: "แยกตัวรันกับตัวจัดการ library ได้ เลือกเครื่องมือเป็น", time: "4 ชม." },
       { num: "04", title: "JavaScript vs TypeScript", link: "/04-typescript", outcome: "ตั้งโปรเจกต์ TS และเขียน type เป็น", time: "5 ชม." },
       { num: "05", title: "HTTP & REST API", link: "/05-http-api", outcome: "สร้าง API ด้วย TS และแพ็กใส่ Docker ได้", time: "5 ชม." },
     ],
