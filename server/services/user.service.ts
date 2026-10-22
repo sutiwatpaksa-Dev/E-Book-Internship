@@ -1,3 +1,4 @@
+import { env } from "../config/env";
 import type { Role } from "../db/schema";
 import { hashPin, newPin } from "../lib/pin";
 import { userRepository } from "../repositories/user.repository";
@@ -11,6 +12,14 @@ export const userService = {
     const user = await userRepository.create({ username, role, secretHash: await hashPin(pin) });
     if (!user) throw new Error("USERNAME_TAKEN");
     return { user, pin };
+  },
+
+  // ยังไม่มี Dev สักคน + ตั้ง FIRST_DEV_* ไว้ → สร้างบัญชีนั้น (เป็นทางเข้าแรกสุดของหน้า admin)
+  // มี Dev แล้วไม่ทำอะไร ใครมาตั้ง env ทีหลังก็สร้าง Dev เพิ่มทางนี้ไม่ได้
+  async ensureFirstDev() {
+    const { FIRST_DEV_USERNAME: username, FIRST_DEV_PIN: pin } = env;
+    if (!username || !pin || (await userRepository.anyWithRole("dev"))) return;
+    await userRepository.create({ username: username.toLowerCase(), role: "dev", secretHash: await hashPin(pin) });
   },
 
   // pin ส่งมาเองได้เฉพาะสคริปต์ใน Terminal (หน้า admin สุ่มให้เสมอ)

@@ -26,6 +26,10 @@ export const userRepository = {
     const [u] = await db.select().from(users).where(eq(users.username, username));
     return u;
   },
+  async anyWithRole(role: NewUser["role"]) {
+    const [u] = await db.select({ id: users.id }).from(users).where(eq(users.role, role)).limit(1);
+    return !!u;
+  },
   listPublic: () => db.select(publicColumns).from(users).orderBy(asc(users.username)),
   // ชื่อซ้ำคืน undefined (ให้ service ตัดสินว่าจะทำอะไรต่อ)
   async create(values: NewUser): Promise<PublicUser | undefined> {

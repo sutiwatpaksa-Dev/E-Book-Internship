@@ -1,5 +1,6 @@
 import { ipFailureRepository } from "../repositories/ip-failure.repository";
 import { userRepository } from "../repositories/user.repository";
+import { userService } from "./user.service";
 
 const USER_MAX_FAILS = 5;
 const USER_LOCK_MS = 15 * 60 * 1000;
@@ -9,9 +10,17 @@ const IP_WINDOW_MS = 15 * 60 * 1000;
 // ใช้ตอนไม่พบ username: ยังเสียเวลา verify เท่าเดิม คนร้ายจับเวลาตอบไม่ได้ว่าชื่อไหนมีอยู่จริง
 const DUMMY_HASH = await Bun.password.hash("000000");
 
+// เช็กบัญชี Dev คนแรกครั้งเดียวต่อเครื่อง (ไม่ต้องถาม DB ทุกครั้งที่ login)
+let firstDevChecked: Promise<void> | undefined;
+
 // กฎของการ login อยู่ที่นี่ทั้งหมด ไม่รู้จัก HTTP (ส่งผลเป็นรหัส ให้ routes แปลงเป็น status เอง)
 export const authService = {
   async login(username: string, pin: string, ip: string, now = new Date()) {
+    firstDevChecked ??= userService.ensureFirstDev().catch((e) => {
+      firstDevChecked = undefined; // ล้มให้ลองใหม่รอบหน้า
+      throw e;
+    });
+    await firstDevChecked;
     const windowStartAfter = new Date(now.getTime() - IP_WINDOW_MS);
     const ipRow = await ipFailureRepository.find(ip);
     if (ipRow && ipRow.windowStart >= windowStartAfter && ipRow.count >= IP_MAX_FAILS) {

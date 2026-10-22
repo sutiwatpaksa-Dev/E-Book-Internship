@@ -9,6 +9,10 @@ const schema = z.object({
   APP_ORIGIN: z.string().url(),
   // repo ตัวอย่างระบบจริง แสดงหลัง login (เก็บใน env ไม่ใส่ใน repo สาธารณะ) ยังไม่ตั้งก็ได้
   EXAMPLE_REPO_URL: z.string().url().optional(),
+  // บัญชี Dev คนแรก: ระบบสร้างให้เองตอนมีคน login ครั้งแรก ถ้ายังไม่มี Dev สักคน (ไม่ต้องต่อ DB จากเครื่องเรา)
+  // มี Dev แล้วค่านี้ไม่ถูกใช้อีก ลบออกจาก env ได้ · PIN ตั้งเป็น Sensitive ใน Vercel
+  FIRST_DEV_USERNAME: z.string().min(1).optional(),
+  FIRST_DEV_PIN: z.string().regex(/^\d{6}$/).optional(),
 });
 
 // บอก "รูปร่าง" ของค่าที่ผิด ไม่บอกค่าจริง (อาจเป็นความลับ): พอให้รู้ว่าว่าง ติดอะไรมาหัวท้าย หรือมีอักขระแปลก
