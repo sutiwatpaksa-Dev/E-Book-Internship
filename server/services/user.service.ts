@@ -14,12 +14,20 @@ export const userService = {
     return { user, pin };
   },
 
-  // ยังไม่มี Dev สักคน + ตั้ง FIRST_DEV_* ไว้ → สร้างบัญชีนั้น (เป็นทางเข้าแรกสุดของหน้า admin)
-  // มี Dev แล้วไม่ทำอะไร ใครมาตั้ง env ทีหลังก็สร้าง Dev เพิ่มทางนี้ไม่ได้
+  // ตั้ง FIRST_DEV_* ไว้ และยังไม่มีบัญชีชื่อนี้ → สร้างเป็น Dev (ทางเข้าหน้า admin เมื่อยังไม่มีใครเข้าได้)
+  // ชื่อนี้มีอยู่แล้วไม่แตะเลย (ไม่เปลี่ยน PIN ไม่ปลดล็อก) env จึงใช้ยึดบัญชีของคนอื่นไม่ได้
+  // ไม่จำกัดว่า "ต้องยังไม่มี Dev" เพราะคนที่แก้ env ของ Production ได้ ก็เปลี่ยน DATABASE_URL ได้อยู่แล้ว
+  // การจำกัดแบบนั้นไม่ได้กันอะไรเพิ่ม แต่ทำให้พี่เลี้ยงที่ลืม PIN ทุกคนเข้าไม่ได้เลย
   async ensureFirstDev() {
-    const { FIRST_DEV_USERNAME: username, FIRST_DEV_PIN: pin } = env;
-    if (!username || !pin || (await userRepository.anyWithRole("dev"))) return;
-    await userRepository.create({ username: username.toLowerCase(), role: "dev", secretHash: await hashPin(pin) });
+    const { FIRST_DEV_USERNAME: name, FIRST_DEV_PIN: pin } = env;
+    if (!name || !pin) return;
+    const username = name.toLowerCase();
+    if (await userRepository.findByUsername(username)) {
+      console.info(`FIRST_DEV: มีบัญชี ${username} อยู่แล้ว ไม่ได้สร้างใหม่ (ลบ FIRST_DEV_* ออกจาก env ได้)`);
+      return;
+    }
+    await userRepository.create({ username, role: "dev", secretHash: await hashPin(pin) });
+    console.info(`FIRST_DEV: สร้างบัญชี Dev ${username} แล้ว login ได้แล้วให้ลบ FIRST_DEV_PIN ออกจาก env`);
   },
 
   // pin ส่งมาเองได้เฉพาะสคริปต์ใน Terminal (หน้า admin สุ่มให้เสมอ)
