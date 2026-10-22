@@ -11,6 +11,7 @@ const tree: PageTree.Root = {
     page("/", "🏠 หน้าแรก"),
     { type: "separator", name: "ด่าน 2 · ภาษาและ API" },
     page("/03-node-yarn-bun", "03 · Runtime & Package Manager"),
+    page("/08b-db-to-backend", "08b · จากแบบฐานข้อมูลสู่ Backend"),
     page("/react-language", "บทเสริม · ภาษาและคำสั่งที่ใช้เขียน React"),
     { type: "separator", name: "ด่าน 6 · Mini Project" },
     {
@@ -32,7 +33,10 @@ describe("buildNav", () => {
       ["ด่าน 2", "ภาษาและ API"],
       ["ด่าน 6", "Mini Project"],
     ]);
-    expect(nav.stages[0].items).toEqual([{ url: "/03-node-yarn-bun", num: "03", title: "Runtime & Package Manager" }]);
+    expect(nav.stages[0].items).toEqual([
+      { url: "/03-node-yarn-bun", num: "03", title: "Runtime & Package Manager" },
+      { url: "/08b-db-to-backend", num: "08b", title: "จากแบบฐานข้อมูลสู่ Backend" },
+    ]);
   });
   test("บทเสริมแยกออกจากด่าน", () => {
     expect(nav.extras).toEqual([{ url: "/react-language", num: null, title: "ภาษาและคำสั่งที่ใช้เขียน React" }]);

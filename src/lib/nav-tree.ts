@@ -40,12 +40,12 @@ const clean = (s: string) =>
     .replace(/\s*🔒$/u, "")
     .trim();
 
-// "03 · Runtime & Package Manager" → { num: "03", title: "Runtime & Package Manager" }
+// "03 · Runtime & Package Manager" → { num: "03", title: "Runtime & Package Manager" } (บทแทรกอย่าง "08b" ก็นับเป็นเลขบท)
 // "บทเสริม · จัดโครงสร้างโปรเจกต์" → { num: null, title: "จัดโครงสร้างโปรเจกต์" }
 function splitTitle(name: string): Pick<NavItem, "num" | "title"> {
   const m = name.match(/^(\S+)\s+·\s+(.+)$/);
   if (!m) return { num: null, title: clean(name) };
-  return /^\d+$/.test(m[1]) ? { num: m[1], title: m[2] } : { num: null, title: m[2] };
+  return /^\d+[a-z]?$/.test(m[1]) ? { num: m[1], title: m[2] } : { num: null, title: m[2] };
 }
 
 function pageItem(node: PageTree.Item): NavItem {
