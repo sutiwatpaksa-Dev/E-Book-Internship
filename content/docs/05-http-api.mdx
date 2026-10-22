@@ -323,7 +323,7 @@ import { z } from "zod";
 const app = express();
 app.use(express.json());              // ให้ Express อ่าน body ที่เป็น JSON ได้
 
-// ----- ข้อมูล (เก็บใน memory ไปก่อน บทที่ 8 จะย้ายไปฐานข้อมูล) -----
+// ----- ข้อมูล (เก็บใน memory ไปก่อน บทที่ 8b จะย้ายไปฐานข้อมูล) -----
 const LaptopInput = z.object({
   brand: z.string().min(1),
   model: z.string().min(1),

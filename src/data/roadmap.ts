@@ -38,6 +38,7 @@ export const roadmap: RoadmapLevel[] = [
       { num: "06", title: "SQL vs NoSQL", link: "/06-sql-nosql", outcome: "เขียน SQL พื้นฐาน เข้าใจ transaction", time: "4.5 ชม." },
       { num: "07", title: "MySQL vs PostgreSQL", link: "/07-mysql-postgres", outcome: "เห็นความต่างจริงของทั้งสองตัว", time: "3 ชม." },
       { num: "08", title: "Drizzle vs Prisma vs Sequelize", link: "/08-orm", outcome: "ต่อ DB จากโค้ดด้วย ORM และใช้ migration", time: "5 ชม." },
+      { num: "08b", title: "จากแบบฐานข้อมูลสู่ Backend", link: "/08b-db-to-backend", outcome: "เปลี่ยนผังตารางเป็น API ที่กฎครบ แบ่งชั้นโค้ดเป็น", time: "4 ชม." },
     ],
   },
   {

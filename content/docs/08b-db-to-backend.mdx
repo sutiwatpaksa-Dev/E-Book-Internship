@@ -1,0 +1,972 @@
+---
+navTitle: "08b · จากแบบฐานข้อมูลสู่ Backend"
+title: "บทที่ 8b: จากแบบฐานข้อมูลสู่ Backend 🧩"
+---
+
+> ⏱ ประมาณ 4 ชั่วโมง · 🧩 ต้องผ่านก่อน: บทที่ 5, 6, 8 · 🛠 ใช้: TypeScript, Express, Zod, Drizzle, PostgreSQL (Docker)
+
+> **⚡ สรุป 30 วินาที**
+> - แบบฐานข้อมูล (ER) ไม่ได้มีแค่ตารางกับเส้นโยง ข้างในมี **กฎ** ซ่อนอยู่ งานแรกคือ **เขียนกฎออกมาเป็นรายการ**
+> - กฎทุกข้อต้องมี **บ้าน**: ตรวจรูปแบบข้อมูล (Zod) · กฎธุรกิจ (service) · ด่านสุดท้ายในฐานข้อมูล (constraint)
+> - **API ไม่ใช่สำเนาของตาราง** ออกแบบจากสิ่งที่ผู้ใช้อยากทำ บางช่องคำนวณเอา บางช่องห้ามส่งออกไป
+> - แบ่งโค้ดเป็นชั้น: **routes** (HTTP) → **services** (กฎ) → **repositories** (ฐานข้อมูล) แต่ละชั้นทำหน้าที่เดียว
+> - error จากฐานข้อมูล (ข้อมูลซ้ำ, ยังมีของอ้างถึง) ต้อง **แปลงเป็นคำตอบที่ผู้ใช้เข้าใจ** พร้อม status code ที่ถูก
+> - แบบเปลี่ยนเมื่อไหร่ เดินเส้นทางเดิม: รายการกฎ → schema → migration → validation/service → ทดสอบ
+
+---
+
+## 📖 เรื่องเล่า
+
+บิตวาดผังตารางร้านเช่าโน้ตบุ๊กเสร็จ สวยมาก พี่ไบต์ชมว่า normalize ถูกหมด 👏
+แล้วบิตก็เปิด VS Code... นั่งนิ่งไป 20 นาที *"เอ่อ... เริ่มจากไฟล์ไหนดีครับ"*
+
+สุดท้ายบิตเขียนทุกอย่างลง `index.ts` ไฟล์เดียว query อยู่ใน route ปนกับการตรวจข้อมูล ใช้ได้อยู่ 2 วัน
+จนลูกค้า 2 คนกดเช่าเครื่องเดียวกันพร้อมกัน ระบบให้ผ่านทั้งคู่ 😱 ทั้งที่ในผังเขียนไว้ชัดว่า "เครื่องหนึ่งเช่าได้ทีละคน"
+
+พี่ไบต์: *"แบบถูกแล้ว แต่กฎในแบบไม่ได้ตามมาถึงโค้ด"*
+
+> 🧭 **บทนี้คือสะพาน** ระหว่างบทที่ 6 (ออกแบบตาราง), บทที่ 8 (ORM) และบทที่ 5 (API) ข้อ 1–6 อธิบายวิธีคิดแบบทีละขั้น ข้อ 7 เป็นต้นไปลงมือทำ Laptop API จากบทที่ 5 ให้ใช้ฐานข้อมูลจริง ขั้นตอนนี้ใช้ได้กับทุกโปรเจกต์ (รวมถึงงาน STARTER) ไม่ว่าจะใช้ ORM หรือเฟรมเวิร์กตัวไหน
+
+---
+
+## 1. ปัญหา: แบบดี แต่โค้ดไม่ตามแบบ
+
+ระหว่างผังตารางกับโค้ดที่ใช้งานได้ มีของหล่นหายได้ 3 อย่าง
+
+| หล่นอะไร | อาการ |
+|---|---|
+| **กฎในแบบ** | ผังบอกว่า "เลขเครื่องห้ามซ้ำ" แต่ไม่มีใครตรวจ ข้อมูลซ้ำเข้าไปเงียบๆ |
+| **ความหมายของข้อมูล** | API ส่งทุกช่องในตารางออกไปตรงๆ รวมช่องที่ไม่ควรให้ใครเห็น หรือหน้าเว็บต้องเรียก 5 ครั้งเพื่อประกอบข้อมูลหน้าเดียว |
+| **ที่อยู่ของโค้ด** | query, การตรวจข้อมูล และกฎธุรกิจปนกันในไฟล์เดียว แก้ที่หนึ่งพังอีกที่ |
+
+บทนี้แก้ทั้ง 3 ข้อด้วยเส้นทาง 6 ขั้นที่เดินซ้ำได้ทุกโปรเจกต์
+
+| ขั้น | ทำอะไร | ได้อะไรออกมา |
+|---|---|---|
+| ① | อ่านแบบ เขียน **รายการกฎ** | ตารางกฎ + บ้านของแต่ละกฎ |
+| ② | แปลงแบบเป็น **schema** | `schema.ts` ที่มี constraint ครบ |
+| ③ | **migration + seed** | ตารางจริงในฐานข้อมูล + ข้อมูลทดสอบ |
+| ④ | ออกแบบ **API จากสิ่งที่ผู้ใช้ทำ** | ตาราง endpoint + status code |
+| ⑤ | เขียนโค้ด **แบ่งชั้น** | routes / services / repositories |
+| ⑥ | **ทดสอบตามรายการกฎ** | กฎทุกข้อมีผลทดสอบยืนยัน |
+
+---
+
+## 2. ขั้นที่ ①: อ่านแบบ แล้วเขียนกฎออกมา
+
+ตัวอย่างทั้งบท: **ร้านเช่าโน้ตบุ๊ก** (ต่อจาก Laptop API ในบทที่ 5)
+
+```text
+customers                 rentals                          laptops
+─────────────             ───────────────────────          ─────────────────
+id        PK      1 ──< N customer_id  FK            N >── 1 id              PK
+name                      laptop_id    FK                  brand
+phone     UNIQUE          started_at                       model
+                          returned_at                      serial          UNIQUE
+                                                           price_per_month
+```
+
+`returned_at` ว่าง = ยังไม่คืน · ลูกค้า 1 คนเช่าได้หลายครั้ง เครื่อง 1 เครื่องถูกเช่าได้หลายครั้ง (คนละช่วงเวลา) จึงมีตาราง `rentals` อยู่ตรงกลาง (N:M แบบมีข้อมูลของตัวเอง ทบทวน [บทที่ 6 ข้อ 2](/06-sql-nosql#2-sql-relational-database))
+
+> 💡 **สังเกต:** ในบทที่ 5 เราเก็บ `status: "available" | "rented"` ไว้ในเครื่อง แต่ในแบบนี้ **ไม่มีคอลัมน์ status** เพราะคำตอบมีอยู่แล้ว "เครื่องว่าง = ไม่มีรายการเช่าที่ยังไม่คืน" ถ้าเก็บซ้ำอีกที่ วันหนึ่งสองที่จะไม่ตรงกัน (หลัก normalization ในบทที่ 6) ข้อมูลที่ **คำนวณได้** ให้คำนวณ ยกเว้นมีเหตุผลเรื่องความเร็วจริงๆ
+
+### กฎทุกข้อต้องมี "บ้าน"
+
+อ่านผังทีละเส้นทีละช่อง แล้วถามว่า "ช่องนี้มีกฎอะไร" จะได้รายการแบบนี้
+
+| # | กฎ | มาจากตรงไหนในแบบ | บ้าน (ใครเป็นคนตรวจ) | ผิดแล้วตอบ |
+|---|---|---|---|---|
+| 1 | ชื่อ ยี่ห้อ รุ่น ห้ามว่าง | `NOT NULL` | Zod + DB | `400` |
+| 2 | ราคาต่อเดือนต้องเป็นจำนวนเต็มมากกว่า 0 | ความหมายของช่อง | Zod + DB (`CHECK`) | `400` |
+| 3 | เบอร์โทรถูกรูปแบบ | ความหมายของช่อง | Zod | `400` |
+| 4 | เลขเครื่องห้ามซ้ำ / เบอร์ลูกค้าห้ามซ้ำ | `UNIQUE` | DB | `409` |
+| 5 | เช่าได้เฉพาะลูกค้าและเครื่องที่มีอยู่จริง | `FK` | service (+ DB) | `404` |
+| 6 | **เครื่องหนึ่งมีการเช่าที่ยังไม่คืนได้แค่ 1 รายการ** | ความหมายของ `returned_at` | service + DB (unique index) | `409` |
+| 7 | คืนเครื่องซ้ำไม่ได้ | ความหมายของ `returned_at` | service | `409` |
+| 8 | ลบเครื่องที่มีประวัติการเช่าไม่ได้ | `FK` + `ON DELETE RESTRICT` | DB | `409` |
+
+![กฎผ่าน 3 ด่าน: Zod ตรวจรูปแบบ, service ตรวจกฎธุรกิจ, ฐานข้อมูลเป็นด่านสุดท้าย](/img/08b-three-gates.svg)
+*คำขอต้องผ่าน 3 ด่าน ด่านแรกถูกที่สุด ด่านสุดท้ายแน่นอนที่สุด*
+
+**ทำไมกฎบางข้อต้องอยู่ 2 ที่?** แต่ละด่านเก่งคนละเรื่อง
+
+| ด่าน | เก่งเรื่อง | ทำไม่ได้ |
+|---|---|---|
+| **Zod (ตรวจรูปแบบ)** | ตอบเร็ว บอกได้ว่าช่องไหนผิด ไม่ต้องแตะฐานข้อมูล | ไม่รู้ว่าข้อมูลอื่นในระบบเป็นยังไง (ไม่รู้ว่าเครื่องนี้ถูกเช่าอยู่ไหม) |
+| **Service (กฎธุรกิจ)** | เช็คข้อมูลอื่นก่อนตัดสินใจ ตอบข้อความที่เจาะจง | ถ้าสองคำขอมาพร้อมกัน อาจเช็คผ่านทั้งคู่ก่อนที่ใครจะได้บันทึก |
+| **ฐานข้อมูล (constraint)** | **ไม่มีใครข้ามได้** ไม่ว่าจะมาจาก API, สคริปต์ หรือคนพิมพ์ SQL เอง และกันคำขอที่มาพร้อมกันได้จริง | ส่งกลับมาเป็นรหัส error ที่คนทั่วไปอ่านไม่เข้าใจ ต้องแปลงก่อน |
+
+> 🔐 **หลักจำ:** กฎที่ "ถ้าหลุดแล้วข้อมูลเสีย" ต้องมีด่านในฐานข้อมูลเสมอ เช่น กฎข้อ 6 ถ้าเช็คแค่ใน service จะเกิดเหตุการณ์แบบในเรื่องเล่า (สองคนเช่าพร้อมกัน) ทบทวนเรื่อง race condition ใน [บทที่ 6 ข้อ 4](/06-sql-nosql#4-transaction-และ-acid-ทำไม-sql-ไว้ใจได้เรื่องเงิน)
+
+---
+
+## 3. ขั้นที่ ②③: แปลงแบบเป็น schema แล้วสร้างตารางจริง
+
+ทุกอย่างในผังมีคู่ของมันใน schema เปิดตารางนี้ค้างไว้ตอนเขียน
+
+| ในผัง / SQL | ใน Drizzle | หมายเหตุ |
+|---|---|---|
+| ตาราง | `pgTable("ชื่อจริงใน DB", {...})` | ชื่อในฐานข้อมูลใช้ `snake_case` ชื่อในโค้ดใช้ `camelCase` |
+| `PK` เลขรัน | `serial("id").primaryKey()` | |
+| `NOT NULL` | `.notNull()` | ไม่ใส่ = ว่างได้ (เช่น `returned_at`) |
+| `UNIQUE` | `.unique()` | |
+| `FK` | `.references(() => ตาราง.id, { onDelete: ... })` | เลือก `onDelete` ให้ตรงกับกฎ (ตารางข้างล่าง) |
+| `CHECK` | `check("ชื่อ", sql\`...\`)` | กฎที่เขียนเป็นเงื่อนไขได้ เช่น ราคา > 0 |
+| ห้ามซ้ำ "เฉพาะบางแถว" | `uniqueIndex("ชื่อ").on(...).where(sql\`...\`)` | เรียกว่า **partial unique index** ใช้กับกฎข้อ 6 |
+
+**เลือก `onDelete` ยังไง** ถามว่า "ถ้าลบแถวแม่ แถวลูกควรเป็นยังไง"
+
+| ตัวเลือก | ความหมาย | ใช้เมื่อ |
+|---|---|---|
+| `restrict` | ห้ามลบแม่ถ้ายังมีลูก | ลูกเป็นประวัติที่ต้องเก็บ (การเช่า, การสั่งซื้อ, การจ่ายเงิน) |
+| `cascade` | ลบแม่แล้วลบลูกตาม | ลูกไม่มีความหมายถ้าไม่มีแม่ (รูปของสินค้า, คอมเมนต์ในโพสต์) |
+| `set null` | ลบแม่แล้วช่องในลูกกลายเป็นว่าง | ลูกยังอยู่ได้แม้ไม่มีแม่ (สินค้าที่หมวดถูกลบ) และช่องนั้นต้องว่างได้ |
+
+> ⚠️ `cascade` ผิดที่ = ข้อมูลหายเป็นแถบ ลบเครื่อง 1 เครื่อง ประวัติการเช่าทั้งหมดหายตาม ร้านจะไม่มีหลักฐานว่าใครเคยเช่า (งาน STARTER มีกับดักเดียวกันเรื่องหมวดกับสินค้า)
+
+`src/db/schema.ts` (กฎแต่ละข้อมีคอมเมนต์กำกับว่ามาจากข้อไหน)
+
+```ts
+import { sql } from "drizzle-orm";
+import { check, integer, pgTable, serial, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+
+export const customers = pgTable("customers", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  phone: text("phone").notNull().unique(),                          // กฎ: เบอร์ซ้ำไม่ได้
+});
+
+export const laptops = pgTable(
+  "laptops",
+  {
+    id: serial("id").primaryKey(),
+    brand: text("brand").notNull(),
+    model: text("model").notNull(),
+    serial: text("serial").notNull().unique(),                      // กฎ: เลขเครื่องซ้ำไม่ได้
+    pricePerMonth: integer("price_per_month").notNull(),
+  },
+  (t) => [check("price_positive", sql`${t.pricePerMonth} > 0`)],   // กฎ: ราคาต้องมากกว่า 0
+);
+
+export const rentals = pgTable(
+  "rentals",
+  {
+    id: serial("id").primaryKey(),
+    customerId: integer("customer_id").notNull().references(() => customers.id, { onDelete: "restrict" }),
+    laptopId: integer("laptop_id").notNull().references(() => laptops.id, { onDelete: "restrict" }),
+    startedAt: timestamp("started_at", { withTimezone: true }).defaultNow().notNull(),
+    returnedAt: timestamp("returned_at", { withTimezone: true }),   // null = ยังไม่คืน
+  },
+  // กฎ: เครื่องหนึ่งมีการเช่าที่ "ยังไม่คืน" ได้แค่ 1 รายการ
+  (t) => [uniqueIndex("one_open_rental_per_laptop").on(t.laptopId).where(sql`${t.returnedAt} is null`)],
+);
+
+export type Laptop = typeof laptops.$inferSelect;
+export type NewLaptop = typeof laptops.$inferInsert;
+export type NewCustomer = typeof customers.$inferInsert;
+```
+
+> 🤓 **partial unique index อ่านว่า:** "ในบรรดาแถวที่ `returned_at` ว่าง ห้ามมี `laptop_id` ซ้ำกัน" แถวที่คืนแล้วไม่นับ เครื่องเดียวจึงมีประวัติเช่าได้หลายแถว แต่ "กำลังถูกเช่า" ได้ทีละแถว กฎข้อ 6 ทั้งข้อจบในบรรทัดเดียว
+
+ขั้นที่ ③ ใช้คำสั่งเดิมจาก [บทที่ 8 ข้อ 3](/08-orm#3-migration): `generate` แล้ว **เปิดไฟล์ SQL อ่านก่อนเสมอ** ว่าตรงกับรายการกฎไหม แล้วค่อย `migrate` และ `seed`
+
+---
+
+## 4. ขั้นที่ ④: ออกแบบ API จากสิ่งที่ผู้ใช้ทำ ไม่ใช่จากตาราง
+
+มือใหม่มักทำ API "ตารางละ 5 ตัว" (ดูทั้งหมด / ดูตัวเดียว / เพิ่ม / แก้ / ลบ) ทุกตาราง ผลคือหน้าเว็บต้องเรียกหลายรอบมาประกอบเอง และ API ยอมให้ทำสิ่งที่ไม่ควรทำได้ เช่น แก้ `returned_at` ย้อนหลังตรงๆ
+
+เริ่มจากถามว่า **ผู้ใช้อยากทำอะไร** แล้วค่อยหาว่าต้องแตะตารางไหน
+
+| ผู้ใช้อยากทำ | Endpoint | แตะตาราง | ตอบสำเร็จ | ตอบไม่สำเร็จ (กฎข้อ) |
+|---|---|---|---|---|
+| ดูเครื่องทั้งหมด พร้อมบอกว่าว่างไหม | `GET /laptops` | laptops + rentals | `200` | |
+| ดูเครื่องเดียว | `GET /laptops/:id` | laptops | `200` | `404` |
+| เพิ่มเครื่อง | `POST /laptops` | laptops | `201` | `400` (1, 2) · `409` (4) |
+| ลบเครื่อง | `DELETE /laptops/:id` | laptops | `204` | `404` · `409` (8) |
+| สมัครลูกค้า | `POST /customers` | customers | `201` | `400` (1, 3) · `409` (4) |
+| **เช่าเครื่อง** | `POST /rentals` | rentals | `201` | `400` · `404` (5) · `409` (6) |
+| **คืนเครื่อง** | `POST /rentals/:id/return` | rentals | `200` | `404` · `409` (7) |
+| ดูประวัติเช่าของลูกค้า พร้อมชื่อเครื่อง | `GET /customers/:id/rentals` | rentals + laptops | `200` | `404` |
+
+สังเกต 4 อย่างที่ทำให้ API นี้ "ไม่ใช่สำเนาของตาราง"
+
+1. **ช่องที่คำนวณ:** `GET /laptops` มีช่อง `available` ซึ่งไม่มีในตาราง (คำนวณจาก rentals ด้วย query เดียว)
+2. **การกระทำมีชื่อของมันเอง:** "คืนเครื่อง" คือ `POST /rentals/:id/return` ไม่ใช่ `PATCH /rentals/:id` ที่ให้ส่ง `returnedAt` มาเอง เพราะเวลาคืนต้องเป็นเวลาของ server ไม่ใช่เวลาที่ client บอก
+3. **อ่านแบบประกอบมาให้แล้ว:** ประวัติเช่ามีชื่อเครื่องมาด้วย หน้าเว็บไม่ต้องเรียกซ้ำทีละเครื่อง (และฝั่ง server ใช้ `JOIN` ครั้งเดียว ไม่เกิด N+1 จาก [บทที่ 8 ข้อ 5](/08-orm#5-ปัญหา-n1-ต้องรู้))
+4. **ไม่มี endpoint ที่ไม่มีใครต้องใช้:** ไม่มี "แก้รายการเช่า" หรือ "ลบรายการเช่า" เพราะประวัติต้องไม่ถูกแก้ ทุก endpoint ที่เพิ่ม = ประตูอีกบานที่ต้องเฝ้า
+
+> 🔐 **ห้ามส่งทุกช่องออกไปโดยไม่คิด** ตัวอย่างนี้ส่งได้ทุกช่อง แต่ในงาน STARTER ตาราง `admins` มี `password_hash` ถ้าเขียน `select()` แล้วส่งออกไปตรงๆ hash จะหลุดไปถึงเบราว์เซอร์ ให้เลือกช่องที่จะส่งเสมอ ([บทที่ 10](/10-security))
+
+---
+
+## 5. ขั้นที่ ⑤: แบ่งชั้น ให้กฎแต่ละข้ออยู่ถูกที่
+
+ใช้โครงแบบแบ่งตามหน้าที่ (Layered) จาก [บทเสริม: จัดโครงสร้างโปรเจกต์ ข้อ 3](/project-structure#3--backend-แบบที่-1-แบ่งตามหน้าที่-layered--mvc) คราวนี้ชั้นล่างสุดต่อฐานข้อมูลจริง
+
+![คำขอไหลจาก routes ไป services ไป repositories ถึงฐานข้อมูล แต่ละชั้นถือกฎคนละแบบ](/img/08b-layers-rules.svg)
+*แต่ละชั้นถือกฎคนละแบบ และเรียกได้เฉพาะชั้นที่อยู่ถัดลงไป*
+
+| ชั้น | ไฟล์ | ถือกฎแบบไหน | ห้ามทำ |
+|---|---|---|---|
+| routes | `routes/*.routes.ts` | อ่านคำขอ ตรวจรูปแบบด้วย Zod ส่งต่อ ตอบกลับ | query ฐานข้อมูลเอง, เขียนกฎธุรกิจ |
+| services | `services/*.service.ts` | กฎธุรกิจ (ข้อ 5, 6, 7) และแปลง error ของฐานข้อมูลเป็นภาษาคน | รู้จัก `req`, `res`, status code |
+| repositories | `repositories/*.repository.ts` | query อย่างเดียว ตั้งชื่อฟังก์ชันตามความหมาย (`findOpenByLaptop`) | ตัดสินใจว่าอะไรถูกหรือผิด |
+| db | `db/schema.ts` | ด่านสุดท้าย (constraint) | |
+
+```text
+src/
+├── db/
+│   ├── schema.ts           แบบตาราง + constraint
+│   └── index.ts            ต่อฐานข้อมูล
+├── http/
+│   ├── errors.ts           AppError + ตาราง code → status
+│   └── validate.ts         Zod schema ของคำขอ
+├── repositories/           laptop / customer / rental
+├── services/               laptop / customer / rental
+├── routes/                 laptop / customer / rental
+├── app.ts                  ประกอบ routes + จัดการ error ที่เดียว
+├── index.ts                เปิด server
+└── seed.ts
+```
+
+### error ของฐานข้อมูล → คำตอบที่คนเข้าใจ
+
+เมื่อชนด่านในฐานข้อมูล PostgreSQL ส่ง **รหัส error** กลับมา 2 ตัวที่จะเจอบ่อยที่สุด
+
+| รหัส | ชื่อ | เกิดเมื่อ | แปลงเป็น |
+|---|---|---|---|
+| `23505` | unique_violation | ใส่ค่าซ้ำในช่อง `UNIQUE` หรือ unique index | `409` "มีอยู่แล้ว" / "ถูกเช่าอยู่" |
+| `23503` | foreign_key_violation | อ้างถึงแถวที่ไม่มี หรือลบแถวที่ยังมีคนอ้างถึง | `404` หรือ `409` แล้วแต่กรณี |
+| `23514` | check_violation | ผิดเงื่อนไข `CHECK` | ปกติ Zod กันไว้ก่อนแล้ว ถ้าหลุดมาถึงนี่ = Zod หลวมไป |
+
+`src/http/errors.ts` service โยน error ที่บอก "ผิดกฎข้อไหน" ส่วนชั้น HTTP เป็นคนแปลงเป็น status code ที่เดียว
+
+```ts
+// error ที่ "ตั้งใจ" ให้เกิด บอกแค่ว่าผิดกฎข้อไหน (code) ไม่รู้จัก HTTP
+export class AppError extends Error {
+  constructor(
+    public code: "NOT_FOUND" | "VALIDATION_ERROR" | "DUPLICATE" | "LAPTOP_RENTED" | "ALREADY_RETURNED" | "IN_USE",
+    message: string,
+    public details: unknown = undefined,
+  ) {
+    super(message);
+  }
+}
+
+// ชั้น HTTP เป็นคนแปลง code → status code ที่เดียว
+export const STATUS: Record<AppError["code"], number> = {
+  NOT_FOUND: 404,
+  VALIDATION_ERROR: 400,
+  DUPLICATE: 409,
+  LAPTOP_RENTED: 409,
+  ALREADY_RETURNED: 409,
+  IN_USE: 409,
+};
+
+// รหัส error ของ PostgreSQL (Drizzle ห่อ error ของ pg ไว้ใน cause)
+export function pgCode(err: unknown): string | undefined {
+  const e = err as { code?: string; cause?: { code?: string } };
+  return e.cause?.code ?? e.code;
+}
+```
+
+> 💡 **ทำไม service ไม่โยน `404` เอง?** เพราะ service อาจถูกเรียกจากที่อื่นที่ไม่ใช่ HTTP เช่น สคริปต์นำเข้าข้อมูล หรือเทสต์ ถ้า service พูดภาษา "ผิดกฎข้อไหน" ใครเรียกก็เข้าใจ ส่วนการแปลงเป็นตัวเลข HTTP เป็นหน้าที่ของคนที่คุยกับ HTTP
+
+---
+
+## 6. ไล่ 1 คำขอ ตั้งแต่เข้าจนออก
+
+`POST /rentals` ส่ง `{ "customerId": 1, "laptopId": 2 }` เดินทางแบบนี้
+
+| ลำดับ | ชั้น | ทำอะไร | ถ้าไม่ผ่าน |
+|---|---|---|---|
+| 1 | Express | แปลง body เป็น object (`express.json()`) | JSON พัง → `400` |
+| 2 | routes | `parse(RentalInput, req.body)` ตรวจว่าเป็นเลขจำนวนเต็มบวกทั้งคู่ | `VALIDATION_ERROR` → `400` |
+| 3 | services | มีลูกค้าคนนี้ไหม มีเครื่องนี้ไหม (กฎข้อ 5) | `NOT_FOUND` → `404` |
+| 4 | services | เครื่องนี้มีการเช่าที่ยังไม่คืนไหม (กฎข้อ 6 ด่านแรก) | `LAPTOP_RENTED` → `409` |
+| 5 | repositories | `INSERT INTO rentals ...` | |
+| 6 | PostgreSQL | unique index ตรวจซ้ำอีกรอบ (กฎข้อ 6 ด่านสุดท้าย) | รหัส `23505` → service แปลงเป็น `LAPTOP_RENTED` → `409` |
+| 7 | routes | ตอบ `201` พร้อมรายการเช่าที่สร้าง | |
+
+ข้อ 4 กับข้อ 6 ดูเหมือนตรวจซ้ำ แต่ทำงานคนละจังหวะ ข้อ 4 ตอบเร็วและชัดในกรณีปกติ ข้อ 6 รับกรณีที่สองคำขอมาพร้อมกันจนผ่านข้อ 4 ทั้งคู่ (ข้อ 9 จะลองให้เห็นจริง)
+
+---
+
+> 🔧 **จากนี้คือการลงมือ** ต่อยอดจากโปรเจกต์ `laptop-api` ของบทที่ 5 ที่เก็บข้อมูลไว้ใน memory ย้ายมาใช้ PostgreSQL ตามแบบในข้อ 2
+
+## 7. 🔧 ลงมือ: เตรียมโปรเจกต์และฐานข้อมูล
+
+```bash
+docker run -d --name laptop-db -e POSTGRES_PASSWORD=secret -p 5432:5432 postgres:17
+
+cd laptop-api                       # โปรเจกต์จากบทที่ 5
+npm install drizzle-orm pg dotenv
+npm install -D drizzle-kit @types/pg
+mkdir -p src/db src/http src/repositories src/services src/routes
+```
+
+> 💡 ถ้า port `5432` ถูกใช้อยู่ (เช่น ยังเปิดฐานข้อมูลของบทที่ 8 ค้างไว้) เปลี่ยนเป็น `-p 5433:5432` แล้วแก้ port ใน `DATABASE_URL` ให้ตรง ([บทที่ 7 ข้อ 11](/07-mysql-postgres#11--แก้ปัญหาที่เจอบ่อย-troubleshooting))
+> (ทดสอบกับ `express` 5, `zod` 4, `drizzle-orm` 0.45 และ `drizzle-kit` 0.31)
+
+`.env` (อยู่ใน `.gitignore`)
+```
+DATABASE_URL=postgres://postgres:secret@localhost:5432/postgres
+```
+
+`package.json` เพิ่มคำสั่งลัด
+```json
+{
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "tsx src/seed.ts"
+  }
+}
+```
+
+`drizzle.config.ts` (วางนอก `src/`) เหมือน [บทที่ 8 ข้อ 6](/08-orm#6--ลงมือ-drizzle-ตั้งแต่ศูนย์)
+```ts
+import "dotenv/config";
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "postgresql",
+  schema: "./src/db/schema.ts",
+  out: "./drizzle",
+  dbCredentials: { url: process.env.DATABASE_URL! },
+});
+```
+
+`src/db/schema.ts` ใช้โค้ดจากข้อ 3 และ `src/db/index.ts`
+```ts
+import "dotenv/config";
+import { drizzle } from "drizzle-orm/node-postgres";
+import * as schema from "./schema.js";
+
+export const db = drizzle(process.env.DATABASE_URL!, { schema });
+```
+
+> 💡 import ในโปรเจกต์นี้ลงท้ายด้วย `.js` ทั้งที่ไฟล์จริงเป็น `.ts` เพราะ `tsconfig` ของบทที่ 4 ตั้ง `"module": "NodeNext"` ซึ่งให้เขียนชื่อไฟล์ตามที่จะเป็นหลังแปลงแล้ว (ทบทวน [บทที่ 4](/04-typescript))
+
+สร้างตารางแล้ว **อ่าน SQL ก่อน migrate**
+```bash
+npm run db:generate
+```
+เปิดไฟล์ใหม่ใน `drizzle/` ควรเห็นกฎครบตามรายการในข้อ 2 (ตัดมาบางส่วน)
+```sql
+CREATE TABLE "laptops" (
+	...
+	"serial" text NOT NULL,
+	"price_per_month" integer NOT NULL,
+	CONSTRAINT "laptops_serial_unique" UNIQUE("serial"),
+	CONSTRAINT "price_positive" CHECK ("laptops"."price_per_month" > 0)
+);
+...
+ALTER TABLE "rentals" ADD CONSTRAINT "rentals_laptop_id_laptops_id_fk" FOREIGN KEY ("laptop_id") REFERENCES "public"."laptops"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+CREATE UNIQUE INDEX "one_open_rental_per_laptop" ON "rentals" USING btree ("laptop_id") WHERE "rentals"."returned_at" is null;
+```
+ไล่เช็คกับรายการกฎ: `UNIQUE` (ข้อ 4) ✓ `CHECK` (ข้อ 2) ✓ `ON DELETE restrict` (ข้อ 8) ✓ unique index แบบมี `WHERE` (ข้อ 6) ✓ แล้วค่อย
+
+```bash
+npm run db:migrate
+```
+
+`src/seed.ts` ข้อมูลทดสอบ **รันซ้ำได้**
+```ts
+import { db } from "./db/index.js";
+import { customers, laptops } from "./db/schema.js";
+
+// รันซ้ำได้: ถ้ามีเลขเครื่อง/เบอร์นี้แล้ว ข้าม
+await db
+  .insert(laptops)
+  .values([
+    { brand: "Asus", model: "Vivobook 15", serial: "ASU-001", pricePerMonth: 1200 },
+    { brand: "Lenovo", model: "ThinkPad E14", serial: "LEN-001", pricePerMonth: 1500 },
+    { brand: "Acer", model: "Swift Go", serial: "ACE-001", pricePerMonth: 1300 },
+  ])
+  .onConflictDoNothing({ target: laptops.serial });
+
+await db
+  .insert(customers)
+  .values([
+    { name: "มานี", phone: "0811111111" },
+    { name: "ปิติ", phone: "0822222222" },
+  ])
+  .onConflictDoNothing({ target: customers.phone });
+
+console.log("🌱 seed เสร็จ");
+process.exit(0);
+```
+```bash
+npm run db:seed
+```
+
+---
+
+## 8. 🔧 ลงมือ: เขียนทีละชั้น จากล่างขึ้นบน
+
+เขียนจากชั้นล่าง (ใกล้ฐานข้อมูล) ขึ้นไปชั้นบน (ใกล้ HTTP) เพราะชั้นบนเรียกใช้ชั้นล่าง เขียนชั้นล่างเสร็จก่อน TypeScript จะช่วยเติมชื่อฟังก์ชันให้ตอนเขียนชั้นบน
+
+### ชั้น repositories: query อย่างเดียว
+
+`src/repositories/laptop.repository.ts`
+```ts
+import { and, eq, getTableColumns, isNull, sql } from "drizzle-orm";
+import { db } from "../db/index.js";
+import { laptops, type NewLaptop, rentals } from "../db/schema.js";
+
+export const laptopRepository = {
+  // "ว่างไหม" ไม่ได้เก็บเป็นคอลัมน์ แต่คำนวณจาก rentals ที่ยังไม่คืน
+  listWithAvailability: () =>
+    db
+      .select({ ...getTableColumns(laptops), available: sql<boolean>`${rentals.id} is null` })
+      .from(laptops)
+      .leftJoin(rentals, and(eq(rentals.laptopId, laptops.id), isNull(rentals.returnedAt)))
+      .orderBy(laptops.id),
+
+  findById: async (id: number) => {
+    const [row] = await db.select().from(laptops).where(eq(laptops.id, id));
+    return row;
+  },
+
+  create: async (data: NewLaptop) => {
+    const [row] = await db.insert(laptops).values(data).returning();
+    return row;
+  },
+
+  remove: async (id: number) => {
+    const [row] = await db.delete(laptops).where(eq(laptops.id, id)).returning();
+    return row;
+  },
+};
+```
+อ่าน `listWithAvailability`: `LEFT JOIN` กับรายการเช่าที่ยังไม่คืน เครื่องที่จับคู่ไม่ได้ (`rentals.id is null`) คือเครื่องว่าง ใช้เทคนิคเดียวกับ "หาคนที่ยังไม่เคย..." ใน [บทที่ 6](/06-sql-nosql#join-รวมหลายตาราง)
+
+`src/repositories/customer.repository.ts`
+```ts
+import { eq } from "drizzle-orm";
+import { db } from "../db/index.js";
+import { customers, type NewCustomer } from "../db/schema.js";
+
+export const customerRepository = {
+  findById: async (id: number) => {
+    const [row] = await db.select().from(customers).where(eq(customers.id, id));
+    return row;
+  },
+
+  create: async (data: NewCustomer) => {
+    const [row] = await db.insert(customers).values(data).returning();
+    return row;
+  },
+};
+```
+
+`src/repositories/rental.repository.ts`
+```ts
+import { and, desc, eq, isNull } from "drizzle-orm";
+import { db } from "../db/index.js";
+import { laptops, rentals } from "../db/schema.js";
+
+export const rentalRepository = {
+  findById: async (id: number) => {
+    const [row] = await db.select().from(rentals).where(eq(rentals.id, id));
+    return row;
+  },
+
+  findOpenByLaptop: async (laptopId: number) => {
+    const [row] = await db
+      .select()
+      .from(rentals)
+      .where(and(eq(rentals.laptopId, laptopId), isNull(rentals.returnedAt)));
+    return row;
+  },
+
+  create: async (customerId: number, laptopId: number) => {
+    const [row] = await db.insert(rentals).values({ customerId, laptopId }).returning();
+    return row;
+  },
+
+  // คืนได้เฉพาะรายการที่ยังไม่คืน ถ้าคืนไปแล้วจะได้ undefined
+  markReturned: async (id: number) => {
+    const [row] = await db
+      .update(rentals)
+      .set({ returnedAt: new Date() })
+      .where(and(eq(rentals.id, id), isNull(rentals.returnedAt)))
+      .returning();
+    return row;
+  },
+
+  // ประวัติเช่าของลูกค้า พร้อมข้อมูลเครื่อง ด้วย query เดียว (ไม่เกิด N+1)
+  listByCustomer: (customerId: number) =>
+    db
+      .select({
+        id: rentals.id,
+        startedAt: rentals.startedAt,
+        returnedAt: rentals.returnedAt,
+        laptop: { id: laptops.id, brand: laptops.brand, model: laptops.model },
+      })
+      .from(rentals)
+      .innerJoin(laptops, eq(laptops.id, rentals.laptopId))
+      .where(eq(rentals.customerId, customerId))
+      .orderBy(desc(rentals.startedAt)),
+};
+```
+> 🤓 `markReturned` ใส่เงื่อนไข "ยังไม่คืน" ไว้ใน `WHERE` ของ `UPDATE` เลย แทนที่จะอ่านก่อนแล้วค่อยแก้ เพราะการ "อ่าน → ตัดสินใจ → เขียน" มีช่องว่างให้คำขออื่นแทรกได้ ส่วน `UPDATE ... WHERE` ฐานข้อมูลทำให้เสร็จในจังหวะเดียว
+
+### ชั้น services: กฎธุรกิจ
+
+`src/services/rental.service.ts` หัวใจของบทนี้ กฎข้อ 5, 6, 7 อยู่ที่นี่
+```ts
+import { AppError, pgCode } from "../http/errors.js";
+import { customerRepository } from "../repositories/customer.repository.js";
+import { laptopRepository } from "../repositories/laptop.repository.js";
+import { rentalRepository } from "../repositories/rental.repository.js";
+
+export const rentalService = {
+  async rent(customerId: number, laptopId: number) {
+    if (!(await customerRepository.findById(customerId))) throw new AppError("NOT_FOUND", "ไม่พบลูกค้านี้");
+    if (!(await laptopRepository.findById(laptopId))) throw new AppError("NOT_FOUND", "ไม่พบเครื่องนี้");
+
+    // ด่านที่ 1: เช็คก่อน เพื่อตอบข้อความที่อ่านเข้าใจ
+    if (await rentalRepository.findOpenByLaptop(laptopId)) {
+      throw new AppError("LAPTOP_RENTED", "เครื่องนี้ถูกเช่าอยู่");
+    }
+    try {
+      return await rentalRepository.create(customerId, laptopId);
+    } catch (err) {
+      // ด่านสุดท้าย: สองคำขอมาพร้อมกันแล้วผ่านด่านที่ 1 ทั้งคู่ ฐานข้อมูลจะกันไว้ให้ 1 รายการ
+      if (pgCode(err) === "23505") throw new AppError("LAPTOP_RENTED", "เครื่องนี้ถูกเช่าอยู่");
+      throw err;
+    }
+  },
+
+  async returnLaptop(rentalId: number) {
+    const returned = await rentalRepository.markReturned(rentalId);
+    if (returned) return returned;
+    // อัปเดตไม่ได้ แปลว่าไม่มีรายการนี้ หรือคืนไปแล้ว ดูว่าเป็นแบบไหน
+    if (!(await rentalRepository.findById(rentalId))) throw new AppError("NOT_FOUND", "ไม่พบรายการเช่านี้");
+    throw new AppError("ALREADY_RETURNED", "รายการนี้คืนเครื่องแล้ว");
+  },
+};
+```
+
+`src/services/laptop.service.ts`
+```ts
+import type { NewLaptop } from "../db/schema.js";
+import { AppError, pgCode } from "../http/errors.js";
+import { laptopRepository } from "../repositories/laptop.repository.js";
+
+export const laptopService = {
+  list: () => laptopRepository.listWithAvailability(),
+
+  async get(id: number) {
+    const laptop = await laptopRepository.findById(id);
+    if (!laptop) throw new AppError("NOT_FOUND", "ไม่พบเครื่องนี้");
+    return laptop;
+  },
+
+  async create(data: NewLaptop) {
+    try {
+      return await laptopRepository.create(data);
+    } catch (err) {
+      if (pgCode(err) === "23505") throw new AppError("DUPLICATE", "เลขเครื่องนี้มีอยู่แล้ว");
+      throw err;
+    }
+  },
+
+  async remove(id: number) {
+    try {
+      const laptop = await laptopRepository.remove(id);
+      if (!laptop) throw new AppError("NOT_FOUND", "ไม่พบเครื่องนี้");
+    } catch (err) {
+      // 23503 = ยังมีแถวอื่นอ้างถึง (เครื่องนี้มีประวัติการเช่า)
+      if (pgCode(err) === "23503") throw new AppError("IN_USE", "เครื่องนี้มีประวัติการเช่า ลบไม่ได้");
+      throw err;
+    }
+  },
+};
+```
+
+`src/services/customer.service.ts`
+```ts
+import type { NewCustomer } from "../db/schema.js";
+import { AppError, pgCode } from "../http/errors.js";
+import { customerRepository } from "../repositories/customer.repository.js";
+import { rentalRepository } from "../repositories/rental.repository.js";
+
+export const customerService = {
+  async create(data: NewCustomer) {
+    try {
+      return await customerRepository.create(data);
+    } catch (err) {
+      if (pgCode(err) === "23505") throw new AppError("DUPLICATE", "เบอร์นี้มีอยู่แล้ว");
+      throw err;
+    }
+  },
+
+  async rentals(customerId: number) {
+    const customer = await customerRepository.findById(customerId);
+    if (!customer) throw new AppError("NOT_FOUND", "ไม่พบลูกค้านี้");
+    return rentalRepository.listByCustomer(customerId);
+  },
+};
+```
+
+### ชั้น routes: HTTP อย่างเดียว
+
+`src/http/validate.ts` รูปแบบข้อมูลที่รับเข้า (กฎข้อ 1, 2, 3)
+```ts
+import { z } from "zod";
+import { AppError } from "./errors.js";
+
+// ตรวจข้อมูลด้วย Zod ไม่ผ่าน → AppError ที่บอกว่าช่องไหนผิด
+export function parse<T extends z.ZodType>(schema: T, input: unknown): z.infer<T> {
+  const result = schema.safeParse(input);
+  if (!result.success) {
+    throw new AppError("VALIDATION_ERROR", "ข้อมูลไม่ถูกต้อง", z.flattenError(result.error).fieldErrors);
+  }
+  return result.data;
+}
+
+export const IdParam = z.coerce.number().int().positive();
+
+export const LaptopInput = z.object({
+  brand: z.string().trim().min(1),
+  model: z.string().trim().min(1),
+  serial: z.string().trim().min(1),
+  pricePerMonth: z.number().int().positive(),
+});
+
+export const CustomerInput = z.object({
+  name: z.string().trim().min(1),
+  phone: z.string().regex(/^0\d{8,9}$/, "เบอร์โทรต้องเป็นตัวเลข 9-10 หลัก ขึ้นต้นด้วย 0"),
+});
+
+export const RentalInput = z.object({
+  customerId: z.number().int().positive(),
+  laptopId: z.number().int().positive(),
+});
+```
+> 💡 Zod รับเฉพาะช่องที่ประกาศไว้ ช่องอื่นที่แนบมาจะถูกตัดทิ้ง ถ้ามีคนแอบส่ง `"id": 999` หรือ `"returnedAt": "..."` มาด้วย ก็ไม่หลุดถึงฐานข้อมูล
+
+`src/routes/rental.routes.ts`
+```ts
+import { Router } from "express";
+import { IdParam, parse, RentalInput } from "../http/validate.js";
+import { rentalService } from "../services/rental.service.js";
+
+export const rentalRoutes = Router();
+
+rentalRoutes.post("/", async (req, res) => {
+  const { customerId, laptopId } = parse(RentalInput, req.body);
+  res.status(201).json(await rentalService.rent(customerId, laptopId));
+});
+
+rentalRoutes.post("/:id/return", async (req, res) => {
+  res.json(await rentalService.returnLaptop(parse(IdParam, req.params.id)));
+});
+```
+
+`src/routes/laptop.routes.ts`
+```ts
+import { Router } from "express";
+import { IdParam, LaptopInput, parse } from "../http/validate.js";
+import { laptopService } from "../services/laptop.service.js";
+
+export const laptopRoutes = Router();
+
+laptopRoutes.get("/", async (_req, res) => {
+  res.json(await laptopService.list());
+});
+
+laptopRoutes.get("/:id", async (req, res) => {
+  res.json(await laptopService.get(parse(IdParam, req.params.id)));
+});
+
+laptopRoutes.post("/", async (req, res) => {
+  res.status(201).json(await laptopService.create(parse(LaptopInput, req.body)));
+});
+
+laptopRoutes.delete("/:id", async (req, res) => {
+  await laptopService.remove(parse(IdParam, req.params.id));
+  res.status(204).end();
+});
+```
+
+`src/routes/customer.routes.ts`
+```ts
+import { Router } from "express";
+import { CustomerInput, IdParam, parse } from "../http/validate.js";
+import { customerService } from "../services/customer.service.js";
+
+export const customerRoutes = Router();
+
+customerRoutes.post("/", async (req, res) => {
+  res.status(201).json(await customerService.create(parse(CustomerInput, req.body)));
+});
+
+customerRoutes.get("/:id/rentals", async (req, res) => {
+  res.json(await customerService.rentals(parse(IdParam, req.params.id)));
+});
+```
+
+สังเกตว่า route ทุกตัวสั้นมาก และ **ไม่มี `try/catch` สักที่** เพราะ error ทุกชนิดไหลไปจบที่เดียวใน `app.ts`
+
+### ประกอบร่าง
+
+`src/app.ts`
+```ts
+import express, { type ErrorRequestHandler } from "express";
+import { AppError, STATUS } from "./http/errors.js";
+import { customerRoutes } from "./routes/customer.routes.js";
+import { laptopRoutes } from "./routes/laptop.routes.js";
+import { rentalRoutes } from "./routes/rental.routes.js";
+
+export const app = express();
+app.use(express.json());
+
+app.use("/laptops", laptopRoutes);
+app.use("/customers", customerRoutes);
+app.use("/rentals", rentalRoutes);
+
+app.use((_req, res) => {
+  res.status(404).json({ error: "ไม่พบ endpoint นี้" });
+});
+
+// error จากทุกชั้นมาจบที่นี่ (Express 5 ส่ง error ของ async handler มาให้เอง)
+const onError: ErrorRequestHandler = (err, _req, res, _next) => {
+  if (err instanceof AppError) {
+    res.status(STATUS[err.code]).json({ error: err.message, code: err.code, details: err.details });
+    return;
+  }
+  console.error(err);                                   // รายละเอียดจริงอยู่ใน log ของเราเท่านั้น
+  res.status(500).json({ error: "เกิดข้อผิดพลาดในระบบ" });
+};
+app.use(onError);
+```
+
+`src/index.ts`
+```ts
+import { app } from "./app.js";
+
+app.listen(3000, () => console.log("🚀 API on http://localhost:3000"));
+```
+
+> 💡 แยก `app.ts` (ประกอบระบบ) ออกจาก `index.ts` (เปิด port) เพื่อให้เทสต์เรียก `app` ได้โดยไม่ต้องเปิด server จริง
+
+```bash
+npm run typecheck      # ต้องไม่มี error
+npm run dev
+```
+
+---
+
+## 9. 🔧 ทดสอบตามรายการกฎ
+
+ทดสอบ **ทีละกฎ** จากตารางในข้อ 2 ไม่ใช่กดมั่วๆ ว่า "ใช้ได้" สร้าง `rentals.http` (extension REST Client จากบทที่ 5)
+
+```http
+### ดูเครื่องทั้งหมด (ทุกเครื่องควร available: true)
+GET http://localhost:3000/laptops
+
+### มานีเช่าเครื่อง 2 (ควรได้ 201)
+POST http://localhost:3000/rentals
+Content-Type: application/json
+
+{ "customerId": 1, "laptopId": 2 }
+
+### ปิติเช่าเครื่อง 2 ซ้ำ (กฎข้อ 6 → 409)
+POST http://localhost:3000/rentals
+Content-Type: application/json
+
+{ "customerId": 2, "laptopId": 2 }
+
+### เช่าเครื่องที่ไม่มี (กฎข้อ 5 → 404)
+POST http://localhost:3000/rentals
+Content-Type: application/json
+
+{ "customerId": 1, "laptopId": 99 }
+
+### ส่งข้อมูลผิดรูปแบบ (→ 400 บอกช่องที่ผิด)
+POST http://localhost:3000/rentals
+Content-Type: application/json
+
+{ "customerId": "หนึ่ง" }
+
+### คืนเครื่อง (ควรได้ 200) แล้วกดซ้ำ (กฎข้อ 7 → 409)
+POST http://localhost:3000/rentals/1/return
+
+### เพิ่มเครื่องเลขซ้ำ (กฎข้อ 4 → 409)
+POST http://localhost:3000/laptops
+Content-Type: application/json
+
+{ "brand": "Asus", "model": "X", "serial": "ASU-001", "pricePerMonth": 900 }
+
+### ลบเครื่องที่มีประวัติเช่า (กฎข้อ 8 → 409)
+DELETE http://localhost:3000/laptops/2
+
+### ประวัติเช่าของมานี พร้อมชื่อเครื่อง
+GET http://localhost:3000/customers/1/rentals
+```
+
+ผลที่ควรได้ (รันจริง เวลาและเลข id อาจต่างกัน)
+
+```text
+GET    /laptops              → 200 [{"id":1,...,"available":true},{"id":2,...,"available":true},...]
+POST   /rentals (มานี, 2)    → 201 {"id":1,"customerId":1,"laptopId":2,"startedAt":"...","returnedAt":null}
+POST   /rentals (ปิติ, 2)    → 409 {"error":"เครื่องนี้ถูกเช่าอยู่","code":"LAPTOP_RENTED"}
+POST   /rentals (เครื่อง 99) → 404 {"error":"ไม่พบเครื่องนี้","code":"NOT_FOUND"}
+POST   /rentals (ผิดรูปแบบ)  → 400 {"error":"ข้อมูลไม่ถูกต้อง","code":"VALIDATION_ERROR","details":{"customerId":[...],"laptopId":[...]}}
+POST   /rentals/1/return     → 200 {"id":1,...,"returnedAt":"..."}
+POST   /rentals/1/return     → 409 {"error":"รายการนี้คืนเครื่องแล้ว","code":"ALREADY_RETURNED"}
+POST   /laptops (ASU-001)    → 409 {"error":"เลขเครื่องนี้มีอยู่แล้ว","code":"DUPLICATE"}
+DELETE /laptops/2            → 409 {"error":"เครื่องนี้มีประวัติการเช่า ลบไม่ได้","code":"IN_USE"}
+GET    /customers/1/rentals  → 200 [{"id":1,"startedAt":"...","returnedAt":"...","laptop":{"id":2,"brand":"Lenovo","model":"ThinkPad E14"}}]
+```
+
+ได้ครบทุกบรรทัด = กฎทั้ง 8 ข้อมีบ้านและทำงานจริง ✅
+
+---
+
+## 10. 💥 ลองพังมันดู
+
+### ❶ สองคนกดเช่าพร้อมกัน (เหตุการณ์ในเรื่องเล่า)
+
+ปิดด่านที่ 1 ชั่วคราว: ใน `rental.service.ts` ใส่ `//` หน้า 3 บรรทัดของ `if (await rentalRepository.findOpenByLaptop(...))` แล้วสร้าง `race.ts` ยิงคำขอเช่าเครื่อง 3 พร้อมกัน 5 ครั้ง
+
+```ts
+const shots = Array.from({ length: 5 }, (_, i) =>
+  fetch("http://localhost:3000/rentals", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ customerId: (i % 2) + 1, laptopId: 3 }),
+  }).then((r) => r.status),
+);
+console.log(await Promise.all(shots));
+```
+```bash
+npx tsx race.ts
+```
+ควรเห็น `201` แค่ **ตัวเดียว** ที่เหลือเป็น `409` เช่น `[ 409, 201, 409, 409, 409 ]` (ตำแหน่งของ `201` สลับได้ทุกรอบ ขึ้นกับว่าคำขอไหนถึงฐานข้อมูลก่อน)
+ด่านใน service ปิดไปแล้ว แต่ unique index ในฐานข้อมูลยังกันไว้ได้ นี่คือเหตุผลที่กฎสำคัญต้องมีด่านในฐานข้อมูลเสมอ
+
+👉 อยากเห็นของพังจริง: ลองลบบรรทัด `uniqueIndex(...)` ใน schema → `db:generate` → `db:migrate` แล้วรัน `race.ts` อีกรอบ (คืนเครื่อง 3 ก่อน) จะเห็น `[ 201, 201, 201, 201, 201 ]` เครื่องเดียวถูกเช่าซ้อน 5 รายการ เสร็จแล้ว **ใส่บรรทัดนั้นกลับ** generate และ migrate อีกครั้ง และเอา `//` ใน service ออก
+
+### ❷ ลืมแปลง error ของฐานข้อมูล
+
+ลบ `try/catch` ใน `laptopService.create` แล้วเพิ่มเครื่องเลขซ้ำ จะได้ `500 เกิดข้อผิดพลาดในระบบ` และในหน้าจอ server มีข้อความ `duplicate key value violates unique constraint "laptops_serial_unique"`
+ผู้ใช้ไม่ได้ทำอะไรผิดร้ายแรง แค่ข้อมูลซ้ำ แต่ได้คำตอบว่า "ระบบพัง" นี่คือเหตุผลที่ service ต้องแปลง `23505` เป็น `409` ที่อ่านเข้าใจ
+
+### ❸ ตั้ง `onDelete: "cascade"` ผิดที่
+
+เปลี่ยน FK `laptopId` ใน `rentals` เป็น `cascade` → generate → migrate แล้วลบเครื่อง 2 ได้ `204` ทันที... และประวัติการเช่าของมานีหายไปด้วย 😱 (`GET /customers/1/rentals` ได้ `[]`) เปลี่ยนกลับเป็น `restrict` แล้ว generate / migrate อีกรอบ
+
+---
+
+## 11. เมื่อแบบเปลี่ยน: เดินเส้นทางเดิม
+
+ร้านอยากเก็บ **เงินมัดจำ** ตอนเช่า ไม่ต้องคิดใหม่ทั้งหมด เดินตาม 6 ขั้นเดิม
+
+1. **รายการกฎ:** เพิ่มกฎข้อ 9 "มัดจำต้องไม่ติดลบ ถ้าไม่ใส่ = 0" บ้าน: Zod + DB (`CHECK`) + ค่าเริ่มต้น
+2. **schema:** เพิ่ม `deposit: integer("deposit").notNull().default(0)` ใน `rentals` และ `check("deposit_not_negative", ...)`
+3. **migration:** `db:generate` → อ่าน SQL (ต้องเห็น `ADD COLUMN ... DEFAULT 0 NOT NULL` แถวเดิมจะได้ 0) → `db:migrate` **ห้ามแก้ไฟล์ migration เก่าที่รันไปแล้ว** ([บทที่ 8](/08-orm#3-migration))
+4. **API:** `POST /rentals` รับ `deposit` เพิ่ม (ไม่บังคับ)
+5. **โค้ด:** `RentalInput` เพิ่ม `deposit: z.number().int().min(0).default(0)` · repository รับค่าไปบันทึก
+6. **ทดสอบ:** เพิ่มบรรทัดใน `rentals.http` สำหรับกฎข้อ 9 (ส่ง `-100` ต้องได้ `400`)
+
+> 💡 ถ้าเพิ่มคอลัมน์ `NOT NULL` **โดยไม่มีค่าเริ่มต้น** ในตารางที่มีข้อมูลแล้ว migrate จะพัง เพราะแถวเดิมไม่มีค่าให้ใส่ ต้องให้ค่าเริ่มต้น หรือแบ่งเป็น 3 ขั้น: เพิ่มแบบว่างได้ → เติมค่าให้แถวเดิม → ค่อยตั้ง `NOT NULL`
+
+---
+
+## 12. ⚠️ ปัญหาที่เจอบ่อย
+
+| อาการ | สาเหตุ | วิธีแก้ |
+|---|---|---|
+| ข้อมูลซ้ำได้ `500` แทน `409` | ไม่ได้แปลง `23505` ใน service | ใช้ `pgCode(err)` ตามข้อ 5 |
+| ใส่ `err.code === "23505"` แล้วไม่เคยเข้าเงื่อนไข | Drizzle ห่อ error ของ pg ไว้ รหัสจริงอยู่ใน `err.cause.code` | ใช้ตัวช่วย `pgCode` ที่ดูทั้งสองที่ |
+| `GET /laptops` ช้าลงเรื่อยๆ ตอนข้อมูลเยอะ | query แยกทีละเครื่องเพื่อหา "ว่างไหม" (N+1) | คำนวณใน query เดียวด้วย `LEFT JOIN` แบบข้อ 8 และสร้าง index ที่ `rentals.laptop_id` (unique index ของกฎข้อ 6 ช่วยแล้วส่วนหนึ่ง) |
+| `column "deposit" of relation "rentals" contains null values` ตอน migrate | เพิ่มคอลัมน์ `NOT NULL` โดยไม่มีค่าเริ่มต้น | ใส่ `.default(...)` หรือทำ 3 ขั้นตามข้อ 11 |
+| ค่าที่ไม่ได้ตั้งใจหลุดเข้าฐานข้อมูล เช่น client ส่ง `id` มาเอง | ส่ง `req.body` ให้ repository ตรงๆ | ผ่าน `parse(...)` ก่อนเสมอ ให้ Zod ตัดช่องที่ไม่ได้ประกาศ |
+| `Cannot find module '../db/index'` | import ไม่ใส่ `.js` ทั้งที่ใช้ `NodeNext` | ใส่ `.js` ท้ายชื่อไฟล์ตอน import |
+| service เรียก `res.status(...)` ได้ด้วย | ส่ง `res` เข้าไปใน service | service รับแค่ข้อมูล คืนผลหรือโยน `AppError` ชั้น routes เป็นคนตอบ |
+
+---
+
+## 13. 📋 เช็คลิสต์ "จากแบบสู่ Backend" (ใช้กับงาน STARTER ได้เลย)
+
+- [ ] เขียน **รายการกฎ** จากผังตารางครบ ทุกกฎมีบ้าน (Zod / service / DB) และ status code ตอนผิด
+- [ ] กฎที่ "หลุดแล้วข้อมูลเสีย" มีด่านในฐานข้อมูล (`UNIQUE`, `CHECK`, FK, unique index)
+- [ ] เลือก `onDelete` ทุก FK อย่างมีเหตุผล (`restrict` / `cascade` / `set null`)
+- [ ] อ่านไฟล์ SQL ที่ generate ได้ก่อน migrate และเทียบกับรายการกฎ
+- [ ] seed รันซ้ำได้โดยไม่สร้างข้อมูลซ้ำ
+- [ ] ตาราง endpoint ออกแบบจาก "ผู้ใช้อยากทำอะไร" ไม่ส่งช่องลับออกไป
+- [ ] routes / services / repositories แยกกัน service ไม่รู้จัก HTTP
+- [ ] error ของฐานข้อมูล (`23505`, `23503`) แปลงเป็นคำตอบที่อ่านเข้าใจ
+- [ ] มีไฟล์ `.http` ทดสอบครบทุกกฎในรายการ
+
+นำไปใช้กับ [6 ตารางของงาน STARTER](/starter/database-api): เริ่มจากเขียนรายการกฎของ 6 ตาราง (เช่น `slug` ห้ามซ้ำ, ลบหมวดที่ยังมีสินค้าไม่ได้, `site_settings` มีแถวเดียว) ก่อนเขียนโค้ดบรรทัดแรก บทที่ 14 จะทำ API แบบเดียวกันด้วย Hono
+
+---
+
+## 🧠 เช็คความเข้าใจ
+
+<details>
+<summary>1. ทำไม `laptops` ไม่มีคอลัมน์ `status` แล้วเรารู้ได้ยังไงว่าเครื่องว่าง</summary>
+
+เพราะคำตอบมีอยู่ในตาราง `rentals` แล้ว (เครื่องว่าง = ไม่มีรายการเช่าที่ `returned_at` ว่าง) ถ้าเก็บ `status` ซ้ำอีกที่ ต้องคอยแก้สองที่ให้ตรงกันทุกครั้ง วันไหนลืมข้อมูลจะขัดกันเอง เราคำนวณด้วย `LEFT JOIN` ใน query เดียว
+</details>
+
+<details>
+<summary>2. service เช็คแล้วว่าเครื่องว่าง ทำไมยังต้องมี unique index ในฐานข้อมูลอีก</summary>
+
+เพราะถ้าสองคำขอมาพร้อมกัน ทั้งคู่อาจเช็คผ่านก่อนที่ใครจะบันทึก แล้วบันทึกได้ทั้งคู่ ฐานข้อมูลเป็นที่เดียวที่เห็นทุกคำขอและตัดสินได้แน่นอน (ข้อ 10 ❶) ส่วนการเช็คใน service มีไว้ตอบข้อความที่ชัดในกรณีปกติ
+</details>
+
+<details>
+<summary>3. ทำไมการคืนเครื่องเป็น `POST /rentals/:id/return` ไม่ใช่ `PATCH /rentals/:id` ส่ง `returnedAt`</summary>
+
+เวลาคืนต้องมาจาก server ไม่ใช่ให้ client บอกเอง (client โกงเวลาได้) และการคืนมีกฎของมัน (คืนซ้ำไม่ได้) การตั้งชื่อเป็นการกระทำทำให้ API ทำได้เฉพาะสิ่งที่ธุรกิจอนุญาต ไม่ใช่แก้ช่องไหนก็ได้
+</details>
+
+<details>
+<summary>4. FK จาก `rentals` ไป `laptops` ควรเป็น `restrict` หรือ `cascade` เพราะอะไร</summary>
+
+`restrict` เพราะรายการเช่าเป็นประวัติที่ร้านต้องเก็บ (ใครเช่า เมื่อไหร่) ถ้า `cascade` ลบเครื่องแล้วประวัติหายหมด `cascade` เหมาะกับลูกที่ไม่มีความหมายถ้าไม่มีแม่ เช่น รูปของสินค้า
+</details>
+
+<details>
+<summary>5. ทำไม service โยน `AppError("NOT_FOUND")` แทนที่จะตอบ `res.status(404)` เอง</summary>
+
+service ต้องไม่รู้จัก HTTP เพื่อให้เรียกใช้จากที่อื่นได้ (สคริปต์, เทสต์, เปลี่ยนเฟรมเวิร์ก) service บอกแค่ว่า "ผิดกฎอะไร" แล้วชั้น HTTP แปลงเป็นตัวเลขที่เดียวใน `app.ts` เปลี่ยนนโยบาย status code ก็แก้ที่เดียว
+</details>
+
+<details>
+<summary>6. เพิ่มกฎ "ลูกค้า 1 คนเช่าพร้อมกันได้ไม่เกิน 2 เครื่อง" กฎนี้ควรมีบ้านที่ไหน</summary>
+
+ใน service (นับรายการเช่าที่ยังไม่คืนของลูกค้าก่อนสร้างใหม่) เพราะเป็นเงื่อนไขที่ต้องนับหลายแถว constraint ธรรมดาเขียนไม่ได้ ถ้ากลัวคำขอพร้อมกันจริงๆ ค่อยใช้ transaction ที่ล็อกแถวลูกค้าไว้ระหว่างนับ (ระดับถัดไป) ในทางปฏิบัติต้องชั่งว่าความเสียหายถ้าหลุดคุ้มกับความซับซ้อนไหม
+</details>
+
+---
+
+## ✏️ แบบฝึกหัด
+
+1. ทำกฎ "มัดจำ" ตามข้อ 11 ให้ครบ 6 ขั้น พร้อมไฟล์ `.http` ที่พิสูจน์กฎข้อ 9
+2. เพิ่ม `GET /laptops?available=true` ให้ดูเฉพาะเครื่องว่าง คิดก่อนว่ากรองที่ชั้นไหน (คำใบ้: ให้ฐานข้อมูลกรอง ไม่ใช่ดึงมาทั้งหมดแล้วกรองใน JavaScript)
+3. เขียนรายการกฎของ 6 ตารางในงาน STARTER เป็นตารางแบบข้อ 2 (กฎ / มาจากไหน / บ้าน / status ตอนผิด) ส่งให้พี่เลี้ยงดูก่อนเริ่มเขียนโค้ด
+
+## ✅ ผ่านด่าน
+
+- [ ] อ่านผังตารางแล้วเขียนรายการกฎพร้อม "บ้าน" ของแต่ละกฎได้
+- [ ] อธิบายได้ว่าทำไมกฎสำคัญต้องมีด่านในฐานข้อมูล แม้ service จะเช็คแล้ว
+- [ ] แปลง ER เป็น schema ได้ครบ รวม `CHECK`, partial unique index และเลือก `onDelete` อย่างมีเหตุผล
+- [ ] ออกแบบ endpoint จากสิ่งที่ผู้ใช้ทำ ไม่ใช่จากตาราง
+- [ ] เขียนโค้ดแบ่ง routes / services / repositories ที่ต่อฐานข้อมูลจริงได้
+- [ ] แปลง error `23505` / `23503` เป็นคำตอบที่อ่านเข้าใจได้
+- [ ] ทำ "ลองพัง ❶" แล้วเห็นว่าฐานข้อมูลกันการเช่าซ้อนได้จริง
+
+---
+
+[← บทที่ 8: Drizzle vs Prisma vs Sequelize](/08-orm) · [🏠 สารบัญ](/) · [บทที่ 9: Debugging →](/09-debugging)

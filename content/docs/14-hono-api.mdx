@@ -30,6 +30,8 @@ title: "บทที่ 14: สร้าง API ด้วย Bun + Hono + Drizzl
 ![เส้นทางคำขอ /api จากเบราว์เซอร์ผ่าน Vite, Hono, Drizzle ไปถึง PostgreSQL แล้วตอบกลับทางเดิม](/img/14-request-path.svg)
 *Vite ส่งต่อคำขอที่ขึ้นต้น /api ให้ Hono · Hono ใช้ Drizzle คุยกับ PostgreSQL ผลย้อนกลับทางเดิม*
 
+> 🧩 วิธีคิดจากผังตาราง → รายการกฎ → API → แบ่งชั้น อยู่ใน [บทที่ 8b](/08b-db-to-backend) บทนี้ทำซ้ำแบบเดียวกันด้วย Hono สำหรับงาน STARTER
+
 > 📚 บทนี้จัดโฟลเดอร์ `routes / db / validators / middleware` แบบแบ่งตามหน้าที่ ถ้าอยากรู้ว่าเมื่อไหร่ควรจัดแบบโมดูล/ฟีเจอร์ ดู [บทเสริม: จัดโครงสร้างโปรเจกต์](/project-structure)
 
 **Hono เทียบกับ Express (บทที่ 5)** เขียนต่างกันนิดเดียว
