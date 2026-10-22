@@ -97,11 +97,12 @@ Vercel อ่านค่าจาก `vercel.json` เอง (Framework: Next.j
    - `SESSION_SECRET` = ผลจาก `openssl rand -base64 48`
    - `APP_ORIGIN` = URL ของเว็บนั้น เช่น `https://e-book-internship.vercel.app`
    - `EXAMPLE_REPO_URL` = ลิงก์ repo ระบบตัวอย่าง (ไม่ใส่ก็ได้ ปุ่มจะไม่แสดง)
-3. สร้างตารางจากเครื่องเรา (ใช้ `DATABASE_URL` ของ Neon ชั่วคราว ไม่ต้องบันทึกลงไฟล์)
+3. สร้างตารางจากเครื่องเรา ค่าใน Vercel เป็นแบบ Secret ดึงด้วย `vercel env pull` ไม่ได้ (ได้ค่าว่าง) ให้คัดลอก connection string แบบ **ไม่ผ่าน pooler** จาก Neon Console → Connect แล้วรันใน Terminal ของเราเอง (`read -s` ไม่แสดงค่าบนจอ ไม่ติดใน history)
    ```bash
-   DATABASE_URL='<ของ Neon>' npm run db:migrate
-   DATABASE_URL='<ของ Neon>' SESSION_SECRET=x APP_ORIGIN=<URL ของเว็บ> bun scripts/create-user.ts <username> dev
+   read -s "DB?Neon URL (unpooled): " && export DATABASE_URL=$DB SESSION_SECRET=$(openssl rand -base64 48) APP_ORIGIN=<URL ของเว็บ>
+   npx drizzle-kit migrate && bun scripts/create-user.ts <username> dev
    ```
+   `SESSION_SECRET` ตรงนี้ใช้แค่ผ่านด่านตรวจ env ของสคริปต์ ไม่ต้องตรงกับบน Vercel
    จด PIN ที่ได้ (แสดงครั้งเดียว)
 4. เปิด `/api/health` ต้องได้ `{"ok":true,"db":"ok"}` แล้ว login ด้วยบัญชีนั้น เปิด **⚙️ จัดการบัญชี** อัปโหลด PDF Requirement และสร้างบัญชีน้อง
 
