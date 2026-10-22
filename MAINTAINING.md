@@ -103,7 +103,7 @@ Vercel อ่านค่าจาก `vercel.json` เอง (Framework: Next.j
    read -s "DB?Neon URL: " && export DATABASE_URL=$DB SESSION_SECRET=$(openssl rand -base64 48) APP_ORIGIN=<URL ของเว็บ>
    bun scripts/create-user.ts <username> dev
    ```
-   ลืม PIN: รันแบบเดียวกันแต่ใช้ `bun scripts/reset-pin.ts <username>` (ออก PIN ใหม่ + ปลดล็อก)
+   ลืม PIN: รันแบบเดียวกันแต่ใช้ `bun scripts/reset-pin.ts <username>` (ออก PIN ใหม่ + ปลดล็อก) อยากตั้งเอง: `read -s "NEW_PIN?PIN 6 หลัก: " && export NEW_PIN` ก่อนรัน
    `SESSION_SECRET` ตรงนี้ใช้แค่ผ่านด่านตรวจ env ของสคริปต์ ไม่ต้องตรงกับบน Vercel
    จด PIN ที่ได้ (แสดงครั้งเดียว)
 5. เปิด `/api/health` ต้องได้ `{"ok":true,"db":"ok"}` แล้ว login ด้วยบัญชีนั้น เปิด **⚙️ จัดการบัญชี** อัปโหลด PDF Requirement และสร้างบัญชีน้อง

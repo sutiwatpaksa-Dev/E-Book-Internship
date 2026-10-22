@@ -13,8 +13,8 @@ export const userService = {
     return { user, pin };
   },
 
-  async resetPin(id: number) {
-    const pin = newPin();
+  // pin ส่งมาเองได้เฉพาะสคริปต์ใน Terminal (หน้า admin สุ่มให้เสมอ)
+  async resetPin(id: number, pin = newPin()) {
     const user = await userRepository.update(id, { secretHash: await hashPin(pin), secretKind: "pin", failedCount: 0, lockedUntil: null });
     if (!user) throw new Error("NOT_FOUND");
     return { user, pin };
