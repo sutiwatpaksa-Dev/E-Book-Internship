@@ -1,0 +1,65 @@
+import { describe, expect, test } from "bun:test";
+import type * as PageTree from "fumadocs-core/page-tree";
+import { buildNav, sectionOf, stageOf } from "./nav-tree";
+
+const page = (url: string, name: string): PageTree.Item => ({ type: "page", url, name });
+
+// หน้าตาเดียวกับ page tree ที่ได้จาก meta.json (ย่อให้เหลือไม่กี่บท)
+const tree: PageTree.Root = {
+  name: "docs",
+  children: [
+    page("/", "🏠 หน้าแรก"),
+    { type: "separator", name: "ด่าน 2 · ภาษาและ API" },
+    page("/03-node-yarn-bun", "03 · Runtime & Package Manager"),
+    page("/react-language", "บทเสริม · ภาษาและคำสั่งที่ใช้เขียน React"),
+    { type: "separator", name: "ด่าน 6 · Mini Project" },
+    {
+      type: "folder",
+      name: "เว็บไซต์ STARTER 🔒",
+      index: page("/starter", "Requirement + สรุปร้าน"),
+      children: [page("/starter/timeline", "แผน 10 วัน")],
+    },
+    { type: "separator", name: "อ้างอิง" },
+    page("/glossary", "📖 ศัพท์ที่ต้องรู้"),
+  ],
+};
+
+const nav = buildNav(tree, ["/react-language"]);
+
+describe("buildNav", () => {
+  test("ตัวคั่นกลายเป็นด่าน แยกเลขบทออกจากชื่อ", () => {
+    expect(nav.stages.map((s) => [s.kicker, s.name])).toEqual([
+      ["ด่าน 2", "ภาษาและ API"],
+      ["ด่าน 6", "Mini Project"],
+    ]);
+    expect(nav.stages[0].items).toEqual([{ url: "/03-node-yarn-bun", num: "03", title: "Runtime & Package Manager" }]);
+  });
+  test("บทเสริมแยกออกจากด่าน", () => {
+    expect(nav.extras).toEqual([{ url: "/react-language", num: null, title: "ภาษาและคำสั่งที่ใช้เขียน React" }]);
+  });
+  test("หน้าในโฟลเดอร์เรียงเลข 1, 2 …", () => {
+    expect(nav.stages[1].items.map((i) => [i.num, i.url])).toEqual([
+      ["1", "/starter"],
+      ["2", "/starter/timeline"],
+    ]);
+  });
+  test("หมวดอ้างอิงตัดอีโมจิหน้าชื่อ", () => {
+    expect(nav.refs).toEqual([{ url: "/glossary", num: null, title: "ศัพท์ที่ต้องรู้" }]);
+    expect(nav.home?.url).toBe("/");
+  });
+});
+
+describe("sectionOf / stageOf", () => {
+  test("บอกหมวดของหน้าได้ถูก", () => {
+    expect(sectionOf(nav, "/")).toBe("roadmap");
+    expect(sectionOf(nav, "/03-node-yarn-bun")).toBe("learn");
+    expect(sectionOf(nav, "/react-language")).toBe("learn");
+    expect(sectionOf(nav, "/starter/timeline")).toBe("project");
+    expect(sectionOf(nav, "/glossary")).toBe("ref");
+    expect(sectionOf(nav, "/login")).toBeNull();
+  });
+  test("หาด่านของหน้า", () => {
+    expect(stageOf(nav, "/starter/timeline")?.kicker).toBe("ด่าน 6");
+    expect(stageOf(nav, "/glossary")).toBeNull();
+  });
+});

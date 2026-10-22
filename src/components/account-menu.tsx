@@ -1,0 +1,120 @@
+"use client";
+
+import { ChevronDown, FileText, LogIn, LogOut, Package, Settings } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { authApi } from "@/api/auth.api";
+import { filesApi, REQUIREMENT_PDF_URL } from "@/api/files.api";
+import { useSession } from "@/hooks/use-session";
+
+export const ROLE_LABEL = { intern: "Internship", dev: "พี่เลี้ยง" } as const;
+export const ROLE_BADGE = {
+  intern: "bg-fd-primary/10 text-fd-primary",
+  dev: "bg-orange-500/15 text-orange-800 dark:text-orange-300",
+} as const;
+
+const itemClass = "flex min-h-10 w-full items-center gap-2 rounded-md px-2.5 text-left text-sm hover:bg-fd-accent";
+
+// บัญชีมุมขวาบน: ยังไม่ login = ปุ่มเข้าสู่ระบบ · login แล้ว = กดชื่อเพื่อเปิดเมนู
+export function AccountMenu() {
+  const { role, logout } = useSession();
+  const [username, setUsername] = useState<string | null>(null);
+  const [exampleRepo, setExampleRepo] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (!role) return;
+    authApi
+      .me()
+      .then((me) => setUsername(me.username))
+      // บัตรหมดอายุแต่ cookie บอก role ยังค้าง: ถือว่ายังไม่ได้ login
+      .catch(() => logout());
+    filesApi
+      .links()
+      .then((r) => setExampleRepo(r.exampleRepo))
+      .catch(() => {});
+  }, [role]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ปิดเมนูเมื่อเปลี่ยนหน้า, กด Esc หรือคลิกนอกเมนู
+  useEffect(() => setOpen(false), [pathname]);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const onClick = (e: PointerEvent) => !boxRef.current?.contains(e.target as Node) && setOpen(false);
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onClick);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onClick);
+    };
+  }, [open]);
+
+  if (!role) {
+    return (
+      <Link
+        href="/login"
+        aria-label="เข้าสู่ระบบ"
+        className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-fd-primary px-3 text-sm font-medium text-fd-primary-foreground hover:opacity-90 sm:px-3.5"
+      >
+        <LogIn className="size-4" />
+        <span className="max-sm:hidden">เข้าสู่ระบบ</span>
+      </Link>
+    );
+  }
+
+  return (
+    <div ref={boxRef} className="relative">
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={`บัญชี ${username ?? ""}`}
+        onClick={() => setOpen((v) => !v)}
+        className="flex h-10 items-center gap-2 rounded-full border border-fd-border bg-fd-background p-1 hover:bg-fd-accent sm:pe-2.5"
+      >
+        <span className="flex size-8 items-center justify-center rounded-full bg-fd-primary/10 text-sm font-bold text-fd-primary">
+          {username?.[0]?.toUpperCase() ?? "·"}
+        </span>
+        <span className="text-sm font-medium max-sm:hidden">{username}</span>
+        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold max-sm:hidden ${ROLE_BADGE[role]}`}>{ROLE_LABEL[role]}</span>
+        <ChevronDown className="size-3.5 text-fd-muted-foreground max-sm:hidden" />
+      </button>
+
+      {open && (
+        <div role="menu" className="absolute end-0 top-12 z-50 flex w-60 flex-col gap-0.5 rounded-xl border border-fd-border bg-fd-popover p-1.5 text-fd-popover-foreground shadow-lg">
+          <div className="px-2.5 py-1.5 text-xs text-fd-muted-foreground sm:hidden">
+            {username} · {ROLE_LABEL[role]}
+          </div>
+          {role === "dev" && (
+            <Link role="menuitem" href="/dev/admin" className={itemClass}>
+              <Settings className="size-4" /> หลังบ้านพี่เลี้ยง
+            </Link>
+          )}
+          <a role="menuitem" href={REQUIREMENT_PDF_URL} target="_blank" rel="noopener" className={itemClass}>
+            <FileText className="size-4" /> เอกสาร Requirement
+          </a>
+          {exampleRepo && (
+            <a role="menuitem" href={exampleRepo} target="_blank" rel="noopener" className={itemClass} title="โค้ดของระบบจริง ใช้ดูการวางโครงสร้าง">
+              <Package className="size-4" /> ระบบตัวอย่าง
+            </a>
+          )}
+          <div className="mx-1.5 my-1 h-px bg-fd-border" />
+          <button
+            type="button"
+            role="menuitem"
+            className={`${itemClass} text-red-700 dark:text-red-400`}
+            onClick={async () => {
+              await logout();
+              location.assign("/");
+            }}
+          >
+            <LogOut className="size-4" /> ออกจากระบบ
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

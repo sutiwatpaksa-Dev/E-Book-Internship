@@ -84,3 +84,7 @@ export const roadmap: RoadmapLevel[] = [
     ],
   },
 ];
+
+// บทที่นับในความคืบหน้า (ไม่รวมบทเสริม) ใช้ร่วมกันทั้งหน้าแรก, sidebar และปุ่ม "ผ่านบทนี้แล้ว"
+export const requiredLinks = roadmap.flatMap((l) => l.items.filter((i) => !i.extra).map((i) => i.link));
+export const extraLinks = roadmap.flatMap((l) => l.items.filter((i) => i.extra).map((i) => i.link));

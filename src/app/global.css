@@ -12,6 +12,25 @@
   --rm-item-bg: #fff6d6;
   --rm-line: #2f6feb;
   --rm-done: #2da44e;
+  /* ส่วนท้ายหน้า: น้ำเงินเข้มทั้งสองโหมด */
+  --footer-bg: #0f1b33;
+  --footer-fg: #c9d3e6;
+  --footer-line: #24345a;
+  --footer-muted: #9fb0cf;
+
+  /* ความสูง headbar (site-header.tsx) มือถือรวมแถบ "อยู่ด่านไหน" ด้วย
+     ส่งต่อให้ Fumadocs ผ่าน --fd-banner-height: sidebar และสารบัญขวาจะติดอยู่ใต้ headbar พอดี */
+  --site-header-h: 88px;
+  --fd-banner-height: var(--site-header-h);
+}
+@media (min-width: 768px) {
+  :root {
+    --site-header-h: 64px;
+  }
+  /* sidebar ของเรา (site-sidebar.tsx) กว้างกว่าของ Fumadocs เล็กน้อย ให้ชื่อบทภาษาไทยไม่ตัดบรรทัดบ่อย */
+  #nd-docs-layout {
+    --fd-sidebar-width: 288px;
+  }
 }
 
 .dark {

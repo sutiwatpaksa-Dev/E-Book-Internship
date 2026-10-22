@@ -1,0 +1,11 @@
+import type { Metadata } from "next";
+import { AdminPanel } from "@/components/admin-panel";
+import { requirePageAccess } from "@/lib/require-page-access";
+
+export const metadata: Metadata = { title: "หลังบ้านพี่เลี้ยง" };
+
+export default async function AdminPage() {
+  // หน้านี้ไม่มีความลับในตัว (ข้อมูลมาจาก API ที่ตรวจสิทธิ์อีกชั้น) แต่ไม่ควรให้คนนอกเห็นหน้าตาเครื่องมือ
+  await requirePageAccess("/dev/admin");
+  return <AdminPanel />;
+}
