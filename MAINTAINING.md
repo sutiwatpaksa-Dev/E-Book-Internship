@@ -97,14 +97,15 @@ Vercel อ่านค่าจาก `vercel.json` เอง (Framework: Next.j
    - `SESSION_SECRET` = ผลจาก `openssl rand -base64 48`
    - `APP_ORIGIN` = URL ของเว็บนั้น เช่น `https://e-book-internship.vercel.app`
    - `EXAMPLE_REPO_URL` = ลิงก์ repo ระบบตัวอย่าง (ไม่ใส่ก็ได้ ปุ่มจะไม่แสดง)
-3. สร้างตารางจากเครื่องเรา ค่าใน Vercel เป็นแบบ Secret ดึงด้วย `vercel env pull` ไม่ได้ (ได้ค่าว่าง) ให้คัดลอก connection string แบบ **ไม่ผ่าน pooler** จาก Neon Console → Connect แล้วรันใน Terminal ของเราเอง (`read -s` ไม่แสดงค่าบนจอ ไม่ติดใน history)
+3. ตาราง: Vercel รัน `npm run db:migrate` ก่อน `next build` ทุกครั้ง (`buildCommand` ใน `vercel.json`) จึงสร้าง/แก้ตารางให้เอง ใน Build Logs จะมีบรรทัด `migrate → <host>/<ฐาน>` บอกว่า migrate ไปที่ไหน ต่อฐานไม่ได้ build จะล้มก่อน ไม่ปล่อยเว็บที่ไม่มีตารางขึ้นไป
+4. สร้างบัญชี Dev คนแรกจาก Terminal ของเราเอง ค่าใน Vercel เป็นแบบ Secret ดึงด้วย `vercel env pull` ไม่ได้ (ได้ค่าว่าง) ให้คัดลอก connection string ของฐาน**ที่ตรงกับ host ใน Build Logs** จาก Neon Console → Connect (`read -s` ไม่แสดงค่าบนจอ ไม่ติดใน history)
    ```bash
-   read -s "DB?Neon URL (unpooled): " && export DATABASE_URL=$DB SESSION_SECRET=$(openssl rand -base64 48) APP_ORIGIN=<URL ของเว็บ>
-   npx drizzle-kit migrate && bun scripts/create-user.ts <username> dev
+   read -s "DB?Neon URL: " && export DATABASE_URL=$DB SESSION_SECRET=$(openssl rand -base64 48) APP_ORIGIN=<URL ของเว็บ>
+   bun scripts/create-user.ts <username> dev
    ```
    `SESSION_SECRET` ตรงนี้ใช้แค่ผ่านด่านตรวจ env ของสคริปต์ ไม่ต้องตรงกับบน Vercel
    จด PIN ที่ได้ (แสดงครั้งเดียว)
-4. เปิด `/api/health` ต้องได้ `{"ok":true,"db":"ok"}` แล้ว login ด้วยบัญชีนั้น เปิด **⚙️ จัดการบัญชี** อัปโหลด PDF Requirement และสร้างบัญชีน้อง
+5. เปิด `/api/health` ต้องได้ `{"ok":true,"db":"ok"}` แล้ว login ด้วยบัญชีนั้น เปิด **⚙️ จัดการบัญชี** อัปโหลด PDF Requirement และสร้างบัญชีน้อง
 
 ### รันในเครื่อง
 
@@ -115,4 +116,4 @@ npm run db:migrate && bun scripts/create-user.ts mentor dev
 npm run dev              # เว็บ + API ที่ :3000 (รันบน Bun เพราะ API ใช้ Bun.password)
 ```
 
-แก้ตารางใน `server/db/schema.ts` แล้ว `npm run db:generate` ได้ไฟล์ SQL ใหม่ใน `server/db/migrations/` ให้ commit ไฟล์นั้นด้วย และรัน `db:migrate` กับ Neon ก่อน deploy
+แก้ตารางใน `server/db/schema.ts` แล้ว `npm run db:generate` ได้ไฟล์ SQL ใหม่ใน `server/db/migrations/` ให้ commit ไฟล์นั้นด้วย push แล้ว Vercel migrate ให้ตอน build
