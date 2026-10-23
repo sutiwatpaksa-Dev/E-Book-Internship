@@ -21,7 +21,16 @@ const FILTERS: { id: Role | "all"; label: string }[] = [
 ];
 
 // การกระทำที่ต้องถามก่อน เพราะมีผลกับน้องทันที
-type Pending = { kind: "disable" | "reset"; user: User } | null;
+// เปลี่ยนบทบาทก็ต้องถาม: select เลือกพลาดได้ง่าย และน้องที่กลายเป็น Dev จะเห็นแชทของน้องทุกคนทันที
+type Pending = { kind: "disable" | "reset"; user: User } | { kind: "role"; user: User; role: Role } | null;
+
+const CONFIRM_TEXT = {
+  disable: "น้องเรียก API (เช่นเปิด PDF) ไม่ได้ทันที แต่หน้า STARTER จะเปิดได้จนบัตรผ่านหมดอายุ (ไม่เกิน 12 ชั่วโมง) เปิดบัญชีคืนได้ภายหลัง",
+  reset: "PIN เดิมจะใช้ไม่ได้ทันที PIN ใหม่แสดงครั้งเดียว ต้องส่งให้น้องเอง",
+  // API อ่านบทบาทจากฐานข้อมูลทุกครั้ง (มีผลทันที) แต่ด่านหน้าเว็บอ่านจากบัตรผ่าน (มีผลเมื่อ login ใหม่)
+  dev: "login ครั้งถัดไปจะเข้าหลังบ้านได้ เห็นแชทของน้องทุกคน สร้าง/ปิดบัญชีและออก PIN ให้คนอื่นได้",
+  intern: "ใช้คำสั่งหลังบ้านไม่ได้ทันที ไม่เห็นแชทของน้องคนอื่นอีก เปลี่ยนกลับได้ภายหลัง",
+};
 
 // แท็บบัญชีผู้ใช้: สร้างบัญชี ค้นหา กรองตาม role แบ่งหน้า และจัดการทีละบัญชี
 export function AdminUsers({ admin }: { admin: AdminState }) {
@@ -48,10 +57,10 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
 
   const confirm = async () => {
     if (!pending) return;
-    const { kind, user } = pending;
     setPending(null);
-    if (kind === "reset") await admin.resetPin(user);
-    else await admin.updateUser(user, { disabled: true });
+    if (pending.kind === "role") await admin.updateUser(pending.user, { role: pending.role });
+    else if (pending.kind === "reset") await admin.resetPin(pending.user);
+    else await admin.updateUser(pending.user, { disabled: true });
   };
 
   return (
@@ -123,15 +132,19 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
 
       {pending && (
         <ConfirmBox
-          title={pending.kind === "disable" ? `ปิดบัญชี ${pending.user.username}?` : `ออก PIN ใหม่ให้ ${pending.user.username}?`}
-          confirmLabel={pending.kind === "disable" ? "ปิดบัญชี" : "ออก PIN ใหม่"}
-          danger={pending.kind === "disable"}
+          title={
+            pending.kind === "role"
+              ? `เปลี่ยน ${pending.user.username} เป็น ${ROLE_LABEL[pending.role]}?`
+              : pending.kind === "disable"
+                ? `ปิดบัญชี ${pending.user.username}?`
+                : `ออก PIN ใหม่ให้ ${pending.user.username}?`
+          }
+          confirmLabel={pending.kind === "role" ? "เปลี่ยนบทบาท" : pending.kind === "disable" ? "ปิดบัญชี" : "ออก PIN ใหม่"}
+          danger={pending.kind === "disable" || (pending.kind === "role" && pending.role === "dev")}
           onConfirm={confirm}
           onCancel={() => setPending(null)}
         >
-          {pending.kind === "disable"
-            ? "น้องเรียก API (เช่นเปิด PDF) ไม่ได้ทันที แต่หน้า STARTER จะเปิดได้จนบัตรผ่านหมดอายุ (ไม่เกิน 12 ชั่วโมง) เปิดบัญชีคืนได้ภายหลัง"
-            : "PIN เดิมจะใช้ไม่ได้ทันที PIN ใหม่แสดงครั้งเดียว ต้องส่งให้น้องเอง"}
+          {CONFIRM_TEXT[pending.kind === "role" ? pending.role : pending.kind]}
         </ConfirmBox>
       )}
 
@@ -163,7 +176,7 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
                     aria-label={`บทบาทของ ${u.username}`}
                     className={`${selectClass} ${ROLE_BADGE[u.role]}`}
                     value={u.role}
-                    onChange={(e) => admin.updateUser(u, { role: e.target.value as Role })}
+                    onChange={(e) => setPending({ kind: "role", user: u, role: e.target.value as Role })}
                   >
                     <option value="intern">{ROLE_LABEL.intern}</option>
                     <option value="dev">{ROLE_LABEL.dev}</option>

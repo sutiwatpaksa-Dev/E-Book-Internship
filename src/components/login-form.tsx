@@ -2,14 +2,18 @@
 
 import { useState, type FormEvent } from "react";
 import { useSession } from "@/hooks/use-session";
+import type { Role } from "@/types";
 import { Button } from "./button";
 import { ErrorText } from "./error-text";
 import { Field, Input } from "./field";
 
+// ไม่มี ?next= (กด "เข้าสู่ระบบ" จากเมนูเอง) → ไปหน้าที่ใช้บ่อยที่สุดของบทบาทนั้น: พี่เลี้ยงไปหลังบ้าน น้องไป STARTER
+const HOME: Record<Role, string> = { dev: "/dev/admin", intern: "/starter" };
+
 // รับเฉพาะ path ภายในเว็บเรา กันคนส่งลิงก์ login?next=https://เว็บปลอม มาหลอก
-function nextPath() {
-  const next = new URLSearchParams(location.search).get("next") ?? "/starter";
-  return next.startsWith("/") && !next.startsWith("//") ? next : "/starter";
+function nextPath(role: Role) {
+  const next = new URLSearchParams(location.search).get("next");
+  return next?.startsWith("/") && !next.startsWith("//") ? next : HOME[role];
 }
 
 export function LoginForm() {
@@ -24,9 +28,9 @@ export function LoginForm() {
     setError("");
     setBusy(true);
     try {
-      await login(username, pin);
+      const role = await login(username, pin);
       // โหลดหน้าใหม่ทั้งหน้า ให้ server ตรวจสิทธิ์พร้อม cookie ใหม่
-      location.assign(nextPath());
+      location.assign(nextPath(role));
     } catch (err) {
       setError((err as Error).message);
       setPin("");

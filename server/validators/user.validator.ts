@@ -1,8 +1,9 @@
 import { z } from "zod";
+import { USERNAME_PATTERN } from "../../src/lib/username";
 import { ROLES } from "../db/schema";
 
-// ตัวพิมพ์เล็ก ตัวเลข . _ - เท่านั้น รูปแบบจริงพี่เลี้ยงกำหนดเอง
-const username = z.string().trim().toLowerCase().regex(/^[a-z0-9._-]{3,64}$/);
+// กติกาเดียวกับที่หน้าเว็บใช้ตรวจก่อนส่ง (src/lib/username.ts) · server ยังตรวจซ้ำเสมอ เพราะใครก็ยิง API ตรงได้
+const username = z.string().trim().toLowerCase().regex(USERNAME_PATTERN);
 
 export const createUserSchema = z.object({ username, role: z.enum(ROLES) });
 

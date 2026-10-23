@@ -16,8 +16,11 @@ export function AdminOverview({ admin, nav }: { admin: AdminState; nav: AdminNav
   const unread = useUnread();
   const interns = admin.users.filter((u) => u.role === "intern" && !u.disabled);
   const locked = admin.users.filter(isLockedNow);
-  // ไม่เคยเข้า หรือเข้าล่าสุดนานเกิน 7 วัน: ควรทักไปถามความคืบหน้า
-  const stale = interns.filter((u) => (daysSince(u.lastLoginAt) ?? Infinity) > STALE_DAYS);
+  // แยกสองกลุ่มเพราะต้องทำคนละอย่าง: ยังไม่เคยเข้า = อาจยังไม่ได้รับ PIN (ตามส่ง PIN)
+  // เคยเข้าแต่หายไปเกิน 7 วัน = อาจติดอะไรอยู่ (ทักไปถามความคืบหน้า)
+  const neverIn = interns.filter((u) => !u.lastLoginAt);
+  const stale = interns.filter((u) => (daysSince(u.lastLoginAt) ?? 0) > STALE_DAYS);
+  const toInterns = () => document.getElementById("interns")?.scrollIntoView({ behavior: "smooth" });
   const newRequests = admin.threads.filter((t) => t.status === "new").length;
   const waiting = admin.threads.filter((t) => t.status === "waiting").length;
 
@@ -27,7 +30,8 @@ export function AdminOverview({ admin, nav }: { admin: AdminState; nav: AdminNav
     { show: waiting > 0, text: `คำถามที่รอพี่เลี้ยงตอบ ${waiting} เรื่อง`, go: () => nav.goTab("questions") },
     { show: newRequests > 0, text: `คำขอเนื้อหาที่ยังไม่รับเรื่อง ${newRequests} เรื่อง`, go: () => nav.goTab("requests") },
     { show: locked.length > 0, text: `บัญชีถูกล็อก ${locked.length} บัญชี (ใส่ PIN ผิด 5 ครั้ง)`, go: () => nav.goTab("users") },
-    { show: stale.length > 0, text: `น้องไม่ได้เข้ามาเกิน ${STALE_DAYS} วัน ${stale.length} คน ลองทักไปถาม`, go: () => document.getElementById("interns")?.scrollIntoView({ behavior: "smooth" }) },
+    { show: neverIn.length > 0, text: `น้องยังไม่เคย login ${neverIn.length} คน ส่ง PIN ให้แล้วหรือยัง`, go: toInterns },
+    { show: stale.length > 0, text: `น้องไม่ได้เข้ามาเกิน ${STALE_DAYS} วัน ${stale.length} คน ลองทักไปถาม`, go: toInterns },
     { show: !admin.pdf && !admin.loading, text: "ยังไม่มีไฟล์ Requirement PDF ให้น้องเปิด", go: () => nav.goTab("files") },
   ].filter((t) => t.show);
 
@@ -83,7 +87,7 @@ export function AdminOverview({ admin, nav }: { admin: AdminState; nav: AdminNav
               )}
               {interns.map((u) => {
                 const s = summarize(admin.progress[u.id]);
-                const isStale = (daysSince(u.lastLoginAt) ?? Infinity) > STALE_DAYS;
+                const isStale = !u.lastLoginAt || (daysSince(u.lastLoginAt) ?? 0) > STALE_DAYS;
                 return (
                   <tr key={u.id} className="border-t border-fd-border">
                     <td className="px-3 py-2">
@@ -94,8 +98,9 @@ export function AdminOverview({ admin, nav }: { admin: AdminState; nav: AdminNav
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">{s.level}</td>
                     <td className="px-3 py-2">
+                      {/* shrink-0: แถบมี overflow-hidden ทำให้ flex บีบมันได้ถึง 0 จอแคบจึงเหลือแค่จุด */}
                       <div className="flex items-center gap-2">
-                        <span className="h-1.5 w-20 overflow-hidden rounded-full bg-fd-muted">
+                        <span className="h-1.5 w-20 shrink-0 overflow-hidden rounded-full bg-fd-muted">
                           <span className="block h-full bg-fd-primary" style={{ width: `${(s.doneCount / s.total) * 100}%` }} />
                         </span>
                         <span className="whitespace-nowrap tabular-nums">

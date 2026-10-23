@@ -4,6 +4,7 @@ import { Copy } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import type { AdminState } from "@/hooks/use-admin";
 import { toast } from "@/hooks/use-toast";
+import { parseUsernameList } from "@/lib/username";
 import type { BulkResult, Role } from "@/types";
 import { Button } from "./button";
 import { Field, inputClass } from "./field";
@@ -15,17 +16,15 @@ export function AdminBulkCreate({ admin, onClose }: { admin: AdminState; onClose
   const [role, setRole] = useState<Role>("intern");
   const [results, setResults] = useState<BulkResult[] | null>(null);
 
-  // รับได้ทั้งขึ้นบรรทัดใหม่ เว้นวรรค และจุลภาค (วางจาก Excel/LINE ได้เลย)
-  const names = text
-    .split(/[\s,]+/)
-    .map((n) => n.trim().toLowerCase())
-    .filter(Boolean);
+  // ตรวจทุกครั้งที่พิมพ์ ชี้ชื่อที่ผิดให้เห็นก่อนกดสร้าง แทนให้ server ปฏิเสธทั้งชุดโดยไม่บอกว่าชื่อไหน
+  const { valid, invalid } = parseUsernameList(text);
 
+  // ส่งเฉพาะชื่อที่ถูก ชื่อที่ผิดไปต่อท้ายตารางผลว่า "ข้าม" พร้อมเหตุผล จะได้เห็นครบทุกชื่อที่วางมา
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    const r = await admin.createMany(names, role);
+    const r = await admin.createMany(valid, role);
     if (r) {
-      setResults(r);
+      setResults([...r, ...invalid]);
       setText("");
     }
   };
@@ -83,6 +82,18 @@ export function AdminBulkCreate({ admin, onClose }: { admin: AdminState; onClose
           required
         />
       </Field>
+      {invalid.length > 0 && (
+        <div role="alert" className="rounded-lg border border-orange-500/40 bg-orange-500/5 px-3 py-2 text-sm">
+          <p>ชื่อเหล่านี้ใช้ไม่ได้ จะถูกข้าม (แก้ในช่องด้านบนก่อนกดสร้างก็ได้)</p>
+          <ul className="mt-1 list-disc ps-5">
+            {invalid.map((n) => (
+              <li key={n.username}>
+                <code>{n.username}</code> · {n.error}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className="flex flex-wrap items-end gap-3">
         <Field label="บทบาท">
           <select className={inputClass} value={role} onChange={(e) => setRole(e.target.value as Role)}>
@@ -90,14 +101,16 @@ export function AdminBulkCreate({ admin, onClose }: { admin: AdminState; onClose
             <option value="dev">Dev (พี่เลี้ยง)</option>
           </select>
         </Field>
-        <Button type="submit" disabled={names.length === 0 || names.length > 50}>
-          สร้าง {names.length} บัญชี
+        <Button type="submit" disabled={valid.length === 0 || valid.length > 50}>
+          สร้าง {valid.length} บัญชี
         </Button>
         <Button type="button" variant="ghost" onClick={onClose}>
           ยกเลิก
         </Button>
       </div>
-      <p className="text-xs text-fd-muted-foreground">ชื่อที่มีอยู่แล้วจะถูกข้าม คนอื่นยังสร้างได้ตามปกติ</p>
+      <p className="text-xs text-fd-muted-foreground">
+        {valid.length > 50 ? "ครั้งละไม่เกิน 50 ชื่อ แบ่งส่งเป็นหลายรอบ" : "ชื่อที่มีอยู่แล้วจะถูกข้าม คนอื่นยังสร้างได้ตามปกติ"}
+      </p>
     </form>
   );
 }
