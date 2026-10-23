@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { adminApi } from "@/api/admin.api";
 import { filesApi } from "@/api/files.api";
 import type { FileInfo, Role, User } from "@/types";
+import { toast } from "./use-toast";
 
 // ข้อมูลและคำสั่งทั้งหมดของหลังบ้าน แยกจากหน้าตา: component แค่เรียกใช้ ไม่เรียก API เอง
 export function useAdmin() {
@@ -64,10 +65,13 @@ export function useAdmin() {
       run(async () => {
         await adminApi.updateUser(u.id, changes);
         await reload();
+        const what = changes.unlock ? "ปลดล็อก" : changes.disabled === true ? "ปิด" : changes.disabled === false ? "เปิดใช้" : "เปลี่ยนบทบาทของ";
+        toast.success(`${what}บัญชี ${u.username} แล้ว`);
       }),
     uploadRequirement: (file: File) =>
       run(async () => {
         setPdf(await adminApi.uploadRequirement(file));
+        toast.success("อัปโหลด Requirement PDF แล้ว น้องเปิดดูฉบับใหม่ได้ทันที");
       }),
   };
 }

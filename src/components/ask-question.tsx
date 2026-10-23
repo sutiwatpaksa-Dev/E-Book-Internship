@@ -8,6 +8,7 @@ import { useSession } from "@/hooks/use-session";
 import type { NewThread, ThreadSummary } from "@/types";
 import { Button } from "./button";
 import { ErrorText } from "./error-text";
+import { toast } from "@/hooks/use-toast";
 import { NewThreadForm } from "./new-thread-form";
 import { StatusBadge } from "./status-badge";
 
@@ -18,7 +19,6 @@ export function AskQuestion({ pageUrl }: { pageUrl: string }) {
   const [here, setHere] = useState<ThreadSummary[]>([]);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState("");
-  const [sentId, setSentId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!role) return;
@@ -35,7 +35,7 @@ export function AskQuestion({ pageUrl }: { pageUrl: string }) {
     try {
       const { id } = await threadsApi.create(t);
       setHere(await threadsApi.list().then((ts) => ts.filter((x) => x.pageUrl === pageUrl)));
-      setSentId(id);
+      toast.success("ส่งถึงพี่เลี้ยงแล้ว", { href: `/questions?t=${id}`, label: "เปิดแชท" });
       setOpen(false);
       return true;
     } catch (e) {
@@ -64,14 +64,6 @@ export function AskQuestion({ pageUrl }: { pageUrl: string }) {
         </ul>
       )}
 
-      {sentId !== null && (
-        <p role="status" className="text-sm text-green-700 dark:text-green-400">
-          ส่งแล้ว พี่เลี้ยงตอบเมื่อไรจะมีจุดแจ้งเตือนที่เมนูบัญชี ·{" "}
-          <Link href={`/questions?t=${sentId}`} className="underline">
-            เปิดแชท
-          </Link>
-        </p>
-      )}
       {error && <ErrorText>{error}</ErrorText>}
 
       {open ? (

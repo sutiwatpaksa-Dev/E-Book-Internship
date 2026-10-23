@@ -5,6 +5,7 @@ import { adminApi } from "@/api/admin.api";
 import { threadsApi } from "@/api/threads.api";
 import type { NewThread, Role, ThreadDetail, ThreadStatus, ThreadSummary } from "@/types";
 import { usePolling } from "./use-polling";
+import { toast } from "./use-toast";
 import { refreshUnread } from "./use-unread";
 
 // แหล่งข้อมูลของแชท: น้องคุยผ่าน /api/threads (เห็นแค่ของตัวเอง) · พี่เลี้ยงผ่าน /api/admin/threads (เห็นทุกเรื่อง)
@@ -94,6 +95,7 @@ export function useChat(side: ChatSide, initialId: number | null = null) {
         id = (await source.create!(t)).id;
         await loadList();
         setSelectedId(id);
+        toast.success("ส่งถึงพี่เลี้ยงแล้ว พี่เลี้ยงตอบเมื่อไรจะมีจุดสีส้มที่เมนูบัญชี");
       });
       return id;
     },
@@ -101,6 +103,7 @@ export function useChat(side: ChatSide, initialId: number | null = null) {
       run(async () => {
         await source.setStatus!(selectedId!, status, note);
         await Promise.all([loadDetail(selectedId!), loadList()]);
+        toast.success("บันทึกสถานะแล้ว น้องจะเห็นในแชท");
       }),
   };
 }
