@@ -37,23 +37,53 @@ export const files = pgTable("files", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-// คำถามจากน้องถึงพี่เลี้ยง เห็นกันแค่คนถามกับพี่เลี้ยง (ไม่มีหน้ารวมให้น้องคนอื่นเห็น)
-export const questions = pgTable(
-  "questions",
+// เรื่องที่น้องคุยกับพี่เลี้ยง: ถามเรื่องที่ติด หรือขอเนื้อหาเพิ่ม (เช่น "อยากได้บท Python")
+// เห็นกันแค่เจ้าของเรื่องกับพี่เลี้ยง น้องคนอื่นไม่เห็น
+export const THREAD_KINDS = ["question", "content_request"] as const;
+export type ThreadKind = (typeof THREAD_KINDS)[number];
+// คำถาม: ระบบเปลี่ยนเองตามว่าใครพิมพ์ล่าสุด (รอตอบ ↔ ตอบแล้ว) พี่เลี้ยงปิดเรื่องได้
+// ขอเนื้อหา: พี่เลี้ยงเลื่อนเองทีละขั้น ไม่ทำต้องบอกเหตุผล
+export const QUESTION_STATUSES = ["waiting", "answered", "closed"] as const;
+export const REQUEST_STATUSES = ["new", "accepted", "in_progress", "done", "declined"] as const;
+export type ThreadStatus = (typeof QUESTION_STATUSES)[number] | (typeof REQUEST_STATUSES)[number];
+
+export const threads = pgTable(
+  "threads",
   {
     id: serial("id").primaryKey(),
-    askedBy: integer("asked_by")
+    createdBy: integer("created_by")
       .notNull()
       .references(() => users.id),
-    // หน้าที่น้องกดถาม (เช่น /08b-db-to-backend) พี่เลี้ยงเปิดไปดูบริบทได้
-    pageUrl: text("page_url").notNull(),
-    body: text("body").notNull(),
-    // ยังไม่มีคำตอบ = รอตอบ (ไม่ต้องมีคอลัมน์สถานะแยก ค่าจะได้ไม่ขัดกันเอง)
-    answer: text("answer"),
-    answeredBy: integer("answered_by").references(() => users.id),
-    answeredAt: timestamp("answered_at", { withTimezone: true }),
+    kind: text("kind").$type<ThreadKind>().notNull(),
+    subject: text("subject").notNull(),
+    // หน้าที่น้องกดถาม (เช่น /08b-db-to-backend) พี่เลี้ยงเปิดไปดูบริบทได้ · ขอเนื้อหาไม่ต้องมี
+    pageUrl: text("page_url"),
+    status: text("status").$type<ThreadStatus>().notNull(),
+    // เก็บซ้ำจากข้อความล่าสุด หน้ารายการจะได้เรียงและบอก "ยังไม่อ่าน" โดยไม่ต้อง join ข้อความทุกแถว
+    lastMessageAt: timestamp("last_message_at", { withTimezone: true }).notNull().defaultNow(),
+    lastAuthorRole: text("last_author_role").$type<Role>().notNull(),
+    // อ่านล่าสุดเมื่อไร แยกฝั่งน้องกับฝั่งพี่เลี้ยง (พี่เลี้ยงทุกคนใช้ค่าร่วมกัน)
+    internReadAt: timestamp("intern_read_at", { withTimezone: true }),
+    devReadAt: timestamp("dev_read_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  // หน้าของน้องค้นด้วย "คำถามของฉัน" ทุกครั้ง
-  (t) => [index("questions_asked_by_idx").on(t.askedBy)],
+  (t) => [index("threads_created_by_idx").on(t.createdBy)],
+);
+
+export const threadMessages = pgTable(
+  "thread_messages",
+  {
+    id: serial("id").primaryKey(),
+    threadId: integer("thread_id")
+      .notNull()
+      .references(() => threads.id, { onDelete: "cascade" }),
+    authorId: integer("author_id")
+      .notNull()
+      .references(() => users.id),
+    body: text("body").notNull(),
+    // true = ระบบบันทึกเอง (เช่น "เปลี่ยนสถานะเป็น กำลังทำ") แสดงเป็นบรรทัดกลางแชท ไม่ใช่ฟองข้อความ
+    isSystem: boolean("is_system").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("thread_messages_thread_idx").on(t.threadId, t.createdAt)],
 );

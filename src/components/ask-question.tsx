@@ -2,81 +2,91 @@
 
 import { MessageCircle } from "lucide-react";
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
-import { useMyQuestions } from "@/hooks/use-my-questions";
+import { useEffect, useState } from "react";
+import { threadsApi } from "@/api/threads.api";
+import { useSession } from "@/hooks/use-session";
+import type { NewThread, ThreadSummary } from "@/types";
 import { Button } from "./button";
 import { ErrorText } from "./error-text";
-import { inputClass } from "./field";
-import { QuestionThread } from "./question-thread";
+import { NewThreadForm } from "./new-thread-form";
+import { StatusBadge } from "./status-badge";
 
-// กล่องท้ายบท: ถามพี่เลี้ยงเรื่องบทนี้ เห็นกันแค่คนถามกับพี่เลี้ยง
+// กล่องท้ายบท: ถามพี่เลี้ยงเรื่องบทนี้ (บันทึกว่ามาจากหน้าไหน) แล้วไปคุยต่อในหน้าแชท
 // ไม่ได้ login ไม่แสดงเลย (คนนอกไม่มีบัญชีให้พี่เลี้ยงตอบกลับ)
 export function AskQuestion({ pageUrl }: { pageUrl: string }) {
-  const { loggedIn, questions, error, ask } = useMyQuestions();
+  const { role } = useSession();
+  const [here, setHere] = useState<ThreadSummary[]>([]);
   const [open, setOpen] = useState(false);
-  const [body, setBody] = useState("");
-  const [sending, setSending] = useState(false);
-  if (!loggedIn) return null;
+  const [error, setError] = useState("");
+  const [sentId, setSentId] = useState<number | null>(null);
 
-  const here = questions.filter((q) => q.pageUrl === pageUrl);
+  useEffect(() => {
+    if (!role) return;
+    threadsApi
+      .list()
+      .then((ts) => setHere(ts.filter((t) => t.pageUrl === pageUrl)))
+      .catch(() => {});
+  }, [role, pageUrl]);
 
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    setSending(true);
-    if (await ask(pageUrl, body)) setBody("");
-    setSending(false);
+  if (!role) return null;
+
+  const submit = async (t: NewThread) => {
+    setError("");
+    try {
+      const { id } = await threadsApi.create(t);
+      setHere(await threadsApi.list().then((ts) => ts.filter((x) => x.pageUrl === pageUrl)));
+      setSentId(id);
+      setOpen(false);
+      return true;
+    } catch (e) {
+      setError((e as Error).message);
+      return false;
+    }
   };
 
   return (
-    <section aria-labelledby="ask-title" className="not-prose mt-10 flex flex-col gap-4 rounded-xl border border-fd-border bg-fd-card p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 id="ask-title" className="flex items-center gap-2 text-base font-semibold">
-          <MessageCircle className="size-5 text-fd-primary" /> ติดตรงไหนในบทนี้ ถามพี่เลี้ยงได้
-        </h2>
-        <Link href="/questions" className="text-sm text-fd-primary underline">
-          คำถามของฉันทั้งหมด
-        </Link>
-      </div>
+    <section aria-labelledby="ask-title" className="not-prose mt-10 flex flex-col gap-3 rounded-xl border border-fd-border bg-fd-card p-4">
+      <h2 id="ask-title" className="flex items-center gap-2 text-base font-semibold">
+        <MessageCircle className="size-5 text-fd-primary" /> ติดตรงไหนในบทนี้ ถามพี่เลี้ยงได้
+      </h2>
 
-      {here.map((q) => (
-        <div key={q.id} className="border-t border-fd-border pt-3">
-          <QuestionThread q={q} />
+      {here.length > 0 && (
+        <ul className="flex flex-col gap-1 text-sm">
+          {here.map((t) => (
+            <li key={t.id}>
+              <Link href={`/questions?t=${t.id}`} className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-fd-accent">
+                <StatusBadge status={t.status} />
+                <span className={`min-w-0 flex-1 truncate ${t.unread ? "font-bold" : ""}`}>{t.subject}</span>
+                {t.unread && <span className="text-xs font-semibold text-orange-600">ข้อความใหม่</span>}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {sentId !== null && (
+        <p role="status" className="text-sm text-green-700 dark:text-green-400">
+          ส่งแล้ว พี่เลี้ยงตอบเมื่อไรจะมีจุดแจ้งเตือนที่เมนูบัญชี ·{" "}
+          <Link href={`/questions?t=${sentId}`} className="underline">
+            เปิดแชท
+          </Link>
+        </p>
+      )}
+      {error && <ErrorText>{error}</ErrorText>}
+
+      {open ? (
+        <div className="-m-4 mt-0">
+          <NewThreadForm kinds={["question"]} pageUrl={pageUrl} onSubmit={submit} onCancel={() => setOpen(false)} />
         </div>
-      ))}
-
-      {!open ? (
-        <Button variant="ghost" className="w-fit" onClick={() => setOpen(true)} aria-expanded={open}>
-          เขียนคำถาม
-        </Button>
       ) : (
-        <form onSubmit={submit} className="flex flex-col gap-2">
-          {/* พาให้ลองหาคำตอบเองก่อน: คำถามที่บอกว่าลองอะไรไปแล้ว พี่เลี้ยงตอบได้ตรงและเร็วกว่า */}
-          <p className="text-xs leading-relaxed text-fd-muted-foreground">
-            ก่อนถาม ลองอ่าน error ทั้งบรรทัด ค้นในบทนี้และหน้าศัพท์ แล้วลองแก้เองอย่างน้อยหนึ่งวิธี · เวลาเขียนให้บอก{" "}
-            <strong>ทำอะไรอยู่ · คาดว่าจะได้อะไร · ได้อะไรจริง (คัดลอก error มาวาง) · ลองอะไรไปแล้ว</strong> · เห็นแค่เรากับพี่เลี้ยง
-          </p>
-          <label htmlFor="ask-body" className="sr-only">
-            คำถาม
-          </label>
-          <textarea
-            id="ask-body"
-            className={`${inputClass} min-h-32`}
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            minLength={10}
-            maxLength={2000}
-            required
-          />
-          {error && <ErrorText>{error}</ErrorText>}
-          <div className="flex gap-2">
-            <Button type="submit" disabled={sending}>
-              {sending ? "กำลังส่ง…" : "ส่งคำถาม"}
-            </Button>
-            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
-              ปิด
-            </Button>
-          </div>
-        </form>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="ghost" onClick={() => setOpen(true)}>
+            เขียนคำถาม
+          </Button>
+          <Link href="/questions?new=content_request" className="text-sm text-fd-primary underline">
+            อยากได้เนื้อหาเรื่องอื่น? ขอเนื้อหาเพิ่ม
+          </Link>
+        </div>
       )}
     </section>
   );

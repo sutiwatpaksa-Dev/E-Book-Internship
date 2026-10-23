@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { authApi } from "@/api/auth.api";
 import { filesApi, REQUIREMENT_PDF_URL } from "@/api/files.api";
 import { useSession } from "@/hooks/use-session";
+import { useUnread } from "@/hooks/use-unread";
 
 export const ROLE_LABEL = { intern: "Internship", dev: "พี่เลี้ยง" } as const;
 export const ROLE_BADGE = {
@@ -19,6 +20,7 @@ const itemClass = "flex min-h-10 w-full items-center gap-2 rounded-md px-2.5 tex
 // บัญชีมุมขวาบน: ยังไม่ login = ปุ่มเข้าสู่ระบบ · login แล้ว = กดชื่อเพื่อเปิดเมนู
 export function AccountMenu() {
   const { role, logout } = useSession();
+  const unread = useUnread();
   const [username, setUsername] = useState<string | null>(null);
   const [exampleRepo, setExampleRepo] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
@@ -75,8 +77,10 @@ export function AccountMenu() {
         onClick={() => setOpen((v) => !v)}
         className="flex h-10 items-center gap-2 rounded-full border border-fd-border bg-fd-background p-1 hover:bg-fd-accent sm:pe-2.5"
       >
-        <span className="flex size-8 items-center justify-center rounded-full bg-fd-primary/10 text-sm font-bold text-fd-primary">
+        <span className="relative flex size-8 items-center justify-center rounded-full bg-fd-primary/10 text-sm font-bold text-fd-primary">
           {username?.[0]?.toUpperCase() ?? "·"}
+          {/* จุดส้ม = มีข้อความใหม่ในแชทกับพี่เลี้ยง (พี่เลี้ยง: น้องพิมพ์มา) */}
+          {unread > 0 && <span aria-label={`ข้อความใหม่ ${unread} เรื่อง`} className="absolute -end-0.5 -top-0.5 size-3 rounded-full border-2 border-fd-background bg-orange-500" />}
         </span>
         <span className="text-sm font-medium max-sm:hidden">{username}</span>
         <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold max-sm:hidden ${ROLE_BADGE[role]}`}>{ROLE_LABEL[role]}</span>
@@ -93,8 +97,9 @@ export function AccountMenu() {
               <Settings className="size-4" /> หลังบ้านพี่เลี้ยง
             </Link>
           )}
-          <Link role="menuitem" href="/questions" className={itemClass}>
-            <MessageCircle className="size-4" /> คำถามของฉัน
+          <Link role="menuitem" href={role === "dev" ? "/dev/admin?tab=questions" : "/questions"} className={itemClass}>
+            <MessageCircle className="size-4" /> {role === "dev" ? "ข้อความจากน้อง" : "ข้อความถึงพี่เลี้ยง"}
+            {unread > 0 && <span className="ms-auto rounded-full bg-orange-500 px-1.5 text-[11px] font-bold text-white">{unread}</span>}
           </Link>
           <a role="menuitem" href={REQUIREMENT_PDF_URL} target="_blank" rel="noopener" className={itemClass}>
             <FileText className="size-4" /> เอกสาร Requirement

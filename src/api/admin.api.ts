@@ -1,4 +1,4 @@
-import type { AdminQuestion, FileInfo, IssuedPin, Role, User } from "@/types";
+import type { FileInfo, IssuedPin, Role, ThreadDetail, ThreadStatus, ThreadSummary, User } from "@/types";
 import { jsonBody, request } from "./client";
 
 export const adminApi = {
@@ -10,6 +10,9 @@ export const adminApi = {
   getRequirementInfo: () => request<FileInfo | null>("/admin/requirement"),
   uploadRequirement: (file: File) =>
     request<FileInfo>("/admin/requirement", { method: "PUT", headers: { "Content-Type": "application/pdf" }, body: file }),
-  listQuestions: () => request<AdminQuestion[]>("/admin/questions"),
-  answerQuestion: (id: number, answer: string) => request<null>(`/admin/questions/${id}/answer`, jsonBody("PUT", { answer })),
+  listThreads: () => request<ThreadSummary[]>("/admin/threads"),
+  unreadThreads: () => request<{ count: number }>("/admin/threads/unread"),
+  getThread: (id: number) => request<ThreadDetail>(`/admin/threads/${id}`),
+  replyThread: (id: number, body: string) => request<null>(`/admin/threads/${id}/messages`, jsonBody("POST", { body })),
+  setThreadStatus: (id: number, status: ThreadStatus, note?: string) => request<null>(`/admin/threads/${id}`, jsonBody("PATCH", { status, note })),
 };

@@ -7,7 +7,7 @@ import { errorHandler } from "./middleware/error-handler";
 import { adminRoutes } from "./routes/admin.routes";
 import { authRoutes } from "./routes/auth.routes";
 import { fileRoutes } from "./routes/file.routes";
-import { questionRoutes } from "./routes/question.routes";
+import { threadRoutes } from "./routes/thread.routes";
 
 // โครงแบบแบ่งตามหน้าที่ (Layered / MVC): routes → services → repositories → db
 export const app = new Hono().basePath("/api");
@@ -32,7 +32,7 @@ app.get("/health", async (c) => {
 app.route("/auth", authRoutes);
 app.route("/admin", adminRoutes);
 app.route("/files", fileRoutes);
-app.route("/questions", questionRoutes);
+app.route("/threads", threadRoutes);
 
 // บอก path ที่ server เห็นด้วย ช่วยตรวจว่า rewrite ของ Vercel ส่ง path เดิมมาครบไหม
 app.notFound((c) => c.json({ error: "ไม่พบ", path: c.req.path }, 404));

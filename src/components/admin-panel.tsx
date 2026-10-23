@@ -3,11 +3,12 @@
 import { FileText, LayoutDashboard, MessageCircle, Users, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 import { useAdmin } from "@/hooks/use-admin";
+import { useUnread } from "@/hooks/use-unread";
 import { AdminFiles } from "./admin-files";
 import { AdminOverview } from "./admin-overview";
-import { AdminQuestions } from "./admin-questions";
 import { AdminUsers } from "./admin-users";
 import { Button } from "./button";
+import { ChatPanel } from "./chat-panel";
 import { ErrorText } from "./error-text";
 
 type TabId = "overview" | "users" | "files" | "questions";
@@ -15,15 +16,16 @@ const TABS: { id: TabId; label: string; icon: LucideIcon }[] = [
   { id: "overview", label: "ภาพรวม", icon: LayoutDashboard },
   { id: "users", label: "บัญชีผู้ใช้", icon: Users },
   { id: "files", label: "ไฟล์และตั้งค่า", icon: FileText },
-  { id: "questions", label: "คำถามจากน้อง", icon: MessageCircle },
+  { id: "questions", label: "ข้อความจากน้อง", icon: MessageCircle },
 ];
 
 // หลังบ้านพี่เลี้ยง: เมนูแท็บซ้าย (มือถือเป็นแถบเลื่อนด้านบน) + เนื้อหาของแท็บที่เลือก
-export function AdminPanel({ titles }: { titles: Record<string, string> }) {
+export function AdminPanel({ titles, initialTab = "overview" }: { titles: Record<string, string>; initialTab?: string }) {
   const admin = useAdmin();
-  const [tab, setTab] = useState<TabId>("overview");
+  // เปิดแท็บจากลิงก์ได้ เช่น /dev/admin?tab=questions จากเมนูบัญชี
+  const [tab, setTab] = useState<TabId>(TABS.some((t) => t.id === initialTab) ? (initialTab as TabId) : "overview");
   const active = TABS.find((t) => t.id === tab)!;
-  const waiting = admin.questions.filter((q) => !q.answer).length;
+  const waiting = useUnread();
 
   return (
     <div className="flex flex-col gap-6 md:flex-row">
@@ -42,7 +44,7 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
             <t.icon className="size-4" />
             {t.label}
             {t.id === "questions" && waiting > 0 && (
-              <span aria-label={`รอตอบ ${waiting} ข้อ`} className="ms-auto rounded-full bg-orange-500 px-1.5 text-[11px] font-bold text-white">
+              <span aria-label={`ยังไม่อ่าน ${waiting} เรื่อง`} className="ms-auto rounded-full bg-orange-500 px-1.5 text-[11px] font-bold text-white">
                 {waiting}
               </span>
             )}
@@ -70,7 +72,7 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
         {tab === "overview" && <AdminOverview admin={admin} />}
         {tab === "users" && <AdminUsers admin={admin} />}
         {tab === "files" && <AdminFiles admin={admin} />}
-        {tab === "questions" && <AdminQuestions admin={admin} titles={titles} />}
+        {tab === "questions" && <ChatPanel side="dev" titles={titles} />}
       </div>
     </div>
   );
