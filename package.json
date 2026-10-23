@@ -1,6 +1,6 @@
 {
   "name": "blicktech-intern-handbook",
-  "version": "2.0.5",
+  "version": "2.0.5a",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "bun --bun next start",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
+    "db:migrate": "bun scripts/migrate.ts",
     "user:create": "bun scripts/create-user.ts",
     "user:reset-pin": "bun scripts/reset-pin.ts",
     "test": "bun test",
