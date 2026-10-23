@@ -47,3 +47,7 @@ export type ThreadDetail = {
 };
 
 export type NewThread = { kind: ThreadKind; subject: string; body: string; pageUrl?: string };
+
+// บทที่ผ่านแล้ว (รูปร่างตรงกับ server/routes/progress.routes.ts)
+export type ProgressEntry = { link: string; doneAt: string };
+

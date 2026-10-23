@@ -15,6 +15,7 @@ const KNOWN: Record<string, [ContentfulStatusCode, string]> = {
   THREAD_NOT_FOUND: [404, "ไม่พบเรื่องนี้"],
   INVALID_STATUS: [400, "สถานะนี้ใช้กับเรื่องประเภทนี้ไม่ได้"],
   NOTE_REQUIRED: [400, "ถ้าไม่ทำ ให้เขียนเหตุผลบอกน้องด้วย"],
+  UNKNOWN_CHAPTER: [400, "ไม่มีบทนี้ในแผนการเรียน"],
 };
 
 export function errorHandler(err: Error, c: Context) {

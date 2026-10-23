@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { requireRole, type AuthVars } from "../middleware/require-role";
 import { fileService } from "../services/file.service";
+import { progressService } from "../services/progress.service";
 import { threadService } from "../services/thread.service";
 import { userService } from "../services/user.service";
 import { messageSchema, statusSchema } from "../validators/thread.validator";
@@ -24,6 +25,8 @@ adminRoutes.patch("/users/:id", async (c) => {
   if (!parsed.success) return c.json({ error: "ข้อมูลไม่ถูกต้อง" }, 400);
   return c.json(await userService.update(c.get("user").id, Number(c.req.param("id")), parsed.data));
 });
+
+adminRoutes.get("/progress", async (c) => c.json(await progressService.byUser()));
 
 adminRoutes.get("/requirement", async (c) => c.json(await fileService.getRequirementInfo()));
 

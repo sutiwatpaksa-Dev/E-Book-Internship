@@ -3,13 +3,16 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "@/api/admin.api";
 import { filesApi } from "@/api/files.api";
-import type { FileInfo, Role, User } from "@/types";
+import type { FileInfo, ProgressEntry, Role, ThreadSummary, User } from "@/types";
 import { toast } from "./use-toast";
 
 // ข้อมูลและคำสั่งทั้งหมดของหลังบ้าน แยกจากหน้าตา: component แค่เรียกใช้ ไม่เรียก API เอง
 export function useAdmin() {
   const [users, setUsers] = useState<User[]>([]);
   const [pdf, setPdf] = useState<FileInfo | null>(null);
+  // ใช้ในภาพรวม หน้าน้องรายคน และบอร์ดคำขอ: โหลดพร้อมรายชื่อ ทุกแท็บเห็นชุดเดียวกัน
+  const [progress, setProgress] = useState<Record<number, ProgressEntry[]>>({});
+  const [threads, setThreads] = useState<ThreadSummary[]>([]);
   const [exampleRepo, setExampleRepo] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -28,9 +31,11 @@ export function useAdmin() {
 
   const reload = () =>
     run(async () => {
-      const [u, p] = await Promise.all([adminApi.listUsers(), adminApi.getRequirementInfo()]);
+      const [u, p, pr, t] = await Promise.all([adminApi.listUsers(), adminApi.getRequirementInfo(), adminApi.progress(), adminApi.listThreads()]);
       setUsers(u);
       setPdf(p);
+      setProgress(pr);
+      setThreads(t);
     });
 
   useEffect(() => {
@@ -44,6 +49,9 @@ export function useAdmin() {
   return {
     users,
     pdf,
+    progress,
+    threads,
+    reload,
     exampleRepo,
     loading,
     error,

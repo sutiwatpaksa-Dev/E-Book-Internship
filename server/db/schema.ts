@@ -1,4 +1,4 @@
-import { boolean, customType, index, integer, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, customType, index, integer, pgTable, primaryKey, serial, text, timestamp } from "drizzle-orm/pg-core";
 
 const bytea = customType<{ data: Buffer }>({ dataType: () => "bytea" });
 
@@ -87,3 +87,18 @@ export const threadMessages = pgTable(
   },
   (t) => [index("thread_messages_thread_idx").on(t.threadId, t.createdAt)],
 );
+
+// บทที่น้องติ๊ก "ผ่านแล้ว" เก็บกับบัญชี (เดิมอยู่ในเบราว์เซอร์อย่างเดียว พี่เลี้ยงจึงไม่เห็น และเปลี่ยนเครื่องแล้วหาย)
+// คีย์คู่ (user, link): บทเดียวกันติ๊กซ้ำได้แค่แถวเดียว ยกเลิกติ๊ก = ลบแถว
+export const progress = pgTable(
+  "progress",
+  {
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    link: text("link").notNull(),
+    doneAt: timestamp("done_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.link] })],
+);
+

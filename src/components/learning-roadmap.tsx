@@ -60,7 +60,7 @@ export function LearningRoadmap() {
           <i className="mr-1 inline-block h-3 w-4.5 rounded-sm border-2 border-dashed border-fd-muted-foreground bg-fd-card align-middle" /> บทเสริม อ่านเมื่ออยากรู้ลึก
         </span>
         <span>🔒 ต้อง login</span>
-        <span>✓ ติ๊กเองเมื่อผ่านบท (เก็บในเบราว์เซอร์นี้)</span>
+        <span>✓ ติ๊กเองเมื่อผ่านบท (login อยู่: เก็บกับบัญชี · ไม่ได้ login: เก็บในเบราว์เซอร์นี้)</span>
       </div>
     </div>
   );
