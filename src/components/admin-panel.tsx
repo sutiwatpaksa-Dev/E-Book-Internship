@@ -1,21 +1,23 @@
 "use client";
 
-import { FileText, LayoutDashboard, MessageCircle, Users, type LucideIcon } from "lucide-react";
+import { FileText, Inbox, LayoutDashboard, MessageCircle, Users, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 import { useAdmin } from "@/hooks/use-admin";
 import { useUnread } from "@/hooks/use-unread";
 import { AdminFiles } from "./admin-files";
 import { AdminInternDetail } from "./admin-intern-detail";
 import { AdminOverview } from "./admin-overview";
+import { AdminRequests } from "./admin-requests";
 import { AdminUsers } from "./admin-users";
 import { Button } from "./button";
 import { ChatPanel } from "./chat-panel";
 import { ErrorText } from "./error-text";
 
-type TabId = "overview" | "questions" | "users" | "files";
+type TabId = "overview" | "questions" | "requests" | "users" | "files";
 const TABS: { id: TabId; label: string; icon: LucideIcon }[] = [
   { id: "overview", label: "ภาพรวม", icon: LayoutDashboard },
   { id: "questions", label: "ข้อความจากน้อง", icon: MessageCircle },
+  { id: "requests", label: "คำขอเนื้อหา", icon: Inbox },
   { id: "users", label: "บัญชีผู้ใช้", icon: Users },
   { id: "files", label: "ไฟล์และตั้งค่า", icon: FileText },
 ];
@@ -99,6 +101,7 @@ export function AdminPanel({ titles, initialTab = "overview" }: { titles: Record
         {tab === "overview" && (internId !== null ? <AdminInternDetail admin={admin} nav={nav} userId={internId} /> : <AdminOverview admin={admin} nav={nav} />)}
         {/* key: สั่งเปิดเรื่องใหม่จากหน้าอื่น ให้แชทเริ่มใหม่ที่เรื่องนั้น */}
         {tab === "questions" && <ChatPanel key={threadId ?? "list"} side="dev" titles={titles} initialId={threadId} />}
+        {tab === "requests" && <AdminRequests admin={admin} nav={nav} />}
         {tab === "users" && <AdminUsers admin={admin} />}
         {tab === "files" && <AdminFiles admin={admin} />}
       </div>

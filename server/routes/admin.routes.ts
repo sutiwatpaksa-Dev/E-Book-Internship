@@ -5,7 +5,7 @@ import { progressService } from "../services/progress.service";
 import { threadService } from "../services/thread.service";
 import { userService } from "../services/user.service";
 import { messageSchema, statusSchema } from "../validators/thread.validator";
-import { createUserSchema, updateUserSchema } from "../validators/user.validator";
+import { createManySchema, createUserSchema, updateUserSchema } from "../validators/user.validator";
 
 export const adminRoutes = new Hono<AuthVars>();
 adminRoutes.use("*", requireRole("dev"));
@@ -16,6 +16,12 @@ adminRoutes.post("/users", async (c) => {
   const parsed = createUserSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ error: "username ใช้ได้เฉพาะ a-z 0-9 . _ - ยาว 3–64 ตัว และต้องเลือก role" }, 400);
   return c.json(await userService.create(parsed.data.username, parsed.data.role), 201);
+});
+
+adminRoutes.post("/users/bulk", async (c) => {
+  const parsed = createManySchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: "ใส่ 1–50 ชื่อ บรรทัดละชื่อ ใช้ได้เฉพาะ a-z 0-9 . _ - ยาว 3–64 ตัว" }, 400);
+  return c.json(await userService.createMany(parsed.data.usernames, parsed.data.role), 201);
 });
 
 adminRoutes.post("/users/:id/reset-pin", async (c) => c.json(await userService.resetPin(Number(c.req.param("id")))));

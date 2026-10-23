@@ -63,6 +63,19 @@ export function useAdmin() {
         setIssued({ username: r.user.username, pin: r.pin });
         await reload();
       }),
+    // ผลลัพธ์ (PIN ของแต่ละคน) คืนให้ component แสดงครั้งเดียว ไม่เก็บไว้ใน state กลาง
+    createMany: async (usernames: string[], role: Role) => {
+      setError("");
+      try {
+        const results = await adminApi.createMany(usernames, role);
+        await reload();
+        toast.success(`สร้างบัญชีแล้ว ${results.filter((r) => "pin" in r).length} คน`);
+        return results;
+      } catch (e) {
+        setError((e as Error).message);
+        return null;
+      }
+    },
     resetPin: (u: User) =>
       run(async () => {
         const r = await adminApi.resetPin(u.id);

@@ -1,9 +1,10 @@
-import type { FileInfo, IssuedPin, ProgressEntry, Role, ThreadDetail, ThreadStatus, ThreadSummary, User } from "@/types";
+import type { BulkResult, FileInfo, IssuedPin, ProgressEntry, Role, ThreadDetail, ThreadStatus, ThreadSummary, User } from "@/types";
 import { jsonBody, request } from "./client";
 
 export const adminApi = {
   listUsers: () => request<User[]>("/admin/users"),
   createUser: (username: string, role: Role) => request<IssuedPin>("/admin/users", jsonBody("POST", { username, role })),
+  createMany: (usernames: string[], role: Role) => request<BulkResult[]>("/admin/users/bulk", jsonBody("POST", { usernames, role })),
   // { userId: บทที่ผ่าน } ของทุกบัญชี
   progress: () => request<Record<number, ProgressEntry[]>>("/admin/progress"),
   resetPin: (id: number) => request<IssuedPin>(`/admin/users/${id}/reset-pin`, { method: "POST" }),

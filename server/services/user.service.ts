@@ -14,6 +14,21 @@ export const userService = {
     return { user, pin };
   },
 
+  // ชื่อซ้ำหรือมีอยู่แล้วไม่ทำให้ทั้งชุดล้ม: คนอื่นยังได้บัญชี แล้วบอกว่าชื่อไหนข้ามไป
+  async createMany(usernames: string[], role: Role) {
+    const results: ({ username: string; pin: string } | { username: string; error: string })[] = [];
+    for (const username of [...new Set(usernames)]) {
+      try {
+        const { pin } = await userService.create(username, role);
+        results.push({ username, pin });
+      } catch (e) {
+        if ((e as Error).message !== "USERNAME_TAKEN") throw e;
+        results.push({ username, error: "มีชื่อนี้แล้ว" });
+      }
+    }
+    return results;
+  },
+
   // ตั้ง FIRST_DEV_* ไว้ และยังไม่มีบัญชีชื่อนี้ → สร้างเป็น Dev (ทางเข้าหน้า admin เมื่อยังไม่มีใครเข้าได้)
   // ชื่อนี้มีอยู่แล้วไม่แตะเลย (ไม่เปลี่ยน PIN ไม่ปลดล็อก) env จึงใช้ยึดบัญชีของคนอื่นไม่ได้
   // ไม่จำกัดว่า "ต้องยังไม่มี Dev" เพราะคนที่แก้ env ของ Production ได้ ก็เปลี่ยน DATABASE_URL ได้อยู่แล้ว

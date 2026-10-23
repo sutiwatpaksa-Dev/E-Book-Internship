@@ -1,10 +1,11 @@
 "use client";
 
-import { Search, UserPlus } from "lucide-react";
+import { Search, UserPlus, Users } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { isLockedNow, type AdminState } from "@/hooks/use-admin";
 import type { Role, User } from "@/types";
 import { ROLE_BADGE, ROLE_LABEL } from "./account-menu";
+import { AdminBulkCreate } from "./admin-bulk-create";
 import { Button } from "./button";
 import { ConfirmBox } from "./confirm-box";
 import { Field, Input, inputClass } from "./field";
@@ -25,6 +26,7 @@ type Pending = { kind: "disable" | "reset"; user: User } | null;
 // แท็บบัญชีผู้ใช้: สร้างบัญชี ค้นหา กรองตาม role แบ่งหน้า และจัดการทีละบัญชี
 export function AdminUsers({ admin }: { admin: AdminState }) {
   const [showCreate, setShowCreate] = useState(false);
+  const [showBulk, setShowBulk] = useState(false);
   const [newUsername, setNewUsername] = useState("");
   const [newRole, setNewRole] = useState<Role>("intern");
   const [query, setQuery] = useState("");
@@ -56,10 +58,17 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-fd-muted-foreground">PIN แสดงครั้งเดียวตอนสร้างหรือออกใหม่ · ใส่ PIN ผิด 5 ครั้งล็อก 15 นาที</p>
-        <Button onClick={() => setShowCreate((v) => !v)} aria-expanded={showCreate}>
-          <UserPlus className="size-4" /> สร้างบัญชี
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="ghost" onClick={() => setShowBulk((v) => !v)} aria-expanded={showBulk}>
+            <Users className="size-4" /> สร้างหลายคน
+          </Button>
+          <Button onClick={() => setShowCreate((v) => !v)} aria-expanded={showCreate}>
+            <UserPlus className="size-4" /> สร้างบัญชี
+          </Button>
+        </div>
       </div>
+
+      {showBulk && <AdminBulkCreate admin={admin} onClose={() => setShowBulk(false)} />}
 
       {showCreate && (
         <form onSubmit={create} className="flex flex-wrap items-end gap-3 rounded-xl border border-fd-border bg-fd-card p-4">
