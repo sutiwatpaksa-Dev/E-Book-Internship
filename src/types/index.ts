@@ -51,6 +51,6 @@ export type NewThread = { kind: ThreadKind; subject: string; body: string; pageU
 // บทที่ผ่านแล้ว (รูปร่างตรงกับ server/routes/progress.routes.ts)
 export type ProgressEntry = { link: string; doneAt: string };
 
-// หลังบ้าน: ผลการสร้างบัญชีทีละหลายคน
+// หลังบ้าน: บันทึกการกระทำ และผลการสร้างบัญชีทีละหลายคน
+export type AuditEntry = { id: number; actor: string; action: string; target: string; detail: string | null; createdAt: string };
 export type BulkResult = { username: string; pin: string } | { username: string; error: string };
-

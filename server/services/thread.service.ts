@@ -1,5 +1,6 @@
 import { QUESTION_STATUSES, REQUEST_STATUSES, type Role, type ThreadKind, type ThreadStatus } from "../db/schema";
 import { threadRepository } from "../repositories/thread.repository";
+import { auditService } from "./audit.service";
 
 // กันเปิดเรื่องรัวๆ: ค้างได้ไม่เกินเท่านี้ (เรื่องที่ปิด/ทำเสร็จ/ไม่ทำ ไม่นับ)
 const MAX_OPEN_PER_USER = 10;
@@ -84,5 +85,6 @@ export const threadService = {
     if (status === "declined" && !note) throw new Error("NOTE_REQUIRED");
     const items = [{ body: `เปลี่ยนสถานะเป็น "${STATUS_LABEL[status]}"`, isSystem: true }, ...(note ? [{ body: note }] : [])];
     await threadRepository.addMessages(id, devId, "dev", items, status);
+    await auditService.log(devId, "thread.status", `#${id} ${t.subject}`, STATUS_LABEL[status]);
   },
 };

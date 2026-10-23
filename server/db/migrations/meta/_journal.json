@@ -36,6 +36,13 @@
       "when": 1792729455431,
       "tag": "0004_progress",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792729562665,
+      "tag": "0005_audit-logs",
+      "breakpoints": true
     }
   ]
 }

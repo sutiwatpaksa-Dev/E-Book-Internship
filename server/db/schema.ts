@@ -102,3 +102,20 @@ export const progress = pgTable(
   (t) => [primaryKey({ columns: [t.userId, t.link] })],
 );
 
+// บันทึกว่าพี่เลี้ยงคนไหนทำอะไรกับระบบเมื่อไร (ออก PIN, ปิดบัญชี, อัปโหลดไฟล์ ...) ไว้ย้อนดูเวลามีปัญหา
+// เพิ่มอย่างเดียว ไม่มีหน้าแก้หรือลบ บันทึกที่แก้ได้ก็เชื่อไม่ได้
+export const auditLogs = pgTable(
+  "audit_logs",
+  {
+    id: serial("id").primaryKey(),
+    actorId: integer("actor_id")
+      .notNull()
+      .references(() => users.id),
+    action: text("action").notNull(),
+    // ชื่อสิ่งที่ถูกกระทำ เก็บเป็นข้อความ (เช่น username ตอนนั้น) บัญชีเปลี่ยนชื่อหรือถูกลบภายหลังก็ยังอ่านรู้เรื่อง
+    target: text("target").notNull(),
+    detail: text("detail"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("audit_logs_created_idx").on(t.createdAt)],
+);

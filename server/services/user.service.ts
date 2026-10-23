@@ -1,25 +1,27 @@
 import { env } from "../config/env";
 import type { Role } from "../db/schema";
 import { hashPin, newPin } from "../lib/pin";
-import { userRepository } from "../repositories/user.repository";
+import { userRepository, type PublicUser } from "../repositories/user.repository";
+import { auditService } from "./audit.service";
 
 // PIN คืนออกไปครั้งเดียวตอนสร้าง/ออกใหม่ ระบบเก็บแค่ hash จึงดูย้อนหลังไม่ได้
 export const userService = {
   list: () => userRepository.listPublic(),
 
-  async create(username: string, role: Role) {
+  async create(actorId: number, username: string, role: Role) {
     const pin = newPin();
     const user = await userRepository.create({ username, role, secretHash: await hashPin(pin) });
     if (!user) throw new Error("USERNAME_TAKEN");
+    await auditService.log(actorId, "user.create", username, role);
     return { user, pin };
   },
 
   // ชื่อซ้ำหรือมีอยู่แล้วไม่ทำให้ทั้งชุดล้ม: คนอื่นยังได้บัญชี แล้วบอกว่าชื่อไหนข้ามไป
-  async createMany(usernames: string[], role: Role) {
+  async createMany(actorId: number, usernames: string[], role: Role) {
     const results: ({ username: string; pin: string } | { username: string; error: string })[] = [];
     for (const username of [...new Set(usernames)]) {
       try {
-        const { pin } = await userService.create(username, role);
+        const { pin } = await userService.create(actorId, username, role);
         results.push({ username, pin });
       } catch (e) {
         if ((e as Error).message !== "USERNAME_TAKEN") throw e;
@@ -45,10 +47,11 @@ export const userService = {
     console.info(`FIRST_DEV: สร้างบัญชี Dev ${username} แล้ว login ได้แล้วให้ลบ FIRST_DEV_PIN ออกจาก env`);
   },
 
-  // pin ส่งมาเองได้เฉพาะสคริปต์ใน Terminal (หน้า admin สุ่มให้เสมอ)
-  async resetPin(id: number, pin = newPin()) {
+  // pin ส่งมาเองได้เฉพาะสคริปต์ใน Terminal (หน้า admin สุ่มให้เสมอ) · actorId มีเฉพาะตอนสั่งจากหน้า admin
+  async resetPin(id: number, pin = newPin(), actorId?: number) {
     const user = await userRepository.update(id, { secretHash: await hashPin(pin), secretKind: "pin", failedCount: 0, lockedUntil: null });
     if (!user) throw new Error("NOT_FOUND");
+    if (actorId) await auditService.log(actorId, "user.reset_pin", user.username);
     return { user, pin };
   },
 
@@ -56,8 +59,11 @@ export const userService = {
     // กันพี่เลี้ยงปิดหรือลดสิทธิ์ตัวเองจนไม่มีใครเข้าหน้า admin ได้
     if (actorId === id && (changes.disabled === true || changes.role === "intern")) throw new Error("CANNOT_CHANGE_SELF");
     const { unlock, ...rest } = changes;
-    const user = await userRepository.update(id, { ...rest, ...(unlock ? { failedCount: 0, lockedUntil: null } : {}) });
+    const user: PublicUser | undefined = await userRepository.update(id, { ...rest, ...(unlock ? { failedCount: 0, lockedUntil: null } : {}) });
     if (!user) throw new Error("NOT_FOUND");
+    if (unlock) await auditService.log(actorId, "user.unlock", user.username);
+    if (changes.disabled !== undefined) await auditService.log(actorId, changes.disabled ? "user.disable" : "user.enable", user.username);
+    if (changes.role) await auditService.log(actorId, "user.role", user.username, changes.role);
     return user;
   },
 };

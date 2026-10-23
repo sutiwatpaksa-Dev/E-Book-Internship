@@ -1,9 +1,10 @@
 "use client";
 
-import { FileText, Inbox, LayoutDashboard, MessageCircle, Users, type LucideIcon } from "lucide-react";
+import { FileText, History, Inbox, LayoutDashboard, MessageCircle, Users, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 import { useAdmin } from "@/hooks/use-admin";
 import { useUnread } from "@/hooks/use-unread";
+import { AdminAudit } from "./admin-audit";
 import { AdminFiles } from "./admin-files";
 import { AdminInternDetail } from "./admin-intern-detail";
 import { AdminOverview } from "./admin-overview";
@@ -13,13 +14,14 @@ import { Button } from "./button";
 import { ChatPanel } from "./chat-panel";
 import { ErrorText } from "./error-text";
 
-type TabId = "overview" | "questions" | "requests" | "users" | "files";
+type TabId = "overview" | "questions" | "requests" | "users" | "files" | "audit";
 const TABS: { id: TabId; label: string; icon: LucideIcon }[] = [
   { id: "overview", label: "ภาพรวม", icon: LayoutDashboard },
   { id: "questions", label: "ข้อความจากน้อง", icon: MessageCircle },
   { id: "requests", label: "คำขอเนื้อหา", icon: Inbox },
   { id: "users", label: "บัญชีผู้ใช้", icon: Users },
   { id: "files", label: "ไฟล์และตั้งค่า", icon: FileText },
+  { id: "audit", label: "บันทึกการกระทำ", icon: History },
 ];
 
 // แท็บต่างๆ พากันไปหน้าอื่นผ่านตัวนี้ (เช่น ภาพรวม → น้องรายคน → เปิดแชทของน้อง)
@@ -104,6 +106,7 @@ export function AdminPanel({ titles, initialTab = "overview" }: { titles: Record
         {tab === "requests" && <AdminRequests admin={admin} nav={nav} />}
         {tab === "users" && <AdminUsers admin={admin} />}
         {tab === "files" && <AdminFiles admin={admin} />}
+        {tab === "audit" && <AdminAudit />}
       </div>
     </div>
   );

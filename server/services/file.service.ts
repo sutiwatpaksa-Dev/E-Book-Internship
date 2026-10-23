@@ -1,4 +1,5 @@
 import { fileRepository } from "../repositories/file.repository";
+import { auditService } from "./audit.service";
 
 const REQUIREMENT_KEY = "starter-requirement";
 const PDF_MAX_BYTES = 4 * 1024 * 1024; // Vercel Functions รับ body ได้ไม่เกิน ~4.5 MB
@@ -13,6 +14,7 @@ export const fileService = {
     if (data.subarray(0, 5).toString() !== "%PDF-") throw new Error("NOT_PDF");
     const updatedAt = new Date();
     await fileRepository.upsert({ key: REQUIREMENT_KEY, data, contentType: "application/pdf", size: data.length, updatedBy, updatedAt });
+    await auditService.log(updatedBy, "file.requirement", "Requirement PDF", `${Math.round(data.length / 1024)} KB`);
     return { size: data.length, updatedAt };
   },
 };
