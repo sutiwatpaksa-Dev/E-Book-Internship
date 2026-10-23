@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 420" role="img" aria-label="สลับลำดับรูปตรงๆ ชน unique index ระหว่างทาง วิธีแก้คือย้ายไปเลขติดลบก่อนแล้วค่อยใส่เลขจริง ใน transaction เดียว">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker>
+<marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker></defs>
+<rect x="1" y="1" width="798" height="418" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="32" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="18" font-weight="700" fill="#0b3c91" text-anchor="middle">สลับรูป A (ลำดับ 1) กับ B (ลำดับ 2) ของเครื่องเดียวกัน</text>
+<text x="24" y="70" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="15" font-weight="700" fill="#dc2626" text-anchor="start">แบบผิด: UPDATE ตรงๆ (แม้จะเป็นคำสั่งเดียว)</text>
+<text x="24" y="114" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="start">เริ่ม</text>
+<rect x="200" y="84" width="110" height="46" rx="8" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
+<text x="255" y="104" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="middle">A</text>
+<text x="255" y="122" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="12" font-weight="400" fill="#334155" text-anchor="middle">position = 1</text>
+<rect x="330" y="84" width="110" height="46" rx="8" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
+<text x="385" y="104" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="middle">B</text>
+<text x="385" y="122" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="12" font-weight="400" fill="#334155" text-anchor="middle">position = 2</text>
+<text x="470" y="114" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="start">unique (laptop_id, position)</text>
+<text x="24" y="170" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="700" fill="#dc2626" text-anchor="start">แถวแรก</text>
+<rect x="200" y="140" width="110" height="46" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="1.5"/>
+<text x="255" y="160" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="middle">A</text>
+<text x="255" y="178" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="12" font-weight="400" fill="#334155" text-anchor="middle">position = 2</text>
+<rect x="330" y="140" width="110" height="46" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="1.5"/>
+<text x="385" y="160" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="middle">B</text>
+<text x="385" y="178" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="12" font-weight="400" fill="#334155" text-anchor="middle">position = 2</text>
+<text x="470" y="170" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="start">A เปลี่ยนเป็น 2 ขณะ B ยังเป็น 2 → 23505</text>
+<text x="24" y="222" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="15" font-weight="700" fill="#16a34a" text-anchor="start">แบบถูก: 2 ขั้นใน transaction เดียว (โค้ดในบทนี้)</text>
+<text x="24" y="266" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="start">ขั้น 1</text>
+<rect x="200" y="236" width="110" height="46" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+<text x="255" y="256" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="middle">A</text>
+<text x="255" y="274" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="12" font-weight="400" fill="#334155" text-anchor="middle">position = -1</text>
+<rect x="330" y="236" width="110" height="46" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+<text x="385" y="256" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="middle">B</text>
+<text x="385" y="274" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="12" font-weight="400" fill="#334155" text-anchor="middle">position = -2</text>
+<text x="470" y="266" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="start">ทุกรูปไปเลขติดลบ ไม่ชนกับใคร</text>
+<text x="24" y="322" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="start">ขั้น 2</text>
+<rect x="200" y="292" width="110" height="46" rx="8" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
+<text x="255" y="312" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="middle">B</text>
+<text x="255" y="330" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="12" font-weight="400" fill="#334155" text-anchor="middle">position = 1</text>
+<rect x="330" y="292" width="110" height="46" rx="8" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
+<text x="385" y="312" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="middle">A</text>
+<text x="385" y="330" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="12" font-weight="400" fill="#334155" text-anchor="middle">position = 2</text>
+<text x="470" y="322" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="start">ใส่เลขจริงทีละรูป ช่อง 1..n ว่างหมดแล้ว</text>
+<text x="400" y="372" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="middle">ทั้งหมดอยู่ใน transaction เดียว และล็อกแถวของเครื่องไว้ คนอื่นไม่เห็นสภาพเลขติดลบ และเรียงซ้อนกันไม่ได้</text>
+<text x="400" y="396" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="400" fill="#64748b" text-anchor="middle">อีกทาง: EXCLUDE constraint แบบ DEFERRABLE (ตรวจตอน COMMIT) แต่ Drizzle ประกาศให้ไม่ได้ ต้องเขียน SQL เอง</text>
+</svg>

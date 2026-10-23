@@ -1,0 +1,2238 @@
+---
+navTitle: "08d · รูปภาพ: ที่เก็บแบบอื่นและฟีเจอร์ร้านจริง"
+title: "บทที่ 8d: รูปภาพ ภาคต่อ: ลองที่เก็บแบบอื่นจริงๆ และฟีเจอร์ที่ร้านจริงต้องมี 🗂️"
+---
+
+> ⏱ ประมาณ 5–6 ชั่วโมง (แบ่ง 2 วันได้: วันแรกภาค A ข้อ 1–6 · วันที่สองภาค B ข้อ 7 เป็นต้นไป) · 🧩 ต้องผ่านก่อน: บทที่ 2, 8b, 8c · 🛠 ใช้: TypeScript, Express, Drizzle, PostgreSQL, RustFS, sharp, Docker, rclone, autocannon
+
+> **⚡ สรุป 30 วินาที**
+> - บท 8c เทียบที่เก็บรูป 3 แบบ "บนกระดาษ" บทนี้ **ลองทำจริงทั้ง 3 แบบแล้ววัดผล** ด้วยรูป 300 รูปชุดเดียวกัน
+> - **`bytea`** ใช้ได้จริงและง่าย แต่ฐานข้อมูลโตจาก 8 MB เป็น 87 MB, `pg_dump` จาก 0.1 วินาทีเป็น 6 วินาที และทุกครั้งที่มีคนเปิดรูป API กับฐานข้อมูลต้องทำงาน เหมาะกับไฟล์ **น้อย เล็ก และเป็นความลับ** เท่านั้น
+> - **ดิสก์ของ server** เร็วและง่าย แต่ **ไฟล์หายเมื่อสร้าง container ใหม่ถ้าไม่มี volume** และใช้ไม่ได้บน serverless หรือ server หลายเครื่อง ใช้ได้กับ VPS เครื่องเดียว
+> - **base64 ในฐานข้อมูลหรือ JSON** คือของต้องห้าม: ใหญ่ขึ้น 33% และ cache แยกไม่ได้
+> - ภาค B เพิ่มฟีเจอร์ร้านจริงบนแบบ object storage: **หลายรูป + เรียงลำดับ + จำกัดจำนวน**, **ถังขยะกู้คืนได้**, **ตัวแทนรูปตอนรอโหลด**, **กันรูปซ้ำด้วย sha256** และ **สำรอง/กู้คืนทั้งฐานข้อมูลและ bucket ให้ตรงกัน**
+> - หลักที่ใช้ซ้ำทั้งบท: กฎที่ "นับหลายแถว" ต้อง **ล็อกก่อนนับ** · กฎที่นับเฉพาะรูปที่ยังไม่ลบต้องใช้ **partial index** · ทุกลำดับงานเรียงให้ **พลาดได้แค่ไฟล์กำพร้า**
+
+---
+
+## 📖 เรื่องเล่า
+
+ระบบรูปจากบท 8c ขึ้นใช้งานได้หนึ่งเดือน เจ้าของร้านเริ่มขอ
+
+- *"ขอลากรูปสลับลำดับได้ไหม รูปแรกควรเป็นด้านหน้าเครื่อง"*
+- *"เผลอกดลบรูปที่ถ่ายยากที่สุด ขอคืนได้ไหม"*
+- *"หน้ารายการตอนเน็ตช้าเป็นกล่องขาวเต็มจอ"*
+- *"พนักงานอัปโหลดรูปเดียวกันซ้ำ 3 รอบ"*
+
+ส่วนเพื่อนร่วมทีมของบิตถามว่า *"ทำไมไม่เก็บรูปในฐานข้อมูลเลยล่ะ ง่ายกว่าตั้งเยอะ"* บิตตอบได้แค่ว่า *"บท 8c บอกว่ามันไม่ดี"*
+
+พี่ไบต์: *"คำตอบแบบนั้นยังไม่พอ ลองทำทั้งสองแบบแล้ววัดให้เห็นตัวเลข จะได้รู้ว่ามันไม่ดี **ตรงไหน** และ **เมื่อไหร่ที่มันโอเค**"*
+
+> 🧭 **บทนี้ต่อจากโปรเจกต์ `laptop-api` ของบท 8c** ภาค A (ข้อ 1–6) เป็น "ห้องทดลอง" ลองที่เก็บแบบอื่นแล้ววัดผล ภาค B (ข้อ 7 เป็นต้นไป) เพิ่มฟีเจอร์ลงในระบบ object storage จริงของเรา **ทุกคำสั่งรันจริงแล้ว ตัวเลขทั้งหมดวัดจริง** บน MacBook (Apple Silicon) + Docker Desktop ตัวเลขของเราจะต่างไปตามเครื่อง แต่ "ทิศทาง" ควรเหมือนกัน
+
+---
+
+# ภาค A: ลองที่เก็บแบบอื่นจริงๆ แล้ววัดผล
+
+## 1. ทำไมต้องลองเอง และเตรียมรูปทดสอบ
+
+ตารางเทียบในบท 8c ข้อ 1 บอกว่า `bytea` "ทำให้ backup ช้า" และ "ไบต์ต้องไหลผ่านฐานข้อมูล" แต่ไม่ได้บอกว่า **ช้าแค่ไหน** วิศวกรที่ดีตัดสินจากตัวเลขของงานตัวเอง ไม่ใช่จากความเชื่อ บทนี้จึงใช้รูปชุดเดียวกันใส่ทั้ง 2 ระบบแล้ววัด 5 อย่าง
+
+| วัดอะไร | ทำไมต้องสน |
+|---|---|
+| ขนาดฐานข้อมูล | ค่าเช่าฐานข้อมูลแพงกว่าค่าเช่าที่เก็บไฟล์หลายเท่า และฐานใหญ่ = ทุกอย่างช้าลง |
+| เวลาและขนาด `pg_dump` / `pg_restore` | วันที่ระบบพัง เวลากู้คืนคือเวลาที่ร้านปิด |
+| ความเร็วตอนส่งรูป | หน้ารายการหนึ่งหน้ามีรูปหลายสิบรูป |
+| CPU / RAM ของ API | ทรัพยากรที่ใช้ส่งรูป = ทรัพยากรที่ไม่ได้ใช้ทำงานอื่น |
+| ผลต่อ endpoint อื่น | เปิดรูปเยอะๆ แล้วหน้าอื่นช้าตามไหม |
+
+### สร้างรูปทดสอบ 300 รูป
+
+รูปสุ่มจุดสีในบท 8c บีบอัดยากผิดธรรมชาติ บทนี้วาดรูปจำลองที่ใกล้รูปถ่ายจริงกว่า (พื้นหลังไล่สี โน้ตบุ๊ก จุดรบกวนเล็กน้อย)
+
+`src/scripts/make-dataset.ts`
+```ts
+import { mkdir } from "node:fs/promises";
+import sharp from "sharp";
+
+// สร้าง "รูปถ่ายจำลอง" N รูปใน dataset/ ไว้วัดผล: พื้นหลังไล่สี + โน้ตบุ๊ก + จุดรบกวนเล็กน้อยเหมือนรูปจริง
+// ใช้: npx tsx src/scripts/make-dataset.ts 300
+const count = Number(process.argv[2] ?? 300);
+await mkdir("dataset", { recursive: true });
+
+for (let i = 1; i <= count; i++) {
+  const hue = (i * 47) % 360;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="3000" height="2250">
+    <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="hsl(${hue},45%,70%)"/><stop offset="1" stop-color="hsl(${(hue + 60) % 360},40%,35%)"/>
+    </linearGradient></defs>
+    <rect width="3000" height="2250" fill="url(#bg)"/>
+    <rect x="700" y="500" width="1600" height="1000" rx="40" fill="#2b2f36"/>
+    <rect x="760" y="560" width="1480" height="880" fill="hsl(${(hue + 180) % 360},60%,55%)"/>
+    <path d="M500 1500 H2500 L2650 1700 H350 Z" fill="#3a3f47"/>
+    <text x="1500" y="1100" font-size="160" font-family="sans-serif" fill="white" text-anchor="middle">LAPTOP #${i}</text>
+  </svg>`;
+  const noise = await sharp({
+    create: { width: 3000, height: 2250, channels: 3, background: "#808080", noise: { type: "gaussian", mean: 128, sigma: 25 } },
+  }).png().toBuffer();
+  await sharp(Buffer.from(svg))
+    .composite([{ input: noise, blend: "overlay" }])
+    .jpeg({ quality: 85 })
+    .toFile(`dataset/${String(i).padStart(4, "0")}.jpg`);
+}
+console.log(`สร้าง ${count} รูปใน dataset/ แล้ว`);
+```
+```bash
+npx tsx src/scripts/make-dataset.ts 300
+echo "dataset/" >> .gitignore
+du -sh dataset
+```
+```text
+สร้าง 300 รูปใน dataset/ แล้ว
+629M	dataset
+```
+ต้นฉบับรูปละราว 2.1 MB (3000 x 2250) หลังผ่าน `processPhoto` ของบท 8c รูปใหญ่ (1600px) เหลือราว **250 KB** ใกล้เคียงรูปสินค้าจริงบนเว็บ
+
+สคริปต์อัปโหลดทั้งชุดผ่าน API (ทางเดียวกับผู้ใช้จริง) กระจายให้เครื่อง 1–3 เครื่องละ 100 รูป
+
+`src/scripts/lab/load-photos.ts`
+```ts
+import { readdir, readFile } from "node:fs/promises";
+
+// อัปโหลดรูปใน dataset/ ทีละรูปผ่าน API (ทางเดียวกับผู้ใช้จริง)
+// ใช้: npx tsx src/scripts/lab/load-photos.ts <photos|blob-photos> <จำนวนเครื่อง>
+const [kind = "photos", laptopsArg = "3"] = process.argv.slice(2);
+const laptops = Number(laptopsArg);
+const files = (await readdir("dataset")).filter((f) => f.endsWith(".jpg")).sort();
+
+const started = performance.now();
+let i = 0;
+for (const f of files) {
+  const laptopId = (i++ % laptops) + 1; // กระจายรูปให้หลายเครื่อง
+  const form = new FormData();
+  form.append("photo", new Blob([await readFile(`dataset/${f}`)], { type: "image/jpeg" }), f);
+  const res = await fetch(`http://localhost:3000/laptops/${laptopId}/${kind}`, { method: "POST", body: form });
+  if (res.status !== 201) throw new Error(`${f}: ${res.status} ${await res.text()}`);
+}
+console.log(`อัปโหลด ${files.length} รูปเข้า /${kind} ใช้เวลา ${((performance.now() - started) / 1000).toFixed(1)} วินาที`);
+```
+
+> ⚠️ **ภาค A ใช้รูปเยอะกว่าโควตาที่ภาค B จะตั้ง** (เครื่องละ 100 รูป) ก่อนเริ่มภาค B ข้อ 8 เราจะล้างรูปทดลองทิ้ง ถ้าอยากแยกให้ชัด ทำภาค A ใน git branch ใหม่ (`git switch -c lab-8d`) ได้
+
+---
+
+## 2. 🔧 แบบ ①: เก็บรูปในฐานข้อมูลจริงๆ (`bytea`)
+
+### ตาราง `blob_photos`
+
+Drizzle รุ่นที่เราใช้ (0.45) ยังไม่มีชนิด `bytea` ให้ใช้ตรงๆ จึงประกาศเองด้วย `customType` (เว็บคู่มือนี้ก็ทำแบบเดียวกันใน `server/db/schema.ts`)
+
+เพิ่มท้าย `src/db/schema.ts` และเพิ่ม `customType` ในบรรทัด import ของ `drizzle-orm/pg-core`
+```ts
+// ---- บทที่ 8d แบบที่ ①: เก็บไบต์ของรูปไว้ในฐานข้อมูล (bytea) ----
+// Drizzle ยังไม่มีชนิด bytea ให้ใช้ตรงๆ จึงประกาศเองด้วย customType: ฝั่ง JS เป็น Buffer ฝั่ง Postgres เป็น bytea
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType: () => "bytea",
+});
+
+export const blobPhotos = pgTable(
+  "blob_photos",
+  {
+    id: serial("id").primaryKey(),
+    laptopId: integer("laptop_id").notNull().references(() => laptops.id, { onDelete: "cascade" }),
+    contentType: text("content_type").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    width: integer("width").notNull(),
+    height: integer("height").notNull(),
+    etag: text("etag").notNull(),                 // ลายนิ้วมือของเนื้อรูป เปลี่ยนรูป = etag ใหม่
+    large: bytea("large").notNull(),              // ไบต์ของรูปใหญ่ 1600px
+    thumb: bytea("thumb").notNull(),              // ไบต์ของรูปเล็ก 400px
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("blob_photos_laptop_id_idx").on(t.laptopId)],
+);
+```
+```bash
+npm run db:generate && npm run db:migrate
+```
+SQL ที่ได้มีบรรทัดสำคัญ `"large" "bytea" NOT NULL` (อ่านก่อน migrate เสมอ)
+
+### Repository: แยก "ข้อมูลของรูป" กับ "ไบต์" ให้ชัด
+
+`src/repositories/blob-photo.repository.ts`
+```ts
+import { and, asc, eq } from "drizzle-orm";
+import { db } from "../db/index.js";
+import { blobPhotos } from "../db/schema.js";
+
+// คอลัมน์ที่ "ไม่ใช่ไบต์" เลือกเฉพาะพวกนี้เสมอ ยกเว้นตอนส่งรูปจริง
+const meta = {
+  id: blobPhotos.id,
+  laptopId: blobPhotos.laptopId,
+  contentType: blobPhotos.contentType,
+  sizeBytes: blobPhotos.sizeBytes,
+  width: blobPhotos.width,
+  height: blobPhotos.height,
+  etag: blobPhotos.etag,
+  createdAt: blobPhotos.createdAt,
+};
+const byIds = (laptopId: number, photoId: number) => and(eq(blobPhotos.id, photoId), eq(blobPhotos.laptopId, laptopId));
+
+export type BlobVariant = "large" | "thumb";
+type BlobData = { contentType: string; sizeBytes: number; width: number; height: number; etag: string; large: Buffer; thumb: Buffer };
+
+export const blobPhotoRepository = {
+  listByLaptop: (laptopId: number) =>
+    db.select(meta).from(blobPhotos).where(eq(blobPhotos.laptopId, laptopId)).orderBy(asc(blobPhotos.id)),
+
+  // ❌ แบบที่มือใหม่มักเขียน: select() เฉยๆ = SELECT * ดึงไบต์ของทุกรูปมาด้วย (ใช้เทียบในข้อ 2 ส่วนวัดผล)
+  listByLaptopWithBytes: (laptopId: number) =>
+    db.select().from(blobPhotos).where(eq(blobPhotos.laptopId, laptopId)).orderBy(asc(blobPhotos.id)),
+
+  findMeta: async (laptopId: number, photoId: number) => {
+    const [row] = await db.select(meta).from(blobPhotos).where(byIds(laptopId, photoId));
+    return row;
+  },
+
+  // อ่านไบต์ของขนาดเดียว (ไม่ดึงอีกขนาดมาด้วย)
+  readBytes: async (laptopId: number, photoId: number, variant: BlobVariant) => {
+    const [row] = await db
+      .select({ contentType: blobPhotos.contentType, etag: blobPhotos.etag, data: blobPhotos[variant] })
+      .from(blobPhotos)
+      .where(byIds(laptopId, photoId));
+    return row;
+  },
+
+  create: async (laptopId: number, data: BlobData) => {
+    const [row] = await db.insert(blobPhotos).values({ laptopId, ...data }).returning(meta);
+    return row;
+  },
+
+  // เปลี่ยนรูป: แถวเดียว UPDATE เดียว ไบต์เก่าหายไปพร้อมกันใน transaction เดียว (ไม่มีไฟล์กำพร้า)
+  replace: async (laptopId: number, photoId: number, data: BlobData) => {
+    const [row] = await db.update(blobPhotos).set(data).where(byIds(laptopId, photoId)).returning(meta);
+    return row;
+  },
+
+  remove: async (laptopId: number, photoId: number) => {
+    const [row] = await db.delete(blobPhotos).where(byIds(laptopId, photoId)).returning({ id: blobPhotos.id });
+    return row;
+  },
+};
+```
+- **`meta`** คือรายการคอลัมน์ที่ไม่ใช่ไบต์ ทุก query ที่ไม่ได้จะส่งรูปให้ใครใช้ตัวนี้ ถ้าเผลอ `select()` เฉยๆ ไบต์ทุกรูปจะติดมาด้วย (เดี๋ยววัดให้ดูว่าหนักแค่ไหน)
+- **`readBytes` ดึงทีละขนาด** คนขอรูปเล็กไม่ต้องลากรูปใหญ่มาด้วย
+
+### Service: ข้อดีที่เห็นชัดคือ "ไม่มีลำดับงานให้คิด"
+
+`src/services/blob-photo.service.ts`
+```ts
+import { createHash } from "node:crypto";
+import { AppError } from "../http/errors.js";
+import { processPhoto } from "../lib/image.js";
+import { laptopRepository } from "../repositories/laptop.repository.js";
+import { blobPhotoRepository, type BlobVariant } from "../repositories/blob-photo.repository.js";
+
+// ตรวจ + ย่อรูปด้วยฟังก์ชันเดิมจากบท 8c แล้วเตรียมไบต์ไว้ลงฐานข้อมูล
+async function prepare(input: Buffer) {
+  const img = await processPhoto(input);
+  return {
+    contentType: img.contentType,
+    sizeBytes: img.large.info.size,
+    width: img.large.info.width,
+    height: img.large.info.height,
+    // ETag = ลายนิ้วมือของเนื้อรูป browser ใช้ถามว่า "รูปที่ฉันมีอยู่ยังใช้ได้ไหม"
+    etag: createHash("sha256").update(img.large.data).digest("hex").slice(0, 32),
+    large: img.large.data,
+    thumb: img.thumb.data,
+  };
+}
+
+const toDto = (p: { id: number; laptopId: number; width: number; height: number; sizeBytes: number; createdAt: Date }) => ({
+  id: p.id,
+  width: p.width,
+  height: p.height,
+  sizeBytes: p.sizeBytes,
+  // URL ชี้กลับมาที่ API ของเราเอง เพราะไบต์อยู่ในฐานข้อมูล
+  urls: {
+    large: `/laptops/${p.laptopId}/blob-photos/${p.id}/large`,
+    thumb: `/laptops/${p.laptopId}/blob-photos/${p.id}/thumb`,
+  },
+  createdAt: p.createdAt,
+});
+
+export const blobPhotoService = {
+  async list(laptopId: number) {
+    return (await blobPhotoRepository.listByLaptop(laptopId)).map(toDto);
+  },
+
+  async add(laptopId: number, input: Buffer) {
+    if (!(await laptopRepository.findById(laptopId))) throw new AppError("NOT_FOUND", "ไม่พบเครื่องนี้");
+    // ไม่มีขั้น "เก็บไฟล์ก่อน" อีกต่อไป ทุกอย่างอยู่ใน INSERT เดียว สำเร็จหรือไม่เกิดเลย
+    return toDto(await blobPhotoRepository.create(laptopId, await prepare(input)));
+  },
+
+  async replace(laptopId: number, photoId: number, input: Buffer) {
+    const row = await blobPhotoRepository.replace(laptopId, photoId, await prepare(input));
+    if (!row) throw new AppError("NOT_FOUND", "ไม่พบรูปนี้");
+    return toDto(row);
+  },
+
+  async remove(laptopId: number, photoId: number) {
+    if (!(await blobPhotoRepository.remove(laptopId, photoId))) throw new AppError("NOT_FOUND", "ไม่พบรูปนี้");
+  },
+
+  // ส่งรูป: ถ้า browser มีรูปเวอร์ชันเดียวกันอยู่แล้ว (If-None-Match ตรง) ไม่ต้องอ่านไบต์เลย
+  async serve(laptopId: number, photoId: number, variant: BlobVariant, ifNoneMatch: string | undefined) {
+    const found = await blobPhotoRepository.findMeta(laptopId, photoId);
+    if (!found) throw new AppError("NOT_FOUND", "ไม่พบรูปนี้");
+    const etag = `"${found.etag}-${variant}"`;
+    if (ifNoneMatch === etag) return { status: 304 as const, etag };
+    const row = await blobPhotoRepository.readBytes(laptopId, photoId, variant);
+    if (!row) throw new AppError("NOT_FOUND", "ไม่พบรูปนี้");
+    return { status: 200 as const, etag, contentType: row.contentType, data: row.data };
+  },
+};
+```
+เทียบกับ `photo.service.ts` ของบท 8c: **ไม่มี** `removeObjectsQuietly` ไม่มีไฟล์กำพร้า ไม่มีงานเก็บกวาด เพราะไบต์กับข้อมูลอยู่ในแถวเดียวกัน transaction ของฐานข้อมูลดูแลให้ทั้งหมด นี่คือ **ข้อดีที่แท้จริง** ของ `bytea` และเป็นเหตุผลที่บางระบบเลือกมัน
+
+### Route: ต้องส่งไบต์เอง และต้องคิดเรื่อง cache เอง
+
+`src/routes/blob-photo.routes.ts`
+```ts
+import { Router } from "express";
+import { z } from "zod";
+import { requireFile, uploadPhoto } from "../http/upload.js";
+import { IdParam, parse } from "../http/validate.js";
+import { blobPhotoService } from "../services/blob-photo.service.js";
+
+export const blobPhotoRoutes = Router();
+const Variant = z.enum(["large", "thumb"]);
+
+blobPhotoRoutes.get("/:laptopId/blob-photos", async (req, res) => {
+  res.json(await blobPhotoService.list(parse(IdParam, req.params.laptopId)));
+});
+
+blobPhotoRoutes.post("/:laptopId/blob-photos", uploadPhoto, async (req, res) => {
+  res.status(201).json(await blobPhotoService.add(parse(IdParam, req.params.laptopId), requireFile(req)));
+});
+
+blobPhotoRoutes.put("/:laptopId/blob-photos/:photoId", uploadPhoto, async (req, res) => {
+  const laptopId = parse(IdParam, req.params.laptopId);
+  res.json(await blobPhotoService.replace(laptopId, parse(IdParam, req.params.photoId), requireFile(req)));
+});
+
+blobPhotoRoutes.delete("/:laptopId/blob-photos/:photoId", async (req, res) => {
+  await blobPhotoService.remove(parse(IdParam, req.params.laptopId), parse(IdParam, req.params.photoId));
+  res.status(204).end();
+});
+
+// ส่งไบต์ของรูปเอง (แบบ object storage ไม่ต้องมี route นี้ เพราะ browser โหลดจาก storage ตรง)
+blobPhotoRoutes.get("/:laptopId/blob-photos/:photoId/:variant", async (req, res) => {
+  const result = await blobPhotoService.serve(
+    parse(IdParam, req.params.laptopId),
+    parse(IdParam, req.params.photoId),
+    parse(Variant, req.params.variant),
+    req.get("if-none-match"),
+  );
+  // URL เดิมอาจได้รูปใหม่ (PUT เปลี่ยนรูปใช้ id เดิม) จึงใช้ immutable ไม่ได้
+  // no-cache = "เก็บไว้ได้ แต่ถามก่อนใช้ทุกครั้ง" ถ้ารูปไม่เปลี่ยน ตอบ 304 ไม่มี body
+  res.set({ ETag: result.etag, "Cache-Control": "public, no-cache" });
+  if (result.status === 304) return res.status(304).end();
+  res.type(result.contentType).send(result.data);
+});
+```
+ต่อใน `src/app.ts` ใต้ `photoRoutes`
+```ts
+import { blobPhotoRoutes } from "./routes/blob-photo.routes.js";
+// ...
+app.use("/laptops", blobPhotoRoutes);   // 8d: ทดลองเก็บรูปใน bytea
+```
+
+**`Cache-Control` สองแบบ ต่างกันเพราะ URL ต่างกัน**
+
+| | URL เปลี่ยนเมื่อรูปเปลี่ยนไหม | header ที่ใช้ | browser ทำอะไร |
+|---|---|---|---|
+| object storage (บท 8c) | ✅ เปลี่ยนรูป = key ใหม่ = URL ใหม่ | `public, max-age=31536000, immutable` | ใช้ของในเครื่องเลย 1 ปี ไม่ถามซ้ำ |
+| `bytea` ผ่าน API (ข้อนี้) | ❌ `/blob-photos/301/large` เหมือนเดิม | `public, no-cache` + `ETag` | เก็บไว้ แต่ถามทุกครั้งพร้อม `If-None-Match` ถ้าไม่เปลี่ยนได้ `304` (ไม่มีเนื้อรูป) |
+
+`no-cache` ไม่ได้แปลว่า "ห้าม cache" (นั่นคือ `no-store`) แต่แปลว่า "cache ได้ แต่ต้องถามก่อนใช้" ส่วนไฟล์ส่วนตัวอย่าง Requirement PDF ของเว็บคู่มือนี้ใช้ `private, no-store` เพราะไม่อยากให้ใครเก็บสำเนาไว้เลย (`server/routes/file.routes.ts`)
+
+### ทดสอบ: เพิ่ม ส่ง 304 เปลี่ยน ลบ
+
+```bash
+U=http://localhost:3000/laptops/3/blob-photos
+curl -s -w "\n%{http_code}\n" -F "photo=@test-images/photo.jpg" $U
+curl -s -o /dev/null -D - $U/302/large
+curl -s -o /dev/null -D - -H 'If-None-Match: "0e96d4769983e2e0adc6444d093dfc15-large"' $U/302/large
+curl -s -o /dev/null -w "%{http_code}\n" -X PUT -F "photo=@test-images/new.png" $U/302
+curl -s -o /dev/null -D - -H 'If-None-Match: "0e96d4769983e2e0adc6444d093dfc15-large"' $U/302/large
+curl -s -w "%{http_code}\n" -X DELETE $U/302
+curl -s -w "\n%{http_code}\n" $U/302/large
+```
+เปลี่ยน `302` และค่า ETag ให้ตรงกับของเรา ผลที่ได้ (รันจริง ตัด header ที่ไม่เกี่ยวออก)
+```text
+{"id":302,"width":1200,"height":1600,"sizeBytes":530258,"urls":{"large":"/laptops/3/blob-photos/302/large","thumb":"/laptops/3/blob-photos/302/thumb"},"createdAt":"2026-10-22T18:45:35.138Z"}
+201
+HTTP/1.1 200 OK
+ETag: "0e96d4769983e2e0adc6444d093dfc15-large"
+Cache-Control: public, no-cache
+Content-Type: image/webp
+Content-Length: 530258
+
+HTTP/1.1 304 Not Modified
+ETag: "0e96d4769983e2e0adc6444d093dfc15-large"
+
+200
+HTTP/1.1 200 OK
+ETag: "4017ebd97c71bd910c1ef68fb2cc53ce-large"
+Content-Length: 246586
+
+204
+{"error":"ไม่พบรูปนี้","code":"NOT_FOUND"}
+404
+```
+อ่านผล: ถาม "รูปยังเหมือนเดิมไหม" ด้วย ETag เดิมได้ `304` (ไม่ส่งเนื้อรูป 530 KB ซ้ำ) หลังเปลี่ยนรูป ETag เดิมไม่ตรงแล้ว จึงได้ `200` พร้อมรูปใหม่และ ETag ใหม่ ส่วนลบรูปก็ลบไบต์ไปพร้อมแถวในคำสั่งเดียว
+
+### TOAST: ไบต์ใหญ่ๆ ไปอยู่ไหนในตาราง
+
+Postgres เก็บข้อมูลเป็น "หน้า" ขนาด 8 KB แถวหนึ่งต้องลงในหน้าเดียว แล้วรูป 250 KB อยู่ได้ยังไง คำตอบคือ **TOAST** (The Oversized-Attribute Storage Technique): ค่าที่ใหญ่เกินราว 2 KB จะถูก **บีบอัด** ก่อน ถ้ายังใหญ่ก็ถูก **ย้ายไปเก็บในตารางลับคู่กัน** (TOAST table) แถวหลักเก็บแค่ตัวชี้
+
+```bash
+docker exec -it laptop-db psql -U postgres -c "select relname as table_name, pg_size_pretty(pg_relation_size(c.oid)) as main, pg_size_pretty(pg_relation_size(reltoastrelid)) as toast, pg_size_pretty(pg_total_relation_size(c.oid)) as total from pg_class c where relname = 'blob_photos'"
+docker exec -it laptop-db psql -U postgres -c "select attname, attstorage from pg_attribute where attrelid='blob_photos'::regclass and attname in ('large','thumb')"
+docker exec -it laptop-db psql -U postgres -c "select id, octet_length(large) as bytes, pg_column_size(large) as stored from blob_photos order by id limit 1"
+```
+(หลังอัปโหลด 300 รูปเข้าทั้งสองแบบด้วย `load-photos.ts` ส่วนวัดผลด้านล่าง)
+```text
+  table_name   | main  |  toast  | total
+---------------+-------+---------+--------
+ blob_photos   | 48 kB | 78 MB   | 79 MB
+
+ attname | attstorage
+---------+------------
+ large   | x
+ thumb   | x
+
+ id | bytes  | stored
+----+--------+--------
+  1 | 255820 | 255820
+```
+- ตารางหลักของ `blob_photos` เล็กแค่ 48 kB **ไบต์ 78 MB อยู่ใน TOAST** ทั้งหมด
+- `attstorage = x` (extended) = "บีบอัดได้ และย้ายออกไปได้" เป็นค่าเริ่มต้นของ `bytea`
+- `stored` เท่ากับ `bytes` ทุกไบต์ (ทั้งตารางก็เช่นกัน: ไบต์ดิบ 76 MB เก็บจริง 76 MB): **WebP ถูกบีบอัดมาแล้ว Postgres บีบซ้ำไม่ได้อีก** เทียบกับข้อความที่ซ้ำกันเยอะ
+```bash
+docker exec -it laptop-db psql -U postgres -c "create temp table t(v text); insert into t values (repeat('ร้านเช่าโน้ตบุ๊ก ', 10000)); select octet_length(v) as bytes, pg_column_size(v) as stored from t;"
+```
+```text
+ bytes  | stored
+--------+--------
+ 490000 |   5663
+```
+ข้อความ 490 KB เหลือ 5.6 KB สรุปคือ TOAST ช่วยให้แถวเล็ก (query ที่ไม่ได้เลือกคอลัมน์ไบต์จึงยังเร็ว) แต่ **ไม่ได้ทำให้รูปเล็กลง** ทุกไบต์ของรูปยังนับเป็นขนาดฐานข้อมูล
+
+### 📏 วัดผล: 300 รูป ใส่ทั้งสองแบบ
+
+```bash
+npx tsx src/scripts/lab/load-photos.ts photos 3        # แบบ 8c (object storage)
+npx tsx src/scripts/lab/load-photos.ts blob-photos 3   # แบบ bytea
+```
+```text
+อัปโหลด 300 รูปเข้า /photos ใช้เวลา 86.3 วินาที
+อัปโหลด 300 รูปเข้า /blob-photos ใช้เวลา 82.5 วินาที
+```
+เวลาอัปโหลดพอๆ กัน เพราะเวลาส่วนใหญ่คือ sharp ย่อรูป ไม่ใช่การเก็บ
+
+**① ขนาด**
+```bash
+docker exec -it laptop-db psql -U postgres -c "select pg_size_pretty(pg_database_size('postgres')) as database_size"
+docker exec laptop-api-storage-1 du -sh /data/laptop-photos
+```
+
+| | ก่อนใส่รูป | หลังใส่ 300 รูป |
+|---|---|---|
+| ฐานข้อมูลทั้งก้อน | 7.9 MB | **87 MB** (เกือบทั้งหมดคือ `blob_photos`) |
+| ตาราง `laptop_photos` (แบบ 8c) | – | 152 kB |
+| โฟลเดอร์ใน RustFS (แบบ 8c) | – | 82 MB |
+
+ไบต์ของรูปเท่ากันทั้งสองแบบ (ราว 80 MB) คำถามคือ **อยากให้ 80 MB นั้นอยู่ที่ไหน** ฐานข้อมูลบน cloud คิดค่าพื้นที่แพงกว่า object storage หลายเท่า และทุกอย่างที่ทำกับฐานข้อมูล (backup, restore, ย้ายเครื่อง, replica) ต้องลากรูปไปด้วยทุกครั้ง
+
+**② Backup และ restore**
+```bash
+time docker exec laptop-db pg_dump -U postgres -Fc postgres > with-bytea.dump
+time docker exec laptop-db pg_dump -U postgres -Fc --exclude-table-data=blob_photos postgres > without-bytea.dump
+time docker exec laptop-db pg_dump -U postgres postgres > plain.sql
+```
+(`--exclude-table-data=blob_photos` จำลอง "ฐานข้อมูลของระบบแบบ 8c" ที่ไม่มีไบต์ของรูป วัด 3 รอบ ผลใกล้กันทุกรอบ)
+
+| | เวลา `pg_dump` | ขนาดไฟล์ | เวลา `pg_restore` ลงฐานว่าง |
+|---|---|---|---|
+| มี `bytea` (`-Fc`) | **5.9 วินาที** | **91 MB** | **2.0 วินาที** |
+| ไม่มีไบต์ของรูป (`-Fc`) | 0.11 วินาที | 29 KB | 0.10 วินาที |
+| มี `bytea` แบบข้อความ (plain SQL) | 1.2 วินาที | **160 MB** | – |
+
+ข้อสังเกตที่คาดไม่ถึง: **ไฟล์ dump ใหญ่กว่ารูปจริง** (91 และ 160 MB เทียบกับ 76 MB) เพราะ `pg_dump` เขียน `bytea` เป็นตัวอักษรฐาน 16 (`\x52494646...`) 1 ไบต์กลายเป็น 2 ตัวอักษร แบบ `-Fc` บีบอัดกลับมาได้บางส่วนแต่แลกกับเวลาบีบอัด 6 วินาที 300 รูปยังแค่นี้ ร้านที่มี 30,000 รูปคือ dump ราว 10 นาที และไฟล์ 9 GB ทุกคืน
+
+**③ เผลอ `select()` ทั้งแถว**
+
+`src/scripts/lab/select-star.ts`
+```ts
+import { blobPhotoRepository } from "../../repositories/blob-photo.repository.js";
+
+// เทียบ "เลือกเฉพาะคอลัมน์ข้อมูล" กับ "select() เฉยๆ" บนตาราง bytea (เครื่องที่ 1)
+for (const [name, query] of [
+  ["เลือกเฉพาะข้อมูลของรูป", () => blobPhotoRepository.listByLaptop(1)],
+  ["select() ทุกคอลัมน์   ", () => blobPhotoRepository.listByLaptopWithBytes(1)],
+] as const) {
+  await query(); // รอบแรกไม่นับ (ให้ connection และ cache พร้อมก่อน)
+  const t = performance.now();
+  const rows = await query();
+  const ms = performance.now() - t;
+  const json = JSON.stringify(rows);
+  console.log(`${name}: ${rows.length} แถว ${ms.toFixed(1)} ms · JSON ${(json.length / 1024).toFixed(0)} KB`);
+}
+process.exit(0);
+```
+```text
+เลือกเฉพาะข้อมูลของรูป: 100 แถว 5.1 ms · JSON 17 KB
+select() ทุกคอลัมน์   : 100 แถว 87.8 ms · JSON 92699 KB
+```
+**JSON 92 MB** เพราะ `Buffer` แปลงเป็น JSON ได้หน้าตา `{"type":"Buffer","data":[82,73,70,...]}` ทุกไบต์กลายเป็นตัวเลขหลายตัวอักษร นี่คือฉากในเรื่องเล่าของบท 8c ("หน้ารายการโหลด 8 วินาที") ด้วยตัวเลขจริง ใน `psql` ก็เห็นแบบเดียวกัน: `select id, width, height from blob_photos` ใช้ **0.17 ms** ส่วน `select * from blob_photos` ใช้ **254–372 ms**
+
+**④ ส่งรูปให้คนดู: ความเร็ว CPU และ RAM**
+
+ใช้ [autocannon](https://github.com/mcollina/autocannon) ยิงคำขอพร้อมกันหลายตัวแล้ววัด
+```bash
+npm install -D autocannon@8.0.0
+npx autocannon -c 50 -d 12 http://localhost:3000/laptops/1/blob-photos/1/thumb
+npx autocannon -c 50 -d 12 http://localhost:9000/laptop-photos/laptops/1/<key>-400.webp
+```
+`-c 50` = 50 คนพร้อมกัน `-d 12` = 12 วินาที ระหว่างยิง อีกหน้าต่างหนึ่งวัด CPU/RAM ของ API (`ps -o %cpu,rss -p <pid>`) และเวลาตอบของ `GET /laptops` (endpoint อื่นที่ไม่เกี่ยวกับรูป) ด้วย `curl -w "%{time_total}"` 40 ครั้ง
+
+รูปเล็ก (`-400.webp` ราว 2.6 KB)
+
+| ส่งจาก | คำขอใน 12 วินาที | ต่อวินาที | เวลาตอบ (กลาง) | CPU ของ API สูงสุด | `GET /laptops` ระหว่างนั้น |
+|---|---|---|---|---|---|
+| `bytea` ผ่าน API | 53k | ~4,400 | 10 ms | **136%** | 3.1 → **7.7 ms** |
+| `bytea` ผ่าน API ตอบ `304` | 84k | ~7,000 | 6 ms | 107% | 2.4 → **9.6 ms** |
+| ดิสก์ผ่าน `express.static` (ข้อ 3) | 149k (11 วินาที) | ~13,500 | 3 ms | – | – |
+| RustFS ตรง | **243k** | **~20,000** | **2 ms** | **0%** (API ไม่รู้ตัวเลย) | – (API ไม่ได้ทำงานเพิ่ม) |
+
+รูปใหญ่ (`-1600.webp` ราว 250 KB, `-c 20`)
+
+| ส่งจาก | คำขอใน 12 วินาที | เวลาตอบ (กลาง) | CPU ของ API สูงสุด | RAM ของ API |
+|---|---|---|---|---|
+| `bytea` ผ่าน API | 3k | 193 ms | 82% | 189 → **310 MB** |
+| RustFS ตรง | 3k | 197 ms | 3% | – (วัดต่อจากรอบ `bytea` ซึ่ง RSS ไม่ลดกลับ จึงเทียบไม่ได้) |
+
+อ่านตารางให้ถูก
+- **รูปใหญ่ได้จำนวนเท่ากัน** เพราะชนเพดานเดียวกัน: เครื่องที่ใช้วัดรับข้อมูลได้ราว 65 MB/วินาที ไม่ว่าจากทางไหน (ลองแบบดิสก์ก็ได้ 265 คำขอ/วินาทีเท่ากัน) ตัวเลขนี้จึงไม่ได้บอกว่าใครเร็วกว่า **สิ่งที่บอกคือ "ใครเหนื่อย"**: แบบ `bytea` API ใช้ CPU 82% และ RAM เพิ่ม 120 MB เพื่อเป็นท่อส่งไบต์ แบบ storage API แทบไม่ได้ใช้ CPU
+- **รูปเล็กเห็นความต่างชัด** storage ส่งได้เร็วกว่าราว 4.5 เท่า และ endpoint อื่นของ API ช้าลงเป็นเท่าตัวเมื่อมีคนเปิดรูปแบบ `bytea` เยอะๆ เพราะใช้ CPU และ connection pool ชุดเดียวกัน
+- **`304` ช่วยเรื่องข้อมูล แต่ไม่ช่วยเรื่องงาน** ยังต้องถามฐานข้อมูลทุกครั้ง ต่างจาก `immutable` ที่ browser ไม่ถามเลย
+- ทั้งหมดนี้ **ยังไม่มี CDN** ถ้ามี CDN หน้า storage รูปส่วนใหญ่ไม่วิ่งมาถึงเครื่องเราด้วยซ้ำ (แบบ `bytea` ก็ใส่ CDN ได้ แต่ต้องทำ URL ให้เปลี่ยนตามเวอร์ชันเอง)
+
+> ⚠️ ตัวเลขทั้งหมดวัดบนเครื่องเดียว (API, Postgres, RustFS และตัวยิงอยู่เครื่องเดียวกัน) ไว้เทียบ "ทิศทาง" ไม่ใช่ตัวเลขที่ server จริงจะได้ ลองวัดบนเครื่องเราเองแล้วเทียบ
+
+### สรุป: `bytea` ใช้เมื่อไหร่ได้
+
+| ✅ ใช้ได้ เมื่อ "ครบทุกข้อ" | ❌ ไม่ควร เมื่อ "มีข้อใดข้อหนึ่ง" |
+|---|---|
+| ไฟล์ **น้อย** (หลักสิบ ไม่โตเรื่อยๆ) | ผู้ใช้อัปโหลดเพิ่มได้เรื่อยๆ |
+| ไฟล์ **เล็ก** (ไม่กี่ MB) | ไฟล์ใหญ่ หรือรวมกันหลาย GB |
+| ต้อง **เช็คสิทธิ์ทุกครั้ง** อยู่แล้ว (ส่งผ่าน API ยังไงก็ต้องผ่าน) | ใครก็เปิดได้ และเปิดบ่อย (รูปสินค้า รูปโปรไฟล์) |
+| อยากได้ "บันทึกพร้อมข้อมูลใน transaction เดียว" และไม่อยากดูแลระบบเพิ่ม | ต้องการ CDN, cache ยาว, `srcset` หลายขนาด |
+
+ไฟล์ Requirement PDF ของเว็บคู่มือนี้ (ตาราง `files` ใน `server/db/schema.ts`) ตรงฝั่งซ้ายทุกข้อ จึงเก็บเป็น `bytea` ได้อย่างสบายใจ รูปเครื่องของร้านตรงฝั่งขวาเกือบทุกข้อ
+
+> 🧪 ยังไม่ต้องลบตาราง `blob_photos` ข้อ 4 จะใช้รูปชุดนี้วัดผลต่อ
+
+---
+
+## 3. 🔧 แบบ ②: เก็บบนดิสก์ของ server + Docker volume
+
+### ทำให้ "ที่เก็บ" สลับได้: เขียนสัญญาก่อน
+
+ใน 8c ทุกส่วนของโปรเจกต์คุยกับ storage ผ่านตัวแปร `storage` ตัวเดียว ถ้าเราเขียน "สัญญา" ว่าที่เก็บไฟล์ต้องทำอะไรได้บ้าง อะไรก็ตามที่ทำตามสัญญาได้ก็ใช้แทนกันได้ โดย service ไม่ต้องแก้สักบรรทัด (หลักเดียวกับการแบ่งชั้นในบท 8b)
+
+`src/storage/types.ts`
+```ts
+// "สัญญา" ของที่เก็บไฟล์: อะไรก็ตามที่ทำ 7 อย่างนี้ได้ ใช้แทนกันได้ (S3, ดิสก์, ...)
+export type Storage = {
+  put(key: string, body: Buffer, contentType: string): Promise<void>;
+  get(key: string): Promise<Buffer>;
+  sizeOf(key: string): Promise<number | undefined>;
+  removeMany(keys: string[]): Promise<void>;
+  publicUrl(key: string): string;
+  signedPutUrl(key: string, contentType: string, expiresIn: number): Promise<string>;
+  signedGetUrl(key: string, expiresIn: number): Promise<string>;
+};
+```
+
+`src/storage/disk.ts`
+```ts
+import "dotenv/config";
+import { mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
+import path from "node:path";
+import type { Storage } from "./types.js";
+
+// แบบที่ ②: เก็บไฟล์ในโฟลเดอร์บนเครื่องที่รัน API หน้าตา (ฟังก์ชัน) เหมือน storage ของบท 8c ทุกตัว
+// service ไม่ต้องรู้ว่าข้างล่างเป็นดิสก์หรือ S3
+export const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR ?? "uploads");
+
+// key ที่ยอมรับ: ตัวอักษร ตัวเลข - _ / และ . เท่านั้น ห้ามมี ".." ห้ามขึ้นต้นด้วย /
+const SAFE_KEY = /^(?!\/)(?!.*\.\.)[A-Za-z0-9/_.-]+$/;
+
+// แปลง key เป็น path จริงบนดิสก์ แล้วตรวจซ้ำว่ายังอยู่ใน UPLOAD_DIR (กัน path traversal 2 ชั้น)
+export function resolveKey(key: string) {
+  if (!SAFE_KEY.test(key)) throw new Error(`key ไม่ปลอดภัย: ${key}`);
+  const full = path.resolve(UPLOAD_DIR, key);
+  if (!full.startsWith(UPLOAD_DIR + path.sep)) throw new Error(`key หลุดออกนอกโฟลเดอร์: ${key}`);
+  return full;
+}
+
+export const diskStorage: Storage = {
+  put: async (key, body) => {
+    const file = resolveKey(key);
+    await mkdir(path.dirname(file), { recursive: true });
+    // เขียนลงไฟล์ชั่วคราวก่อน แล้วค่อยเปลี่ยนชื่อ: คนอ่านจะไม่มีวันเห็นไฟล์ที่เขียนไม่ครบ
+    const tmp = `${file}.${process.pid}.tmp`;
+    await writeFile(tmp, body);
+    await rename(tmp, file);
+  },
+
+  get: (key) => readFile(resolveKey(key)),
+
+  sizeOf: async (key) => {
+    try {
+      return (await stat(resolveKey(key))).size;
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code === "ENOENT") return undefined;
+      throw err;
+    }
+  },
+
+  // ลบซ้ำได้ไม่พัง (force: true = ไม่มีไฟล์ก็ไม่ error) เหมือน DeleteObjects ของ S3
+  removeMany: async (keys) => {
+    await Promise.all(keys.map((k) => rm(resolveKey(k), { force: true })));
+  },
+
+  publicUrl: (key) => `${process.env.PUBLIC_BASE_URL}/${key}`,
+
+  signedPutUrl: async () => {
+    throw new Error("ดิสก์ไม่มี presigned URL ต้องอัปโหลดผ่าน API");
+  },
+  signedGetUrl: async () => {
+    throw new Error("ดิสก์ไม่มี presigned URL ต้องเช็คสิทธิ์ใน API แล้วส่งไฟล์เอง");
+  },
+};
+```
+- **`rename` หลังเขียนเสร็จ** การเปลี่ยนชื่อไฟล์ในโฟลเดอร์เดียวกันเกิดขึ้น "ทีเดียวจบ" (atomic) คนที่เปิดรูประหว่างกำลังเขียนจะได้ `404` หรือไฟล์ครบ ไม่มีวันได้ไฟล์ครึ่งๆ
+- **presigned URL ไม่มี** เพราะดิสก์ไม่มีระบบลายเซ็น นี่คือ "ความสามารถที่หายไป" ตัวแรกเมื่อเลือกดิสก์
+
+แก้ `src/storage/index.ts` 3 จุด: เปลี่ยน `export const storage = {` เป็น `const s3Storage: Storage = {`, ให้ `put` คืน `Promise<void>` ตามสัญญา และเพิ่มท้ายไฟล์
+```ts
+import { diskStorage } from "./disk.js";
+import type { Storage } from "./types.js";
+// ...
+  put: async (key: string, body: Buffer, contentType: string) => {
+    await s3.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType, CacheControl: IMMUTABLE }));
+  },
+// ...
+// บทที่ 8d: เลือกที่เก็บด้วย .env (STORAGE_DRIVER=disk หรือ s3) service ทุกตัวใช้ storage ตัวนี้ตัวเดียว
+export const storage: Storage = env.STORAGE_DRIVER === "disk" ? diskStorage : s3Storage;
+```
+ไฟล์บนดิสก์ไม่มีใครส่งให้ browser แทนเรา API จึงต้องส่งเอง เพิ่มใน `src/app.ts` ใต้ `app.use(express.json())`
+```ts
+import { UPLOAD_DIR } from "./storage/disk.js";
+// ...
+// บทที่ 8d แบบที่ ②: ถ้าเก็บรูปบนดิสก์ API ต้องเปิดให้โหลดไฟล์เอง
+// ชื่อไฟล์สุ่มใหม่ทุกครั้งที่เปลี่ยนรูป จึงให้ cache ได้ 1 ปีเหมือนบน storage
+if (process.env.STORAGE_DRIVER === "disk") {
+  app.use("/files", express.static(UPLOAD_DIR, { immutable: true, maxAge: "1y", index: false, dotfiles: "deny" }));
+}
+```
+`index: false` = ไม่แสดงรายชื่อไฟล์ในโฟลเดอร์ · `dotfiles: "deny"` = ไม่ส่งไฟล์ที่ขึ้นต้นด้วย `.` (เช่น `.env`)
+
+### รัน API ใน container แล้วลอง restart / สร้างใหม่
+
+ปัญหาของดิสก์จะเห็นก็ต่อเมื่อ API อยู่ใน container แบบตอนขึ้นจริง ([บทที่ 20](/20-deploy-vps)) สร้าง `Dockerfile` (ทบทวน [บทที่ 2 ข้อ 8](/02-docker))
+```dockerfile
+FROM node:26-alpine
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+# เก็บรูปบนดิสก์ของ container ที่ /app/uploads
+ENV STORAGE_DRIVER=disk UPLOAD_DIR=/app/uploads
+EXPOSE 3000
+CMD ["npx", "tsx", "src/index.ts"]
+```
+`.dockerignore`
+```
+node_modules
+dataset
+test-images
+uploads
+.env
+```
+`disk.env` (ให้ container คุยกับ Postgres ที่อยู่บนเครื่องเรา ผ่านชื่อพิเศษ `host.docker.internal`)
+```
+DATABASE_URL=postgres://postgres:secret@host.docker.internal:5432/postgres
+PUBLIC_BASE_URL=http://localhost:3000/files
+```
+หยุด `npm run dev` ก่อน (จะได้ไม่แย่ง port 3000) แล้ว
+```bash
+docker build -t laptop-api:disk .
+docker run -d --name laptop-api-disk -p 3000:3000 --env-file disk.env laptop-api:disk
+curl -s -F "photo=@test-images/new.png" http://localhost:3000/laptops/2/photos
+```
+```text
+{"id":301,"isCover":false,"width":800,"height":600,"sizeBytes":246586,"urls":{"large":"http://localhost:3000/files/laptops/2/a8a4f7b8-80f5-4716-aac1-18292abe8843-1600.webp","thumb":"http://localhost:3000/files/laptops/2/a8a4f7b8-80f5-4716-aac1-18292abe8843-400.webp"},"createdAt":"2026-10-22T18:46:11.306Z"}
+```
+ตั้ง `F` เป็น URL `large` ของเรา แล้วลอง 3 สถานการณ์
+```bash
+F=http://localhost:3000/files/laptops/2/a8a4f7b8-80f5-4716-aac1-18292abe8843-1600.webp
+curl -s -o /dev/null -D - $F                      # ① ไฟล์อยู่ไหม
+docker restart laptop-api-disk                    # ② restart (เช่น server reboot)
+curl -s -o /dev/null -w "%{http_code}\n" $F
+docker rm -f laptop-api-disk                      # ③ ลบแล้วสร้างใหม่ (= deploy เวอร์ชันใหม่)
+docker run -d --name laptop-api-disk -p 3000:3000 --env-file disk.env laptop-api:disk
+curl -s -o /dev/null -w "%{http_code}\n" $F
+docker exec -it laptop-db psql -U postgres -c "select id, laptop_id, key from laptop_photos where id = 301"
+```
+```text
+HTTP/1.1 200 OK
+Cache-Control: public, max-age=31536000, immutable
+Content-Type: image/webp
+Content-Length: 246586
+
+200
+
+404
+ id  | laptop_id |                      key
+-----+-----------+------------------------------------------------
+ 301 |         2 | laptops/2/a8a4f7b8-80f5-4716-aac1-18292abe8843
+```
+- **restart ไม่หาย** เพราะ container ตัวเดิมกลับมาพร้อมดิสก์ของมัน (หลายคนจึงเข้าใจผิดว่า "ปลอดภัยแล้ว")
+- **สร้างใหม่ = หาย** ดิสก์ของ container ผูกกับ container ตัวนั้น ลบ container = ลบดิสก์ แต่ **แถวในฐานข้อมูลยังอยู่** ผลคือสภาพที่บท 8c บอกว่าแย่ที่สุด: **รูปแตก** และเกิดกับ **ทุกรูป** ในวันที่ deploy นี่คือฉาก "รูปหายหมด" ในเรื่องเล่าของบท 8c
+
+**แก้ด้วย volume** (ทบทวน [บทที่ 2 ข้อ 7](/02-docker)): ให้โฟลเดอร์ `/app/uploads` ไปอยู่ใน volume ที่ Docker ดูแลแยกจาก container
+```bash
+docker rm -f laptop-api-disk
+docker run -d --name laptop-api-disk -p 3000:3000 --env-file disk.env -v laptop-uploads:/app/uploads laptop-api:disk
+curl -s -F "photo=@test-images/new.png" http://localhost:3000/laptops/2/photos     # ได้ URL ใหม่ ตั้งเป็น F
+docker rm -f laptop-api-disk
+docker run -d --name laptop-api-disk -p 3000:3000 --env-file disk.env -v laptop-uploads:/app/uploads laptop-api:disk
+curl -s -o /dev/null -w "หลังสร้าง container ใหม่: %{http_code}\n" $F
+```
+```text
+หลังสร้าง container ใหม่: 200
+```
+ลบ container ทิ้งได้ ไฟล์อยู่ใน volume `laptop-uploads` ต่อ เสร็จแล้ว `docker rm -f laptop-api-disk` แล้วกลับไปใช้ `npm run dev` ตามเดิม
+
+### กัน path traversal: ทำไมต้องตรวจ 2 ชั้น
+
+บน object storage key `../../.env` เป็นแค่ "ชื่อแปลกๆ" แต่บนดิสก์มันคือ **ที่อยู่จริง** ลองดูว่า `path.join` ธรรมดาพาไปไหน
+```bash
+node -e 'const path=require("path"); console.log(path.join("/app/uploads", "../../.env")); console.log(path.join("/app/uploads", "laptops/../../../app/src/index.ts"))'
+```
+```text
+/.env
+/app/src/index.ts
+```
+ถ้าโค้ดเขียนไฟล์ตาม key นี้ ไฟล์ของผู้ใช้จะไป **ทับ `.env` หรือโค้ดของเรา** `resolveKey` จึงกัน 2 ชั้น: ชั้นแรกห้ามตัวอักษรอันตรายและ `..` ชั้นสองคำนวณ path จริงแล้วตรวจว่ายังอยู่ใต้ `UPLOAD_DIR` (เผื่อชั้นแรกมีช่องที่เราคิดไม่ถึง)
+
+`src/scripts/lab/try-keys.ts`
+```ts
+import { resolveKey } from "../../storage/disk.js";
+
+// ลองส่ง key แปลกๆ ให้ resolveKey ดูว่าตัวไหนผ่าน ตัวไหนโดนปฏิเสธ
+for (const key of ["laptops/2/abc-400.webp", "../../.env", "laptops/../../etc/passwd", "/etc/passwd", "laptops/2/รูป.jpg"]) {
+  try {
+    console.log("✅", key, "→", resolveKey(key));
+  } catch (err) {
+    console.log("❌", key, "→", (err as Error).message);
+  }
+}
+```
+```bash
+UPLOAD_DIR=/app/uploads npx tsx src/scripts/lab/try-keys.ts
+```
+```text
+✅ laptops/2/abc-400.webp → /app/uploads/laptops/2/abc-400.webp
+❌ ../../.env → key ไม่ปลอดภัย: ../../.env
+❌ laptops/../../etc/passwd → key ไม่ปลอดภัย: laptops/../../etc/passwd
+❌ /etc/passwd → key ไม่ปลอดภัย: /etc/passwd
+❌ laptops/2/รูป.jpg → key ไม่ปลอดภัย: laptops/2/รูป.jpg
+```
+ฝั่งอ่านไฟล์ `express.static` ก็มีด่านของตัวเอง ลองยิงตรงๆ ตอน container ทำงาน (`--path-as-is` = ให้ curl ส่ง `..` ไปตามที่พิมพ์ ไม่จัดให้ก่อน)
+```bash
+for p in "/files/../package.json" "/files/..%2fpackage.json" "/files/%2e%2e/%2e%2e/etc/passwd" "/files/.env" "/files/laptops/"; do curl -s --path-as-is -o /dev/null -w "$p → %{http_code}\n" "http://localhost:3000$p"; done
+```
+```text
+/files/../package.json → 404
+/files/..%2fpackage.json → 404
+/files/%2e%2e/%2e%2e/etc/passwd → 404
+/files/.env → 404
+/files/laptops/ → 404
+```
+ทั้งหมดนี้ปลอดภัยเพราะ **key เราสุ่มเองเสมอ** (บท 8c ข้อ 4) ไม่เคยใช้ชื่อไฟล์จากผู้ใช้ การตรวจใน `resolveKey` คือด่านสำรองเผื่อวันหนึ่งมีคนแก้โค้ดผิด
+
+### ดิสก์ใช้ได้เมื่อไหร่ ใช้ไม่ได้เมื่อไหร่
+
+| สถานการณ์ | ใช้ดิสก์ได้ไหม | เพราะ |
+|---|---|---|
+| **VPS เครื่องเดียว** + Docker volume ([บทที่ 20](/20-deploy-vps)) | ✅ ได้ | ไฟล์อยู่เครื่องเดียวกับ API ตลอด volume อยู่รอดข้ามการ deploy |
+| **Vercel / serverless** ([บทที่ 22](/22-deploy-managed)) | ❌ ไม่ได้ | แต่ละคำขออาจรันบนเครื่องคนละตัว เครื่องถูกสร้างและทิ้งตลอด ดิสก์ที่เขียนได้เป็นแค่พื้นที่ชั่วคราว (`/tmp`) ไม่มีใครรับประกันว่าคำขอถัดไปจะเห็นไฟล์ |
+| **API หลายเครื่อง** หลัง load balancer | ❌ ไม่ได้ (ถ้าไม่ทำอะไรเพิ่ม) | อัปโหลดเข้าเครื่อง A คนที่ถูกส่งไปเครื่อง B เปิดรูปได้ `404` ต้องใช้ดิสก์ที่แชร์กัน (NFS) ซึ่งยุ่งกว่าใช้ object storage |
+| เครื่องเสีย / ดิสก์เต็ม | ⚠️ ต้องดูแลเอง | ต้องมี backup ของ volume เอง (ข้อ 11 ใช้วิธีเดียวกันได้: `rclone copy` ดิสก์ไปที่อื่น) และคอยดูพื้นที่ |
+
+> 💡 **ดิสก์ไม่ใช่ทางเลือกที่ผิด** สำหรับระบบเล็กบน VPS เครื่องเดียว มันง่ายและเร็ว (ส่งรูปเล็กได้ ~13,500 คำขอ/วินาทีในการวัดข้อ 2) แต่ให้เขียนผ่าน `Storage` แบบนี้เสมอ วันที่ต้องย้ายขึ้น object storage จะเหลืองานแค่เปลี่ยน `STORAGE_DRIVER` และย้ายไฟล์ (`rclone copy uploads/ photos:laptop-photos`)
+
+---
+
+## 4. ❌ ของต้องห้าม: base64 ในฐานข้อมูลหรือใน JSON
+
+**base64** คือวิธีเขียนไบต์ใดๆ ด้วยตัวอักษร 64 ตัว (A–Z a–z 0–9 + /) ทุก 3 ไบต์กลายเป็น 4 ตัวอักษร จึงใหญ่ขึ้น **1/3 เสมอ** มันมีไว้ส่งไบต์ผ่านช่องทางที่รับได้แค่ข้อความ (อีเมล, data URL เล็กๆ) แต่มักถูกใช้ผิดเป็น "วิธีเก็บรูป" เพราะ `JSON.stringify` ใส่ `Buffer` ไม่ได้ เลยแปลงเป็นข้อความยัดเข้าไปแทน
+
+### วัดให้เห็น
+
+ในฐานข้อมูล (ใช้รูปใหญ่ 300 รูปจาก `blob_photos` ของข้อ 2)
+```bash
+docker exec -it laptop-db psql -U postgres -c "create table photos_base64 as select id, laptop_id, replace(encode(large, 'base64'), E'\n', '') as large_b64 from blob_photos"
+docker exec -it laptop-db psql -U postgres -c "select pg_size_pretty(sum(octet_length(large))) as bytea_raw, (select pg_size_pretty(sum(octet_length(large_b64))) from photos_base64) as base64_text, round((select sum(octet_length(large_b64)) from photos_base64)::numeric / sum(octet_length(large)), 3) as ratio from blob_photos"
+docker exec -it laptop-db psql -U postgres -c "select pg_size_pretty(sum(pg_column_size(large_b64))) as stored_after_toast from photos_base64"
+docker exec -it laptop-db psql -U postgres -c "drop table photos_base64"
+```
+```text
+ bytea_raw | base64_text | ratio
+-----------+-------------+-------
+ 75 MB     | 100 MB      | 1.333
+
+ stored_after_toast
+--------------------
+ 100 MB
+```
+ใหญ่ขึ้น 33.3% ตรงตามทฤษฎี และ TOAST บีบกลับไม่ได้เลย (เนื้อข้างในคือ WebP ที่บีบมาแล้ว)
+
+ใน JSON ของ API (`src/scripts/lab/base64-cost.ts` เทียบรายการรูปของเครื่อง 1 จำนวน 100 รูป)
+```ts
+import { gzipSync } from "node:zlib";
+import { blobPhotoRepository } from "../../repositories/blob-photo.repository.js";
+
+// เทียบ JSON รายการรูปของเครื่องที่ 1 (100 รูป): แบบส่ง URL กับแบบยัด base64 ของรูปเล็ก (400px) ลงไปใน JSON
+const rows = await blobPhotoRepository.listByLaptopWithBytes(1);
+const raw = rows.reduce((sum, r) => sum + r.thumb.length, 0);
+const b64 = rows.reduce((sum, r) => sum + r.thumb.toString("base64").length, 0);
+console.log(`ไบต์ของรูปเล็ก 100 รูป: ${raw.toLocaleString()} B → base64 ${b64.toLocaleString()} B (+${((b64 / raw - 1) * 100).toFixed(1)}%)`);
+
+const withUrls = rows.map((r) => ({ id: r.id, width: r.width, height: r.height, thumb: `/laptops/1/blob-photos/${r.id}/thumb` }));
+const withBase64 = rows.map((r) => ({ id: r.id, width: r.width, height: r.height, thumb: `data:image/webp;base64,${r.thumb.toString("base64")}` }));
+
+for (const [name, data] of [["URL", withUrls], ["base64", withBase64]] as const) {
+  const t = performance.now();
+  const json = JSON.stringify(data);
+  const ms = performance.now() - t;
+  const t2 = performance.now();
+  JSON.parse(json);
+  const parseMs = performance.now() - t2;
+  console.log(`${name.padEnd(6)} JSON ${json.length.toLocaleString()} B · gzip ${gzipSync(json).length.toLocaleString()} B · stringify ${ms.toFixed(2)} ms · parse ${parseMs.toFixed(2)} ms`);
+}
+
+// รูปใหญ่ 1 รูป: base64 ใน JSON หนึ่งก้อน
+const big = rows[0].large;
+const bigJson = JSON.stringify({ photo: big.toString("base64") });
+console.log(`รูปใหญ่ 1 รูป: ${big.length.toLocaleString()} B → JSON ${bigJson.length.toLocaleString()} B · gzip ${gzipSync(bigJson).length.toLocaleString()} B`);
+process.exit(0);
+```
+```text
+ไบต์ของรูปเล็ก 100 รูป: 271,360 B → base64 361,928 B (+33.4%)
+URL    JSON 8,029 B · gzip 600 B · stringify 0.03 ms · parse 0.03 ms
+base64 JSON 369,093 B · gzip 271,814 B · stringify 0.39 ms · parse 0.19 ms
+รูปใหญ่ 1 รูป: 255,820 B → JSON 341,108 B · gzip 258,414 B
+```
+gzip บีบ base64 กลับมาได้ใกล้ขนาดเดิม (แต่ไม่เล็กกว่ารูปเอง) ปัญหาที่ใหญ่กว่าขนาดคือ
+1. **cache แยกไม่ได้** รูปที่ฝังใน JSON ถูกส่งซ้ำ **ทุกครั้ง** ที่ขอรายการ แบบ URL browser โหลดรูปครั้งเดียวแล้วเก็บไว้ 1 ปี JSON เหลือ 8 KB (gzip แล้ว 600 ไบต์)
+2. **โหลดทีละรูปไม่ได้** `loading="lazy"` และ `srcset` ใช้ไม่ได้ ต้องได้ทุกรูปก่อนถึงจะเห็นหน้าแรก
+3. **ทุกชั้นต้องแบก** ฐานข้อมูล → API → JSON parse → หน่วยความจำของ browser ทุกชั้นถือข้อความยาวๆ นี้
+
+### 💥 ลองส่งรูปเป็น base64 มาใน JSON
+
+```bash
+B64=$(base64 -i dataset/0001.jpg | tr -d '\n' | head -c 400000)
+printf '{"brand":"x","model":"y","serial":"B64-1","pricePerMonth":1000,"photo":"%s"}' "$B64" > big.json
+curl -s -w "\n%{http_code}\n" -H "Content-Type: application/json" --data-binary @big.json http://localhost:3000/laptops
+```
+```text
+{"error":"เกิดข้อผิดพลาดในระบบ"}
+500
+```
+และในหน้าจอ `npm run dev`
+```text
+  limit: 102400,
+  type: 'entity.too.large'
+```
+`express.json()` รับ body ได้ไม่เกิน **100 KB** เป็นค่าเริ่มต้น (ดีแล้ว เป็นด่านกันคนส่งข้อความยักษ์มา) แต่ error handler ของเราไม่รู้จัก error นี้ จึงตอบ `500` ทั้งที่ควรเป็น `413` แก้ใน `onError` ของ `src/app.ts` ให้รู้จักมัน (ไม่ใช่ไปขยาย limit)
+```ts
+const onError: ErrorRequestHandler = (err, _req, res, _next) => {
+  // 8d: body ใหญ่เกิน limit ของ express.json (ค่าเริ่มต้น 100 KB) เช่น ยัดรูป base64 มาใน JSON
+  if ((err as { type?: string }).type === "entity.too.large") {
+    res.status(413).json({ error: "ข้อมูลใหญ่เกินที่รับ ไฟล์ให้ส่งแบบ multipart/form-data", code: "FILE_TOO_LARGE" });
+    return;
+  }
+  // ...ส่วนเดิม
+```
+```text
+{"error":"ข้อมูลใหญ่เกินที่รับ ไฟล์ให้ส่งแบบ multipart/form-data","code":"FILE_TOO_LARGE"}
+413
+```
+
+### เจอระบบเดิมที่ทำแบบนี้อยู่แล้ว แก้ยังไง
+
+| ทำอยู่ | แก้เป็น |
+|---|---|
+| หน้าเว็บอ่านไฟล์เป็น base64 แล้วส่งใน JSON | ส่ง `FormData` (multipart) แบบบท 8c หรือ presigned PUT |
+| แอปมือถือ / ระบบอื่นส่งได้แค่ JSON | ฝั่ง API ถอดกลับด้วย `Buffer.from(text, "base64")` ทันทีที่รับ แล้วส่งเข้า `processPhoto` → storage ตามปกติ (ตั้ง limit ของ route นั้นให้พอ เช่น `express.json({ limit: "14mb" })` เฉพาะ route นั้น ไม่ใช่ทั้งแอป) |
+| ตารางมีคอลัมน์ข้อความเก็บ base64 อยู่แล้ว | เขียนสคริปต์ย้าย: อ่านทีละแถว → ถอด base64 → `processPhoto` → `storage.put` → UPDATE แถวให้เก็บ key → ตรวจด้วย `photos:verify` (ข้อ 9) → ค่อยลบคอลัมน์เก่าใน migration ถัดไป |
+
+> 💡 base64 **ที่ถูกที่** มีอยู่: รูปจิ๋วไม่กี่ร้อยไบต์ที่ฝังไปกับ JSON เพื่อแสดงทันที (data URL) ซึ่งข้อ 9 จะใช้ทำตัวแทนรูประหว่างรอโหลด กฎคือ **เล็กมาก** และ **คุ้มที่ไม่ต้องเปิดคำขอใหม่**
+
+---
+
+## 5. ทางเลือกที่ 4: บริการย่อและส่งรูปผ่าน URL (Image CDN)
+
+ในบท 8c เราย่อรูปเองด้วย sharp ตอนอัปโหลด ได้ไฟล์ตายตัว 2 ขนาด อีกแนวคิดหนึ่งคือ **เก็บต้นฉบับไว้ แล้วขอขนาดที่ต้องการผ่าน URL** บริการจะย่อให้ตอนมีคนขอครั้งแรก แล้ว cache ผลไว้บน CDN
+
+```text
+ย่อเองตอนอัปโหลด (บท 8c)      laptops/2/9f3c…-400.webp            ← มีแค่ขนาดที่เราเตรียมไว้
+Cloudflare Images            /cdn-cgi/image/width=400,format=auto/laptops/2/9f3c….jpg
+Cloudinary                   …/image/upload/c_fill,w_400/f_auto/q_auto/laptop-2-front
+Next.js <Image>              /_next/image?url=%2Flaptops%2F2%2F9f3c….jpg&w=640&q=75
+```
+`format=auto` / `f_auto` = ดู header `Accept` ของ browser แล้วเลือก AVIF หรือ WebP ให้เอง
+
+### ในกลุ่มนี้มีใครบ้าง
+
+<ToolTable group="image-cdn" />
+
+(ราคาและโควตาเปลี่ยนบ่อย ข้อมูลในตารางตรวจกับหน้าเอกสาร/ราคาของแต่ละเจ้าตามวันที่ใต้ตาราง ก่อนตัดสินใจให้เปิดลิงก์ดูของล่าสุด)
+
+### เทียบกับย่อเองด้วย sharp
+
+| | ย่อเอง (sharp ตอนอัปโหลด) | Image CDN |
+|---|---|---|
+| อยากได้ขนาดใหม่ (เช่น 800px สำหรับ tablet) | เขียนโค้ด + รันสคริปต์ย่อรูปเก่า **ทุกรูป** ใหม่ | แก้ตัวเลขใน URL |
+| เลือก AVIF / WebP ตาม browser | ต้องทำเองหลายไฟล์ + `<picture>` | อัตโนมัติ |
+| ค่าใช้จ่าย | ค่าพื้นที่เก็บไฟล์ที่ย่อแล้ว ไม่มีค่าต่อรูป | คิดตามจำนวนการแปลง / ปริมาณส่ง (มีโควตาฟรี) เกินแล้วจ่ายตามใช้ |
+| ความเป็นส่วนตัว | ต้นฉบับไม่ต้องเก็บเลย (ทิ้ง GPS ตั้งแต่อัปโหลด) | ต้องเก็บต้นฉบับไว้ให้บริการอ่าน **ต้องแน่ใจว่าลบ EXIF/GPS** ก่อนเก็บ หรือบริการลบให้ |
+| ผูกกับผู้ให้บริการ | ไม่ผูก | URL ทั้งระบบเป็นรูปแบบของเจ้านั้น ย้ายเจ้า = เปลี่ยนวิธีสร้าง URL |
+| ตรวจไฟล์อันตราย (บท 8c ข้อ 6) | เราทำเอง | ยังต้องทำเองตอนรับไฟล์เหมือนเดิม |
+
+**ใช้ Image CDN เมื่อ** มีหน้าที่ต้องการขนาดรูปหลากหลาย (เว็บ + แอป + อีเมล) หรือรูปเยอะจนการย่อเองกลายเป็นภาระ หรือใช้ Next.js บน Vercel อยู่แล้ว (`<Image>` ใช้ได้ทันที) **ย่อเองต่อไปเมื่อ** ขนาดที่ใช้คงที่ไม่กี่ขนาดแบบร้านเช่าโน้ตบุ๊ก งบจำกัด และอยากให้ระบบไม่ผูกกับใคร
+
+> 💡 สองแบบใช้ร่วมกันได้ เก็บไฟล์ที่ sharp ทำแล้ว (ไม่มี GPS) ไว้ใน storage แล้วให้ Image CDN อ่านจาก storage อีกที ได้ทั้งความปลอดภัยและความยืดหยุ่น
+
+---
+
+## 6. สรุปภาค A: เทียบ 4 แบบด้วยตัวเลขจริง
+
+| | ① `bytea` | ② ดิสก์ + volume | ③ base64 | ④ object storage (8c) |
+|---|---|---|---|---|
+| ฐานข้อมูล (300 รูป) | **87 MB** | ไม่กระทบ | **104 MB** (วัดเฉพาะรูปใหญ่) | ไม่กระทบ (152 kB) |
+| `pg_dump` | 5.9 วินาที / 91 MB | 0.1 วินาที (+ ต้อง backup volume เอง) | ไม่ได้วัด (ข้อมูลมากกว่า `bytea` 33%) | 0.1 วินาที (+ backup bucket ข้อ 11) |
+| ส่งรูปเล็ก (50 คนพร้อมกัน) | ~4,400/วินาที, API CPU 136% | ~13,500/วินาที | ส่งไปกับ JSON ทุกครั้ง | **~20,000/วินาที, API CPU 0%** |
+| ลำดับงาน/ไฟล์กำพร้า | ไม่ต้องคิด (transaction เดียว) | ต้องคิดแบบ 8c | ไม่ต้องคิด | ต้องคิดแบบ 8c |
+| deploy ใหม่ | ✅ | ✅ ถ้ามี volume / ❌ ถ้าไม่มี | ✅ | ✅ |
+| serverless / หลายเครื่อง | ✅ | ❌ | ✅ | ✅ |
+| เหมาะกับ | ไฟล์น้อย เล็ก ลับ | VPS เครื่องเดียว ระบบเล็ก | ❌ ไม่ใช้ (ยกเว้นรูปจิ๋ว) | ไฟล์ที่ผู้ใช้อัปโหลดเรื่อยๆ |
+
+ตัดสินด้วยคำถามเดิมจากบท 8c: **กี่ไฟล์ ใหญ่แค่ไหน ใครดู ดูบ่อยแค่ไหน** และเพิ่มอีกข้อจากบทนี้: **deploy ที่ไหน**
+
+---
+
+> 🧹 **เก็บห้องทดลองก่อนเริ่มภาค B** ลบ `blobPhotos` และ `customType` ออกจาก `schema.ts` ลบไฟล์ `blob-photo.*` ทั้ง 3 ไฟล์ และ `src/scripts/lab/select-star.ts`, `base64-cost.ts` ลบ 2 บรรทัดของ `blobPhotoRoutes` ใน `app.ts` แล้ว `npm run db:generate` จะได้
+> ```sql
+> DROP TABLE "blob_photos" CASCADE;
+> ```
+> อ่านแล้ว `npm run db:migrate` ส่วนรูป 300 รูปในตาราง `laptop_photos` (เครื่องละ 100 รูป) เกินโควตาที่ภาค B จะตั้ง ล้างทิ้งก่อน แล้วอัปโหลดใหม่ไม่กี่รูปแบบบท 8c
+> ```bash
+> docker exec -it laptop-db psql -U postgres -c "truncate laptop_photos restart identity"
+> npm run storage:cleanup -- 0
+> ```
+> ส่วน `storage/types.ts`, `storage/disk.ts` และการแก้ `app.ts` ของข้อ 3–4 เก็บไว้ได้ (ไม่ตั้ง `STORAGE_DRIVER` = ใช้ S3 ตามเดิม)
+
+---
+
+# ภาค B: ฟีเจอร์ที่ร้านจริงต้องมี (บน object storage)
+
+## 7. รายการกฎใหม่: เขียนก่อน แล้วหาบ้านให้ทุกข้อ
+
+ต่อจาก P1–P9 ของบท 8c (วิธีเดียวกับบท 8b: กฎก่อน โค้ดทีหลัง)
+
+| # | กฎ | บ้าน (ใครตรวจ) | ผิดแล้วตอบ |
+|---|---|---|---|
+| P10 | เครื่องหนึ่งมีรูป (ที่ยังไม่ลบ) **ไม่เกิน 8 รูป** | multer (ด่านเร็ว ต่อคำขอ) + **service ใน transaction ที่ล็อกแถวเครื่อง** (ด่านจริง) | `400` / `409` |
+| P11 | ลำดับรูป (`position`) ในเครื่องเดียวกัน **ห้ามซ้ำ** | DB: partial unique index | ไม่ควรเกิด |
+| P12 | เรียงใหม่ต้องส่ง id ของ **ทุกรูป ครบ ไม่ซ้ำ** | zod + repository | `400` |
+| P13 | อัปโหลดหลายรูป: **ผ่านทั้งชุดหรือไม่รับเลย** | service (ตรวจทุกรูปก่อนเก็บ) + transaction | `415` / `409` |
+| P14 | ลบแล้ว **กู้คืนได้ภายใน 7 วัน** เกินแล้วกู้ไม่ได้ | service + DB (`deleted_at`) | `410` |
+| P15 | กฎ "ปก 1 รูป", "ลำดับไม่ซ้ำ", "รูปไม่ซ้ำ" นับเฉพาะรูปที่ **ยังไม่ลบ** | DB: partial index `WHERE deleted_at IS NULL` | – |
+| P16 | รูปในถังขยะเกิน 7 วัน **ถูกลบจริงทั้งแถวและไฟล์** · ไฟล์ของรูปในถังขยะ **ห้ามถูกงานเก็บกวาดลบ** | `purge-trash.ts` + `cleanup-orphans.ts` | – |
+| P17 | รูปเดียวกัน (ไบต์เหมือนกันทุกตัว) **ห้ามซ้ำในเครื่องเดียวกัน** | service (sha256) + DB: partial unique index | `409` |
+| P18 | ทุกรูปมี **ตัวแทนระหว่างรอโหลด** (รูปจิ๋ว + สีหลัก) | `lib/image.ts` | – |
+| P19 | backup ของฐานข้อมูลกับ bucket ต้อง **กู้คืนแล้วไม่มีรูปแตก** | ลำดับการสำรอง + `verify-photos.ts` | – |
+
+สังเกตว่ากฎที่ "นับหลายแถว" (P10 นับรูป, P11 หาเลขถัดไป) เป็นกฎที่ index ธรรมดาช่วยได้ไม่หมด เพราะ index ตรวจทีละแถว ไม่ได้ "นับ" ข้อ 9 จะใช้การ **ล็อกแถวของเครื่อง** ให้งานที่เปลี่ยนชุดรูปของเครื่องเดียวกันเข้าคิวทีละงาน
+
+---
+
+## 8. 🔧 แก้ตาราง `laptop_photos` และ migration ที่ต้องแก้เอง
+
+เพิ่มคอลัมน์และแทนที่ส่วน index ใน `src/db/schema.ts`
+```ts
+    isCover: boolean("is_cover").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    // ---- บทที่ 8d ----
+    position: integer("position").notNull(),                 // ลำดับที่แสดง 1, 2, 3, ... (เรียงใหม่ได้)
+    contentHash: text("content_hash"),                       // sha256 ของไฟล์ที่ผู้ใช้ส่งมา ใช้หารูปซ้ำ (รูปเก่าก่อนบทนี้ไม่มีค่า)
+    placeholder: text("placeholder"),                        // รูปจิ๋ว 16px เป็น data URL แสดงระหว่างรอรูปจริง
+    dominantColor: text("dominant_color"),                   // สีหลักของรูป เช่น #6b8fb3
+    deletedAt: timestamp("deleted_at", { withTimezone: true }), // ไม่ว่าง = อยู่ในถังขยะ (ลบแบบกู้คืนได้)
+  },
+  (t) => [
+    index("laptop_photos_laptop_id_idx").on(t.laptopId),
+    // กฎทุกข้อด้านล่างนับเฉพาะรูปที่ "ยังไม่ถูกลบ" รูปในถังขยะไม่มาขวาง
+    uniqueIndex("one_cover_per_laptop").on(t.laptopId).where(sql`${t.isCover} and ${t.deletedAt} is null`),
+    uniqueIndex("photo_position_per_laptop").on(t.laptopId, t.position).where(sql`${t.deletedAt} is null`),
+    uniqueIndex("photo_hash_per_laptop").on(t.laptopId, t.contentHash).where(sql`${t.deletedAt} is null`),
+    // งานล้างถังขยะค้นเฉพาะแถวที่ถูกลบ index นี้เล็กมากเพราะเก็บแค่แถวในถังขยะ
+    index("laptop_photos_trash_idx").on(t.deletedAt).where(sql`${t.deletedAt} is not null`),
+    check("photo_size_positive", sql`${t.sizeBytes} > 0`),
+  ],
+```
+ทีละคอลัมน์
+| คอลัมน์ | ทำไมเป็นแบบนี้ |
+|---|---|
+| `position` NOT NULL | ทุกรูปต้องมีลำดับ ใช้ `ORDER BY position` ตรงๆ |
+| `content_hash` **ว่างได้** | รูปที่อัปโหลดก่อนบทนี้ไม่มีไฟล์ต้นฉบับเหลือแล้ว (เราเก็บแต่ไฟล์ที่ย่อแล้ว) คำนวณย้อนหลังไม่ได้ ใน Postgres ค่า `NULL` ไม่ชนกันใน unique index รูปเก่าจึงไม่ติดกฎ P17 |
+| `placeholder`, `dominant_color` ว่างได้ | รูปเก่ายังไม่มี (เติมย้อนหลังได้จากไฟล์ `-400.webp` เป็นแบบฝึกหัด) |
+| `deleted_at` | ว่าง = ใช้งานอยู่ · มีค่า = อยู่ในถังขยะตั้งแต่เวลานั้น ใช้ทั้งเป็น "สถานะ" และ "นาฬิกานับถอยหลัง" ในคอลัมน์เดียว |
+
+**ทำไม index ต้องมี `WHERE deleted_at IS NULL`** ถ้า unique `(laptop_id, position)` นับรูปในถังขยะด้วย รูปที่ลบไปแล้วจะ "จอง" ลำดับไว้ ลบรูปลำดับ 2 แล้วเพิ่มรูปใหม่ที่ได้ลำดับ 2 ไม่ได้ และถ้าลบรูปปกแล้วตั้งปกใหม่ ก็จะชนกับปกที่อยู่ในถังขยะ partial index ทำให้กฎเหล่านี้ "มองไม่เห็น" รูปในถังขยะ (เทคนิคเดียวกับ `one_open_rental_per_laptop` ในบท 8b)
+
+```bash
+npm run db:generate
+```
+SQL ที่ได้ (ตัดบางบรรทัด)
+```sql
+DROP INDEX "one_cover_per_laptop";--> statement-breakpoint
+ALTER TABLE "laptop_photos" ADD COLUMN "position" integer NOT NULL;--> statement-breakpoint
+ALTER TABLE "laptop_photos" ADD COLUMN "content_hash" text;--> statement-breakpoint
+...
+CREATE UNIQUE INDEX "one_cover_per_laptop" ON "laptop_photos" USING btree ("laptop_id") WHERE "laptop_photos"."is_cover" and "laptop_photos"."deleted_at" is null;
+```
+**อ่านก่อน migrate** บรรทัดที่ 2 คือปัญหา: ตารางมีรูปอยู่แล้ว (จากบท 8c) เพิ่มคอลัมน์ที่ห้ามว่าง โดยไม่บอกว่าแถวเดิมให้ค่าอะไร Postgres ทำไม่ได้ ลองดู
+```bash
+npm run db:migrate; echo "exit=$?"
+```
+```text
+[⣷] applying migrations...
+exit=1
+```
+drizzle-kit ล้มโดย **ไม่บอกเหตุผล** (ตอนที่เราทดสอบ) ลองรันคำสั่งเดียวกันใน `psql` เพื่อดู error จริง
+```bash
+docker exec -it laptop-db psql -U postgres -c 'ALTER TABLE "laptop_photos" ADD COLUMN "position" integer NOT NULL;'
+```
+```text
+ERROR:  column "position" of relation "laptop_photos" contains null values
+```
+ข่าวดีคือ migration ทั้งไฟล์อยู่ใน transaction เดียว `DROP INDEX` บรรทัดแรกจึงถูกยกเลิกไปด้วย ฐานข้อมูลไม่ค้างครึ่งทาง
+
+**แก้ไฟล์ SQL เอง** (generator ไม่รู้จักข้อมูลของเรา คนที่รู้คือเรา) แทนบรรทัด `ADD COLUMN "position" integer NOT NULL` ด้วย 3 ขั้น
+```sql
+-- แก้เอง: ตารางมีรูปอยู่แล้ว เพิ่มคอลัมน์ NOT NULL ตรงๆ ไม่ได้ ต้อง 1) เพิ่มแบบว่างได้ 2) เติมค่า 3) ค่อยบังคับ NOT NULL
+ALTER TABLE "laptop_photos" ADD COLUMN "position" integer;--> statement-breakpoint
+UPDATE "laptop_photos" AS p SET "position" = r.n
+FROM (SELECT "id", row_number() OVER (PARTITION BY "laptop_id" ORDER BY "is_cover" DESC, "id") AS n FROM "laptop_photos") AS r
+WHERE p."id" = r."id";--> statement-breakpoint
+ALTER TABLE "laptop_photos" ALTER COLUMN "position" SET NOT NULL;--> statement-breakpoint
+```
+`row_number() OVER (PARTITION BY laptop_id ORDER BY is_cover DESC, id)` = "นับเลข 1, 2, 3, ... แยกทีละเครื่อง รูปปกได้เลข 1 ที่เหลือเรียงตาม id" ลำดับที่ได้จึงตรงกับที่ API ของบท 8c เคยแสดง (ปกขึ้นก่อน) ผู้ใช้ไม่เห็นอะไรเปลี่ยน
+```bash
+npm run db:migrate
+docker exec -it laptop-db psql -U postgres -c "select id, laptop_id, is_cover, position from laptop_photos order by laptop_id, position"
+```
+```text
+[✓] migrations applied successfully!
+ id | laptop_id | is_cover | position
+----+-----------+----------+----------
+  1 |         1 | f        |        1
+  2 |         1 | f        |        2
+  4 |         2 | t        |        1
+  3 |         2 | f        |        2
+  5 |         2 | f        |        3
+```
+รูป id 4 (ปก) ได้ลำดับ 1 ของเครื่อง 2 ตามที่ตั้งใจ (ข้อมูลของเราคือรูป 5 รูปที่อัปโหลดใหม่หลังล้างห้องทดลอง)
+
+> 💡 ไฟล์ migration ที่แก้แล้วต้อง commit ตามนั้น เพื่อนในทีมและเครื่องที่ขึ้นจริงจะได้ SQL ชุดเดียวกัน (ทบทวนเรื่อง migration ใน [บทที่ 8](/08-orm))
+
+---
+
+## 9. 🔧 เขียนทีละชั้น
+
+```text
+src/
+├── db/schema.ts                     + 5 คอลัมน์, index ใหม่
+├── http/errors.ts                   + PHOTO_LIMIT, DUPLICATE_PHOTO, RESTORE_EXPIRED, pgConstraint
+├── http/upload.ts                   + รับหลายไฟล์
+├── http/validate.ts                 + ReorderInput
+├── lib/image.ts                     + รูปจิ๋วและสีหลัก
+├── repositories/photo.repository.ts เขียนใหม่ (ล็อก, เรียง, ถังขยะ)
+├── services/photo.service.ts        เขียนใหม่ (หลายรูป, รูปซ้ำ, กู้คืน)
+├── services/laptop.service.ts       แก้ 1 บรรทัด
+├── routes/photo.routes.ts           + batch, order, trash, restore
+└── scripts/purge-trash.ts, verify-photos.ts
+```
+
+### `src/http/errors.ts`
+
+```ts
+      | "UNSUPPORTED_IMAGE" | "FILE_TOO_LARGE" | "COVER_CONFLICT"
+      | "PHOTO_LIMIT" | "DUPLICATE_PHOTO" | "RESTORE_EXPIRED",
+// ...
+  COVER_CONFLICT: 409,
+  PHOTO_LIMIT: 409,         // รูปเต็มโควตาของเครื่องแล้ว
+  DUPLICATE_PHOTO: 409,     // รูปนี้ (ไบต์เดียวกันทุกตัว) มีอยู่แล้วในเครื่องนี้
+  RESTORE_EXPIRED: 410,     // Gone: เลยเวลากู้คืนแล้ว
+};
+
+// ชื่อ constraint / index ที่ทำให้ error (ตารางเดียวมี unique หลายตัว ต้องรู้ว่าชนตัวไหน)
+export function pgConstraint(err: unknown): string | undefined {
+  const e = err as { constraint?: string; cause?: { constraint?: string } };
+  return e.cause?.constraint ?? e.constraint;
+}
+```
+`410 Gone` = "เคยมี แต่หมดเวลาแล้ว ไม่ต้องลองใหม่" ต่างจาก `404` ("ไม่รู้จัก") ทำให้หน้าเว็บบอกผู้ใช้ได้ตรงกว่า ส่วน `pgConstraint` จำเป็นเพราะตอนนี้ตารางเดียวมี unique 4 ตัว `23505` อย่างเดียวไม่พอจะรู้ว่าผิดกฎข้อไหน
+
+### `src/http/upload.ts` รับหลายไฟล์ (P10 ด่านเร็ว)
+
+```ts
+export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
+export const MAX_PHOTOS_PER_LAPTOP = 8;          // 8d: เครื่องหนึ่งมีรูป (ที่ยังไม่ถูกลบ) ได้ไม่เกิน 8 รูป
+
+// ...single เหมือนเดิม
+
+// 8d: รับหลายไฟล์ในช่อง photos ได้ไม่เกิน 8 ไฟล์ต่อคำขอ (ด่านแรก ตัดตั้งแต่กำลังรับ)
+const many = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_UPLOAD_BYTES, files: MAX_PHOTOS_PER_LAPTOP, fields: 5 },
+}).array("photos", MAX_PHOTOS_PER_LAPTOP);
+
+// ห่อ multer เพื่อแปลง error ของมันเป็น AppError ภาษาเดียวกับทั้งระบบ
+const wrap = (handler: RequestHandler): RequestHandler => (req, res, next) => {
+  handler(req, res, (err: unknown) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === "LIMIT_FILE_SIZE") {
+        return next(new AppError("FILE_TOO_LARGE", `ไฟล์ต้องไม่เกิน ${MAX_UPLOAD_BYTES / 1024 / 1024} MB`));
+      }
+      if (err.code === "LIMIT_FILE_COUNT") {
+        return next(new AppError("VALIDATION_ERROR", `ส่งได้ครั้งละไม่เกิน ${MAX_PHOTOS_PER_LAPTOP} ไฟล์`));
+      }
+      return next(new AppError("VALIDATION_ERROR", "ส่งไฟล์ผิดรูปแบบ", { reason: err.code }));
+    }
+    next(err);
+  });
+};
+
+export const uploadPhoto = wrap(single);
+export const uploadPhotos = wrap(many);
+
+export function requireFiles(req: Request): Buffer[] {
+  const files = (req.files ?? []) as Express.Multer.File[];
+  if (files.length === 0) throw new AppError("VALIDATION_ERROR", "ต้องแนบไฟล์รูปในช่องชื่อ photos อย่างน้อย 1 ไฟล์");
+  return files.map((f) => f.buffer);
+}
+```
+**RAM**: 8 ไฟล์ x 10 MB = 80 MB ต่อคำขอ ถ้ามี 10 คนอัปโหลดพร้อมกันคือ 800 MB ระบบจริงที่รับไฟล์ใหญ่หลายไฟล์ควรเปลี่ยนไปใช้ presigned PUT (บท 8c ข้อ 7) แล้วให้ API ยืนยันทีละไฟล์
+
+**ทำไม multer จำกัด 8 แล้วยังไม่พอ** multer เห็นแค่ "คำขอนี้" ไม่รู้ว่าเครื่องมีรูปอยู่แล้วกี่รูป เครื่องที่มี 6 รูปส่งมาอีก 3 multer ให้ผ่าน ด่านจริงต้องอยู่ที่คนที่ "นับได้" คือฐานข้อมูล
+
+### `src/lib/image.ts` เพิ่มตัวแทนรูป (P18)
+
+ต่อจาก `const [large, thumb] = await Promise.all(...)` ของบท 8c
+```ts
+    // ④ (8d) ตัวแทนรูประหว่างรอโหลด: รูปจิ๋วด้านยาว 16px (เก็บเป็นข้อความ data URL) + สีหลักของรูป
+    const tiny = await base.clone().resize(16, 16, { fit: "inside" }).webp({ quality: 50 }).toBuffer();
+    const { dominant } = await sharp(tiny).stats();
+    const hex = (n: number) => n.toString(16).padStart(2, "0");
+
+    return {
+      large,
+      thumb,
+      contentType: "image/webp",
+      placeholder: `data:image/webp;base64,${tiny.toString("base64")}`,
+      dominantColor: `#${hex(dominant.r)}${hex(dominant.g)}${hex(dominant.b)}`,
+    };
+```
+หาสีหลักจากรูปจิ๋ว (`sharp(tiny).stats()`) ไม่ใช่จากรูปเต็ม เพราะผลแทบเหมือนกันแต่เร็วกว่ามาก (รายละเอียดและการเลือกวิธีอยู่ในข้อ 10 ⑧)
+
+### `src/repositories/photo.repository.ts` (เขียนใหม่ทั้งไฟล์)
+
+```ts
+import { and, asc, desc, eq, inArray, isNotNull, isNull, lt, sql } from "drizzle-orm";
+import { db } from "../db/index.js";
+import { laptopPhotos, laptops, type NewLaptopPhoto } from "../db/schema.js";
+
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+export type PhotoData = Omit<NewLaptopPhoto, "id" | "laptopId" | "position" | "isCover" | "createdAt" | "deletedAt">;
+
+// "รูปที่ยังไม่ถูกลบ" ของเครื่องหนึ่ง ใช้แทบทุก query
+const active = (laptopId: number) => and(eq(laptopPhotos.laptopId, laptopId), isNull(laptopPhotos.deletedAt));
+const byIds = (laptopId: number, photoId: number) => and(eq(laptopPhotos.id, photoId), eq(laptopPhotos.laptopId, laptopId));
+
+// ล็อกแถวของเครื่องไว้จนจบ transaction: งานที่เปลี่ยน "ชุดรูป" ของเครื่องเดียวกัน (เพิ่ม กู้คืน เรียงใหม่) ต้องเข้าคิวทีละงาน
+async function lockLaptop(tx: Tx, laptopId: number) {
+  const [row] = await tx.select({ id: laptops.id }).from(laptops).where(eq(laptops.id, laptopId)).for("update");
+  return row;
+}
+
+async function countAndLastPosition(tx: Tx, laptopId: number) {
+  const [row] = await tx
+    .select({ count: sql<number>`count(*)::int`, last: sql<number>`coalesce(max(${laptopPhotos.position}), 0)::int` })
+    .from(laptopPhotos)
+    .where(active(laptopId));
+  return row;
+}
+
+export const photoRepository = {
+  listByLaptop: (laptopId: number) =>
+    db.select().from(laptopPhotos).where(active(laptopId)).orderBy(asc(laptopPhotos.position)),
+
+  // รวมรูปในถังขยะด้วย ใช้ตอนลบทั้งเครื่อง (cascade จะลบแถวในถังขยะไปด้วย ไฟล์ของมันก็ต้องตามลบ)
+  listAllByLaptop: (laptopId: number) => db.select().from(laptopPhotos).where(eq(laptopPhotos.laptopId, laptopId)),
+
+  listTrash: (laptopId: number) =>
+    db
+      .select()
+      .from(laptopPhotos)
+      .where(and(eq(laptopPhotos.laptopId, laptopId), isNotNull(laptopPhotos.deletedAt)))
+      .orderBy(desc(laptopPhotos.deletedAt)),
+
+  countActive: async (laptopId: number) => {
+    const [row] = await db.select({ count: sql<number>`count(*)::int` }).from(laptopPhotos).where(active(laptopId));
+    return row.count;
+  },
+
+  find: async (laptopId: number, photoId: number) => {
+    const [row] = await db.select().from(laptopPhotos).where(and(byIds(laptopId, photoId), isNull(laptopPhotos.deletedAt)));
+    return row;
+  },
+
+  findByHashes: (laptopId: number, hashes: string[]) =>
+    db
+      .select({ id: laptopPhotos.id, contentHash: laptopPhotos.contentHash })
+      .from(laptopPhotos)
+      .where(and(active(laptopId), inArray(laptopPhotos.contentHash, hashes))),
+
+  // เพิ่มหลายรูปในครั้งเดียว: ล็อกเครื่อง → นับรูป → ต่อท้ายลำดับ → INSERT ทั้งหมด (สำเร็จทั้งชุดหรือไม่เกิดเลย)
+  createMany: (laptopId: number, photos: PhotoData[], max: number) =>
+    db.transaction(async (tx) => {
+      if (!(await lockLaptop(tx, laptopId))) return { ok: false as const, reason: "NOT_FOUND" as const };
+      const { count, last } = await countAndLastPosition(tx, laptopId);
+      if (count + photos.length > max) return { ok: false as const, reason: "LIMIT" as const, count };
+      const rows = await tx
+        .insert(laptopPhotos)
+        .values(photos.map((p, i) => ({ ...p, laptopId, position: last + i + 1 })))
+        .returning();
+      return { ok: true as const, rows };
+    }),
+
+  replace: (laptopId: number, photoId: number, data: PhotoData) =>
+    db.transaction(async (tx) => {
+      const [before] = await tx
+        .select()
+        .from(laptopPhotos)
+        .where(and(byIds(laptopId, photoId), isNull(laptopPhotos.deletedAt)))
+        .for("update");
+      if (!before) return undefined;
+      const [after] = await tx.update(laptopPhotos).set(data).where(eq(laptopPhotos.id, photoId)).returning();
+      return { before, after };
+    }),
+
+  setCover: (laptopId: number, photoId: number) =>
+    db.transaction(async (tx) => {
+      const [photo] = await tx
+        .select({ id: laptopPhotos.id })
+        .from(laptopPhotos)
+        .where(and(byIds(laptopId, photoId), isNull(laptopPhotos.deletedAt)));
+      if (!photo) return undefined;
+      await tx.update(laptopPhotos).set({ isCover: false }).where(and(active(laptopId), eq(laptopPhotos.isCover, true)));
+      const [row] = await tx.update(laptopPhotos).set({ isCover: true }).where(eq(laptopPhotos.id, photoId)).returning();
+      return row;
+    }),
+
+  // เรียงใหม่: photoIds คือ id ของรูปทุกรูป (ที่ยังไม่ถูกลบ) ตามลำดับที่ต้องการ
+  reorder: (laptopId: number, photoIds: number[]) =>
+    db.transaction(async (tx) => {
+      if (!(await lockLaptop(tx, laptopId))) return undefined;
+      const current = await tx.select({ id: laptopPhotos.id }).from(laptopPhotos).where(active(laptopId));
+      const same = current.length === photoIds.length && current.every((r) => photoIds.includes(r.id));
+      if (!same) return { ok: false as const, current: current.map((r) => r.id).sort((a, b) => a - b) };
+
+      // ขั้น 1: ย้ายทุกรูปไปเลขติดลบก่อน (-1, -2, ...) เลขติดลบไม่ชนกับเลขบวกที่ใช้อยู่ และไม่ชนกันเอง
+      await tx.update(laptopPhotos).set({ position: sql`-${laptopPhotos.position}` }).where(active(laptopId));
+      // ขั้น 2: ใส่เลขจริงทีละรูป ตอนนี้ช่อง 1..n ว่างหมดแล้ว ไม่มีทางชน
+      for (const [i, id] of photoIds.entries()) {
+        await tx.update(laptopPhotos).set({ position: i + 1 }).where(eq(laptopPhotos.id, id));
+      }
+      const rows = await tx.select().from(laptopPhotos).where(active(laptopId)).orderBy(asc(laptopPhotos.position));
+      return { ok: true as const, rows };
+    }),
+
+  // ลบแบบกู้คืนได้: แค่จดเวลาที่ลบ แถวและไฟล์ยังอยู่ครบ
+  softDelete: async (laptopId: number, photoId: number) => {
+    const [row] = await db
+      .update(laptopPhotos)
+      .set({ deletedAt: new Date() })
+      .where(and(byIds(laptopId, photoId), isNull(laptopPhotos.deletedAt)))
+      .returning();
+    return row;
+  },
+
+  // กู้คืน: ล็อกเครื่อง → ตรวจเวลา → ตรวจโควตา → ต่อท้ายลำดับ (ช่องเดิมอาจมีรูปอื่นใช้ไปแล้ว)
+  restore: (laptopId: number, photoId: number, windowDays: number, max: number) =>
+    db.transaction(async (tx) => {
+      if (!(await lockLaptop(tx, laptopId))) return { ok: false as const, reason: "NOT_FOUND" as const };
+      const [photo] = await tx
+        .select({
+          isCover: laptopPhotos.isCover,
+          // ให้ฐานข้อมูลเทียบเวลาเอง (นาฬิกาเดียวกับงานล้างถังขยะ)
+          expired: sql<boolean>`${laptopPhotos.deletedAt} < now() - make_interval(days => ${windowDays})`,
+        })
+        .from(laptopPhotos)
+        .where(and(byIds(laptopId, photoId), isNotNull(laptopPhotos.deletedAt)))
+        .for("update");
+      if (!photo) return { ok: false as const, reason: "NOT_FOUND" as const };
+      if (photo.expired) return { ok: false as const, reason: "EXPIRED" as const };
+      const { count, last } = await countAndLastPosition(tx, laptopId);
+      if (count + 1 > max) return { ok: false as const, reason: "LIMIT" as const, count };
+      const [cover] = await tx
+        .select({ id: laptopPhotos.id })
+        .from(laptopPhotos)
+        .where(and(active(laptopId), eq(laptopPhotos.isCover, true)));
+      const [row] = await tx
+        .update(laptopPhotos)
+        // เคยเป็นปก แต่ระหว่างนั้นมีปกใหม่แล้ว → กลับมาเป็นรูปธรรมดา
+        .set({ deletedAt: null, position: last + 1, isCover: photo.isCover && !cover })
+        .where(eq(laptopPhotos.id, photoId))
+        .returning();
+      return { ok: true as const, row };
+    }),
+
+  // ล้างถังขยะ: ลบ "แถว" ที่อยู่ในถังเกิน N วัน คืน key ให้ไปตามลบไฟล์ (แถวก่อน ไฟล์ทีหลัง เหมือนเดิม)
+  purgeTrash: (olderThanDays: number) =>
+    db
+      .delete(laptopPhotos)
+      .where(lt(laptopPhotos.deletedAt, sql`now() - make_interval(days => ${olderThanDays})`))
+      .returning({ id: laptopPhotos.id, key: laptopPhotos.key }),
+
+  // key ทั้งหมดที่ยังมีแถวอ้างถึง "รวมรูปในถังขยะ" (ยังกู้คืนได้ ไฟล์ต้องอยู่)
+  allKeys: async () => (await db.select({ key: laptopPhotos.key }).from(laptopPhotos)).map((r) => r.key),
+};
+```
+อ่านจุดสำคัญ
+- **`lockLaptop` (`SELECT ... FOR UPDATE` บนแถวของเครื่อง)** คือหัวใจของ P10 และ P11 ทั้งสองกฎต้อง "อ่านหลายแถวแล้วตัดสิน" (นับรูป, หาเลขสุดท้าย) ถ้าสองคำขออ่านพร้อมกันจะได้ตัวเลขเดียวกันแล้วตัดสินผิดทั้งคู่ การล็อกแถวพ่อ (เครื่อง) ทำให้คำขอที่สองต้องรอ แล้วจะอ่านได้ตัวเลขหลังคำขอแรกเสร็จ (ข้อ 12 ❸ จะเอาบรรทัดนี้ออกให้ดูว่าพังยังไง) และล็อกแค่ **เครื่องเดียว** เครื่องอื่นอัปโหลดได้ตามปกติ
+- **`reorder` 2 ขั้น** Postgres ตรวจ unique index **ทีละแถวทันทีที่เปลี่ยน** ไม่ได้รอจนจบคำสั่ง (เอกสาร Postgres ระบุว่าต่างจากมาตรฐาน SQL ตรงนี้) การสลับ A=1, B=2 เป็น A=2, B=1 จึงชนตั้งแต่แถวแรก แม้จะเขียนเป็น UPDATE คำสั่งเดียว (ข้อ 12 ❷) ย้ายทุกรูปไปเลขติดลบก่อน แล้วค่อยใส่เลขจริง ไม่มีจังหวะไหนชน และทั้งหมดอยู่ใน transaction เดียว คนอื่นไม่เคยเห็นเลขติดลบ
+- **`restore` ต่อท้ายลำดับ** ไม่คืนเลขเดิม เพราะช่องเดิมอาจมีรูปอื่นใช้ไปแล้ว และตรวจโควตาอีกรอบ (ระหว่างอยู่ในถังขยะ เจ้าของอาจอัปโหลดจนเต็ม 8 แล้ว)
+- **ให้ฐานข้อมูลเทียบเวลา** (`now() - make_interval(...)`) ทั้งตอนกู้คืนและตอนล้างถังขยะ ถ้าใช้ `new Date()` ฝั่ง Node สองเครื่องที่นาฬิกาต่างกันไม่กี่วินาทีอาจตัดสินไม่ตรงกันตรงขอบเวลา
+- **`allKeys` รวมรูปในถังขยะ** เพื่อให้งานเก็บกวาดไม่ลบไฟล์ของรูปที่ยังกู้คืนได้ (P16, ข้อ 12 ❺)
+
+![สลับลำดับรูปตรงๆ ชน unique index ระหว่างทาง วิธีแก้คือย้ายไปเลขติดลบก่อนแล้วค่อยใส่เลขจริง](/img/08d-reorder-two-phase.svg)
+*Postgres ตรวจ unique ทีละแถว การสลับต้องผ่าน "ที่พักชั่วคราว" ที่ไม่ชนกับใคร*
+
+> 🤓 **อีกทางที่ไม่ต้องสองขั้น** คือ constraint ที่ตรวจตอน COMMIT (`DEFERRABLE INITIALLY DEFERRED`) แต่ unique index แบบมี `WHERE` ตั้งเป็น deferrable ไม่ได้ ต้องใช้ `EXCLUDE USING btree (laptop_id WITH =, position WITH =) WHERE (deleted_at IS NULL) DEFERRABLE INITIALLY DEFERRED` แทน (เราลองใน Postgres 17 แล้ว สลับได้ในคำสั่งเดียว) แต่ Drizzle ประกาศ `EXCLUDE` ใน schema ไม่ได้ ต้องเขียนใน migration เอง วิธีเลขติดลบจึงเข้าใจง่ายกว่าสำหรับทีม
+
+### `src/services/photo.service.ts` (เขียนใหม่ทั้งไฟล์)
+
+```ts
+import { createHash, randomUUID } from "node:crypto";
+import type { LaptopPhoto } from "../db/schema.js";
+import { AppError, pgCode, pgConstraint } from "../http/errors.js";
+import { MAX_PHOTOS_PER_LAPTOP, MAX_UPLOAD_BYTES } from "../http/upload.js";
+import { processPhoto, VARIANTS, type Variant } from "../lib/image.js";
+import { laptopRepository } from "../repositories/laptop.repository.js";
+import { photoRepository, type PhotoData } from "../repositories/photo.repository.js";
+import { storage } from "../storage/index.js";
+
+// กู้คืนรูปที่ลบได้ภายในกี่วัน (งานล้างถังขยะใช้ค่าเดียวกัน)
+export const RESTORE_DAYS = Number(process.env.PHOTO_RESTORE_DAYS ?? 7);
+
+export const variantKey = (key: string, v: Variant) => `${key}-${VARIANTS[v]}.webp`;
+const objectKeys = (key: string) => [variantKey(key, "large"), variantKey(key, "thumb")];
+const sha256 = (data: Buffer) => createHash("sha256").update(data).digest("hex");
+
+const toDto = (p: LaptopPhoto) => ({
+  id: p.id,
+  position: p.position,
+  isCover: p.isCover,
+  width: p.width,
+  height: p.height,
+  sizeBytes: p.sizeBytes,
+  placeholder: p.placeholder,
+  dominantColor: p.dominantColor,
+  urls: { large: storage.publicUrl(variantKey(p.key, "large")), thumb: storage.publicUrl(variantKey(p.key, "thumb")) },
+  createdAt: p.createdAt,
+});
+
+const toTrashDto = (p: LaptopPhoto) => ({
+  ...toDto(p),
+  deletedAt: p.deletedAt,
+  restoreUntil: new Date(p.deletedAt!.getTime() + RESTORE_DAYS * 86_400_000),
+});
+
+async function removeObjectsQuietly(key: string) {
+  try {
+    await storage.removeMany(objectKeys(key));
+  } catch (err) {
+    const reason = (err as { code?: string }).code ?? (err as Error).message;
+    console.error(`⚠️ ลบไฟล์ ${key} ไม่สำเร็จ (${reason}) เหลือเป็นไฟล์กำพร้า งานเก็บกวาดจะตามลบ`);
+  }
+}
+
+async function ensureLaptop(laptopId: number) {
+  if (!(await laptopRepository.findById(laptopId))) throw new AppError("NOT_FOUND", "ไม่พบเครื่องนี้");
+}
+
+const limitError = (count: number) =>
+  new AppError("PHOTO_LIMIT", `เครื่องหนึ่งมีรูปได้ไม่เกิน ${MAX_PHOTOS_PER_LAPTOP} รูป`, { current: count, max: MAX_PHOTOS_PER_LAPTOP });
+
+// แปลง error จาก unique index ของตารางรูปเป็นภาษาที่ผู้ใช้เข้าใจ
+function translateUniqueError(err: unknown): never {
+  if (pgCode(err) === "23505") {
+    const which = pgConstraint(err);
+    if (which === "photo_hash_per_laptop") throw new AppError("DUPLICATE_PHOTO", "รูปนี้มีอยู่แล้วในเครื่องนี้");
+    if (which === "one_cover_per_laptop") throw new AppError("COVER_CONFLICT", "มีการเปลี่ยนรูปปกพร้อมกัน ลองใหม่อีกครั้ง");
+  }
+  throw err;
+}
+
+// เก็บไฟล์ที่ย่อแล้วลง storage (ยังไม่แตะฐานข้อมูล)
+async function storeProcessed(laptopId: number, img: Awaited<ReturnType<typeof processPhoto>>, contentHash: string) {
+  const key = `laptops/${laptopId}/${randomUUID()}`;
+  await Promise.all([
+    storage.put(variantKey(key, "large"), img.large.data, img.contentType),
+    storage.put(variantKey(key, "thumb"), img.thumb.data, img.contentType),
+  ]);
+  return {
+    key,
+    contentType: img.contentType,
+    sizeBytes: img.large.info.size,
+    width: img.large.info.width,
+    height: img.large.info.height,
+    contentHash,
+    placeholder: img.placeholder,
+    dominantColor: img.dominantColor,
+  } satisfies PhotoData;
+}
+
+export const photoService = {
+  async list(laptopId: number) {
+    await ensureLaptop(laptopId);
+    return (await photoRepository.listByLaptop(laptopId)).map(toDto);
+  },
+
+  async add(laptopId: number, input: Buffer) {
+    const [photo] = await photoService.addMany(laptopId, [input]);
+    return photo;
+  },
+
+  // เพิ่มหลายรูปพร้อมกัน: ผ่านทั้งชุดหรือไม่รับเลย
+  async addMany(laptopId: number, inputs: Buffer[]) {
+    await ensureLaptop(laptopId);
+
+    // ① ด่านเร็ว (ยังไม่ใช่ด่านจริง): เต็มแน่ๆ ก็ไม่ต้องเสียเวลาย่อรูป
+    const count = await photoRepository.countActive(laptopId);
+    if (count + inputs.length > MAX_PHOTOS_PER_LAPTOP) throw limitError(count);
+
+    // ② หารูปซ้ำจากลายนิ้วมือ sha256 ของไฟล์ที่ส่งมา (ซ้ำกันเองในชุด หรือซ้ำกับรูปที่มีอยู่)
+    const hashes = inputs.map(sha256);
+    if (new Set(hashes).size !== hashes.length) throw new AppError("DUPLICATE_PHOTO", "ส่งรูปเดียวกันมาซ้ำในชุดนี้");
+    const existing = await photoRepository.findByHashes(laptopId, hashes);
+    if (existing.length > 0) {
+      throw new AppError("DUPLICATE_PHOTO", "รูปนี้มีอยู่แล้วในเครื่องนี้", { photoIds: existing.map((e) => e.id) });
+    }
+
+    // ③ ตรวจและย่อ "ทุกรูป" ให้ผ่านก่อน แล้วค่อยเก็บไฟล์ (รูปที่ 3 เสีย = ไม่ต้องเก็บรูปที่ 1, 2 ให้เป็นขยะ)
+    //    ทำทีละรูป ไม่ Promise.all: ย่อ 8 รูปพร้อมกันกิน RAM และ CPU พร้อมกัน 8 เท่า
+    const processed = [];
+    for (const [i, input] of inputs.entries()) {
+      try {
+        processed.push(await processPhoto(input));
+      } catch (err) {
+        if (err instanceof AppError) err.details = { ...(err.details as object), fileIndex: i };
+        throw err;
+      }
+    }
+
+    // ④ เก็บไฟล์ทั้งหมด ⑤ บันทึกแถวทั้งหมดใน transaction เดียว (ด่านจริงของโควตาอยู่ในนั้น)
+    const stored: PhotoData[] = [];
+    try {
+      for (const [i, img] of processed.entries()) stored.push(await storeProcessed(laptopId, img, hashes[i]));
+      const result = await photoRepository.createMany(laptopId, stored, MAX_PHOTOS_PER_LAPTOP);
+      if (!result.ok && result.reason === "LIMIT") throw limitError(result.count);
+      if (!result.ok) throw new AppError("NOT_FOUND", "ไม่พบเครื่องนี้");
+      return result.rows.map(toDto);
+    } catch (err) {
+      for (const s of stored) await removeObjectsQuietly(s.key); // ไม่ได้บันทึกแถว → ไฟล์ที่ใส่ไปแล้วเป็นขยะ ลบทันที
+      if (pgCode(err) === "23503") throw new AppError("NOT_FOUND", "ไม่พบเครื่องนี้");
+      translateUniqueError(err);
+    }
+  },
+
+  async replace(laptopId: number, photoId: number, input: Buffer) {
+    if (!(await photoRepository.find(laptopId, photoId))) throw new AppError("NOT_FOUND", "ไม่พบรูปนี้");
+    const stored = await storeProcessed(laptopId, await processPhoto(input), sha256(input));
+    let result;
+    try {
+      result = await photoRepository.replace(laptopId, photoId, stored);
+    } catch (err) {
+      await removeObjectsQuietly(stored.key);
+      translateUniqueError(err);
+    }
+    if (!result) {
+      await removeObjectsQuietly(stored.key);
+      throw new AppError("NOT_FOUND", "ไม่พบรูปนี้");
+    }
+    await removeObjectsQuietly(result.before.key);
+    return toDto(result.after);
+  },
+
+  async setCover(laptopId: number, photoId: number) {
+    try {
+      const row = await photoRepository.setCover(laptopId, photoId);
+      if (!row) throw new AppError("NOT_FOUND", "ไม่พบรูปนี้");
+      return toDto(row);
+    } catch (err) {
+      translateUniqueError(err);
+    }
+  },
+
+  async reorder(laptopId: number, photoIds: number[]) {
+    const result = await photoRepository.reorder(laptopId, photoIds);
+    if (!result) throw new AppError("NOT_FOUND", "ไม่พบเครื่องนี้");
+    if (!result.ok) {
+      throw new AppError("VALIDATION_ERROR", "ต้องส่ง id ของรูปทุกรูปในเครื่องนี้ ครบและไม่ซ้ำ", { expected: result.current });
+    }
+    return result.rows.map(toDto);
+  },
+
+  // ลบ = ย้ายเข้าถังขยะ ไฟล์ยังอยู่ (กู้คืนได้ภายใน RESTORE_DAYS วัน)
+  async remove(laptopId: number, photoId: number) {
+    if (!(await photoRepository.softDelete(laptopId, photoId))) throw new AppError("NOT_FOUND", "ไม่พบรูปนี้");
+  },
+
+  async trash(laptopId: number) {
+    await ensureLaptop(laptopId);
+    return (await photoRepository.listTrash(laptopId)).map(toTrashDto);
+  },
+
+  async restore(laptopId: number, photoId: number) {
+    let result;
+    try {
+      result = await photoRepository.restore(laptopId, photoId, RESTORE_DAYS, MAX_PHOTOS_PER_LAPTOP);
+    } catch (err) {
+      translateUniqueError(err); // ระหว่างอยู่ในถังขยะ มีคนอัปโหลดรูปเดียวกันกลับมาแล้ว
+    }
+    if (result.ok) return toDto(result.row);
+    if (result.reason === "EXPIRED") throw new AppError("RESTORE_EXPIRED", `กู้คืนได้ภายใน ${RESTORE_DAYS} วันหลังลบเท่านั้น`);
+    if (result.reason === "LIMIT") throw limitError(result.count);
+    throw new AppError("NOT_FOUND", "ไม่พบรูปนี้ในถังขยะ");
+  },
+
+  async removeFiles(keys: string[]) {
+    for (const key of keys) await removeObjectsQuietly(key);
+  },
+
+  // createUploadUrl และ confirmUpload เหมือนบท 8c ทุกบรรทัด (confirmUpload เรียก photoService.add จึงได้กฎใหม่ทั้งหมดไปด้วย)
+};
+```
+อ่านจุดสำคัญ
+- **ด่านเร็ว ① กับด่านจริง ⑤** ตรวจโควตาเดียวกันสองที่ ① อยู่นอก transaction จึง "อาจผิด" ได้ถ้ามีคำขออื่นแทรก แต่ช่วยไม่ให้เสียเวลาย่อ 8 รูปเมื่อเต็มอยู่แล้ว ⑤ อยู่ใน transaction ที่ล็อกเครื่องจึง "ผิดไม่ได้" แบบเดียวกับ "3 ด่าน" ในบท 8b: ด่านหน้าเพื่อประสบการณ์ ด่านหลังเพื่อความถูกต้อง
+- **ตรวจทุกรูปก่อนเก็บรูปไหน (P13)** ถ้าเก็บไปทีละรูปแล้วรูปที่ 3 เสีย ต้องตามลบรูปที่ 1–2 และถ้าการลบพังก็เหลือไฟล์กำพร้า เรียงให้ "งานที่พังได้บ่อย" (ไฟล์เสีย) เกิดก่อน "งานที่ต้องเก็บกวาด" (เก็บไฟล์)
+- **sha256 ของไฟล์ต้นฉบับ** คำนวณก่อนย่อรูป (เร็ว: ไฟล์ 7 MB ใช้ไม่กี่สิบมิลลิวินาที) ถ้าซ้ำก็ตอบ `409` ทันทีโดยไม่ย่อ ตอบ `photoIds` ของรูปที่มีอยู่ไปด้วย หน้าเว็บจะได้บอกว่า "ซ้ำกับรูปไหน" ส่วน unique index `photo_hash_per_laptop` คือด่านสุดท้ายถ้าสองคำขอส่งรูปเดียวกันพร้อมกัน
+- **`remove` ไม่แตะ storage อีกต่อไป** ไฟล์จะถูกลบตอนล้างถังขยะเท่านั้น
+- **`replace` ยังลบไฟล์เก่าทันที** การเปลี่ยนรูปไม่ได้ผ่านถังขยะ (ถ้าอยากให้ "เปลี่ยนแล้วย้อนกลับได้" ต้องเก็บประวัติรูปแยกอีกตาราง เป็นแบบฝึกหัด)
+
+### `src/http/validate.ts` และ `src/routes/photo.routes.ts`
+
+```ts
+// 8d: เรียงรูปใหม่ ส่ง id ของรูปทุกรูปตามลำดับที่ต้องการ
+export const ReorderInput = z.object({
+  photoIds: z
+    .array(z.number().int().positive())
+    .min(1)
+    .refine((ids) => new Set(ids).size === ids.length, "id ห้ามซ้ำ"),
+});
+```
+เพิ่มใน `photo.routes.ts` (และ import `requireFiles`, `uploadPhotos`, `ReorderInput`)
+```ts
+// 8d: ถังขยะ (รูปที่ลบแล้ว ยังกู้คืนได้)
+photoRoutes.get("/:laptopId/photos/trash", async (req, res) => {
+  res.json(await photoService.trash(parse(IdParam, req.params.laptopId)));
+});
+
+// 8d: อัปโหลดหลายรูปในคำขอเดียว (ช่องชื่อ photos)
+photoRoutes.post("/:laptopId/photos/batch", uploadPhotos, async (req, res) => {
+  const laptopId = parse(IdParam, req.params.laptopId);
+  res.status(201).json(await photoService.addMany(laptopId, requireFiles(req)));
+});
+
+// 8d: เรียงใหม่ ⚠️ ต้องอยู่ "ก่อน" PUT /:laptopId/photos/:photoId ไม่งั้น "order" จะถูกจับเป็น :photoId
+photoRoutes.put("/:laptopId/photos/order", async (req, res) => {
+  const { photoIds } = parse(ReorderInput, req.body);
+  res.json(await photoService.reorder(parse(IdParam, req.params.laptopId), photoIds));
+});
+
+// ...PUT /:laptopId/photos/:photoId, POST .../cover เหมือนเดิม
+
+// 8d: DELETE = ย้ายเข้าถังขยะ (route เดิม โค้ดใน service เปลี่ยน)
+photoRoutes.post("/:laptopId/photos/:photoId/restore", async (req, res) => {
+  res.json(await photoService.restore(parse(IdParam, req.params.laptopId), parse(IdParam, req.params.photoId)));
+});
+```
+
+| ผู้ใช้อยากทำ | Endpoint | ตอบสำเร็จ | ตอบไม่สำเร็จ (กฎ) |
+|---|---|---|---|
+| ดูรูป (เรียงตาม `position`) | `GET /laptops/:laptopId/photos` | `200` | `404` |
+| อัปโหลดหลายรูป | `POST /laptops/:laptopId/photos/batch` (ช่อง `photos`) | `201` | `400` (เกิน 8 ไฟล์) · `409` (P10, P17) · `413` · `415` (P13) |
+| เรียงใหม่ | `PUT /laptops/:laptopId/photos/order` body `{"photoIds":[...]}` | `200` | `400` (P12) · `404` |
+| ลบ (เข้าถังขยะ) | `DELETE /laptops/:laptopId/photos/:photoId` | `204` | `404` |
+| ดูถังขยะ | `GET /laptops/:laptopId/photos/trash` | `200` | `404` |
+| กู้คืน | `POST /laptops/:laptopId/photos/:photoId/restore` | `200` | `404` · `409` (P10, P17) · `410` (P14) |
+
+### `src/services/laptop.service.ts` แก้ 1 บรรทัด
+
+```ts
+    const photos = await photoRepository.listAllByLaptop(id); // 8d: รวมรูปในถังขยะด้วย
+```
+ลบเครื่อง → cascade ลบแถวรูป **รวมแถวในถังขยะ** ถ้ายังจด key ด้วย `listByLaptop` (ที่ตอนนี้เห็นแค่รูปที่ใช้งาน) ไฟล์ของรูปในถังขยะจะค้างเป็นกำพร้า บรรทัดเดียวที่ไม่ได้แก้ตาม = รั่วแบบเงียบๆ ทุกครั้งที่ลบเครื่อง เมื่อความหมายของ "รูปของเครื่อง" เปลี่ยน ให้ไล่หาทุกที่ที่ใช้มัน (`grep -rn listByLaptop src`)
+
+### งานล้างถังขยะ `src/scripts/purge-trash.ts`
+
+```ts
+import { photoRepository } from "../repositories/photo.repository.js";
+import { photoService, RESTORE_DAYS } from "../services/photo.service.js";
+
+// ล้างถังขยะ: รูปที่ลบเกิน RESTORE_DAYS วัน (หรือตามที่สั่ง: npm run photos:purge -- 0)
+const days = Number(process.argv[2] ?? RESTORE_DAYS);
+
+// ① ลบแถวก่อน (ถ้าพังหลังจากนี้ = ไฟล์กำพร้า งาน cleanup-orphans ตามเก็บได้)
+const purged = await photoRepository.purgeTrash(days);
+// ② ค่อยลบไฟล์
+await photoService.removeFiles(purged.map((p) => p.key));
+
+console.log(`ล้างถังขยะ (เกิน ${days} วัน): ลบ ${purged.length} รูป`, purged.map((p) => p.id));
+process.exit(0);
+```
+
+### ตรวจรูปแตก `src/scripts/verify-photos.ts`
+
+```ts
+import { db } from "../db/index.js";
+import { laptopPhotos } from "../db/schema.js";
+import { variantKey } from "../services/photo.service.js";
+import { storage } from "../storage/index.js";
+
+// ตรวจ "รูปแตก": ทุกแถวในฐานข้อมูล (รวมถังขยะ) ต้องมีไฟล์ครบทั้ง 2 ขนาดใน storage
+// ใช้หลัง restore ทุกครั้ง และตั้งให้รันเป็นรอบได้
+const rows = await db.select({ id: laptopPhotos.id, key: laptopPhotos.key }).from(laptopPhotos);
+const missing: string[] = [];
+for (const row of rows) {
+  for (const v of ["large", "thumb"] as const) {
+    const key = variantKey(row.key, v);
+    if ((await storage.sizeOf(key)) === undefined) missing.push(`#${row.id} ${key}`);
+  }
+}
+console.log(`ตรวจ ${rows.length} รูป (${rows.length * 2} ไฟล์): ไฟล์หาย ${missing.length}`, missing);
+process.exit(missing.length ? 1 : 0);
+```
+งานเก็บกวาดของบท 8c หา "ไฟล์ที่ไม่มีแถว" สคริปต์นี้คือด้านกลับ หา "แถวที่ไม่มีไฟล์" สองตัวรวมกันตรวจความตรงกันของฐานข้อมูลกับ storage ได้ครบสองทิศ (`exit 1` เมื่อเจอปัญหา เอาไปใส่ในงานตามเวลาแล้วแจ้งเตือนได้)
+
+`package.json`
+```json
+{
+  "scripts": {
+    "photos:purge": "tsx src/scripts/purge-trash.ts",
+    "photos:verify": "tsx src/scripts/verify-photos.ts"
+  }
+}
+```
+```bash
+npm run typecheck
+npm run dev
+```
+
+---
+
+## 10. 🧪 ทดสอบทีละกฎ
+
+เริ่มจากสภาพหลัง migrate: เครื่อง 1 มีรูป 2 รูป (id 1, 2) เครื่อง 2 มี 3 รูป (id 4 เป็นปก, 3, 5) เครื่อง 3 ยังไม่มีรูป ใช้รูปจาก `dataset/` ของข้อ 1 (ตัด field ที่ไม่เกี่ยวออกจากผลลัพธ์)
+
+### ① อัปโหลดหลายรูป + ตัวแทนรูป (P13, P18)
+
+```bash
+U=http://localhost:3000/laptops
+curl -s -F "photos=@dataset/0010.jpg" -F "photos=@dataset/0011.jpg" -F "photos=@dataset/0012.jpg" $U/1/photos/batch
+```
+```text
+[{"id":6,"position":3,"isCover":false,"width":1600,"height":1200,"placeholder":"data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAACwAQCdASoQAAwAAsBMJbACdADt5GSAAP7HF+Vc…","dominantColor":"#588878",...},
+ {"id":7,"position":4,...,"dominantColor":"#588898",...},
+ {"id":8,"position":5,...,"dominantColor":"#686898",...}]
+```
+ได้ `201` รูปใหม่ต่อท้ายลำดับ 3, 4, 5 ทุกรูปมี `placeholder` (ยาว 151–163 ตัวอักษร) และ `dominantColor`
+
+### ② โควตา 8 รูป (P10)
+
+```bash
+curl -s -w "\n%{http_code}\n" -F "photos=@dataset/0013.jpg" -F "photos=@dataset/0014.jpg" -F "photos=@dataset/0015.jpg" -F "photos=@dataset/0016.jpg" $U/1/photos/batch
+curl -s -w "\n%{http_code}\n" $(for i in 20 21 22 23 24 25 26 27 28; do echo "-F photos=@dataset/00$i.jpg"; done) $U/3/photos/batch
+```
+```text
+{"error":"เครื่องหนึ่งมีรูปได้ไม่เกิน 8 รูป","code":"PHOTO_LIMIT","details":{"current":5,"max":8}}
+409
+{"error":"ส่งได้ครั้งละไม่เกิน 8 ไฟล์","code":"VALIDATION_ERROR"}
+400
+```
+คำขอแรก: มี 5 + ส่งมา 4 = 9 เกินโควตา ปฏิเสธ **ทั้งชุด** (ไม่รับ 3 รูปแรกแล้วทิ้งรูปที่ 4 เพราะผู้ใช้จะงงว่ารูปไหนเข้าไปแล้ว) คำขอที่สองโดน multer ตัดตั้งแต่ไฟล์ที่ 9 ยังไม่ทันถึง service
+
+### ③ ไฟล์เสีย 1 ไฟล์ในชุด = ไม่รับทั้งชุด และไม่เหลือขยะ (P13)
+
+```bash
+docker exec laptop-api-storage-1 sh -c 'ls /data/laptop-photos/laptops/3 2>/dev/null | wc -l'
+curl -s -w "\n%{http_code}\n" -F "photos=@dataset/0030.jpg" -F "photos=@test-images/fake.jpg" -F "photos=@dataset/0031.jpg" $U/3/photos/batch
+docker exec laptop-api-storage-1 sh -c 'ls /data/laptop-photos/laptops/3 2>/dev/null | wc -l'
+```
+```text
+0
+{"error":"รองรับเฉพาะรูป JPEG, PNG หรือ WebP","code":"UNSUPPORTED_IMAGE","details":{"detected":"ไม่รู้จัก","fileIndex":1}}
+415
+0
+```
+`fileIndex: 1` บอกหน้าเว็บว่าไฟล์ที่ 2 (นับจาก 0) คือตัวปัญหา และใน storage ไม่มีไฟล์เพิ่มสักไฟล์ เพราะตรวจทุกรูปก่อนเก็บ
+
+### ④ รูปซ้ำ (P17)
+
+```bash
+curl -s -w "\n%{http_code}\n" -F "photo=@dataset/0011.jpg" $U/1/photos
+curl -s -w "\n%{http_code}\n" -F "photos=@dataset/0040.jpg" -F "photos=@dataset/0040.jpg" $U/3/photos/batch
+curl -s -o /dev/null -w "%{http_code}\n" -F "photo=@dataset/0011.jpg" $U/2/photos
+```
+```text
+{"error":"รูปนี้มีอยู่แล้วในเครื่องนี้","code":"DUPLICATE_PHOTO","details":{"photoIds":[7]}}
+409
+{"error":"ส่งรูปเดียวกันมาซ้ำในชุดนี้","code":"DUPLICATE_PHOTO"}
+409
+201
+```
+รูปเดียวกันเข้าเครื่องอื่นได้ (`201`, ได้ id 9) เพราะกฎของเราคือ "ห้ามซ้ำ **ในเครื่องเดียวกัน**" ส่วนเรื่องควรกันซ้ำทั้งระบบไหม อยู่ในส่วนท้ายของข้อนี้
+
+### ⑤ เรียงใหม่ (P11, P12)
+
+```bash
+curl -s -X PUT -H "Content-Type: application/json" -d '{"photoIds":[8,1,2,6,7]}' $U/1/photos/order | python3 -c 'import json,sys; print([(p["id"],p["position"]) for p in json.load(sys.stdin)])'
+curl -s -w "\n%{http_code}\n" -X PUT -H "Content-Type: application/json" -d '{"photoIds":[8,1]}' $U/1/photos/order
+curl -s -w "\n%{http_code}\n" -X PUT -H "Content-Type: application/json" -d '{"photoIds":[8,1,2,7,7]}' $U/1/photos/order
+```
+```text
+[(8, 1), (1, 2), (2, 3), (6, 4), (7, 5)]
+{"error":"ต้องส่ง id ของรูปทุกรูปในเครื่องนี้ ครบและไม่ซ้ำ","code":"VALIDATION_ERROR","details":{"expected":[1,2,6,7,8]}}
+400
+{"error":"ข้อมูลไม่ถูกต้อง","code":"VALIDATION_ERROR","details":{"photoIds":["id ห้ามซ้ำ"]}}
+400
+```
+**ทำไมบังคับส่งครบทุกรูป** ถ้ารับแค่ "ย้ายรูป 8 ไปไว้หน้าสุด" สองคนที่ลากรูปพร้อมกันจะได้ผลที่ขึ้นกับว่าใครถึงก่อน และรูปที่อีกคนเพิ่งอัปโหลดอาจหลุดลำดับ การส่ง "ลำดับทั้งหมดที่ฉันเห็น" ทำให้ server ตรวจได้ว่าผู้ใช้เห็นข้อมูลล่าสุดไหม ถ้าไม่ตรง ตอบ `400` พร้อม `expected` ให้หน้าเว็บโหลดใหม่
+
+### ⑥ ถังขยะ: ลบ ดู กู้คืน (P14, P15)
+
+![วงจรชีวิตของรูป: ใช้งาน ลบเข้าถังขยะ กู้คืนได้ภายใน 7 วัน หลังจากนั้นงานล้างถังขยะลบแถวและไฟล์จริง](/img/08d-soft-delete-lifecycle.svg)
+*ลบ = แค่จดเวลา ไฟล์ยังอยู่จนกว่างานล้างถังขยะจะมาเก็บ*
+
+เครื่อง 2 ตอนนี้: id 4 (ปก, ลำดับ 1), 3, 5, 9
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" -X DELETE $U/2/photos/4
+curl -s $U/2/photos | python3 -c 'import json,sys; print([p["id"] for p in json.load(sys.stdin)])'
+curl -s $U/2/photos/trash | python3 -c 'import json,sys; print([{k: p[k] for k in ("id","position","isCover","deletedAt","restoreUntil")} for p in json.load(sys.stdin)])'
+```
+```text
+204
+[3, 5, 9]
+[{'id': 4, 'position': 1, 'isCover': True, 'deletedAt': '2026-10-22T18:54:34.047Z', 'restoreUntil': '2026-10-29T18:54:34.047Z'}]
+```
+ระหว่างอยู่ในถังขยะ ตั้งรูป 5 เป็นปกใหม่ (ได้ เพราะ `one_cover_per_laptop` ไม่นับรูปในถังขยะ) แล้วกู้คืนรูป 4
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" -X POST $U/2/photos/5/cover
+curl -s -X POST $U/2/photos/4/restore | python3 -c 'import json,sys; p=json.load(sys.stdin); print({k: p[k] for k in ("id","position","isCover")})'
+curl -s -w "\n%{http_code}\n" -X POST $U/2/photos/4/restore
+```
+```text
+200
+{'id': 4, 'position': 5, 'isCover': False}
+{"error":"ไม่พบรูปนี้ในถังขยะ","code":"NOT_FOUND"}
+404
+```
+รูป 4 กลับมาต่อท้าย (ลำดับ 5) และ **ไม่ได้เป็นปกแล้ว** เพราะมีปกใหม่ ถ้าให้กลับมาเป็นปกด้วย จะมีปก 2 รูปและชน unique index
+
+> ⚠️ **ลบแล้ว URL ยังเปิดได้** ระหว่างอยู่ในถังขยะ ไฟล์ยังอยู่ใน bucket แบบ public ใครที่จด URL ไว้ยังเปิดรูปได้ (เราลองแล้วได้ `200`) สำหรับรูปสินค้าไม่เป็นไร แต่ถ้าเป็นไฟล์ส่วนตัว ต้องใช้ bucket แบบ private + presigned GET (บท 8c ข้อ 7) หรือย้ายไฟล์ไป prefix อื่นตอนลบ
+
+**เลยเวลากู้คืน** จำลองว่าลบไปแล้ว 8 วัน (แก้เวลาในฐานข้อมูลตรงๆ เพื่อทดสอบเท่านั้น)
+```bash
+curl -s -o /dev/null -X DELETE $U/2/photos/3
+docker exec -it laptop-db psql -U postgres -c "update laptop_photos set deleted_at = now() - interval '8 days' where id = 3"
+curl -s -w "\n%{http_code}\n" -X POST $U/2/photos/3/restore
+npm run photos:purge
+```
+```text
+{"error":"กู้คืนได้ภายใน 7 วันหลังลบเท่านั้น","code":"RESTORE_EXPIRED"}
+410
+ล้างถังขยะ (เกิน 7 วัน): ลบ 1 รูป [ 3 ]
+```
+หลัง purge แถวของรูป 3 หายไป และ URL ของรูปตอบ `404` งานนี้ตั้งให้รันวันละครั้งด้วย cron เหมือน `storage:cleanup` ของบท 8c
+
+**กู้คืนแล้วชนรูปซ้ำ** ลบรูป 9 (ไฟล์ `0011.jpg`) แล้วอัปโหลดไฟล์เดิมเข้ามาใหม่ จากนั้นกู้คืนรูป 9
+```bash
+curl -s -o /dev/null -X DELETE $U/2/photos/9
+curl -s -o /dev/null -w "%{http_code}\n" -F "photo=@dataset/0011.jpg" $U/2/photos
+curl -s -w "\n%{http_code}\n" -X POST $U/2/photos/9/restore
+```
+```text
+201
+{"error":"รูปนี้มีอยู่แล้วในเครื่องนี้","code":"DUPLICATE_PHOTO"}
+409
+```
+อัปโหลดใหม่ได้ เพราะ `photo_hash_per_laptop` ไม่นับรูปในถังขยะ แต่กู้คืนไม่ได้ เพราะจะมีรูปซ้ำ 2 รูปที่ใช้งาน unique index ปฏิเสธ แล้ว `translateUniqueError` แปลเป็น `409` ที่อ่านรู้เรื่อง
+
+**ลบทั้งเครื่องที่มีรูปในถังขยะ** เครื่อง 4 มี 5 รูป (10 ไฟล์) ลบไปแล้ว 1 รูป
+```bash
+docker exec laptop-api-storage-1 sh -c 'ls /data/laptop-photos/laptops/4 | wc -l'
+curl -s -o /dev/null -w "%{http_code}\n" -X DELETE $U/4
+docker exec laptop-api-storage-1 sh -c 'ls /data/laptop-photos/laptops/4 2>/dev/null | wc -l'
+```
+```text
+10
+204
+0
+```
+ไฟล์ของรูปในถังขยะถูกลบไปด้วย เพราะ `laptop.service.ts` ใช้ `listAllByLaptop` แล้ว
+
+### ⑦ ตรวจของเดิมจากบท 8c ยังทำงาน
+
+```bash
+npm run photos:verify
+npm run storage:cleanup
+```
+```text
+ตรวจ 18 รูป (36 ไฟล์): ไฟล์หาย 0 []
+พบไฟล์กำพร้า 0 ไฟล์ []
+ลบเรียบร้อย
+```
+(อัปโหลดแบบ presigned ของบท 8c ข้อ 7 ก็ยังได้ `201` เพราะ `confirmUpload` เรียก `photoService.add` ที่ตอนนี้ผ่าน `addMany` ได้กฎใหม่ทุกข้อไปเอง โดยไม่ต้องแก้ route นั้นเลย)
+
+### ⑧ ใช้ตัวแทนรูปในหน้าเว็บ
+
+![ตัวแทนรูป 3 ระดับจากรูปจริงในระบบ: สีหลัก 7 ตัวอักษร รูปจิ๋ว 16px 163 ตัวอักษร และรูปเล็กจริง 2.6 KB](/img/08d-placeholder.svg)
+*ข้อมูลจริงของรูป id 6: สีหลักแสดงได้ทันที รูปจิ๋วเบลอแสดงได้ทันที (มากับ JSON) รูปจริงตามมาทีหลัง*
+
+แนวคิด: ตอนได้ JSON รายการรูป หน้าเว็บมีทุกอย่างที่ต้องใช้วาด "ร่าง" ของรูปแล้ว ไม่ต้องรอโหลดอะไรเพิ่ม
+```html
+<!-- กล่องจองที่ไว้ตามสัดส่วนจริง (กันหน้ากระตุก) + พื้นสีหลัก + รูปจิ๋วขยายเบลอ -->
+<div
+  class="photo"
+  style="aspect-ratio: 1600 / 1200;
+         background-color: #588878;
+         background-image: url('data:image/webp;base64,UklGRmAAAABXRUJQ...');
+         background-size: cover;"
+>
+  <img src="https://.../laptops/1/6899747a-...-400.webp" width="400" height="300" loading="lazy" alt="Dell Latitude 5440 ด้านหน้า">
+</div>
+```
+```css
+.photo { position: relative; overflow: hidden; }
+.photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+```
+- **`aspect-ratio` จาก `width`/`height` ที่เก็บไว้** กล่องมีขนาดถูกตั้งแต่แรก ข้อความด้านล่างไม่กระโดดตอนรูปมา (ปัญหานี้ชื่อ layout shift)
+- **พื้นหลัง 2 ชั้น** สีหลักขึ้นก่อนแม้ browser ยังถอดรหัส data URL ไม่เสร็จ รูปจิ๋ว 16px ที่ browser ขยายเต็มกล่องจะเบลอเองตามธรรมชาติ (ถ้าอยากเบลอกว่านี้ ใส่ `filter: blur()` ใน element ลูกแยก)
+- **`<img>` ทับด้านบน** โหลดเสร็จเมื่อไหร่ก็บังพื้นหลังเอง ไม่ต้องเขียน JavaScript
+
+ถ้าหน้าเว็บใช้ Next.js คอมโพเนนต์ `<Image>` มีให้ในตัว: `placeholder="blur"` คู่กับ `blurDataURL` (ถ้า import รูปจากไฟล์ในโปรเจกต์ Next สร้างให้เอง แต่รูปจาก storage ภายนอกต้องส่งให้เอง ซึ่งก็คือ `placeholder` ที่เราเก็บไว้)
+```tsx
+<Image src={photo.urls.thumb} width={photo.width} height={photo.height} placeholder="blur" blurDataURL={photo.placeholder} alt="..." />
+```
+
+**เลือกวิธีไหนดี** เทียบ 4 วิธีจากรูปเดียวกัน (`src/scripts/lab/placeholder-compare.ts` ใช้ `thumbhash@0.1.1` และ `blurhash@2.0.5`)
+```text
+dataset/0010.jpg (3000x2250)
+รูปจิ๋ว 16px (data URL)    163 ตัวอักษร  26.8 ms
+สีหลัก                       7 ตัวอักษร  89.0 ms
+ThumbHash                   28 ตัวอักษร  46.1 ms  oNcFHYyNqYiPh3eHeVaXjOuKj5EI
+BlurHash                    28 ตัวอักษร  45.6 ms  LJEDq-?sC.yA_2t6S[kAC.kS+Aes
+```
+
+| วิธี | เก็บ | หน้าเว็บต้องทำอะไร | เหมาะกับ |
+|---|---|---|---|
+| สีหลัก | 7 ตัวอักษร | ไม่มี ใช้เป็น `background-color` | ทุกหน้า ถูกที่สุด |
+| รูปจิ๋ว data URL | ~160 ตัวอักษร | ไม่มี browser แสดงได้เอง | หน้าเว็บทั่วไป (ที่บทนี้เลือก) |
+| ThumbHash / BlurHash | 28 ตัวอักษร | ต้องมี library ถอดรหัสเป็นรูปด้วย JavaScript | แอปมือถือ หรือรายการยาวมากที่ JSON ต้องเล็ก |
+
+เวลาส่วนใหญ่คือการ **ถอดรหัสรูปต้นฉบับ** ไม่ใช่การคำนวณ (รูป 4000x3000 ใช้ 150–430 ms ทุกวิธี) ใน `processPhoto` เราถอดรหัสครั้งเดียวแล้วทำทุกขนาดจาก `base` เดียวกัน ต้นทุนเพิ่มของรูปจิ๋วจึงน้อย และหาสีหลักจากรูปจิ๋วแทนรูปเต็ม
+
+> 💡 **สีหลักคือสีที่พบมากที่สุด ไม่ใช่สีของสินค้า** ในรูปของเรามันคือสีพื้นหลัง (เขียวเทา) ไม่ใช่สีตัวโน้ตบุ๊ก สำหรับตัวแทนระหว่างรอโหลดนั่นคือสิ่งที่ต้องการ (กล่องสีใกล้รูปจริง) แต่อย่าเอาไปใช้เป็น "สีของเครื่อง" ในตัวกรองสินค้า
+
+### ⑨ กันซ้ำในเครื่อง หรือกันซ้ำทั้งระบบ
+
+เราเลือก **กันซ้ำในเครื่องเดียวกัน** อีกแบบที่ได้ยินบ่อยคือ **เก็บตามเนื้อไฟล์** (content-addressed): ใช้ sha256 เป็น key (`photos/9f86d0...webp`) รูปเดียวกันกี่เครื่องก็เก็บไฟล์เดียว
+
+| | กันซ้ำในเครื่อง (ที่ทำ) | เก็บตามเนื้อไฟล์ทั้งระบบ |
+|---|---|---|
+| ประหยัดพื้นที่ | ไม่ (รูปเดียวกัน 2 เครื่อง = 2 ไฟล์) | ใช่ |
+| ลบรูป | ลบไฟล์ของแถวนั้นได้เลย | ต้องรู้ว่า **ยังมีแถวอื่นใช้ไฟล์นี้อยู่ไหม** ต้องมีตัวนับการใช้งาน (reference count) หรือตารางแยก "ไฟล์" กับ "รูปของเครื่อง" |
+| แข่งกัน | ไม่มี | A กำลังลบแถวสุดท้ายที่ใช้ไฟล์ X ขณะที่ B อัปโหลดรูปเดียวกัน (เห็นว่า X มีอยู่แล้วจึงไม่อัปโหลด) A ลบไฟล์ → รูปของ B แตก ต้องล็อกหรือหน่วงการลบ |
+| งานเก็บกวาด | แบบบท 8c ตรงๆ | ต้องนับการใช้งานใหม่ทั้งหมดก่อนลบ |
+| ความเป็นส่วนตัว | ไม่รู้กันข้ามเครื่อง | ถ้าระบบมีหลายเจ้าของ คนหนึ่งเดาได้ว่า "ไฟล์นี้มีคนอื่นอัปโหลดแล้ว" จากความเร็วหรือคำตอบ |
+
+ร้านเช่าโน้ตบุ๊กมีรูปซ้ำข้ามเครื่องน้อย (แต่ละเครื่องถ่ายแยก) ประหยัดได้ไม่กี่ MB ไม่คุ้มกับความซับซ้อน แบบเก็บตามเนื้อไฟล์เหมาะกับระบบที่ไฟล์ซ้ำกันเยอะจริง เช่น ไฟล์แนบอีเมลในองค์กร หรือ backup
+
+> 🤓 **sha256 ของไฟล์ต้นฉบับ จับได้แค่ "ไฟล์เดียวกันทุกไบต์"** รูปเดียวกันที่ถูกย่อ ครอปนิดหน่อย หรือส่งผ่านแอปแชทจนบีบอัดใหม่ ได้ sha256 คนละค่า การหา "รูปที่หน้าตาเหมือนกัน" ต้องใช้ perceptual hash ซึ่งเป็นอีกเรื่องหนึ่ง
+
+---
+
+## 11. 🔧 สำรองฐานข้อมูลคู่กับ bucket และซ้อมกู้คืน
+
+บท 8b สอน `pg_dump` แต่ตอนนี้ข้อมูลของเราอยู่ **สองที่** ฐานข้อมูลมีแถว bucket มีไฟล์ backup ที่ดีต้องกู้คืนแล้ว **สองที่ตรงกัน** ไม่มีรูปแตก
+
+### ลำดับสำคัญกว่าเครื่องมือ
+
+ทั้งสองที่สำรองพร้อมกันเป๊ะไม่ได้ (คนละระบบ) คำถามคือ **อะไรก่อน** ใช้หลักเดียวกับบท 8c ข้อ 5: เลือกลำดับที่ถ้าระหว่างทางมีอะไรเกิดขึ้น ผลเสียคือ "ไฟล์เกิน" ไม่ใช่ "ไฟล์ขาด"
+
+![สำรองไฟล์ก่อนฐานข้อมูล: รูปที่อัปโหลดระหว่างนั้นมีแถวแต่ไม่มีไฟล์ = รูปแตก สำรองฐานข้อมูลก่อน: มีไฟล์เกินมา = ไฟล์กำพร้า](/img/08d-backup-order.svg)
+*ฐานข้อมูลก่อน ไฟล์ทีหลัง: ทุกแถวใน dump มีไฟล์ใน backup แน่นอน*
+
+- **ฐานข้อมูลก่อน แล้วค่อยไฟล์** รูปที่อัปโหลดระหว่างนั้นมีไฟล์ใน backup แต่ไม่มีแถวใน dump = ไฟล์กำพร้า → `storage:cleanup` เก็บให้หลังกู้คืน
+- **ไฟล์ก่อน แล้วค่อยฐานข้อมูล** รูปที่อัปโหลดระหว่างนั้นมีแถวใน dump แต่ไม่มีไฟล์ใน backup = **รูปแตก** แก้ไม่ได้
+- **copy ห้าม sync** ถ้าระหว่างสำรองมีคนเปลี่ยนรูป ไฟล์เก่าถูกลบจาก bucket ทั้งที่ dump (ที่ทำไปก่อน) ยังชี้ไฟล์เก่า `copy` เพิ่มไฟล์อย่างเดียวไม่ลบ ไฟล์เก่าจาก backup รอบก่อนจึงยังอยู่ ส่วน `sync` จะลบไฟล์ใน backup ให้ตรงกับ bucket ตอนนั้น (ข้อนี้เราอธิบายจากหลักการ ไม่ได้จำลอง) ถังขยะ 7 วันของข้อ 10 ช่วยด้วย: รูปที่ลบระหว่างนั้นยังไม่ถูกลบไฟล์
+
+### เครื่องมือ: rclone
+
+[rclone](https://rclone.org/s3/) คัดลอกไฟล์ระหว่าง storage ได้แทบทุกเจ้า (S3, R2, Google Drive, ดิสก์) รันผ่าน Docker ไม่ต้องติดตั้ง ตั้งค่าด้วยตัวแปรสภาพแวดล้อม `RCLONE_CONFIG_<ชื่อ>_<ค่า>` แทนไฟล์ config
+
+`rclone.env` (อย่า commit ใส่ `.gitignore`)
+```
+RCLONE_CONFIG_PHOTOS_TYPE=s3
+RCLONE_CONFIG_PHOTOS_PROVIDER=Other
+RCLONE_CONFIG_PHOTOS_ENDPOINT=http://storage:9000
+RCLONE_CONFIG_PHOTOS_ACCESS_KEY_ID=laptop-dev
+RCLONE_CONFIG_PHOTOS_SECRET_ACCESS_KEY=laptop-dev-secret-change-me
+RCLONE_CONFIG_PHOTOS_FORCE_PATH_STYLE=true
+```
+- `PROVIDER=Other` เพราะ rclone 1.75 ยังไม่มีตัวเลือก RustFS ใช้แบบ "S3 ทั่วไป" (เจ้าที่มีชื่อในรายการ เช่น `Cloudflare`, `AWS` ให้ใช้ชื่อนั้น)
+- `ENDPOINT=http://storage:9000` เพราะ container ของ rclone อยู่ใน network เดียวกับ compose ของเรา (`laptop-api_default`) เรียกชื่อ service ได้ตรง
+- `FORCE_PATH_STYLE` เหตุผลเดียวกับ `forcePathStyle` ในบท 8c
+
+`backup.sh`
+```bash
+#!/bin/bash
+# สำรองข้อมูลรูป: ① ฐานข้อมูลก่อน ② ไฟล์ทีหลัง (copy = เพิ่มอย่างเดียว ไม่ลบไฟล์เก่าใน backup)
+set -euo pipefail
+STAMP=$(date +%Y%m%d-%H%M%S)
+mkdir -p backup/db
+docker exec laptop-db pg_dump -U postgres -Fc postgres > "backup/db/laptop-$STAMP.dump"
+echo "① ฐานข้อมูล → backup/db/laptop-$STAMP.dump ($(du -h "backup/db/laptop-$STAMP.dump" | cut -f1))"
+docker run --rm --network laptop-api_default --env-file rclone.env -v "$PWD/backup:/backup" \
+  rclone/rclone:1.75.2 copy photos:laptop-photos /backup/photos --exclude "incoming/**" -q
+echo "② ไฟล์รูป → backup/photos ($(find backup/photos -type f | wc -l | tr -d ' ') ไฟล์)"
+```
+`--exclude "incoming/**"` = ไม่สำรองไฟล์ที่ยังไม่ยืนยัน (presigned ของบท 8c) เพราะมันหมดอายุเองอยู่แล้ว
+```bash
+chmod +x backup.sh && ./backup.sh
+```
+```text
+① ฐานข้อมูล → backup/db/laptop-20261023-024314.dump ( 20K)
+② ไฟล์รูป → backup/photos (30 ไฟล์)
+```
+ครั้งแรกใช้ราว 1.4 วินาที (30 ไฟล์ 3.8 MB) ครั้งต่อไปเร็วกว่าเพราะ rclone ข้ามไฟล์ที่มีอยู่แล้ว (ชื่อไฟล์เราไม่ซ้ำ ไฟล์ที่เคยสำรองไม่เปลี่ยนอีก)
+
+ของจริง backup ต้องอยู่ **นอกเครื่อง** เปลี่ยนปลายทางจากโฟลเดอร์ `/backup/photos` เป็น remote อีกตัว เช่น bucket ของผู้ให้บริการอื่นหรือคนละ region (`copy photos:laptop-photos offsite:laptop-photos-backup`) และเก็บ dump หลายรุ่นย้อนหลัง
+
+> 💡 **ใช้ aws-cli ก็ได้** `docker run --rm --network laptop-api_default -e AWS_ACCESS_KEY_ID=laptop-dev -e AWS_SECRET_ACCESS_KEY=... -e AWS_DEFAULT_REGION=us-east-1 -v "$PWD/backup-aws:/b" amazon/aws-cli:2.38.4 --endpoint-url http://storage:9000 s3 sync s3://laptop-photos /b --exclude "incoming/*"` (เราลองกับ RustFS แล้ว คัดลอก 30 ไฟล์ได้ครบ) `s3 sync` ของ aws-cli ไม่ลบไฟล์ปลายทางถ้าไม่ใส่ `--delete` จึงใช้ได้ ส่วน `mc` (โปรแกรมฝั่ง client ของ MinIO) ที่บทความเก่าๆ ชอบใช้ ตอนเราลอง `docker pull minio/mc` เมื่อ 23 ต.ค. 2569 ได้ "pull access denied" เหมือน `minio/minio` ในบท 8c ข้อ 2
+
+### 🔥 ซ้อมกู้คืน: ทำลายทุกอย่างแล้วเอากลับมา
+
+backup ที่ไม่เคยลองกู้คืน = ยังไม่รู้ว่ามี backup ไหม ซ้อมทั้งกระบวนการ
+```bash
+# ① ภัยพิบัติ: ลบ storage พร้อม volume และล้างฐานข้อมูล
+docker compose down -v
+docker exec -it laptop-db psql -U postgres -c "drop schema public cascade; drop schema drizzle cascade; create schema public;"
+
+# ② กู้ storage: เปิดใหม่ + สร้าง bucket/policy/CORS (สคริปต์เดิมของบท 8c)
+docker compose up -d && npm run storage:setup
+
+# ③ กู้ฐานข้อมูล
+docker exec -i laptop-db pg_restore -U postgres -d postgres --no-owner < backup/db/laptop-20261023-024314.dump
+
+# ④ กู้ไฟล์
+docker run --rm --network laptop-api_default --env-file rclone.env -v "$PWD/backup:/backup" \
+  rclone/rclone:1.75.2 copy /backup/photos photos:laptop-photos
+
+# ⑤ ตรวจ
+npm run photos:verify
+curl -s -o /dev/null -D - <URL ของรูปสักรูป> | grep -i -E "content-type|cache-control"
+```
+```text
+สร้าง bucket "laptop-photos" แล้ว
+ตั้ง policy: อ่านได้เฉพาะ laptops/*
+ตั้ง CORS: http://localhost:5173 PUT ได้
+ตรวจ 15 รูป (30 ไฟล์): ไฟล์หาย 0 []
+Content-Type: image/webp
+```
+ไฟล์ครบ แต่ **`Cache-Control` หายไป** ซ้อมแล้วถึงเห็น: header ของ object (`CacheControl: immutable` ที่ใส่ตอน `put`) เป็นข้อมูลที่อยู่กับ object ใน storage พอสำรองลงดิสก์ธรรมดา เหลือแค่ไฟล์ ข้อมูลนี้หายไป rclone เดา `Content-Type` กลับจากนามสกุลได้ แต่ `Cache-Control` เดาไม่ได้ ผลคือหลังกู้คืน browser ต้องถามรูปใหม่ทุกครั้ง (ไม่พัง แต่ช้าและเปลืองโดยไม่มีใครรู้ตัว) แก้ด้วยการบอก rclone ให้ใส่ header ตอนอัปโหลดกลับ
+```bash
+docker run --rm --network laptop-api_default --env-file rclone.env -v "$PWD/backup:/backup" \
+  rclone/rclone:1.75.2 copy /backup/photos photos:laptop-photos --ignore-times \
+  --header-upload "Cache-Control: public, max-age=31536000, immutable"
+```
+```text
+Content-Type: image/webp
+Cache-Control: public, max-age=31536000, immutable
+```
+(`--ignore-times` = อัปโหลดใหม่ทุกไฟล์แม้จะมีอยู่แล้ว) ถ้า backup เป็น bucket-to-bucket (S3 ไป S3) rclone คัดลอก header ไปให้เอง ปัญหานี้เกิดเฉพาะ backup ที่ผ่านดิสก์ธรรมดา
+
+### พิสูจน์ว่าลำดับสำคัญ
+
+ซ้อมสองแบบโดยมีคนอัปโหลดรูปแทรกตรงกลาง แล้วกู้คืนลงฐานข้อมูลและ bucket ใหม่ (`drill`, `drill-photos`) ที่ไม่ยุ่งกับของจริง
+```text
+แบบผิด: ไฟล์ก่อน (30 ไฟล์) → อัปโหลดรูปใหม่ 201 → dump ฐานข้อมูล
+  กู้คืนแล้ว photos:verify → ตรวจ 16 รูป (32 ไฟล์): ไฟล์หาย 2 [ '#29 laptops/2/22850b6f-…-1600.webp', '#29 laptops/2/22850b6f-…-400.webp' ]
+
+แบบถูก: dump ฐานข้อมูลก่อน → อัปโหลดรูปใหม่ 201 → ไฟล์ (34 ไฟล์)
+  กู้คืนแล้ว photos:verify → ตรวจ 15 รูป (30 ไฟล์): ไฟล์หาย 0 []
+  storage:cleanup → พบไฟล์กำพร้า 2 ไฟล์ (รูปที่อัปโหลดแทรก) ลบแล้ว
+```
+แบบผิดได้รูปแตก 1 รูปที่แก้ไม่ได้ แบบถูกได้ไฟล์เกิน 2 ไฟล์ที่เก็บกวาดได้ ตรงตามที่คาด
+
+> 📋 **ขั้นตอนกู้คืนที่ทีมควรมีเป็นลายลักษณ์อักษร** ① เปิด storage + `storage:setup` ② `pg_restore` ③ copy ไฟล์กลับ (พร้อม `--header-upload`) ④ `npm run db:migrate` (ถ้า dump เก่ากว่าโค้ด) ⑤ `photos:verify` ต้องได้ 0 ⑥ `storage:cleanup` ⑦ เปิดหน้าเว็บดูรูปจริงสักหน้า เก็บไว้ใน repo (เช่น `docs/restore.md`) และซ้อมตามรอบ (เช่น ทุก 3 เดือน)
+
+---
+
+## 12. 💥 ลองพัง
+
+### ❶ migration เพิ่มคอลัมน์ NOT NULL ในตารางที่มีข้อมูล
+
+ทำไปแล้วในข้อ 8: drizzle-kit `exit=1` เงียบๆ, `psql` บอก `column "position" of relation "laptop_photos" contains null values` **บทเรียน**: generator เห็นแค่ schema ไม่เห็นข้อมูล ทุกครั้งที่เพิ่มคอลัมน์ NOT NULL ที่ไม่มี default ในตารางที่มีข้อมูลจริง ต้องเขียน 3 ขั้นเอง และเมื่อ drizzle-kit ไม่บอกเหตุผล ให้ลองรัน SQL บรรทัดนั้นใน `psql`
+
+### ❷ สลับลำดับด้วย SQL ตรงๆ
+
+```bash
+docker exec -it laptop-db psql -U postgres -c "update laptop_photos set position = 2 where id = 8"
+docker exec -it laptop-db psql -U postgres -c "update laptop_photos set position = case id when 1 then 3 when 2 then 2 end where id in (1, 2)"
+```
+(ตอนนั้นรูป 1 อยู่ลำดับ 2 และรูป 2 อยู่ลำดับ 3 คำสั่งที่สองสลับสองรูปใน UPDATE เดียว)
+```text
+ERROR:  duplicate key value violates unique constraint "photo_position_per_laptop"
+DETAIL:  Key (laptop_id, "position")=(1, 2) already exists.
+ERROR:  duplicate key value violates unique constraint "photo_position_per_laptop"
+DETAIL:  Key (laptop_id, "position")=(1, 3) already exists.
+```
+คำสั่งที่สองน่าสนใจ: หลายคนคิดว่า "คำสั่งเดียวตรวจตอนจบคำสั่ง" แต่ unique index ของ Postgres ตรวจ **ทันทีที่แต่ละแถวเปลี่ยน** รูป 1 ย้ายไปลำดับ 3 ขณะที่รูป 2 ยังอยู่ลำดับ 3 → ชน นี่คือเหตุผลของ 2 ขั้น (ข้อ 9)
+
+### ❸ เอาการล็อกออก แล้วอัปโหลดพร้อมกัน
+
+`race-limit.ts` (วางที่ root ของโปรเจกต์) ยิงอัปโหลด "คนละรูป" 10 รูปเข้าเครื่องเดียวพร้อมกัน
+```ts
+import { readFile } from "node:fs/promises";
+
+// อัปโหลดรูป "คนละรูป" 10 รูปเข้าเครื่องเดียวกันพร้อมกัน (โควตา 8 รูป)
+const laptopId = Number(process.argv[2] ?? 3);
+const shots = Array.from({ length: 10 }, async (_, i) => {
+  const form = new FormData();
+  const file = `dataset/${String(50 + i).padStart(4, "0")}.jpg`;
+  form.append("photo", new Blob([await readFile(file)], { type: "image/jpeg" }), file);
+  const res = await fetch(`http://localhost:3000/laptops/${laptopId}/photos`, { method: "POST", body: form });
+  return res.status;
+});
+console.log(await Promise.all(shots));
+```
+```bash
+npx tsx race-limit.ts 3
+```
+```text
+[201, 201, 409, 201, 201, 201, 201, 409, 201, 201]
+```
+มีล็อก: 8 สำเร็จ 2 ได้ `409 PHOTO_LIMIT` ลำดับ 1–8 ไม่ซ้ำ ถูกต้อง ทีนี้ลองคอมเมนต์บรรทัด `if (!(await lockLaptop(tx, laptopId))) ...` ใน `createMany` ออก แล้วยิงเข้าเครื่องที่ยังไม่มีรูป
+```text
+[500, 201, 500, 500, 500, 500, 201, 201, 201, 201]
+```
+และใน log
+```text
+error: duplicate key value violates unique constraint "photo_position_per_laptop"
+```
+ไม่มีล็อก หลายคำขออ่าน `max(position)` ได้ค่าเดียวกันพร้อมกัน แล้วพยายามใส่ลำดับเดียวกัน unique index กันข้อมูลเสียไว้ได้ (ได้ 5 รูป ลำดับไม่ซ้ำ) แต่ผู้ใช้ 5 คนได้ `500` ทั้งที่ควรสำเร็จ ถ้าไม่มี unique index ด้วย จะได้ลำดับซ้ำ และกฎ 8 รูปก็หลุดได้เพราะทุกคำขอนับได้ว่า "ยังไม่ถึง 8" (ข่าวดีเล็กๆ: ทุกคำขอที่ล้ม ลบไฟล์ของตัวเองแล้ว `storage:cleanup` ได้ 0) **คืนบรรทัดล็อกกลับ**
+
+### ❹ วาง route `/photos/order` ไว้ใต้ `/photos/:photoId`
+
+```text
+{"error":"ข้อมูลไม่ถูกต้อง","code":"VALIDATION_ERROR","details":{}}
+400
+```
+Express ไล่ route จากบนลงล่าง `PUT /laptops/1/photos/order` ตรงกับ `PUT /:laptopId/photos/:photoId` ก่อน (`photoId = "order"`) แล้ว `IdParam` แปลง `"order"` เป็นตัวเลขไม่ได้ error ที่ได้ไม่บอกเลยว่า "route ผิดตัว" ต้องรู้หลักนี้ถึงจะหาเจอ route ที่เป็นคำตายตัวต้องอยู่ก่อน route ที่มี `:param` ตำแหน่งเดียวกันเสมอ
+
+### ❺ งานเก็บกวาดที่ลืมถังขยะ
+
+แก้ `allKeys` ให้ดูเฉพาะรูปที่ใช้งาน (`.where(isNull(laptopPhotos.deletedAt))`) ดูเหมือน "สมเหตุสมผล" แล้วลบรูปหนึ่งเข้าถังขยะ
+```text
+npm run storage:cleanup -- 0
+พบไฟล์กำพร้า 2 ไฟล์ [ 'laptops/2/cef263f5-…-1600.webp', 'laptops/2/cef263f5-…-400.webp' ]
+```
+กดกู้คืนรูปนั้น ได้ `200` สวยงาม แต่เปิดรูปได้ **`404`** รูปที่ "กู้คืนสำเร็จ" กลายเป็นรูปแตก เพราะงานเก็บกวาดลบไฟล์ไประหว่างที่มันอยู่ในถังขยะ บั๊กแบบนี้น่ากลัวเพราะ **ไม่มี error ที่ไหนเลย** ทุก endpoint ตอบสำเร็จ เห็นแค่ตอนคนเปิดรูป **บทเรียน**: เมื่อเพิ่มสถานะใหม่ (ถังขยะ) ต้องไล่ถามทุกงานที่อ่านตารางนี้ว่า "สถานะใหม่นี้นับไหม" (`listAllByLaptop` ของ `laptop.service` คือเรื่องเดียวกัน) **คืนโค้ดกลับ**
+
+### ❻ ส่งรูป base64 ใน JSON
+
+ทำไปแล้วในข้อ 4: ได้ `500` จาก `entity.too.large` ที่ handler ไม่รู้จัก แก้ให้ตอบ `413` และบอกวิธีที่ถูก
+
+### ❼ ใช้ `path.join` กับ key บนดิสก์
+
+ทำไปแล้วในข้อ 3: `path.join("/app/uploads", "../../.env")` ได้ `/.env` ถ้าไม่มี `resolveKey` ไฟล์ของผู้ใช้เขียนทับไฟล์ระบบได้
+
+### ❽ สร้าง container ใหม่โดยไม่มี volume
+
+ทำไปแล้วในข้อ 3: `docker restart` ยังอยู่ (`200`) แต่ `rm` + `run` ได้ `404` ทุกรูป ขณะที่แถวในฐานข้อมูลยังอยู่ครบ
+
+---
+
+## ⚠️ ปัญหาที่เจอบ่อย
+
+| อาการ | สาเหตุ | แก้ |
+|---|---|---|
+| `npm run db:migrate` ล้ม `exit 1` ไม่มีข้อความ | migration ทำสิ่งที่ข้อมูลเดิมไม่ยอม (มักเป็น NOT NULL) | รันบรรทัดนั้นใน `psql` ดู error จริง แล้วแก้ SQL เป็น 3 ขั้น (ข้อ 8) |
+| เรียงรูปใหม่ได้ `500` duplicate key `photo_position_per_laptop` | ใส่เลขใหม่ตรงๆ ทับเลขที่ยังมีคนใช้ | ย้ายไปเลขติดลบก่อน (ข้อ 9) |
+| `PUT /photos/order` ได้ `400` `details: {}` | route `:photoId` อยู่ก่อน | ย้าย route คำตายตัวขึ้นก่อน |
+| อัปโหลดพร้อมกันบางคำขอได้ `500` หรือรูปเกินโควตา | นับแล้วตัดสินโดยไม่ล็อก | `SELECT ... FOR UPDATE` แถวของเครื่องใน transaction |
+| ลบรูปปกแล้วตั้งปกใหม่ไม่ได้ / อัปโหลดรูปเดิมกลับมาไม่ได้ | unique index นับรูปในถังขยะด้วย | ใส่ `WHERE deleted_at IS NULL` ใน index |
+| กู้คืนสำเร็จแต่รูปแตก | งานเก็บกวาดไม่นับรูปในถังขยะ | `allKeys` ต้องรวมทุกแถว |
+| ลบเครื่องแล้วไฟล์ของรูปในถังขยะค้าง | จด key ด้วย query ที่เห็นเฉพาะรูปใช้งาน | `listAllByLaptop` |
+| ส่ง JSON ได้ `500` แทน `413` | error `entity.too.large` ไม่มีใครแปล | เพิ่มใน `onError` (ข้อ 4) |
+| รูปบนดิสก์หายหลัง deploy | ไม่มี volume | `-v laptop-uploads:/app/uploads` |
+| หลังกู้คืน browser โหลดรูปซ้ำทุกครั้ง | backup ผ่านดิสก์ทำ `Cache-Control` หาย | `--header-upload` ตอน copy กลับ |
+| rclone ต่อ RustFS ไม่ได้ (`NoSuchBucket` หรือหา host ไม่เจอ) | ไม่ได้ตั้ง path style หรือ endpoint ผิด network | `FORCE_PATH_STYLE=true` และ `--network` เดียวกับ compose |
+| `pg_dump` ช้าและไฟล์ใหญ่ผิดปกติ | มี `bytea` ใหญ่ในฐานข้อมูล | ย้ายไฟล์ออกไป storage หรือ `--exclude-table-data` แล้วสำรองตารางนั้นแยก |
+
+---
+
+## 📋 Checklist
+
+- [ ] ตอบได้ด้วยตัวเลขจากเครื่องตัวเองว่า `bytea` ทำให้ฐานข้อมูลและ `pg_dump` โตแค่ไหน และ API เหนื่อยแค่ไหนตอนส่งรูป
+- [ ] อธิบาย TOAST ได้ และรู้ว่าทำไมมันไม่ทำให้รูป WebP เล็กลง
+- [ ] ตั้ง `ETag` + `Cache-Control: no-cache` ได้ และบอกได้ว่าต่างจาก `immutable` ตรงไหน
+- [ ] สลับที่เก็บระหว่างดิสก์กับ S3 ด้วย `STORAGE_DRIVER` โดย service ไม่เปลี่ยน
+- [ ] เห็นกับตาว่าไฟล์บนดิสก์ container หายเมื่อสร้างใหม่ และ volume แก้ได้
+- [ ] กัน path traversal 2 ชั้นได้ และบอกได้ว่าทำไมดิสก์ใช้ไม่ได้บน serverless
+- [ ] บอกได้ว่า base64 ใหญ่ขึ้นเท่าไหร่และทำไมห้ามใช้เก็บรูป
+- [ ] เลือกได้ว่างานไหนควรใช้ Image CDN งานไหนย่อเองด้วย sharp
+- [ ] อัปโหลดหลายรูป ผ่านทั้งชุดหรือไม่รับเลย ไม่เหลือไฟล์ขยะ
+- [ ] จำกัดจำนวนรูปต่อเครื่องได้ถูกต้องแม้ส่งพร้อมกัน (ล็อกแถวเครื่อง)
+- [ ] เรียงรูปใหม่แบบ 2 ขั้นได้ และอธิบายได้ว่าทำไม UPDATE เดียวก็ยังชน
+- [ ] ลบแบบกู้คืนได้ พร้อม partial index, งานล้างถังขยะ และงานเก็บกวาดที่ไม่ลบไฟล์ในถังขยะ
+- [ ] เก็บและแสดงตัวแทนรูป (สีหลัก + รูปจิ๋ว) โดยหน้าไม่กระตุก
+- [ ] กันรูปซ้ำด้วย sha256 และอธิบายได้ว่ากันซ้ำทั้งระบบยากกว่าตรงไหน
+- [ ] สำรองฐานข้อมูลก่อนไฟล์ ด้วย copy ไม่ใช่ sync และซ้อมกู้คืนจน `photos:verify` ได้ 0
+
+---
+
+## 🧠 แบบทดสอบ
+
+<details>
+<summary>1. ทำไม `pg_column_size` ของคอลัมน์ `bytea` ที่เก็บ WebP เท่ากับขนาดไฟล์จริงทุกไบต์ ทั้งที่ TOAST บีบอัดได้</summary>
+
+เพราะ WebP ถูกบีบอัดมาแล้ว ข้อมูลที่บีบแล้วไม่เหลือส่วนซ้ำให้บีบอีก TOAST จึงเก็บตามจริง (ย้ายไปตาราง TOAST อย่างเดียว) ข้อความซ้ำๆ บีบจาก 490 KB เหลือ 5.6 KB ได้เพราะมีส่วนซ้ำเยอะ
+
+</details>
+
+<details>
+<summary>2. รูปใหญ่ส่งจาก `bytea` และจาก RustFS ได้จำนวนคำขอเท่ากัน แปลว่าเร็วเท่ากันใช่ไหม</summary>
+
+ไม่ใช่ ทั้งคู่ชนเพดานของเครื่องที่ยิง (~65 MB/วินาที) ตัวเลขที่บอกความต่างคือ CPU และ RAM ของ API: แบบ `bytea` ใช้ CPU 82% และ RAM เพิ่ม 120 MB แบบ storage ใช้ 3% และถ้าดูรูปเล็กที่ไม่ชนเพดาน storage ส่งได้เร็วกว่าราว 4.5 เท่า
+
+</details>
+
+<details>
+<summary>3. `Cache-Control: no-cache` แปลว่าห้าม browser เก็บรูปไว้ใช่ไหม</summary>
+
+ไม่ใช่ `no-cache` = เก็บไว้ได้ แต่ต้องถาม server ก่อนใช้ทุกครั้ง (พร้อม `If-None-Match`) ถ้าไม่เปลี่ยนได้ `304` ไม่มี body ที่ห้ามเก็บคือ `no-store`
+
+</details>
+
+<details>
+<summary>4. ไฟล์บนดิสก์ใน container อยู่รอดหลัง `docker restart` แต่หายหลัง deploy ใหม่ เพราะอะไร</summary>
+
+`restart` ใช้ container ตัวเดิมซึ่งมีชั้นดิสก์ที่เขียนได้ของมันอยู่ deploy ใหม่คือลบ container แล้วสร้างจาก image ใหม่ ชั้นดิสก์ของตัวเก่าหายไปด้วย ข้อมูลที่ต้องอยู่รอดต้องอยู่ใน volume
+
+</details>
+
+<details>
+<summary>5. multer จำกัด 8 ไฟล์ต่อคำขอแล้ว ทำไมยังต้องตรวจโควตาใน transaction อีก</summary>
+
+multer เห็นแค่คำขอนี้ ไม่รู้ว่าเครื่องมีรูปอยู่แล้วกี่รูป และสองคำขอที่มาพร้อมกันจะนับได้เท่ากัน ด่านจริงต้องนับในฐานข้อมูลหลังล็อกแถวของเครื่อง ให้คำขอของเครื่องเดียวกันเข้าคิวทีละคำขอ
+
+</details>
+
+<details>
+<summary>6. ทำไมสลับลำดับรูป 2 รูปด้วย UPDATE คำสั่งเดียวยังชน unique index</summary>
+
+Postgres ตรวจ unique index (ที่ไม่ได้ตั้ง deferrable) ทันทีที่แต่ละแถวเปลี่ยน ไม่ได้รอจนจบคำสั่ง แถวแรกที่เปลี่ยนจึงชนกับแถวที่สองซึ่งยังไม่ได้เปลี่ยน แก้ด้วยการย้ายไปเลขติดลบก่อนแล้วค่อยใส่เลขจริง
+
+</details>
+
+<details>
+<summary>7. เพิ่มถังขยะแล้ว ต้องแก้ index อะไร และต้องแก้งานอะไรอีกบ้าง</summary>
+
+index: unique ทุกตัวที่เป็นกฎของรูปที่ใช้งาน (ปก ลำดับ รูปซ้ำ) ต้องมี `WHERE deleted_at IS NULL` งาน: ทุก query ที่แสดงรูปต้องกรองถังขยะ, `allKeys` ของงานเก็บกวาดต้อง **รวม** ถังขยะ, การลบเครื่องต้องจด key รวมถังขยะ และต้องมีงานล้างถังขยะที่ลบแถวก่อนไฟล์
+
+</details>
+
+<details>
+<summary>8. ทำไมต้องสำรองฐานข้อมูลก่อน bucket</summary>
+
+ถ้ามีรูปอัปโหลดระหว่างสำรอง: ฐานข้อมูลก่อนจะได้ไฟล์เกิน (กำพร้า เก็บกวาดได้) ไฟล์ก่อนจะได้แถวที่ไม่มีไฟล์ (รูปแตก แก้ไม่ได้) และต้องใช้ copy ไม่ใช่ sync เพื่อไม่ให้ไฟล์เก่าที่ dump ยังอ้างถึงหายไปจาก backup
+
+</details>
+
+<details>
+<summary>9. sha256 กันรูปซ้ำได้ทุกกรณีไหม</summary>
+
+ไม่ จับได้แค่ไฟล์ที่เหมือนกันทุกไบต์ รูปเดียวกันที่ถูกบีบอัดใหม่ ย่อ หรือครอปจะได้ค่าต่างกัน ต้องใช้ perceptual hash ถ้าอยากจับรูปที่ "หน้าตาเหมือน"
+
+</details>
+
+---
+
+## ✏️ แบบฝึกหัด
+
+1. **เติมตัวแทนรูปย้อนหลัง** เขียน `src/scripts/backfill-placeholders.ts` อ่านรูปที่ `placeholder` ยังว่าง ดึงไฟล์ `-400.webp` ด้วย `storage.get` แล้วคำนวณรูปจิ๋วและสีหลักเก็บกลับ (คำถาม: ทำไมใช้ไฟล์ 400px ได้ ทั้งที่ตอนอัปโหลดใช้ต้นฉบับ)
+2. **ลดลำดับให้ต่อเนื่อง** หลังลบรูปลำดับ 2 จาก 5 รูป ลำดับเป็น 1, 3, 4, 5 ผิดกฎไหม หน้าเว็บมีปัญหาไหม ถ้าอยากให้เป็น 1, 2, 3, 4 ควรทำตอนไหน (ตอนลบ หรือตอนเรียงครั้งถัดไป) เพราะอะไร
+3. **ลองที่เก็บบนดิสก์ให้ครบ** รันระบบด้วย `STORAGE_DRIVER=disk` แล้วลอง `storage:cleanup` ทำไมมันพัง (ดูว่า cleanup ใช้ฟังก์ชันอะไรของ S3) เพิ่มฟังก์ชัน `listKeys` เข้าไปในสัญญา `Storage` ให้ใช้ได้ทั้งสองแบบ
+4. **วัดเอง** รัน `autocannon` กับ endpoint รูปเล็กของ `bytea` บนเครื่องตัวเอง แล้วเปิด `docker stats` ไปด้วย Postgres ใช้ CPU เท่าไหร่ เทียบกับตอนยิง RustFS
+5. **สำรองแบบเก็บหลายรุ่น** แก้ `backup.sh` ให้เก็บ dump ย้อนหลังแค่ 7 รุ่นล่าสุด และคิดว่าไฟล์รูปใน backup ควรลบตามไหม (ระวัง: dump รุ่นเก่ายังอ้างถึงไฟล์ที่ถูกเปลี่ยนไปแล้ว)
+6. **ประวัติรูป** ออกแบบให้ "เปลี่ยนรูป" ย้อนกลับได้ด้วย (ตอนนี้ `replace` ลบไฟล์เก่าทันที) ต้องเพิ่มตารางหรือคอลัมน์อะไร และงานเก็บกวาดต้องรู้อะไรเพิ่ม
+
+---
+
+## ✅ ผ่านด่าน
+
+ผ่านบทนี้เมื่อ
+- ตอบเพื่อนที่ถามว่า "ทำไมไม่เก็บรูปในฐานข้อมูล" ได้ด้วยตัวเลขที่วัดเอง และบอกได้ว่า **เมื่อไหร่ที่มันโอเค**
+- ระบบรูปของเรามีหลายรูป เรียงได้ จำกัดจำนวน ลบแล้วกู้คืนได้ มีตัวแทนรูป และกันรูปซ้ำ ทุกข้อผ่านการทดสอบในข้อ 10
+- ทำลายฐานข้อมูลและ bucket ทิ้ง แล้วกู้คืนกลับมาได้โดย `photos:verify` ได้ `ไฟล์หาย 0`
+
+บทถัดไปเราจะเรียนวิธีหาสาเหตุเมื่อระบบพังแบบไม่บอกเหตุผล (แบบ drizzle-kit `exit 1` ในข้อ 8) อย่างเป็นระบบ
+
+---
+
+[← บทที่ 8c: เก็บรูปภาพคู่กับฐานข้อมูล](/08c-image-storage) · [🏠 สารบัญ](/) · [บทที่ 9: Debugging →](/09-debugging)

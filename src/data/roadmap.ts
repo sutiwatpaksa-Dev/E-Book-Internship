@@ -41,6 +41,7 @@ export const roadmap: RoadmapLevel[] = [
       { num: "08", title: "ORM, Query Builder & Migration", link: "/08-orm", outcome: "เลือกระดับตัวคุยกับฐานข้อมูลเป็น ใช้ Drizzle และ migration ได้", time: "6 ชม." },
       { num: "08b", title: "จากแบบฐานข้อมูลสู่ Backend", link: "/08b-db-to-backend", outcome: "เปลี่ยนผังตารางเป็น API ที่กฎครบ แบ่งชั้นโค้ดเป็น", time: "4 ชม." },
       { num: "08c", title: "เก็บรูปภาพคู่กับฐานข้อมูล", link: "/08c-image-storage", outcome: "เพิ่ม เปลี่ยน ลบรูปผ่าน object storage อย่างปลอดภัย ลำดับงานไม่ทิ้งรูปแตก", time: "4-5 ชม." },
+      { num: "08d", title: "รูปภาพ ภาคต่อ: ที่เก็บแบบอื่นและฟีเจอร์ร้านจริง", link: "/08d-image-storage-more", outcome: "วัดผลจริงว่า bytea / ดิสก์ / base64 ต่างจาก object storage แค่ไหน แล้วเพิ่มหลายรูป เรียงลำดับ ถังขยะกู้คืนได้ ตัวแทนรูป กันรูปซ้ำ และสำรอง/กู้คืน DB คู่กับ bucket", time: "5-6 ชม." },
     ],
   },
   {

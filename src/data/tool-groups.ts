@@ -291,6 +291,20 @@ export const toolGroups = {
       { name: "SeaweedFS", url: "https://github.com/seaweedfs/seaweedfs", detail: "S3 API · รันเอง", level: "aware", summary: "สัญญาอนุญาต Apache 2.0 · เน้นเก็บไฟล์จำนวนมหาศาล มีทั้ง S3 API และระบบไฟล์ · คำสั่ง docker เดียวได้ S3 ที่ port 8333" },
     ],
   },
+  "image-cdn": {
+    title: "บริการย่อและส่งรูปผ่าน URL (Image CDN)",
+    detailLabel: "สั่งย่อรูปด้วย URL หน้าตาแบบ",
+    checkedAt: "23 ต.ค. 2569",
+    tools: [
+      { name: "sharp (ทำเองใน API)", url: "https://sharp.pixelplumbing.com/", detail: "ไม่มี URL ย่อตอนอัปโหลด ได้ไฟล์ตายตัวไม่กี่ขนาด", level: "team", summary: "สิ่งที่บทที่ 8c ทำ: ย่อรูปตอนอัปโหลดแล้วเก็บ -1600 / -400 ไว้ใน storage · ไม่มีค่าบริการต่อรูป แต่อยากได้ขนาดใหม่ต้องเขียนโค้ดและย่อรูปเก่าทั้งหมดใหม่เอง" },
+      { name: "Next.js Image / Vercel Image Optimization", url: "https://vercel.com/docs/image-optimization/limits-and-pricing", detail: "/_next/image?url=…&w=640&q=75", level: "know", summary: "ใส่ <Image> ใน Next.js แล้วได้รูปย่อตามขนาดจอ เลือก WebP/AVIF ตาม header Accept ของ browser · รูปจากโดเมนอื่นต้องอนุญาตใน images.remotePatterns · บน Vercel คิดตามจำนวนการแปลงและการอ่านเขียน cache (แผน Hobby มีโควตาฟรีรายเดือน) · รัน next start เองก็ใช้ได้ งานย่อรูปไปกินแรง server ของเรา" },
+      { name: "Cloudinary", url: "https://cloudinary.com/documentation/image_transformations", detail: "…/image/upload/c_fill,w_400/f_auto/q_auto/<ชื่อรูป>", level: "know", summary: "อัปโหลดต้นฉบับไปเก็บที่ Cloudinary แล้วสั่งย่อ ครอป เลือกรูปแบบไฟล์ด้วยส่วนของ URL ผลที่ได้ cache บน CDN · แผนฟรีให้ 25 เครดิตต่อเดือน (1 เครดิต = แปลง 1,000 ครั้ง หรือพื้นที่ 1 GB หรือส่งข้อมูล 1 GB)" },
+      { name: "Cloudflare Images", url: "https://developers.cloudflare.com/images/pricing/", detail: "/cdn-cgi/image/width=400,format=auto/<ที่อยู่รูป>", level: "know", summary: "ใช้ได้ 2 แบบ: ย่อรูปที่เก็บไว้ที่อื่น (เช่น R2 หรือ server เรา) ผ่านโดเมนที่อยู่บน Cloudflare หรือเก็บรูปไว้ที่ Cloudflare เลย · การแปลงไม่ซ้ำ 5,000 ครั้งแรกต่อเดือนฟรี เกินจากนั้นคิดต่อ 1,000 ครั้ง" },
+      { name: "imgix", url: "https://docs.imgix.com/en-US/getting-started/setup/creating-sources", detail: "https://<ชื่อ>.imgix.net/<path>?w=400&auto=format", level: "aware", summary: "ไม่เก็บรูปเอง ไปอ่านจาก bucket ของเรา (S3 และตัวที่เข้ากับ S3) หรือโฟลเดอร์บนเว็บ แล้วย่อตาม query string · คิดเป็นเครดิต มีให้ทดลอง 30 วัน ไม่มีแผนฟรีถาวร" },
+      { name: "ImageKit", url: "https://imagekit.io/docs/image-transformation", detail: "https://ik.imagekit.io/<id>/tr:w-400/<path>", level: "aware", summary: "แนวเดียวกับ Cloudinary ต่อกับ storage ภายนอกได้ · เลือกรูปแบบไฟล์ตาม header Accept ให้เอง · มีแผนฟรีที่จำกัดปริมาณส่งข้อมูลต่อเดือน" },
+      { name: "Bunny Optimizer", url: "https://bunny.net/pricing/optimizer/", detail: "<ที่อยู่รูปบน Bunny CDN>?width=400", level: "aware", summary: "ส่วนเสริมของ Bunny CDN คิดเงินเหมาต่อเว็บต่อเดือน ไม่จำกัดจำนวนการแปลง" },
+    ],
+  },
 } satisfies Record<string, ToolGroup>;
 
 export type ToolGroupId = keyof typeof toolGroups;

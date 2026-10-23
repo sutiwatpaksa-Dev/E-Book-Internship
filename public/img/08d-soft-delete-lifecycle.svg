@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" role="img" aria-label="วงจรชีวิตของรูป: ใช้งาน ลบเข้าถังขยะ กู้คืนได้ภายใน 7 วัน เกินแล้วงานล้างถังขยะลบแถวก่อนแล้วลบไฟล์ งานเก็บกวาดไฟล์กำพร้าต้องนับรูปในถังขยะว่ายังมีเจ้าของ">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker>
+<marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker></defs>
+<rect x="1" y="1" width="798" height="398" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="400" y="32" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="18" font-weight="700" fill="#0b3c91" text-anchor="middle">ชีวิตของรูป 1 รูป: ลบได้ กู้คืนได้ แล้วค่อยหายจริง</text>
+<rect x="30" y="70" width="190" height="96" rx="8" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
+<text x="125" y="100" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="16" font-weight="700" fill="#0f172a" text-anchor="middle">ใช้งานอยู่</text>
+<text x="125" y="124" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="12" font-weight="400" fill="#334155" text-anchor="middle">deleted_at = null</text>
+<text x="125" y="144" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="12" font-weight="400" fill="#334155" text-anchor="middle">แสดงในรายการ นับโควตา</text>
+<rect x="305" y="70" width="190" height="96" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+<text x="400" y="100" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="16" font-weight="700" fill="#0f172a" text-anchor="middle">ถังขยะ</text>
+<text x="400" y="124" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="12" font-weight="400" fill="#334155" text-anchor="middle">deleted_at = เวลาที่ลบ</text>
+<text x="400" y="144" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="12" font-weight="400" fill="#334155" text-anchor="middle">แถว + ไฟล์ยังอยู่ครบ</text>
+<rect x="580" y="70" width="190" height="96" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="1.5"/>
+<text x="675" y="100" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="16" font-weight="700" fill="#0f172a" text-anchor="middle">หายจริง</text>
+<text x="675" y="124" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="12" font-weight="400" fill="#334155" text-anchor="middle">แถวถูกลบ → ไฟล์ถูกลบ</text>
+<text x="675" y="144" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="12" font-weight="400" fill="#334155" text-anchor="middle">กู้คืนไม่ได้แล้ว</text>
+<line x1="222" y1="100" x2="302" y2="100" stroke="#0b3c91" stroke-width="2" marker-end="url(#a)"/>
+<text x="262" y="90" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="12" font-weight="700" fill="#0b3c91" text-anchor="middle">DELETE</text>
+<line x1="302" y1="140" x2="222" y2="140" stroke="#0b3c91" stroke-width="2" marker-end="url(#a)"/>
+<text x="262" y="160" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="12" font-weight="700" fill="#0b3c91" text-anchor="middle">restore</text>
+<text x="262" y="176" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="11" font-weight="400" fill="#334155" text-anchor="middle">(ภายใน 7 วัน)</text>
+<line x1="497" y1="118" x2="577" y2="118" stroke="#0b3c91" stroke-width="2" marker-end="url(#a)"/>
+<text x="537" y="108" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="12" font-weight="700" fill="#0b3c91" text-anchor="middle">purge</text>
+<text x="537" y="138" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="11" font-weight="400" fill="#334155" text-anchor="middle">(เกิน 7 วัน)</text>
+<rect x="150" y="220" width="500" height="70" rx="8" fill="#ffffff" stroke="#64748b" stroke-width="1.5"/>
+<text x="400" y="246" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="middle">งานเก็บกวาดไฟล์กำพร้า (cleanup-orphans)</text>
+<text x="400" y="270" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="middle">ต้องถือว่ารูปใน "ถังขยะ" ยังมีเจ้าของ (allKeys รวมแถวที่ deleted_at ไม่ว่าง)</text>
+<line x1="400" y1="218" x2="400" y2="170" stroke="#dc2626" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#r)"/>
+<text x="400" y="320" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="400" fill="#dc2626" text-anchor="middle">ถ้านับเฉพาะรูปที่ใช้งาน: ไฟล์ของรูปในถังขยะถูกลบ → กู้คืนได้ 200 แต่เปิดรูปได้ 404</text>
+<text x="400" y="350" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="middle">ยังลบไม่จริง = URL ยังเปิดได้ (bucket อ่านได้สาธารณะ) รูปที่ต้องหายทันทีด้วยเหตุผลความเป็นส่วนตัว ห้ามใช้ถังขยะแบบนี้</text>
+</svg>
