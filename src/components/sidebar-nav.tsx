@@ -11,6 +11,7 @@ import {
   FileText,
   Flag,
   FolderTree,
+  MessageSquareText,
   History,
   House,
   Lock,
@@ -34,6 +35,7 @@ import { useSite } from "./nav-provider";
 const STAGE_ICONS: LucideIcon[] = [Wrench, CodeXml, Database, ShieldCheck, AppWindow, Flag, Rocket];
 const PAGE_ICONS: Record<string, LucideIcon> = {
   "/react-language": SquareCode,
+  "/ai-prompting": MessageSquareText,
   "/project-structure": FolderTree,
   "/glossary": BookA,
   "/cheat-sheet": FileText,

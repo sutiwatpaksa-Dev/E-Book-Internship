@@ -64,6 +64,7 @@ export const roadmap: RoadmapLevel[] = [
       { num: "14", title: "สร้าง API (Bun + Hono)", link: "/14-hono-api", outcome: "API จริงที่ต่อฐานข้อมูล ตามงาน STARTER", time: "5 ชม." },
       { num: "15", title: "ระบบ login หน้าจัดการร้าน", link: "/15-auth", outcome: "login ของเจ้าของร้านที่ปลอดภัย", time: "4 ชม." },
       { num: "16", title: "ทำงานคู่กับ AI", link: "/16-ai-pairing", outcome: "คุยกับ AI ให้ได้ระบบครบ และเข้าใจทุกบรรทัด", time: "5 ชม." },
+      { num: "เสริม", title: "สั่ง AI ให้ได้งาน (แชท รูป แผน บทความ)", link: "/ai-prompting", outcome: "เขียน prompt ให้ได้งานตรงใจ ทั้งถามเรื่องใหม่ สร้างรูป วางแผน และเขียนงาน", time: "2 ชม.", extra: true },
       { num: "เสริม", title: "จัดโครงสร้างโปรเจกต์", link: "/project-structure", outcome: "วางโฟลเดอร์แบบแบ่งตามหน้าที่และตามฟีเจอร์", time: "–", extra: true },
     ],
   },
