@@ -78,6 +78,11 @@ bun run db:generate && bun run db:migrate
 ```bash
 openssl rand -base64 48
 ```
+ถ้าเครื่องไม่มี `openssl` (เช่น PowerShell บน Windows) ใช้ Bun ที่ติดตั้งไว้แล้วสุ่มแทน ได้ผลแบบเดียวกัน
+```bash
+bun -e "console.log(require('crypto').randomBytes(48).toString('base64'))"
+```
+ทั้งสองแบบสุ่ม 48 byte แล้วแปลงเป็นตัวอักษร base64 ได้ยาว 64 ตัว (เกิน 32 ตัวที่ `env.ts` บังคับไว้สบายๆ) **ห้ามคิดกุญแจเอง** เช่น `bitcafe-secret-2026` เพราะคนเดาได้ ใครรู้กุญแจนี้ก็ทำบัตรผ่านปลอมของเจ้าของร้านได้เลย
 เพิ่มใน `server/.env` (และใส่แค่ชื่อไว้ใน `.env.example` ไม่ใส่ค่าจริง)
 ```
 JWT_SECRET=<ค่าที่สุ่มได้>
@@ -115,7 +120,18 @@ bun run seed
 ![seed อ่านอีเมลกับรหัสผ่านจาก .env, hash รหัสผ่านแล้วบันทึกลงตาราง admins และ hash ต่างจากการเข้ารหัส](/img/15-seed-admin.svg)
 *บัญชีเจ้าของร้านคนแรกสร้างจาก seed รันซ้ำได้ไม่ซ้ำบัญชี*
 
-เปิด pgAdmin ดูช่อง `password_hash` จะเห็นประมาณ `$argon2id$v=19$m=65536,t=2,p=1$...` ไม่ใช่รหัสผ่านจริง ✅
+ดูในฐานข้อมูล (สั่งในโฟลเดอร์ `bit-cafe`)
+```bash
+docker compose exec db psql -U app bitcafe -c 'SELECT email, left(password_hash, 30) AS hash FROM admins;'
+```
+**ควรเห็น**
+```
+        email        |              hash
+---------------------+--------------------------------
+ admin@bitcafe.local | $argon2id$v=19$m=65536,t=2,p=1
+(1 row)
+```
+ไม่ใช่รหัสผ่านจริง ✅ (`left(..., 30)` ตัดให้เห็นแค่ส่วนหัว ที่บอกชื่อวิธี hash และค่าตั้งความช้า ส่วนที่เหลือคือ salt + ผล hash)
 (`Bun.password.hash` ใช้ argon2id ซึ่งเป็น hash สำหรับรหัสผ่านโดยเฉพาะ ตั้งใจให้ช้า คนร้ายจะเดาทีละล้านรหัสไม่ไหว และย้อนกลับเป็นรหัสจริงไม่ได้ ต่างจากการเข้ารหัสที่ถอดกลับได้ถ้ามีกุญแจ: [บทที่ 10 ข้อ 2](/10-security#2-เก็บรหัสผ่านผู้ใช้-hash-ไม่ใช่-encrypt))
 
 ---
@@ -276,17 +292,52 @@ adminRoutes.delete("/categories/:id", async (c) => {
 });
 ```
 
-`src/index.ts` ประกอบเข้าด้วยกัน
+`src/index.ts` ประกอบเข้าด้วยกัน **เขียนทับทั้งไฟล์ของบทที่ 14** (ของเดิมยังอยู่ครบ เพิ่มบรรทัด ⓪–③ และกรณี 403 ใน `onError` ซึ่งอธิบายในหัวข้อ CSRF ถัดไป)
 ```ts
+import { Hono } from "hono";
+import { logger } from "hono/logger";
+import { csrf } from "hono/csrf";
+import { HTTPException } from "hono/http-exception";
+import { env } from "./env";
+import { AppError } from "./http/response";
+import { requireAdmin } from "./middleware/require-admin";
+import { publicRoutes } from "./routes/public";
 import { authRoutes } from "./routes/auth";
 import { adminRoutes } from "./routes/admin";
-import { requireAdmin } from "./middleware/require-admin";
 
+const app = new Hono();
+app.use(logger());                                          // log ทุก request ใน terminal
+
+// ⓪ ด่าน CSRF หน้าทุก /api/* ต้องมาก่อน route ทุกตัว (ข้อ 4)
+app.use("/api/*", csrf({ origin: env.APP_ORIGIN }));
+
+app.get("/api/health", (c) => c.json({ status: "ok" }));
 app.route("/api", publicRoutes);
 app.route("/api/admin", authRoutes);         // ① login / logout ประกาศก่อน
 app.use("/api/admin/*", requireAdmin);       // ② ทุก /api/admin/* ที่ประกาศหลังบรรทัดนี้ต้องผ่าน middleware
 app.route("/api/admin", adminRoutes);        // ③ endpoint ที่ต้อง login
+
+app.notFound((c) =>
+  c.json({ success: false, error: { code: "NOT_FOUND", message: "ไม่พบ endpoint นี้", details: {} } }, 404),
+);
+
+app.onError((err, c) => {
+  if (err instanceof AppError) {
+    return c.json({ success: false, error: { code: err.code, message: err.message, details: err.details } }, err.status);
+  }
+  if (err instanceof HTTPException && err.status === 403) {   // ด่าน csrf ปฏิเสธ
+    return c.json({ success: false, error: { code: "FORBIDDEN", message: "คำขอนี้ไม่ได้มาจากหน้าเว็บของเรา", details: {} } }, 403);
+  }
+  console.error(err);                                       // stack trace อยู่ใน log ของเราเท่านั้น
+  return c.json(
+    { success: false, error: { code: "INTERNAL_ERROR", message: "เกิดข้อผิดพลาดในระบบ", details: {} } },
+    500,
+  );
+});
+
+export default { port: env.PORT, fetch: app.fetch };
 ```
+> 💡 `app.route("/api", publicRoutes)` มี **บรรทัดเดียว** ถ้าเผลอแปะซ้ำ (เช่นก๊อปส่วนใหม่ไปต่อท้ายไฟล์เดิม) Hono จะลงทะเบียน route ชุดเดียวกันสองรอบ และ middleware ในชุดนั้น (เช่น `rateLimit` ของฟอร์มติดต่อ) จะทำงานสองครั้งต่อคำขอ ส่งครั้งเดียวนับเป็นสอง
 > ⚠️ **ลำดับบรรทัดสำคัญมาก:** Hono ทำงานตามลำดับที่เขียน คำขอ `/api/admin/login` เจอบรรทัด ① ก่อนและตอบกลับเลย จึงไม่ต้องผ่านด่านตรวจ ② ถ้าสลับลำดับ จะไม่มีใคร login ได้เลย
 
 ![คำขอ login ถูกตอบก่อนถึงด่าน requireAdmin ส่วนคำขออื่นต้องผ่านด่าน ไม่ผ่านได้ 401](/img/15-middleware-gate.svg)
@@ -307,26 +358,18 @@ app.route("/api/admin", adminRoutes);        // ③ endpoint ที่ต้อ�
 
 อีกจุดคือ `c.req.json()` ของ Hono **ไม่ดู Content-Type** คำขอแบบ `text/plain` ที่ฟอร์ม HTML ธรรมดาส่งได้ (ไม่ต้องขออนุญาต CORS ก่อน) จึงถูกอ่านเป็น JSON ได้เหมือนกัน ด่านเดียวจึงไม่พอ
 
-**วิธีแก้:** เพิ่มด่าน `csrf` ของ Hono ไว้หน้าทุก `/api/*` ใน `src/index.ts` (ก่อนบรรทัด `app.route` ทั้งหมด)
+**วิธีแก้:** ด่าน `csrf` ของ Hono คือบรรทัด ⓪ ใน `src/index.ts` ด้านบน
 ```ts
-import { csrf } from "hono/csrf";
-import { HTTPException } from "hono/http-exception";
-
-app.use("/api/*", csrf({ origin: env.APP_ORIGIN }));   // ← ใส่ก่อน app.route("/api", ...) บรรทัดแรก
+app.use("/api/*", csrf({ origin: env.APP_ORIGIN }));
 ```
-และเพิ่มใน `app.onError` ของบทที่ 14 **ก่อน** บรรทัด `console.error(err)` ไม่งั้นการปฏิเสธจะกลายเป็น 500
-```ts
-  if (err instanceof HTTPException && err.status === 403) {
-    return c.json({ success: false, error: { code: "FORBIDDEN", message: "คำขอนี้ไม่ได้มาจากหน้าเว็บของเรา", details: {} } }, 403);
-  }
-```
+อยู่หน้าทุก `/api/*` และก่อน `app.route` ทุกบรรทัด เพราะ Hono ทำงานตามลำดับที่เขียน ถ้าวางไว้ทีหลัง route ที่ตอบไปแล้วจะไม่เคยผ่านด่านนี้ ส่วนกรณี `HTTPException` 403 ใน `onError` ต้องอยู่ **ก่อน** `console.error(err)` เพราะด่าน `csrf` ปฏิเสธด้วยการ throw `HTTPException` (ไม่ใช่ `AppError` ของเรา) ถ้าไม่ดักไว้ จะตกไปถึงบรรทัดสุดท้ายแล้วกลายเป็น 500 "เกิดข้อผิดพลาดในระบบ" ทั้งที่ไม่มีอะไรพัง
 
 **ด่านนี้ตรวจอะไร** (ตรวจเฉพาะคำขอที่เปลี่ยนข้อมูลได้ คือไม่ใช่ `GET` / `HEAD` / `OPTIONS` และมี Content-Type แบบที่ฟอร์ม HTML ส่งได้ หรือไม่มี Content-Type เลย)
 1. header `Sec-Fetch-Site` ที่เบราว์เซอร์ใส่ให้เอง (โค้ดหน้าเว็บปลอมไม่ได้) ถ้าเป็น `same-origin` = มาจากหน้าเว็บเราเอง ผ่าน
 2. ถ้าข้อ 1 ไม่ผ่าน ดู header `Origin` ว่าตรงกับ `APP_ORIGIN` ไหม ตรงก็ผ่าน
 3. ไม่ผ่านทั้งสองข้อ ตอบ `403`
 
-> ⚠️ **ทำไมต้องบอก `origin` เอง:** ถ้าไม่ใส่ Hono จะเทียบ `Origin` กับที่อยู่ที่ server เห็นตัวเอง ซึ่งไม่เคยตรงในโปรเจกต์เรา ตอนพัฒนา proxy ของ Vite เปลี่ยนที่อยู่เป็น `localhost:3000` แต่เบราว์เซอร์ส่ง `Origin: http://localhost:5173` และตอนขึ้นระบบจริง Caddy คุยกับ server ด้วย `http://` แต่เบราว์เซอร์ส่ง `https://` (ทดสอบแล้ว: ไม่ใส่ `origin` คำขอผ่าน proxy ที่ไม่มี `Sec-Fetch-Site` ได้ 403) เบราว์เซอร์รุ่นใหม่ยังผ่านด้วย `Sec-Fetch-Site` แต่เราไม่ควรให้ความปลอดภัยพึ่งด่านเดียว
+> ⚠️ **ทำไมต้องบอก `origin` เอง:** ถ้าไม่ใส่ Hono จะเทียบ `Origin` กับที่อยู่ที่ server เห็นตัวเอง ซึ่งไม่เคยตรงในโปรเจกต์เรา ตอนพัฒนา proxy ของ Vite แบบเขียนสั้น (`"/api": "http://localhost:3000"`) ตั้ง `changeOrigin: true` ให้เอง จึงเปลี่ยน header `Host` เป็น `localhost:3000` server เลยเห็นตัวเองเป็น `http://localhost:3000` แต่เบราว์เซอร์ส่ง `Origin: http://localhost:5173` และตอนขึ้นระบบจริง Caddy คุยกับ server ด้วย `http://` แต่เบราว์เซอร์ส่ง `https://` (ทดสอบแล้วกับ Vite 8: ผ่าน proxy แบบเขียนสั้น server เห็น `Host: localhost:3000` และคำขอ `POST` แบบ `text/plain` ที่มี `Origin: http://localhost:5173` แต่ไม่มี `Sec-Fetch-Site` ได้ 403 ถ้าไม่ใส่ `origin`) เบราว์เซอร์รุ่นใหม่ยังผ่านด้วย `Sec-Fetch-Site` แต่เราไม่ควรให้ความปลอดภัยพึ่งด่านเดียว
 
 > 🤔 **แล้วคำขอแบบ `application/json` จากเว็บอื่นล่ะ ทำไมด่านปล่อยผ่าน?** เพราะเบราว์เซอร์จะไม่ยอมส่ง JSON ข้ามเว็บจนกว่าจะถาม server ก่อน (CORS preflight) และ API เราไม่ได้เปิด CORS ไว้ เบราว์เซอร์จึงหยุดคำขอนั้นเอง ด่าน `csrf` เลยดูแลเฉพาะช่องที่ CORS ไม่ได้กัน ถ้าวันหนึ่งเปิด CORS ให้ทุกเว็บ ช่องนี้จะเปิดทันที
 
@@ -461,13 +504,130 @@ export default function LoginPage() {
 }
 ```
 
-### ปุ่มออกจากระบบ (ในโครงหน้าหลังบ้าน)
+### โครงหน้าหลังบ้าน + ปุ่มออกจากระบบ
+`client/src/components/admin-layout.tsx` (แบบเดียวกับ `PublicLayout` ของบทที่ 13: แถบบน + `<Outlet />` ให้หน้าลูกมาวาด)
 ```tsx
-const navigate = useNavigate();
-<button onClick={async () => { await logout(); navigate("/admin/login", { replace: true }); }}>
-  ออกจากระบบ
-</button>
+import { NavLink, Outlet, useNavigate } from "react-router";
+import { logout } from "../api/auth";
+
+const links = [
+  { to: "/admin", label: "สรุป", end: true },        // end = ตรงกับ /admin พอดีเท่านั้น
+  { to: "/admin/services", label: "บริการ", end: false },
+  { to: "/admin/settings", label: "ตั้งค่าร้าน", end: false },
+];
+
+export default function AdminLayout() {
+  const navigate = useNavigate();
+
+  async function onLogout() {
+    await logout();                                   // server ลบ cookie
+    navigate("/admin/login", { replace: true });
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <header className="flex items-center gap-4 border-b border-gray-200 bg-white px-6 py-3">
+        <span className="font-bold text-brand">Bit Café · หลังร้าน</span>
+        <nav className="flex gap-3">
+          {links.map((l) => (
+            <NavLink key={l.to} to={l.to} end={l.end}
+              className={({ isActive }) => (isActive ? "font-semibold text-brand" : "text-gray-600")}>
+              {l.label}
+            </NavLink>
+          ))}
+        </nav>
+        <button onClick={onLogout} className="ml-auto rounded border border-gray-300 px-3 py-1 text-sm">
+          ออกจากระบบ
+        </button>
+      </header>
+      <main className="p-6">
+        <Outlet />        {/* 👈 หน้าลูกของ /admin มาวาดตรงนี้ */}
+      </main>
+    </div>
+  );
+}
 ```
+ปุ่มออกจากระบบต้องเรียก server (`logout()`) ไม่ใช่แค่ลบอะไรในหน้าเว็บ เพราะ cookie เป็น `httpOnly` โค้ดหน้าเว็บมองไม่เห็นและลบเองไม่ได้ มีแต่ server ที่สั่งลบผ่าน `Set-Cookie` ได้
+
+**หน้าลูกชั่วคราว 3 หน้า** เพื่อให้ route ของบทที่ 13 มีของจริงให้แสดง (แบบฝึกหัดท้ายบทจะเติมเนื้อหาจริง)
+
+`client/src/pages/admin/dashboard-page.tsx` (เรียก API หลังบ้านจริง เพื่อเห็นว่า cookie ถูกแนบไปเอง)
+```tsx
+import { useFetch } from "../../api/useFetch";
+
+interface Dashboard {
+  unread: number;
+  totalServices: number;
+}
+
+export default function DashboardPage() {
+  const { data, error, loading } = useFetch<Dashboard>("/api/admin/dashboard");
+
+  if (loading) return <p>กำลังโหลด... ⏳</p>;
+  if (error) return <p>โหลดไม่สำเร็จ: {error}</p>;
+  return (
+    <section>
+      <title>สรุป | หลังร้าน</title>
+      <h1 className="text-2xl font-bold">สรุป</h1>
+      <p>ข้อความที่ยังไม่อ่าน: {data?.unread} · บริการทั้งหมด: {data?.totalServices}</p>
+    </section>
+  );
+}
+```
+`client/src/pages/admin/settings-page.tsx`
+```tsx
+// หน้าชั่วคราว: แบบฝึกหัดท้ายบทจะเติมของจริง
+export default function SettingsPage() {
+  return (
+    <section>
+      <title>ตั้งค่าร้าน | หลังร้าน</title>
+      <h1 className="text-2xl font-bold">ตั้งค่าร้าน</h1>
+      <p>ยังไม่ได้ทำ 🚧</p>
+    </section>
+  );
+}
+```
+`client/src/pages/admin/services-page.tsx` หน้าตาเหมือน `settings-page.tsx` เปลี่ยนชื่อฟังก์ชันเป็น `ServicesPage` และข้อความเป็น `จัดการบริการ`
+
+**เพิ่ม route หลังบ้าน** (ส่วนที่บทที่ 13 ข้อ "หน้าจัดการร้าน" ให้อ่านไว้ก่อน) ตอนนี้ทุกชิ้นมีแล้ว `client/src/app.tsx` ทั้งไฟล์:
+```tsx
+import { Routes, Route } from "react-router";
+import PublicLayout from "./components/public-layout";
+import AdminLayout from "./components/admin-layout";
+import RequireAuth from "./components/require-auth";
+import HomePage from "./pages/home-page";
+import AboutPage from "./pages/about-page";
+import ContactPage from "./pages/contact-page";
+import NotFoundPage from "./pages/not-found-page";
+import LoginPage from "./pages/admin/login-page";
+import DashboardPage from "./pages/admin/dashboard-page";
+import SettingsPage from "./pages/admin/settings-page";
+import ServicesPage from "./pages/admin/services-page";
+
+export default function App() {
+  return (
+    <Routes>
+      <Route element={<PublicLayout />}>          {/* ทุกหน้าข้างในมี Navbar/Footer */}
+        <Route index element={<HomePage />} />     {/* "/" */}
+        <Route path="about" element={<AboutPage />} />
+        <Route path="contact" element={<ContactPage />} />
+        <Route path="*" element={<NotFoundPage />} />   {/* URL ที่ไม่มี → 404 */}
+      </Route>
+
+      {/* หลังร้าน: อยู่นอก PublicLayout จึงไม่มี Navbar/Footer ของหน้าร้าน */}
+      <Route path="admin/login" element={<LoginPage />} />
+      <Route path="admin" element={<RequireAuth><AdminLayout /></RequireAuth>}>
+        <Route index element={<DashboardPage />} />            {/* /admin */}
+        <Route path="settings" element={<SettingsPage />} />   {/* /admin/settings */}
+        <Route path="services" element={<ServicesPage />} />   {/* /admin/services */}
+      </Route>
+    </Routes>
+  );
+}
+```
+ทำไม `admin/login` อยู่ **นอก** `RequireAuth`: ถ้าอยู่ข้างใน คนที่ยังไม่ login จะถูกส่งไปหน้า login ซึ่งก็ต้อง login ก่อนอีก วนไม่จบ
+
+**ควรเห็น** (`bun run dev` ทั้งสองฝั่ง): เปิด `/admin/services` ตอนยังไม่ login → ถูกพาไปหน้า "เข้าสู่ระบบ" → login ด้วย `ADMIN_EMAIL` / `ADMIN_PASSWORD` → กลับมาที่ "จัดการบริการ" (หน้าที่ตั้งใจเข้าตอนแรก) → กด "สรุป" เห็น `ข้อความที่ยังไม่อ่าน: 0 · บริการทั้งหมด: 3` → กด "ออกจากระบบ" กลับไปหน้า login และกดย้อนกลับก็เข้าไม่ได้แล้ว
 
 ### เปิดอ่านข้อความแล้วเปลี่ยนเป็น "อ่านแล้ว"
 ในหน้าข้อความ ตอนเจ้าของร้านกดเปิดข้อความไหน ให้หน้าเว็บส่ง `PATCH` ไปบอก server
@@ -481,15 +641,35 @@ await api(`/api/admin/messages/${id}`, { method: "PATCH", body: JSON.stringify({
 💡 ทำไมไม่ให้ `GET` เปลี่ยนสถานะให้เองเลย? เพราะ `GET` ต้องเป็นการดูอย่างเดียว (บทที่ 5) ระบบอื่นอาจเรียก `GET` เองโดยไม่มีใครตั้งใจ เช่น ตัวโหลดหน้าล่วงหน้าของเบราว์เซอร์ แล้วข้อความจะกลายเป็นอ่านแล้วทั้งที่เจ้าของร้านยังไม่เห็น
 
 ### บัตรหมดอายุระหว่างใช้งาน
-เพิ่มใน `api()` ของไฟล์ `client/src/api/client.ts` ก่อนบรรทัด `throw` ตัวสุดท้าย:
+แก้ `api()` ในไฟล์ `client/src/api/client.ts` เปลี่ยนบรรทัด `if (!body.success) throw ...` เป็น:
 ```ts
-if (res.status === 401 && path.startsWith("/api/admin") && path !== "/api/admin/login") {
-  window.location.assign("/admin/login");     // หมดอายุ → ส่งกลับไป login
-}
+  if (!body.success) {
+    // บัตรหมดอายุระหว่างใช้งาน → ส่งกลับไป login (ยกเว้น login เอง และ /me ที่ RequireAuth ใช้ถาม)
+    if (res.status === 401 && path.startsWith("/api/admin") && path !== "/api/admin/login" && path !== "/api/admin/me") {
+      window.location.assign("/admin/login");
+    }
+    throw new ApiError(res.status, body.error.code, body.error.message, body.error.details);
+  }
 ```
+ทำไมยกเว้น 2 ที่อยู่:
+- `/api/admin/login`: รหัสผิดได้ 401 ถ้าส่งไปหน้า login ใหม่ ข้อความ "อีเมลหรือรหัสผ่านไม่ถูกต้อง" จะหายไปก่อนผู้ใช้ทันอ่าน
+- `/api/admin/me`: `RequireAuth` ใช้ถามว่า login อยู่ไหม และได้ 401 เป็นเรื่องปกติทุกครั้งที่ยังไม่ login มันจัดการเองอยู่แล้วด้วย `<Navigate state={{ from }}>` ที่จำหน้าเดิมไว้ ถ้าไม่ยกเว้น `window.location.assign` จะโหลดหน้าใหม่ทั้งหน้า สิ่งที่จำไว้ใน `state` หายหมด login เสร็จแล้วไปตกที่ `/admin` แทนหน้าที่ตั้งใจเข้า (ทดสอบแล้ว: ไม่ยกเว้น `/me` เปิด `/admin/services` ตอนยังไม่ login จะเรียก `window.location.assign` 1 ครั้ง ยกเว้นแล้วเป็น 0 ครั้ง)
+
+ส่วน API หลังบ้านตัวอื่น เช่น `/api/admin/dashboard` ถ้าได้ 401 แปลว่าบัตรหมดอายุ **ระหว่าง** ใช้งาน จึงส่งไป login ได้เลย
 
 ![บัตรใช้ได้ 1 วัน หมดอายุแล้วได้ 401 และหน้าเว็บพาไป login ส่วนออกจากระบบคือลบ cookie](/img/15-session-expiry.svg)
 *เส้นเวลาของบัตรผ่าน และสิ่งที่เกิดขึ้นตอนกดออกจากระบบ*
+
+### ⚠️ ปัญหาที่เจอบ่อย
+
+| อาการ | สาเหตุ | วิธีแก้ |
+|---|---|---|
+| `bun run dev` ขึ้น `ZodError` พร้อม `"message": "JWT_SECRET ต้องยาวอย่างน้อย 32 ตัวอักษร"` | กุญแจใน `.env` สั้นเกิน หรือลืมใส่ | สุ่มใหม่ด้วย `openssl rand -base64 48` (หรือคำสั่ง `bun -e` ในข้อ 2) แล้ววางใน `.env` |
+| curl login ได้ 200 แต่ในเบราว์เซอร์ login แล้วเด้งกลับหน้า login ทุกครั้ง | หน้าเว็บเรียก `http://localhost:3000/api/...` ตรงๆ ไม่ผ่าน proxy ของ Vite กลายเป็นคนละเว็บ cookie จึงไม่ถูกแนบ (หรือโดน CORS บล็อกก่อน) | ใน `client/src` เรียกแค่ `/api/...` (ไม่มี `http://localhost:3000`) และตรวจ `proxy` ใน `vite.config.ts` (บทที่ 14 ข้อ 6) |
+| คำขอจาก curl / `.http` ที่ใส่ `Origin: http://localhost:5173` ถูกได้ 403 ทั้งที่ Origin ถูก | ใน `.env` เขียน `APP_ORIGIN=http://localhost:5173/` (มี `/` ท้าย) แต่เบราว์เซอร์ส่ง `Origin` แบบไม่มี `/` ท้าย เทียบแบบตัวอักษรตรงกันเป๊ะจึงไม่ตรง (เบราว์เซอร์รุ่นใหม่ยังผ่านเพราะ `Sec-Fetch-Site` เลยดูเหมือนพังแค่บางที่) | ลบ `/` ท้าย `APP_ORIGIN` แล้วปิด-เปิด server ใหม่ |
+| ตั้ง `NODE_ENV=production` บนเครื่องตัวเองแล้ว login ไม่ติด (เปิดเว็บผ่าน IP เช่น `http://192.168.1.10:5173`) | cookie ได้ `Secure` ซึ่งเบราว์เซอร์รับเฉพาะ `https://` (Chrome/Firefox ยกเว้นให้ `localhost` เท่านั้น) | ตอนพัฒนาไม่ต้องตั้ง `NODE_ENV=production` ระบบจริงต้องเป็น `https://` เสมอ ([บทที่ 20](/20-deploy-vps)) |
+| `DELETE` / logout จาก curl ได้ 403 แต่ login ได้ปกติ | curl ไม่ใส่ `Origin` ให้ และคำขอที่ไม่ได้ส่ง JSON ด่าน `csrf` พิสูจน์ไม่ได้ว่ามาจากหน้าเว็บเรา | ใส่ `-H "Origin: http://localhost:5173"` (ดูกล่อง 💡 ใต้ข้อ ⑥) |
+| login ไม่ได้เลยสักคน ได้ 401 ตลอด | สลับลำดับ `app.use("/api/admin/*", requireAdmin)` ไปไว้ก่อน `app.route("/api/admin", authRoutes)` | เรียงตาม ⓪ → ① → ② → ③ ใน `src/index.ts` |
 
 ---
 

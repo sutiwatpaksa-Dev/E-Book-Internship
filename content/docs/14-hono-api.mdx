@@ -68,6 +68,7 @@ volumes:
 cd bit-cafe
 docker compose up -d
 ```
+> ⚠️ ถ้าขึ้น `Bind for 0.0.0.0:5432 failed: port is already allocated` แปลว่ามี Postgres ตัวอื่นจับ port 5432 อยู่แล้ว (มักเป็นกล่องจากบทก่อนๆ เช่น `pg` ของบท 6/8, `laptop-db` ของบท 8b หรือ stack `db-compare` ของบท 7) ดูว่าใครจับด้วย `docker ps` แล้วหยุดตัวนั้น (`docker stop ชื่อกล่อง`) หรือเปลี่ยนเป็น `"5433:5432"` แล้วแก้ port ใน `DATABASE_URL` ให้ตรง
 
 **ส่วน server**
 ```bash
@@ -240,7 +241,21 @@ bun run seed            # ใส่ข้อมูลตัวอย่าง
 ```
 ![ลำดับคำสั่ง db:generate, db:migrate และ seed จาก schema.ts จนตารางมีข้อมูล](/img/14-db-workflow.svg)
 *ทุกครั้งที่แก้ schema.ts ให้ทำ db:generate และ db:migrate ใหม่*
-เปิด pgAdmin (หรือ Adminer จากบทที่ 2) ต่อที่ `localhost:5432` ชื่อผู้ใช้ `app` รหัส `secret` ควรเห็น 3 ตารางพร้อมข้อมูล 🎉
+ตรวจในฐานข้อมูลด้วย psql ที่อยู่ในกล่องอยู่แล้ว (ไม่ต้องติดตั้งอะไรเพิ่ม สั่งในโฟลเดอร์ `bit-cafe` ที่มี `compose.yaml`)
+```bash
+docker compose exec db psql -U app bitcafe -c '\dt'
+```
+**ควรเห็น** 3 ตาราง 🎉
+```
+             List of relations
+ Schema |       Name       | Type  | Owner
+--------+------------------+-------+-------
+ public | categories       | table | app
+ public | contact_messages | table | app
+ public | services         | table | app
+(3 rows)
+```
+ดูข้อมูลที่ seed ใส่ด้วย `docker compose exec db psql -U app bitcafe -c 'SELECT id, name, price FROM services;'` (ถ้าอยากใช้โปรแกรมมีหน้าจอ เช่น DBeaver ให้ต่อที่ `localhost:5432` user `app` รหัส `secret` ส่วน Adminer ของบทที่ 2 อยู่คนละ compose จึงมองไม่เห็นกล่อง `db` นี้)
 
 ---
 
@@ -445,6 +460,21 @@ publicRoutes.post("/contact", rateLimit({ limit: 5, windowMs: 10 * 60 * 1000 }),
 ```bash
 bun run dev
 ```
+**ควรเห็น**
+```
+$ bun --watch src/index.ts
+Started development server: http://localhost:3000
+```
+ทดสอบเร็วๆ ว่า server ยังมีชีวิต (smoke test) จาก Terminal อีกหน้าต่าง
+```bash
+curl http://localhost:3000/api/health
+```
+ต้องได้ `{"status":"ok"}` และหน้าจอ server จะมี log จาก `logger()` สองบรรทัด (`<--` = คำขอเข้า, `-->` = ตอบออก พร้อม status และเวลา)
+```
+<-- GET /api/health
+--> GET /api/health 200 0ms
+```
+ถ้า health ผ่านแต่ `/api/services` พัง ปัญหาอยู่ที่ฐานข้อมูลหรือ route ไม่ใช่ที่ตัว server นี่คือเหตุผลที่ทุก API ควรมี endpoint ง่ายๆ แบบนี้ไว้หนึ่งตัว (ระบบ deploy ในบทหลังๆ ก็ใช้มันเช็คว่าแอปพร้อมหรือยัง)
 
 ### ลองเรียกด้วยไฟล์ `.http` (เหมือนบทที่ 5)
 `server/requests.http`
@@ -531,7 +561,47 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 ```
 
-แก้ `useFetch` ในบทที่ 11 ให้เรียก `api<T>(url, { signal: controller.signal })` แทน `fetch` และเปลี่ยนที่อยู่จาก `/mock/services.json` เป็น `/api/services`
+**แก้ `useFetch` ของบทที่ 11 ให้ใช้ `api<T>()`** เขียนทับ `client/src/api/useFetch.ts` ทั้งไฟล์ (ชื่อไฟล์และหน้าตาที่คืน `{ data, error, loading }` เหมือนเดิม หน้าไหนที่ใช้อยู่จึงไม่ต้องแก้)
+```ts
+import { useEffect, useState } from "react";
+import { api } from "./client";
+
+export function useFetch<T>(url: string) {
+  const [data, setData] = useState<T | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const controller = new AbortController();   // ยกเลิก request ถ้าออกจากหน้าก่อนโหลดเสร็จ
+    setLoading(true);
+    setError(null);
+
+    // api() แกะ { success, data } ให้แล้ว: สำเร็จได้ data ตรงๆ ไม่สำเร็จ throw ApiError
+    api<T>(url, { signal: controller.signal })
+      .then((result) => {
+        if (!controller.signal.aborted) setData(result);
+      })
+      .catch((err: unknown) => {
+        if (controller.signal.aborted) return;   // ถูกยกเลิกเอง ไม่ใช่ error ที่ต้องโชว์
+        setError(err instanceof Error ? err.message : "เกิดข้อผิดพลาด");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+
+    return () => controller.abort();           // cleanup: React เรียกตอนออกจากหน้า หรือ url เปลี่ยน
+  }, [url]);                                    // รันใหม่เมื่อ url เปลี่ยนเท่านั้น
+
+  return { data, error, loading };
+}
+```
+อ่านส่วนที่เปลี่ยน: ของเดิมต้องเช็ค `res.ok`, แปลง JSON เอง และแกะ `{ success, data }` เอง ตอนนี้ทั้งหมดอยู่ใน `api()` ที่เดียวแล้ว `.then` จึงได้ `data` ตรงๆ (ไม่ใช่ `body.data`) **ถ้าเปลี่ยนแค่ `fetch` เป็น `api` แต่ยังเขียน `setData(body.data)` แบบเดิม จะได้ `data` เป็น `undefined` เงียบๆ โดยไม่มี error** เพราะ `api()` แกะชั้นนั้นออกไปให้แล้ว ส่วนเช็ค `controller.signal.aborted` ยังต้องมีครบ 3 จุด: ตอนยกเลิก (ออกจากหน้า หรือ `url` เปลี่ยนเร็วๆ เช่นกดปุ่มหมวดรัวๆ) `fetch` ข้างใน `api()` จะ throw และ `api()` แปลงเป็น `ApiError` "เชื่อมต่อ server ไม่ได้" ถ้าไม่เช็ค ข้อความนี้จะโผล่ทั้งที่ไม่มีอะไรพัง
+
+จากนั้นเปลี่ยนที่อยู่จากไฟล์ mock เป็น API จริง:
+- `src/pages/home-page.tsx`: `useFetch<Service[]>("/mock/services.json")` → `useFetch<Service[]>("/api/services?featured=true")` (หน้าแรกโชว์เฉพาะบริการเด่น)
+- `src/components/service-list.tsx`: ถ้าเปลี่ยนเป็น `/mock/...` ตามกล่องในบทที่ 13 ไว้ ให้เปลี่ยนกลับเป็น `/api/categories` และ `/api/services...` ตอนนี้ปุ่มหมวดจะกรองการ์ดได้จริงแล้ว เพราะ server อ่าน `?category=`
+
+**ควรเห็น** (เปิด `bun run dev` ทั้ง server และ client): หน้าแรกมีการ์ด 3 ใบจากฐานข้อมูล หน้า `/about?category=drinks` มีแค่ ลาเต้ กับ มอคค่า และ `/about?category=catering` มีแค่ Coffee Break 50 ที่ ถ้าลองเปิดที่อยู่ที่ไม่มี เช่นเปลี่ยนเป็น `useFetch("/api/nope")` จะเห็น `โหลดข้อมูลไม่สำเร็จ: ไม่พบ endpoint นี้` ซึ่งเป็นข้อความจาก `app.notFound` ของ server ส่งผ่าน `ApiError` มาถึงหน้าจอ
 
 ส่งฟอร์มติดต่อของจริง (แทน `setTimeout` ในบทที่ 11) เพิ่ม state ไว้เก็บ error จาก server ในฟอร์มก่อน:
 ```tsx
@@ -565,6 +635,9 @@ try {
 |---|---|---|
 | ขึ้น `ZodError ... DATABASE_URL` ตอนเปิด | ไม่มีไฟล์ `.env` หรือสั่งนอกโฟลเดอร์ `server/` | `cd server` แล้วสั่ง `bun run dev` |
 | ขึ้น `ECONNREFUSED 127.0.0.1:5432` | ฐานข้อมูลยังไม่เปิด | `docker compose up -d` แล้วดู `docker compose ps` |
+| `docker compose up -d` ขึ้น `Bind for 0.0.0.0:5432 failed: port is already allocated` | Postgres จากบทก่อนๆ (`pg`, `laptop-db`, `db-compare`) ยังรันอยู่ | `docker ps` ดูว่าใครจับ 5432 แล้ว `docker stop ชื่อกล่อง` หรือเปลี่ยนเป็น `"5433:5432"` และแก้ `DATABASE_URL` |
+| `bun run dev` ขึ้น `Failed to start server. Is port 3000 in use?` | มีโปรแกรมอื่นจับ port 3000 (เช่นกล่อง `api` ของบทที่ 5 หรือ server ของบทที่ 8b) | ปิดตัวนั้น หรือเปลี่ยน `PORT` ใน `.env` แล้วแก้ proxy ใน `vite.config.ts` ให้ตรง |
+| หน้าเว็บไม่ error แต่ไม่มีการ์ดเลย (`data` เป็น `undefined`) | ใน `useFetch` ยังเขียน `setData(body.data)` หลังเปลี่ยนมาใช้ `api()` | ใช้ `useFetch` ฉบับเต็มในข้อ 6 (`api()` คืน `data` ให้แล้ว) |
 | ขึ้น `relation "services" does not exist` | ยังไม่ได้สร้างตาราง | `bun run db:generate` แล้ว `bun run db:migrate` |
 | หน้าเว็บได้หน้า HTML แทนข้อมูล | ไม่ได้ตั้งการส่งต่อใน Vite หรือ server ไม่ได้เปิด | ตรวจ `vite.config.ts` แล้วปิด-เปิด `bun run dev` ฝั่งหน้าเว็บใหม่ |
 | ส่งข้อมูลผิดแล้วได้ 500 แทน 400 | เรียก `.parse()` ของ Zod ตรงๆ | ใช้ตัวช่วย `parse(schema, input)` ที่เราเขียนไว้ |

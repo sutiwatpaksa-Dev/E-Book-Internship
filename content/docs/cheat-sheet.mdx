@@ -45,7 +45,7 @@ port: `-p เครื่องเรา:ในกล่อง` · ในกล�
 | ทำอะไร | npm | Yarn | Bun |
 |---|---|---|---|
 | ติดตั้งทั้งหมด | `npm install` | `yarn` | `bun install` |
-| ตาม lock เป๊ะ | `npm ci` | `yarn install --frozen-lockfile` | `bun install --frozen-lockfile` |
+| ตาม lock เป๊ะ | `npm ci` | v1: `yarn install --frozen-lockfile` / v2 ขึ้นไป: `yarn install --immutable` (เช็คด้วย `yarn --version` v1 ไม่ฟ้อง flag ที่ไม่รู้จัก) | `bun install --frozen-lockfile` |
 | เพิ่ม | `npm install x` | `yarn add x` | `bun add x` |
 | เพิ่มแบบ dev | `npm install -D x` | `yarn add -D x` | `bun add -d x` |
 | รัน script | `npm run dev` | `yarn dev` | `bun run dev` |
