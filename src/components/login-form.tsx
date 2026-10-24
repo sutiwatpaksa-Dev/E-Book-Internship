@@ -7,8 +7,8 @@ import { Button } from "./button";
 import { ErrorText } from "./error-text";
 import { Field, Input } from "./field";
 
-// ไม่มี ?next= (กด "เข้าสู่ระบบ" จากเมนูเอง) → ไปหน้าที่ใช้บ่อยที่สุดของบทบาทนั้น: พี่เลี้ยงไปหลังบ้าน น้องไป STARTER
-const HOME: Record<Role, string> = { dev: "/dev/admin", intern: "/starter" };
+// ไม่มี ?next= (กด "เข้าสู่ระบบ" จากเมนูเอง) → ไปหน้าที่ใช้บ่อยที่สุดของบทบาทนั้น: พี่เลี้ยงไปหลังบ้าน น้องไปหน้าวันนี้ (ทำต่อจากที่ค้าง)
+const HOME: Record<Role, string> = { dev: "/dev/admin", intern: "/today" };
 
 // รับเฉพาะ path ภายในเว็บเรา กันคนส่งลิงก์ login?next=https://เว็บปลอม มาหลอก
 function nextPath(role: Role) {

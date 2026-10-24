@@ -16,6 +16,8 @@ export type LearnStep = {
   output: string;
   // ช่วงย่อยในขั้น เรียงตามลำดับทำ (ขั้น Coding = DB → Backend → API → Frontend)
   parts?: string[];
+  // โจทย์ STARTER ของขั้นนี้แบบย่อ (หน้าวันนี้แสดง ตัวเต็มอยู่ในหน้าขั้น ส่วน "ลงมือกับโปรเจกต์ของเรา")
+  task: string;
 };
 
 export type LearnCard = {
@@ -32,13 +34,13 @@ export type LearnCard = {
 export type LegacyLink = { step: StepSlug; part?: string; title: string; link: string };
 
 export const steps: LearnStep[] = [
-  { slug: "problem", num: 1, name: "Problem", th: "เข้าใจปัญหา", output: "รายการความต้องการ (user story) และขอบเขตงาน" },
-  { slug: "design", num: 2, name: "Design", th: "ออกแบบ", output: "ภาพร่างหน้าจอ แบบตาราง และรายการ API" },
-  { slug: "coding", num: 3, name: "Coding", th: "เขียนโค้ด", output: "ระบบที่รันได้ในเครื่อง", parts: ["DB", "Backend", "API", "Frontend"] },
-  { slug: "testing", num: 4, name: "Testing", th: "ทดสอบ", output: "เทสต์ที่รันซ้ำได้ และเช็กลิสต์ทดสอบด้วยมือ" },
-  { slug: "documentation", num: 5, name: "Documentation", th: "เขียนเอกสาร", output: "README, .env.example และเอกสาร API" },
-  { slug: "deploy", num: 6, name: "Deploy", th: "ขึ้นระบบจริง", output: "เว็บที่เปิดได้จาก URL จริง" },
-  { slug: "maintenance", num: 7, name: "Maintenance", th: "ดูแลระบบ", output: "แผนดูแล: log, backup, อัปเดต และ feedback" },
+  { slug: "problem", num: 1, name: "Problem", th: "เข้าใจปัญหา", output: "รายการความต้องการ (user story) และขอบเขตงาน", task: "เขียน user story ของ STARTER อย่างน้อย 8 ข้อ จัดลำดับ ต้องมี / ควรมี / ไว้ทีหลัง" },
+  { slug: "design", num: 2, name: "Design", th: "ออกแบบ", output: "ภาพร่างหน้าจอ แบบตาราง และรายการ API", task: "วาดหน้าจอหลักทุกหน้า แล้วไล่ทีละช่องว่าต้องเก็บข้อมูลอะไร จดเป็นตารางและรายการ API" },
+  { slug: "coding", num: 3, name: "Coding", th: "เขียนโค้ด", output: "ระบบที่รันได้ในเครื่อง", parts: ["DB", "Backend", "API", "Frontend"], task: "เปลี่ยนแบบตารางเป็น schema แล้วสร้างด้วย migration จากนั้นทำ Backend ทีละ story ที่ต้องมี" },
+  { slug: "testing", num: 4, name: "Testing", th: "ทดสอบ", output: "เทสต์ที่รันซ้ำได้ และเช็กลิสต์ทดสอบด้วยมือ", task: "เขียนเช็กลิสต์ทดสอบจาก story ที่ต้องมี แล้วให้เพื่อนทำตามเช็กลิสต์ของเรา" },
+  { slug: "documentation", num: 5, name: "Documentation", th: "เขียนเอกสาร", output: "README, .env.example และเอกสาร API", task: "เขียน README แล้วให้เพื่อน clone ไปรันโดยดูแค่ README จดทุกจุดที่เพื่อนติด" },
+  { slug: "deploy", num: 6, name: "Deploy", th: "ขึ้นระบบจริง", output: "เว็บที่เปิดได้จาก URL จริง", task: "ขึ้น STARTER ด้วยบริการสำเร็จรูป แล้วไล่เช็กลิสต์จากขั้น 4 บนเว็บจริงทุกข้อ" },
+  { slug: "maintenance", num: 7, name: "Maintenance", th: "ดูแลระบบ", output: "แผนดูแล: log, backup, อัปเดต และ feedback", task: "ตั้ง backup ฐานข้อมูล แล้วลองกู้คืนลงฐานใหม่จริง 1 ครั้ง" },
 ];
 
 export const cards: LearnCard[] = [
@@ -88,6 +90,14 @@ export function stepOfUrl(url: string): StepSlug | null {
   if (card) return card.step;
   const step = steps.find((s) => stepUrl(s.slug) === url);
   return step?.slug ?? null;
+}
+
+// สิ่งที่ควรทำต่อ: การ์ดแรกที่ยังไม่เข้าใจ (ตามลำดับขั้น) · ยังไม่เริ่มเลย = ขั้น 1 · ครบแล้ว card = null
+// แผนที่ (/learn) และหน้าวันนี้ (/today) ใช้ตัวเดียวกัน ปุ่ม "ทำต่อ" จึงพาไปที่เดียวกันเสมอ
+export function nextUp(done: ReadonlySet<string>) {
+  const started = cards.some((c) => done.has(cardUrl(c.slug)));
+  const card = cards.find((c) => !done.has(cardUrl(c.slug))) ?? null;
+  return { started, card, step: started && card ? stepBySlug(card.step) : steps[0] };
 }
 
 // การ์ดก่อน/ถัดไปในขั้นเดียวกัน (สุดทางแล้วพากลับหน้าขั้น)

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync } from "node:fs";
 import { setProgressSchema } from "../../server/validators/progress.validator";
-import { cardByUrl, cards, learnLinks, legacy, neighbors, steps, stepOfUrl } from "./learn";
+import { cardByUrl, cards, cardUrl, learnLinks, legacy, neighbors, nextUp, steps, stepOfUrl } from "./learn";
 
 describe("โครง 7 ขั้น", () => {
   test("ทุกขั้นและทุกการ์ดมีไฟล์เนื้อหาจริง (ลืมสร้างไฟล์ = ลิงก์ไปหน้า 404)", () => {
@@ -32,5 +32,19 @@ describe("โครง 7 ขั้น", () => {
     expect(neighbors(first).prev).toBeNull();
     expect(neighbors(first).next?.slug).toBe("postgres");
     expect(neighbors(last).next).toBeNull();
+  });
+
+  test("ทำต่อ: ยังไม่เริ่ม = ขั้น 1 · เริ่มแล้ว = การ์ดแรกที่ยังไม่เข้าใจ · ครบแล้ว = ไม่มีการ์ด", () => {
+    const fresh = nextUp(new Set());
+    expect(fresh.started).toBe(false);
+    expect(fresh.step.slug).toBe("problem");
+
+    const some = nextUp(new Set([cardUrl("sql-basics")]));
+    expect(some.started).toBe(true);
+    expect(some.card?.slug).toBe("postgres");
+    expect(some.step.slug).toBe("coding");
+
+    const all = nextUp(new Set(learnLinks));
+    expect(all.card).toBeNull();
   });
 });

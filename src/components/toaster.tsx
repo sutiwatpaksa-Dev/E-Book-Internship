@@ -15,7 +15,7 @@ const LOOK: Record<Toast["tone"], { icon: typeof Info; className: string }> = {
 export function Toaster() {
   const toasts = useToasts();
   return (
-    <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-4 bottom-4 z-[60] flex flex-col items-center gap-2 sm:inset-x-auto sm:end-4 sm:items-end">
+    <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-4 bottom-20 z-[60] md:bottom-4 flex flex-col items-center gap-2 sm:inset-x-auto sm:end-4 sm:items-end">
       {toasts.map((t) => {
         const { icon: Icon, className } = LOOK[t.tone];
         return (

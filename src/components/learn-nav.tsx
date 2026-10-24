@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Check, ChevronRight, Map } from "lucide-react";
+import { BookOpen, Check, ChevronRight, LayoutGrid, Map } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cardUrl, cards, cardsOf, LEARN_BASE, legacyOf, steps, stepOfUrl, stepUrl } from "@/data/learn";
@@ -88,9 +88,13 @@ export function LearnNav({ onNavigate }: { onNavigate?: () => void }) {
       })}
 
       <div className="mx-2 my-2.5 h-px bg-fd-border" />
-      <Link href="/" onClick={onNavigate} className="flex min-h-9 items-center gap-2 rounded-md px-2 py-1 text-fd-muted-foreground hover:bg-fd-accent">
-        <ArrowLeft className="size-4" />
-        กลับคู่มือแบบเดิม
+      <Link href="/learn/cards" onClick={onNavigate} className="flex min-h-9 items-center gap-2 rounded-md px-2 py-1 text-fd-muted-foreground hover:bg-fd-accent">
+        <LayoutGrid className="size-4" />
+        คลังการ์ด
+      </Link>
+      <Link href="/learn/cards#full" onClick={onNavigate} className="flex min-h-9 items-center gap-2 rounded-md px-2 py-1 text-fd-muted-foreground hover:bg-fd-accent">
+        <BookOpen className="size-4" />
+        บทเรียนฉบับเต็ม (แบบเดิม)
       </Link>
     </nav>
   );

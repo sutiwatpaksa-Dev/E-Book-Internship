@@ -55,11 +55,15 @@ describe("buildNav", () => {
 
 describe("sectionOf / stageOf", () => {
   test("บอกหมวดของหน้าได้ถูก", () => {
-    expect(sectionOf(nav, "/")).toBe("roadmap");
-    expect(sectionOf(nav, "/03-node-yarn-bun")).toBe("learn");
-    expect(sectionOf(nav, "/react-language")).toBe("learn");
+    expect(sectionOf(nav, "/today")).toBe("today");
+    expect(sectionOf(nav, "/learn")).toBe("path");
+    expect(sectionOf(nav, "/learn/coding")).toBe("path");
+    expect(sectionOf(nav, "/learn/cards")).toBe("cards");
+    expect(sectionOf(nav, "/learn/cards/migration")).toBe("cards");
+    expect(sectionOf(nav, "/03-node-yarn-bun")).toBe("cards");
+    expect(sectionOf(nav, "/react-language")).toBe("cards");
     expect(sectionOf(nav, "/starter/timeline")).toBe("project");
-    expect(sectionOf(nav, "/glossary")).toBe("ref");
+    expect(sectionOf(nav, "/glossary")).toBe("cards");
     expect(sectionOf(nav, "/login")).toBeNull();
   });
   test("หาด่านของหน้า", () => {

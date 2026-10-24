@@ -20,7 +20,8 @@ export type NavStage = {
   items: NavItem[];
 };
 
-export type NavSection = "roadmap" | "learn" | "project" | "ref" | "path";
+// เมนูหลัก 4 หมวด (ดู section-links.tsx) · บทเรียนเดิมและหน้าอ้างอิงนับเป็น "คลังการ์ด" เพราะใช้หยิบอ่านตอนต้องการ
+export type NavSection = "today" | "path" | "cards" | "project";
 
 export type NavModel = {
   home: NavItem | null;
@@ -31,6 +32,8 @@ export type NavModel = {
 
 const REF_SEPARATOR = "อ้างอิง";
 const PROJECT_URL = "/starter";
+export const TODAY_URL = "/today";
+export const CARDS_URL = "/learn/cards";
 
 const text = (name: unknown) => (typeof name === "string" ? name : "");
 // ตัดอีโมจิหน้าชื่อ ("📖 ศัพท์ที่ต้องรู้") และ 🔒 ท้ายชื่อ เมนูใช้ไอคอนของตัวเองแทน
@@ -89,11 +92,12 @@ export function buildNav(tree: PageTree.Root, extraLinks: string[]): NavModel {
 
 // หน้านี้อยู่หมวดไหนของเมนูบน (ใช้ไฮไลต์ลิงก์ใน headbar)
 export function sectionOf(model: NavModel, url: string): NavSection | null {
-  if (url === model.home?.url) return "roadmap";
+  if (url === TODAY_URL) return "today";
+  if (url === CARDS_URL || url.startsWith(`${CARDS_URL}/`)) return "cards";
   if (url === "/learn" || url.startsWith("/learn/")) return "path";
   if (url === PROJECT_URL || url.startsWith(`${PROJECT_URL}/`)) return "project";
-  if (model.refs.some((r) => r.url === url)) return "ref";
-  if (model.extras.some((x) => x.url === url) || model.stages.some((s) => s.items.some((i) => i.url === url))) return "learn";
+  if (model.refs.some((r) => r.url === url)) return "cards";
+  if (model.extras.some((x) => x.url === url) || model.stages.some((s) => s.items.some((i) => i.url === url))) return "cards";
   return null;
 }
 

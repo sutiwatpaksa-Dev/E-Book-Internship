@@ -2,6 +2,7 @@ import defaultMdxComponents from "fumadocs-ui/mdx";
 import type { MDXComponents } from "mdx/types";
 import type { ComponentProps } from "react";
 import { Hint } from "./hint";
+import { CardLibrary } from "./card-library";
 import { LearnMap } from "./learn-map";
 import { LearningRoadmap } from "./learning-roadmap";
 import { StepCards } from "./step-cards";
@@ -17,7 +18,7 @@ function Anchor(props: ComponentProps<"a">) {
 
 // component ที่เรียกใช้ในไฟล์ .mdx ได้ เช่น <LearningRoadmap /> ในหน้าแรก, <ToolTable group="..." /> ในบทเรียน
 export function getMDXComponents(components?: MDXComponents) {
-  return { ...defaultMdxComponents, a: Anchor, Hint, LearnMap, LearningRoadmap, StepCards, ToolTable, ...components } satisfies MDXComponents;
+  return { ...defaultMdxComponents, a: Anchor, CardLibrary, Hint, LearnMap, LearningRoadmap, StepCards, ToolTable, ...components } satisfies MDXComponents;
 }
 
 declare global {

@@ -1,5 +1,6 @@
 import { NavProvider } from "@/components/nav-provider";
 import { RequirementViewer } from "@/components/requirement-viewer";
+import { BottomNav, BottomNavSpacer } from "@/components/section-links";
 import { SiteDocsLayout } from "@/components/site-docs-layout";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -21,6 +22,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <RequirementViewer />
       </SiteDocsLayout>
       <SiteFooter version={version} />
+      <BottomNavSpacer />
+      <BottomNav />
     </NavProvider>
   );
 }

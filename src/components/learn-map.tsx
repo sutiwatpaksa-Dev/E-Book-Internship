@@ -1,16 +1,15 @@
 "use client";
 
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { cardUrl, cards, cardsOf, steps, stepUrl, type LearnCard } from "@/data/learn";
+import { cardUrl, cardsOf, nextUp, steps, stepUrl, type LearnCard } from "@/data/learn";
 import { useProgress } from "@/hooks/use-progress";
 
-// แผนที่ 7 ขั้น (หน้า /learn): ปุ่ม "ทำต่อ" + ขั้นทั้ง 7 พร้อมความคืบหน้า + คลังการ์ดทั้งหมด
+// แผนที่ 7 ขั้น (หน้า /learn): ปุ่ม "ทำต่อ" + ขั้นทั้ง 7 พร้อมความคืบหน้า + ทางไปคลังการ์ด
 // น้องควรรู้ภายใน 5 วินาทีว่าอยู่ตรงไหนและต้องทำอะไรต่อ จึงวางปุ่มทำต่อไว้บนสุด
 export function LearnMap() {
   const { done } = useProgress();
-  const next = cards.find((c) => !done.has(cardUrl(c.slug))) ?? null;
-  const started = cards.some((c) => done.has(cardUrl(c.slug)));
+  const { started, card: next } = nextUp(done);
 
   return (
     <div className="not-prose my-6 flex flex-col gap-8">
@@ -44,17 +43,10 @@ export function LearnMap() {
         })}
       </ol>
 
-      <section aria-labelledby="library-title" className="flex flex-col gap-3">
-        <h2 id="library-title" className="text-lg font-semibold">
-          คลังการ์ดความรู้
-        </h2>
-        <p className="text-sm text-fd-muted-foreground">ไม่ต้องอ่านตามลำดับก็ได้ ต้องใช้เรื่องไหนเปิดเรื่องนั้น (หรือกดค้นหาที่แถบบน)</p>
-        <ul className="grid gap-2 sm:grid-cols-2">
-          {cards.map((c) => (
-            <CardLink key={c.slug} card={c} done={done.has(cardUrl(c.slug))} />
-          ))}
-        </ul>
-      </section>
+      <Link href="/learn/cards" className="inline-flex min-h-11 items-center gap-1.5 self-start font-medium text-fd-primary hover:underline">
+        เปิดคลังการ์ดทั้งหมด (ไม่ต้องอ่านเรียง ต้องใช้เรื่องไหนเปิดเรื่องนั้น)
+        <ArrowRight className="size-4" />
+      </Link>
     </div>
   );
 }
@@ -70,27 +62,5 @@ function ContinueBox({ next, finished }: { next: LearnCard | null; finished: boo
       {label}
       <ArrowRight className="size-5 shrink-0" />
     </Link>
-  );
-}
-
-function CardLink({ card, done }: { card: LearnCard; done: boolean }) {
-  const step = steps.find((s) => s.slug === card.step)!;
-  return (
-    <li>
-      <Link href={cardUrl(card.slug)} className="flex min-h-12 items-center gap-3 rounded-lg border px-3 py-2 hover:bg-fd-accent">
-        <span
-          className={`flex size-5 shrink-0 items-center justify-center rounded-full border ${done ? "border-fd-primary bg-fd-primary text-fd-primary-foreground" : "border-fd-border"}`}
-        >
-          {done && <Check aria-label="เข้าใจแล้ว" className="size-3" strokeWidth={3} />}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-sm font-medium">{card.title}</span>
-          <span className="block text-xs text-fd-muted-foreground">
-            {step.name}
-            {card.part ? ` › ${card.part}` : ""} · {card.minutes} นาที
-          </span>
-        </span>
-      </Link>
-    </li>
   );
 }
