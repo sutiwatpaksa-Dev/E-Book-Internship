@@ -57,6 +57,12 @@ export const cards: LearnCard[] = [
   { slug: "hono", title: "Hono", step: "coding", part: "API", minutes: 10, needs: ["http-rest"] },
   { slug: "validation", title: "ตรวจข้อมูลขาเข้าด้วย Zod", step: "coding", part: "API", minutes: 8, needs: ["hono"] },
   { slug: "api-testing", title: "ยิงทดสอบ API", step: "coding", part: "API", minutes: 8, alsoIn: ["testing"], needs: ["http-rest"] },
+  { slug: "react-components", title: "React: Component และ Props", step: "coding", part: "Frontend", minutes: 10 },
+  { slug: "react-state", title: "React: State และ useEffect", step: "coding", part: "Frontend", minutes: 10, needs: ["react-components"] },
+  { slug: "fetch-data", title: "หน้าเว็บดึงข้อมูลจาก API", step: "coding", part: "Frontend", minutes: 8, needs: ["react-state", "http-rest"] },
+  { slug: "react-forms", title: "ฟอร์ม: กรอก ตรวจ ส่ง", step: "coding", part: "Frontend", minutes: 8, needs: ["fetch-data"] },
+  { slug: "tailwind", title: "Tailwind และออกแบบมือถือก่อน", step: "coding", part: "Frontend", minutes: 8, alsoIn: ["design"], needs: ["react-components"] },
+  { slug: "router-seo", title: "หลายหน้า (React Router) และ SEO", step: "coding", part: "Frontend", minutes: 10, needs: ["react-components"] },
 ];
 
 export const legacy: LegacyLink[] = [
@@ -65,9 +71,6 @@ export const legacy: LegacyLink[] = [
   { step: "design", title: "จัดโครงสร้างโปรเจกต์", link: "/project-structure" },
   { step: "coding", part: "DB", title: "เก็บรูปภาพคู่กับฐานข้อมูล", link: "/08c-image-storage" },
   { step: "coding", part: "API", title: "ระบบ login", link: "/15-auth" },
-  { step: "coding", part: "Frontend", title: "สร้างหน้าเว็บด้วย React", link: "/11-react" },
-  { step: "coding", part: "Frontend", title: "Tailwind", link: "/12-tailwind" },
-  { step: "coding", part: "Frontend", title: "หลายหน้า + SEO", link: "/13-router-seo" },
   { step: "testing", title: "Debugging", link: "/09-debugging" },
   { step: "deploy", title: "เน็ตเวิร์กพื้นฐาน", link: "/17-network" },
   { step: "deploy", title: "Domain และ DNS", link: "/18-domain-dns" },

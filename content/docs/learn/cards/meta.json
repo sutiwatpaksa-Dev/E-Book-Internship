@@ -12,6 +12,12 @@
     "http-rest",
     "hono",
     "validation",
-    "api-testing"
+    "api-testing",
+    "react-components",
+    "react-state",
+    "fetch-data",
+    "react-forms",
+    "tailwind",
+    "router-seo"
   ]
 }
