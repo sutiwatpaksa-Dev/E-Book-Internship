@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { setProgressSchema } from "../../server/validators/progress.validator";
 import { cardByUrl, cards, cardsOf, cardUrl, learnLinks, legacy, neighbors, nextUp, steps, stepOfUrl } from "./learn";
 
@@ -30,6 +30,11 @@ describe("โครง 7 ขั้น", () => {
         expect(at, `${need} ต้องมาก่อน ${c.slug}`).toBeLessThan(i);
       }
     });
+  });
+
+  test("meta.json ของคลังการ์ดเรียงเหมือน learn.ts (หน้าค้นหาและสารบัญของ Fumadocs จะได้ลำดับเดียวกัน)", () => {
+    const meta = JSON.parse(readFileSync("content/docs/learn/cards/meta.json", "utf8")) as { pages: string[] };
+    expect(meta.pages.filter((p) => p !== "index")).toEqual(cards.map((c) => c.slug));
   });
 
   test("การ์ดในขั้นเดียวกันเรียงตามลำดับช่วง", () => {

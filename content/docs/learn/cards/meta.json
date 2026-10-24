@@ -2,22 +2,22 @@
   "title": "คลังการ์ด",
   "pages": [
     "index",
-    "sql-basics",
     "postgres",
+    "sql-basics",
     "orm-query-builder",
     "drizzle-orm",
     "migration",
-    "layers",
-    "error-handling",
     "http-rest",
     "hono",
     "validation",
+    "layers",
+    "error-handling",
     "api-testing",
     "react-components",
+    "tailwind",
     "react-state",
     "fetch-data",
     "react-forms",
-    "tailwind",
     "router-seo"
   ]
 }
