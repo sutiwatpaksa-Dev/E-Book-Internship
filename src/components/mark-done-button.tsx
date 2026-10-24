@@ -4,7 +4,7 @@ import { Check } from "lucide-react";
 import { useProgress } from "@/hooks/use-progress";
 
 // ปุ่มใต้ชื่อบท: ติ๊กว่าผ่านบทนี้แล้ว (ค่าเดียวกับติ๊กบนหน้าแรกและป้ายใน sidebar)
-export function MarkDoneButton({ link, label = "ผ่านบทนี้แล้ว" }: { link: string; label?: string }) {
+export function MarkDoneButton({ link, label = "ผ่านบทนี้แล้ว", size = "md" }: { link: string; label?: string; size?: "md" | "lg" }) {
   const { done, toggle } = useProgress();
   const isDone = done.has(link);
   return (
@@ -12,7 +12,7 @@ export function MarkDoneButton({ link, label = "ผ่านบทนี้แ�
       type="button"
       aria-pressed={isDone}
       onClick={() => toggle(link)}
-      className={`not-prose inline-flex h-10 w-fit items-center gap-2 rounded-lg border border-fd-primary px-4 text-sm font-medium transition-colors ${
+      className={`not-prose inline-flex w-fit items-center gap-2 border border-fd-primary font-medium transition-colors ${size === "lg" ? "min-h-12 rounded-xl px-6 text-base" : "h-10 rounded-lg px-4 text-sm"} ${
         isDone ? "bg-fd-primary text-fd-primary-foreground hover:opacity-90" : "text-fd-primary hover:bg-fd-primary/10"
       }`}
     >

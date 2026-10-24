@@ -1,6 +1,7 @@
 import { ArrowLeft, ArrowRight, Clock } from "lucide-react";
 import Link from "next/link";
-import { cardUrl, neighbors, stepBySlug, stepUrl, type LearnCard } from "@/data/learn";
+import { cards, cardUrl, neighbors, stepBySlug, stepUrl, type LearnCard } from "@/data/learn";
+import { CardStatus } from "./card-done";
 
 // หัวการ์ด: อยู่ขั้นไหน › ช่วงไหน, เวลาอ่าน, และขั้นอื่นที่ใช้การ์ดนี้ด้วย
 export function CardHeader({ card }: { card: LearnCard }) {
@@ -27,7 +28,21 @@ export function CardHeader({ card }: { card: LearnCard }) {
           <Clock className="size-3.5" /> อ่านประมาณ {card.minutes} นาที
         </span>
         {card.alsoIn && <span>ใช้ในขั้น: {[card.step, ...card.alsoIn].map((s) => stepBySlug(s).name).join(", ")}</span>}
+        <CardStatus link={cardUrl(card.slug)} />
       </p>
+      {card.needs && (
+        <p className="flex flex-wrap items-center gap-x-2">
+          อ่านก่อน:
+          {card.needs.map((slug) => {
+            const need = cards.find((c) => c.slug === slug)!;
+            return (
+              <Link key={slug} href={cardUrl(slug)} className="font-medium text-fd-primary hover:underline">
+                {need.title}
+              </Link>
+            );
+          })}
+        </p>
+      )}
     </div>
   );
 }

@@ -28,6 +28,8 @@ export type LearnCard = {
   minutes: number;
   // ขั้นอื่นที่ใช้การ์ดนี้ด้วย (การ์ดมีหน้าเดียว แต่บอกว่าใช้ที่ไหนบ้าง)
   alsoIn?: StepSlug[];
+  // การ์ดที่ควรอ่านก่อน (slug) · แสดงเป็นลิงก์บนหัวการ์ด
+  needs?: string[];
 };
 
 // บทเดิมที่ยังไม่ได้แปลงเป็นการ์ด แสดงในขั้นที่เกี่ยวข้องพร้อมป้าย "บทเดิม" จนกว่าจะแปลงเสร็จ
@@ -46,9 +48,9 @@ export const steps: LearnStep[] = [
 export const cards: LearnCard[] = [
   { slug: "sql-basics", title: "SQL ที่ใช้บ่อย", step: "coding", part: "DB", minutes: 10, alsoIn: ["design"] },
   { slug: "postgres", title: "Postgres และที่ที่มันรัน", step: "coding", part: "DB", minutes: 8, alsoIn: ["deploy"] },
-  { slug: "orm-query-builder", title: "ORM กับ Query Builder", step: "coding", part: "DB", minutes: 8 },
-  { slug: "drizzle-orm", title: "Drizzle ORM", step: "coding", part: "DB", minutes: 10 },
-  { slug: "migration", title: "Migration", step: "coding", part: "DB", minutes: 8, alsoIn: ["deploy"] },
+  { slug: "orm-query-builder", title: "ORM กับ Query Builder", step: "coding", part: "DB", minutes: 8, needs: ["sql-basics"] },
+  { slug: "drizzle-orm", title: "Drizzle ORM", step: "coding", part: "DB", minutes: 10, needs: ["orm-query-builder"] },
+  { slug: "migration", title: "Migration", step: "coding", part: "DB", minutes: 8, alsoIn: ["deploy"], needs: ["sql-basics"] },
 ];
 
 export const legacy: LegacyLink[] = [
