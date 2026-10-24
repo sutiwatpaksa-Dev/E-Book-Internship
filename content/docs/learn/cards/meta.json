@@ -1,0 +1,4 @@
+{
+  "title": "การ์ดความรู้",
+  "pages": ["sql-basics", "postgres", "orm-query-builder", "drizzle-orm", "migration"]
+}

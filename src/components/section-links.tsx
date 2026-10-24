@@ -19,6 +19,8 @@ function useSections() {
 
   const sections: { id: NavSection; label: string; href: string }[] = [
     { id: "roadmap", label: "Roadmap", href: nav.home?.url ?? "/" },
+    // โครงใหม่แบบ 7 ขั้น (ทดลองอยู่) ใช้คู่กับบทเดิมไปก่อนจนแปลงเนื้อหาครบ
+    { id: "path", label: "7 ขั้น (ใหม่)", href: "/learn" },
     { id: "learn", label: "บทเรียน", href: firstChapter },
     { id: "project", label: "Mini Project", href: "/starter" },
     { id: "ref", label: "อ้างอิง", href: nav.refs[0]?.url ?? "/" },

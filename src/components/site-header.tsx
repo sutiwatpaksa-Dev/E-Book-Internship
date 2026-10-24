@@ -5,6 +5,7 @@ import { ThemeSwitch } from "fumadocs-ui/layouts/shared/slots/theme-switch";
 import { Menu, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { stepBySlug, stepOfUrl } from "@/data/learn";
 import { useNavDrawer } from "@/hooks/use-nav-drawer";
 import { sectionOf, stageOf } from "@/lib/nav-tree";
 import { AccountMenu } from "./account-menu";
@@ -93,7 +94,18 @@ function WhereAmI() {
   const chapterIndex = chapters.findIndex((i) => i.url === pathname);
   const inStage = stage?.items.findIndex((i) => i.url === pathname) ?? -1;
 
-  const label = stage ? `${stage.kicker} · ${stage.name}` : section === "ref" ? "อ้างอิง" : section === "learn" ? "บทเสริม" : "หน้าแรก · Roadmap";
+  const step = section === "path" ? stepOfUrl(pathname) : null;
+  const label = stage
+    ? `${stage.kicker} · ${stage.name}`
+    : section === "path"
+      ? step
+        ? `ขั้น ${stepBySlug(step).num} · ${stepBySlug(step).name}`
+        : "แผนที่ 7 ขั้น"
+      : section === "ref"
+        ? "อ้างอิง"
+        : section === "learn"
+          ? "บทเสริม"
+          : "หน้าแรก · Roadmap";
   // "บทที่ 8 · 9/24" = เลขบท และลำดับในเล่ม (บทที่ 0 นับเป็นบทแรก)
   const position =
     chapterIndex >= 0

@@ -4,7 +4,9 @@ import { ThemeSwitch } from "fumadocs-ui/layouts/shared/slots/theme-switch";
 import { X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
+import { LEARN_BASE } from "@/data/learn";
 import { useNavDrawer } from "@/hooks/use-nav-drawer";
+import { LearnNav } from "./learn-nav";
 import { useSite } from "./nav-provider";
 import { SectionLinks } from "./section-links";
 import { BookProgress, HomeLink, SidebarNav } from "./sidebar-nav";
@@ -12,18 +14,27 @@ import { BookProgress, HomeLink, SidebarNav } from "./sidebar-nav";
 // แทน sidebar เดิมของ Fumadocs (ช่อง slots.sidebar.root) วางในคอลัมน์ซ้ายของ grid ที่ Fumadocs จัดไว้
 // id="nd-sidebar" คงไว้ เพราะแผง Requirement ใช้วัดความกว้างของแถบซ้าย
 export function SiteSidebar() {
+  const learn = useInLearn();
   return (
     <>
       <div className="sticky top-(--fd-docs-row-1) z-20 h-[calc(var(--fd-docs-height)-var(--fd-docs-row-1))] [grid-area:sidebar] max-md:hidden">
         <aside id="nd-sidebar" aria-label="สารบัญคู่มือ" className="absolute inset-y-0 start-0 flex w-full flex-col items-end border-e border-fd-border bg-fd-card">
           <div className="flex h-full w-(--fd-sidebar-width) flex-col overflow-y-auto overscroll-contain">
-            <div className="flex flex-col gap-3 px-3 pt-4 pb-1">
-              <HomeLink />
-              <BookProgress />
-            </div>
-            <div className="px-3 pt-2 pb-6">
-              <SidebarNav />
-            </div>
+            {learn ? (
+              <div className="px-3 pt-4 pb-6">
+                <LearnNav />
+              </div>
+            ) : (
+              <>
+                <div className="flex flex-col gap-3 px-3 pt-4 pb-1">
+                  <HomeLink />
+                  <BookProgress />
+                </div>
+                <div className="px-3 pt-2 pb-6">
+                  <SidebarNav />
+                </div>
+              </>
+            )}
           </div>
         </aside>
       </div>
@@ -32,11 +43,18 @@ export function SiteSidebar() {
   );
 }
 
+// หน้าในโครงใหม่ 7 ขั้น (/learn) ใช้ sidebar ของตัวเอง ที่เหลือใช้สารบัญบทเรียนเดิม
+function useInLearn() {
+  const pathname = usePathname();
+  return pathname === LEARN_BASE || pathname.startsWith(`${LEARN_BASE}/`);
+}
+
 // ลิ้นชักเมนูบนมือถือ เปิดจากปุ่ม ☰ ใน headbar เลือกบทแล้วปิดเอง
 function NavDrawer() {
   const { open, setOpen } = useNavDrawer();
   const { version } = useSite();
   const pathname = usePathname();
+  const learn = useInLearn();
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => setOpen(false), [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -70,10 +88,16 @@ function NavDrawer() {
           <div className="flex flex-wrap gap-1.5 pb-3">
             <SectionLinks variant="pills" />
           </div>
-          <div className="mb-3">
-            <BookProgress />
-          </div>
-          <SidebarNav onNavigate={close} />
+          {learn ? (
+            <LearnNav onNavigate={close} />
+          ) : (
+            <>
+              <div className="mb-3">
+                <BookProgress />
+              </div>
+              <SidebarNav onNavigate={close} />
+            </>
+          )}
         </div>
         <div className="flex shrink-0 items-center justify-between border-t border-fd-border px-4 py-2.5 text-xs text-fd-muted-foreground">
           <span>v{version}</span>

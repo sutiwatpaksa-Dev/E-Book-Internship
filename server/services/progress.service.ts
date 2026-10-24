@@ -1,8 +1,9 @@
+import { learnLinks } from "../../src/data/learn";
 import { extraLinks, requiredLinks } from "../../src/data/roadmap";
 import { progressRepository } from "../repositories/progress.repository";
 
-// รับเฉพาะบทที่มีจริงในแผนที่ กันคนยิง API ใส่ข้อความอะไรก็ได้ลงตาราง
-const KNOWN = new Set([...requiredLinks, ...extraLinks]);
+// รับเฉพาะบทที่มีจริงในแผนที่ (และการ์ดของโครงใหม่ 7 ขั้น) กันคนยิง API ใส่ข้อความอะไรก็ได้ลงตาราง
+const KNOWN = new Set([...requiredLinks, ...extraLinks, ...learnLinks]);
 
 export const progressService = {
   listMine: (userId: number) => progressRepository.listByUser(userId),

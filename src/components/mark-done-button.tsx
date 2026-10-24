@@ -4,7 +4,7 @@ import { Check } from "lucide-react";
 import { useProgress } from "@/hooks/use-progress";
 
 // ปุ่มใต้ชื่อบท: ติ๊กว่าผ่านบทนี้แล้ว (ค่าเดียวกับติ๊กบนหน้าแรกและป้ายใน sidebar)
-export function MarkDoneButton({ link }: { link: string }) {
+export function MarkDoneButton({ link, label = "ผ่านบทนี้แล้ว" }: { link: string; label?: string }) {
   const { done, toggle } = useProgress();
   const isDone = done.has(link);
   return (
@@ -17,7 +17,7 @@ export function MarkDoneButton({ link }: { link: string }) {
       }`}
     >
       <Check className="size-4" strokeWidth={2.5} />
-      {isDone ? "ผ่านบทนี้แล้ว (กดอีกครั้งเพื่อยกเลิก)" : "ผ่านบทนี้แล้ว"}
+      {isDone ? `${label} (กดอีกครั้งเพื่อยกเลิก)` : label}
     </button>
   );
 }

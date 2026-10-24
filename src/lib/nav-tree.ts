@@ -20,7 +20,7 @@ export type NavStage = {
   items: NavItem[];
 };
 
-export type NavSection = "roadmap" | "learn" | "project" | "ref";
+export type NavSection = "roadmap" | "learn" | "project" | "ref" | "path";
 
 export type NavModel = {
   home: NavItem | null;
@@ -90,6 +90,7 @@ export function buildNav(tree: PageTree.Root, extraLinks: string[]): NavModel {
 // หน้านี้อยู่หมวดไหนของเมนูบน (ใช้ไฮไลต์ลิงก์ใน headbar)
 export function sectionOf(model: NavModel, url: string): NavSection | null {
   if (url === model.home?.url) return "roadmap";
+  if (url === "/learn" || url.startsWith("/learn/")) return "path";
   if (url === PROJECT_URL || url.startsWith(`${PROJECT_URL}/`)) return "project";
   if (model.refs.some((r) => r.url === url)) return "ref";
   if (model.extras.some((x) => x.url === url) || model.stages.some((s) => s.items.some((i) => i.url === url))) return "learn";

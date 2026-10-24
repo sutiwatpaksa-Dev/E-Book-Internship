@@ -1,0 +1,67 @@
+---
+title: "Drizzle ORM"
+---
+
+## ความหมาย
+
+Drizzle คือ library ภาษา TypeScript ที่ให้เรา **ประกาศหน้าตาตารางเป็นโค้ด** แล้วใช้โค้ดนั้นทั้งสร้างตาราง (ผ่าน migration) และเขียนคำสั่งดึงข้อมูลที่มี type ถูกต้อง ไฟล์ schema ไฟล์เดียวจึงเป็น "ความจริงหนึ่งเดียว" ของหน้าตาฐานข้อมูล
+
+## ที่มา
+
+ORM รุ่นก่อนหลายตัวซ่อน SQL ไว้จนคนใช้ไม่รู้ว่าเกิดอะไรขึ้น และต้องมีขั้นตอนสร้างโค้ดแยก Drizzle เกิดขึ้นช่วงปี 2022 ด้วยแนวคิด "ถ้ารู้ SQL ก็ใช้ Drizzle เป็น" คำสั่งหน้าตาเหมือน SQL ตัวเล็ก ไม่ต้องสร้างโค้ดเพิ่ม และ type มาจาก schema โดยตรง
+
+## การใช้งาน
+
+ประกาศตาราง (ห้องสมุด):
+
+```ts
+import { integer, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+
+export const books = pgTable("books", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+});
+export const loans = pgTable("loans", {
+  id: serial("id").primaryKey(),
+  bookId: integer("book_id").notNull().references(() => books.id),
+  returnedAt: timestamp("returned_at", { withTimezone: true }),
+});
+```
+
+ดึงการยืมที่ยังไม่คืน:
+
+```ts
+const open = await db.select().from(loans).where(isNull(loans.returnedAt));
+```
+
+`open` มี type เป็น "รายการแถวของ loans" ให้เอง พิมพ์ `open[0].returndAt` (สะกดผิด) editor ขีดแดงทันที
+
+## ทริคที่แนะนำ
+
+1. **ชื่อในโค้ดกับชื่อในฐานข้อมูลแยกกันได้:** โค้ดใช้ `bookId` ฐานข้อมูลใช้ `book_id` ตามธรรมเนียมของแต่ละฝั่ง
+2. **ดึง type ของแถวจาก schema** ด้วย `typeof books.$inferSelect` ไม่ต้องเขียน type ซ้ำเอง
+3. **เปิดดูข้อมูลในฐานแบบหน้าเว็บ** ด้วย `npx drizzle-kit studio` (ใช้ได้ทั้ง Windows และ Mac)
+
+## ปรับไปใช้จริง
+
+เว็บคู่มือนี้ใช้ Drizzle จริง ไฟล์ schema อยู่ที่ `server/db/schema.ts` และ **มีแค่ไฟล์ในโฟลเดอร์ `server/repositories/` ที่เรียก `db`** ไฟล์อื่นต้องเรียกผ่าน repository ทำให้รู้เสมอว่าโค้ดคุยกับฐานข้อมูลตรงไหน (ดูเหตุผลของการแบ่งชั้นในบทเดิม [จากแบบฐานข้อมูลสู่ Backend](/08b-db-to-backend))
+
+> ตอนเขียนการ์ดนี้ `npm install drizzle-orm` ได้รุ่น 0.45 ส่วนรุ่น 1.0 ยังเป็นรุ่นทดสอบ ซึ่งเขียนความสัมพันธ์และ `db.query` ต่างออกไป ถ้าติดตั้งได้ 1.x ให้ดูเอกสารของรุ่นนั้นที่ [orm.drizzle.team](https://orm.drizzle.team)
+
+ลองคิด: ถ้าทุกไฟล์เรียก `db` ได้เอง แล้ววันหนึ่งต้องเปลี่ยนชื่อตาราง ต้องไล่แก้กี่ที่
+
+## ตัวเลือกอื่นที่คล้ายกัน
+
+<ToolTable group="orm-orm" />
+
+## ลองเอง
+
+**โจทย์:** เพิ่มตาราง `members` แล้วทำให้การยืมแต่ละครั้งรู้ว่าใครเป็นคนยืม จากนั้นดึง "ชื่อสมาชิก + ชื่อหนังสือ" ของการยืมที่ยังไม่คืน
+
+<Hint level={1}>`loans` ต้องมีคอลัมน์ใหม่ที่ชี้ไปหา `members` แบบเดียวกับที่ `bookId` ชี้ไปหา `books`</Hint>
+<Hint level={2}>ดึงข้อมูลจาก 3 ตารางพร้อมกันใช้ `.innerJoin(ตาราง, eq(คอลัมน์, คอลัมน์))` ต่อกัน 2 ครั้ง</Hint>
+<Hint level={3}>โครง: `db.select({ name: ..., title: ... }).from(loans).innerJoin(...).innerJoin(...).where(...)` เติมช่องเอง แล้วอย่าลืมสร้าง migration ให้ตารางใหม่</Hint>
+
+## อ่านเพิ่ม
+
+ตั้งโปรเจกต์ Drizzle ตั้งแต่ศูนย์และ seed ข้อมูล อยู่ในบทเดิม [ORM, Query Builder & Migration](/08-orm)
