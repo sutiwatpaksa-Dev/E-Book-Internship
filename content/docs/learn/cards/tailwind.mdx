@@ -4,7 +4,9 @@ title: "Tailwind และออกแบบมือถือก่อน"
 
 ## ความหมาย
 
-Tailwind คือการตกแต่งหน้าเว็บด้วย **คลาสสั้นๆ ที่ทำงานอย่างเดียว** ใส่ตรงในแท็ก เช่น `p-4` (ระยะขอบใน), `rounded-xl` (มุมมน), `text-lg` (ตัวใหญ่) ไม่ต้องเขียนไฟล์ CSS แยกแล้วคิดชื่อคลาสเอง และแต่ละคลาสเติมคำนำหน้าบอกขนาดจอได้ เช่น `md:grid-cols-2`
+[Tailwind](/glossary#tailwind) คือการตกแต่งหน้าเว็บด้วย **คลาสสั้นๆ ที่ทำงานอย่างเดียว** ใส่ตรงในแท็ก เช่น `p-4` (ระยะขอบใน), `rounded-xl` (มุมมน), `text-lg` (ตัวใหญ่) ไม่ต้องเขียนไฟล์ CSS แยกแล้วคิดชื่อคลาสเอง และแต่ละคลาสเติมคำนำหน้าบอกขนาดจอได้ ([breakpoint](/glossary#breakpoint)) เช่น `md:grid-cols-2`
+
+**นึกภาพ:** ตัวต่อเลโก้ แต่ละชิ้นทำได้อย่างเดียว (สี, ระยะ, มุม) เอามาต่อกันในแท็กจนได้หน้าตาที่ต้องการ ไม่ต้องหล่อชิ้นใหม่เอง
 
 ## ที่มา
 
@@ -12,7 +14,27 @@ Tailwind คือการตกแต่งหน้าเว็บด้ว�
 
 ## การใช้งาน
 
-**สีและฟอนต์ของโปรเจกต์อยู่ที่เดียว** ใน CSS หลัก (Tailwind รุ่น 4)
+### ตั้งค่าครั้งแรก (ในโฟลเดอร์ `client/` จากการ์ด [React: Component](/learn/cards/react-components))
+
+```bash
+bun add tailwindcss @tailwindcss/vite
+```
+
+เพิ่ม plugin ใน `client/vite.config.ts`
+
+```ts
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
+});
+```
+
+ลบไฟล์ `src/App.css` ทิ้ง (และบรรทัด `import "./App.css"` ใน `App.tsx` ถ้ามี) แล้วแทนที่ `src/index.css` ทั้งไฟล์ด้วยข้างล่าง (`main.tsx` import ไฟล์นี้อยู่แล้ว)
+
+**สีและฟอนต์ของโปรเจกต์อยู่ที่เดียว** (Tailwind รุ่น 4)
 
 ```css
 @import "tailwindcss";
@@ -35,7 +57,15 @@ Tailwind คือการตกแต่งหน้าเว็บด้ว�
 </ul>
 ```
 
-มือถือเห็น 1 คอลัมน์ จอ 768px ขึ้นไปเห็น 2 จอ 1024px ขึ้นไปเห็น 3
+มือถือเห็น 1 คอลัมน์ จอ 768px ขึ้นไปเห็น 2 จอ 1024px ขึ้นไปเห็น 3 (รีสตาร์ท `bun run dev` หลังติดตั้ง แล้วลองย่อหน้าต่าง browser ดู)
+
+| คำนำหน้า | ใช้เมื่อจอกว้างตั้งแต่ |
+|---|---|
+| (ไม่มี) | ทุกจอ รวมมือถือ 375px |
+| `sm:` | 640px |
+| `md:` | 768px (แท็บเล็ต) |
+| `lg:` | 1024px |
+| `xl:` | 1280px (โน้ตบุ๊ก) |
 
 ## ทริคที่แนะนำ
 
@@ -45,7 +75,9 @@ Tailwind คือการตกแต่งหน้าเว็บด้ว�
 
 ## ปรับไปใช้จริง
 
-เว็บคู่มือนี้ตกแต่งด้วย Tailwind 4 ทั้งหมด สีหลักตั้งไว้ใน `src/app/global.css` เป็น `--color-fd-primary` ทั้งโหมดสว่างและโหมดมืด ชิ้นส่วนใช้คลาส `bg-fd-primary` `text-fd-primary` ไม่มีรหัสสีตรงๆ ส่วนแถบเมนูล่างบนมือถือ (`src/components/section-links.tsx`) ใช้ `md:hidden` ซ่อนตัวเองบนจอกว้าง
+**ในงาน STARTER:** Requirement ตรวจ responsive ที่ 375 / 768 / 1280 px ตรงกับ "ไม่มีคำนำหน้า" / `md:` / `xl:` ในตาราง และวันที่ 6 ต้องตั้ง Tailwind theme (สี, ฟอนต์) ตาม brief ให้เสร็จก่อนทำหน้าแรก
+
+**เว็บคู่มือนี้:** ตกแต่งด้วย Tailwind 4 ทั้งหมด สีหลักตั้งไว้ใน [src/app/global.css](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/src/app/global.css) เป็น `--color-fd-primary` ทั้งโหมดสว่างและโหมดมืด ชิ้นส่วนใช้คลาส `bg-fd-primary` `text-fd-primary` ไม่มีรหัสสีตรงๆ ส่วนแถบเมนูล่างบนมือถือ ([section-links.tsx](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/src/components/section-links.tsx)) ใช้ `md:hidden` ซ่อนตัวเองบนจอกว้าง
 
 ลองคิด: ตารางกว้าง 6 คอลัมน์บนจอ 375px ควรทำยังไง ย่อตัวหนังสือ เลื่อนซ้ายขวา หรือเปลี่ยนเป็นกล่องเรียงลงมา
 

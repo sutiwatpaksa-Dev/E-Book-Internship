@@ -4,7 +4,9 @@ title: "หน้าเว็บดึงข้อมูลจาก API"
 
 ## ความหมาย
 
-หน้าเว็บขอข้อมูลจาก API ด้วย `fetch` ระหว่างรอและเมื่อได้ผล หน้าจอต้องมี **3 สถานะเสมอ: กำลังโหลด / โหลดพัง / สำเร็จ** และโค้ดเรียก API อยู่ใน **ไฟล์กลางที่เดียว** ไม่กระจายอยู่ในทุกชิ้นส่วน
+หน้าเว็บขอข้อมูลจาก API ด้วย `fetch` ระหว่างรอและเมื่อได้ผล หน้าจอต้องมี **3 สถานะเสมอ: [กำลังโหลด](/glossary#loading-state) / โหลดพัง / สำเร็จ** และโค้ดเรียก API อยู่ใน **ไฟล์กลางที่เดียว** ไม่กระจายอยู่ในทุกชิ้นส่วน
+
+**นึกภาพ:** สั่งอาหารผ่านแอป หน้าจอบอกตลอดว่า "กำลังเตรียม" "ส่งไม่ได้ ร้านปิด" หรือ "ถึงแล้ว" ถ้าหน้าจอนิ่งเฉยๆ เราจะกดสั่งซ้ำ หรือคิดว่าแอปพัง
 
 ## ที่มา
 
@@ -12,28 +14,80 @@ title: "หน้าเว็บดึงข้อมูลจาก API"
 
 ## การใช้งาน
 
-**ชั้นเรียก API** อยู่ไฟล์เดียว รู้จัก URL รูปแบบ error และ cookie
+### ตั้งค่าครั้งแรก: ให้หน้าเว็บคุยกับ API ได้ (proxy)
+
+ตอนพัฒนามี 2 โปรแกรมรันพร้อมกัน: หน้าเว็บ (Vite, port 5173) และ API (Hono, port 3000) ต่างคน "ต่างบ้าน" browser จะไม่ยอมให้หน้าเว็บอ่านคำตอบจากบ้านอื่นง่ายๆ (เรื่อง [CORS](/glossary#cors)) วิธีที่ง่ายที่สุดคือให้ Vite เป็นคนกลาง ([proxy](/glossary#proxy-dev)): หน้าเว็บขอ `/api/...` ที่ Vite แล้ว Vite ส่งต่อให้ Hono
+
+เพิ่ม `server` ใน `client/vite.config.ts` แล้วรีสตาร์ท `bun run dev`
+
+```ts
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
+  server: {
+    proxy: { "/api": "http://localhost:3000" },   // คำขอที่ขึ้นต้นด้วย /api ส่งต่อให้ server
+  },
+});
+```
+
+**ควรเห็น:** เปิด server ไว้ (`bun run dev` ใน `server/`) แล้วเปิด `http://localhost:5173/api/books` ได้ JSON เดียวกับเปิดที่ port 3000
+
+### 1. ชั้นเรียก API อยู่ไฟล์เดียว
+
+รู้จัก URL, รูปแบบคำตอบ `{ success, data }` / `{ success: false, error }` (ดูการ์ด [HTTP และ REST](/learn/cards/http-rest)) และการส่ง cookie
 
 ```ts
 // src/api/client.ts
-export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const res = await fetch(`/api${path}`, init);
-  const body = res.status === 204 ? null : await res.json().catch(() => null);
-  if (!res.ok) throw new Error(body?.error ?? `ผิดพลาด (${res.status})`);   // ข้อความภาษาไทยจาก API
-  return body as T;
+type ApiResponse<T> =
+  | { success: true; data: T }
+  | { success: false; error: { code: string; message: string; details?: Record<string, string[]> } };
+
+export class ApiError extends Error {
+  details?: Record<string, string[]>;            // error รายช่องจาก Zod ใช้ในการ์ดฟอร์ม
+  constructor(message: string, details?: Record<string, string[]>) {
+    super(message);
+    this.details = details;
+  }
 }
 
-// src/api/books.api.ts
+export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const res = await fetch(`/api${path}`, { credentials: "same-origin", ...init });
+  const body = (await res.json().catch(() => null)) as ApiResponse<T> | null;
+  if (!body) throw new ApiError(`ผิดพลาด (${res.status})`);          // ไม่ได้ JSON กลับมา เช่น server ดับ
+  if (!body.success) throw new ApiError(body.error.message, body.error.details);
+  return body.data;                                                   // ชิ้นส่วนได้แค่ data ไม่ต้องแกะเอง
+}
+
+export const jsonBody = (method: string, data: unknown): RequestInit => ({
+  method,
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(data),
+});
+```
+
+```ts
+// src/api/books.api.ts · ไฟล์ละเรื่อง
+import type { Book } from "../types/book";
+import { jsonBody, request } from "./client";
+
 export const booksApi = {
   list: () => request<Book[]>("/books"),
+  get: (id: number) => request<Book>(`/books/${id}`),
+  create: (data: { title: string }) => request<Book>("/books", jsonBody("POST", data)),
 };
 ```
 
-**ชิ้นส่วน** สนใจแค่ 3 สถานะ
+### 2. ชิ้นส่วนสนใจแค่ 3 สถานะ
+
+แก้ `src/pages/books-page.tsx` จากการ์ด Component ให้ดึงเองแทนรับ props
 
 ```tsx
-export function BookList() {
-  const [books, setBooks] = useState<Book[] | null>(null);
+import { useEffect, useState } from "react";
+import { booksApi } from "../api/books.api";
+import { BookCard } from "../components/book-card";
+import type { Book } from "../types/book";
+
+export function BooksPage() {
+  const [books, setBooks] = useState<Book[] | null>(null);    // null = ยังโหลดไม่เสร็จ
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -47,19 +101,29 @@ export function BookList() {
   if (error) return <p role="alert">โหลดไม่สำเร็จ: {error}</p>;
   if (!books) return <p>กำลังโหลด...</p>;
   if (books.length === 0) return <p>ยังไม่มีหนังสือ</p>;
-  return <ul>{books.map((b) => <li key={b.id}>{b.title}</li>)}</ul>;
+  return (
+    <ul className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      {books.map((b) => <li key={b.id}><BookCard book={b} /></li>)}
+    </ul>
+  );
 }
 ```
+
+แล้วใน `App.tsx` เปลี่ยนเป็น `<BooksPage />` (ไม่ต้องส่ง `books` แล้ว ลบ array ตายตัวทิ้ง)
+
+**ควรเห็น:** แวบหนึ่งขึ้น "กำลังโหลด..." แล้วเป็นรายการหนังสือจากฐานข้อมูลจริง ลองปิด server แล้วรีเฟรช ต้องเห็นข้อความ "โหลดไม่สำเร็จ"
 
 ## ทริคที่แนะนำ
 
 1. **ลองช้าและลองพังทุกครั้ง:** DevTools → Network → เลือก **Slow 4G** แล้วรีเฟรช ต้องเห็น "กำลังโหลด" ลองปิด API แล้วรีเฟรช ต้องเห็นข้อความ error ไม่ใช่หน้าขาว
 2. **"ว่าง" เป็นสถานะที่ 4 ที่ลืมบ่อย** รายการว่างควรบอกว่าทำอะไรต่อได้ ("ยังไม่มีหนังสือ เพิ่มเล่มแรก") ไม่ใช่พื้นที่ว่างเปล่า
-3. **ใช้ข้อความ error จาก API ตรงๆ** API ที่ทำตามการ์ดจัดการ error ส่งภาษาไทยที่บอกว่าต้องทำอะไรมาแล้ว ไม่ต้องเขียนข้อความใหม่ฝั่งหน้าเว็บ
+3. **ใช้ข้อความ error จาก API ตรงๆ** API ที่ทำตามการ์ด[จัดการ error](/learn/cards/error-handling) ส่ง `error.message` ภาษาไทยที่บอกว่าต้องทำอะไรมาแล้ว ไม่ต้องเขียนข้อความใหม่ฝั่งหน้าเว็บ
 
 ## ปรับไปใช้จริง
 
-เว็บคู่มือนี้มีกติกาว่า **component ไม่เรียก `fetch` เอง** ทุกคำขอผ่าน `src/api/` (`client.ts` อันเดียว + ไฟล์แยกตามเรื่อง เช่น `progress.api.ts`, `threads.api.ts`) ตอนเพิ่มการส่ง cookie ทุกคำขอ แก้แค่ `client.ts` บรรทัดเดียว
+**ในงาน STARTER:** Requirement ให้มีโฟลเดอร์ `client/src/api/` ("fetch wrapper") ตรงกับไฟล์ `client.ts` ข้างบน และเกณฑ์ Frontend ข้อ "Loading/Error state ครบทุกหน้า" มี 15 คะแนน หน้าไหนขาวตอนโหลดหรือตอน API พัง เสียคะแนนทันที ส่วน `credentials` ที่ใส่ไว้ จะได้ใช้ในช่วง Login ตอน cookie ต้องติดไปกับทุกคำขอ
+
+**เว็บคู่มือนี้:** มีกติกาว่า **component ไม่เรียก `fetch` เอง** ทุกคำขอผ่าน [src/api/client.ts](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/src/api/client.ts) + ไฟล์แยกตามเรื่อง (เว็บนี้อ่าน error แบบสั้น `body.error` เพราะทำก่อนมี Requirement)
 
 ลองคิด: ปุ่มที่กดแล้วส่งคำขอ (เช่น "ยืม") ต้องมีสถานะอะไรบ้างระหว่างรอ และถ้าผู้ใช้กดรัวๆ จะเกิดอะไร
 
@@ -74,11 +138,11 @@ export function BookList() {
 
 ## ลองเอง
 
-**โจทย์:** ทำหน้า "การยืมของฉัน" ที่ดึงจาก `GET /api/loans/me` มีครบทั้ง 4 สถานะ (โหลด, พัง, ว่าง, มีข้อมูล) และปุ่ม "คืน" ที่กดซ้ำไม่ได้ระหว่างส่ง แล้วรายการอัปเดตหลังคืนสำเร็จ
+**โจทย์:** เพิ่มปุ่ม "ลบ" ในกล่องหนังสือแต่ละเล่ม ที่เรียก `DELETE /api/books/:id` (จากโจทย์การ์ด [Hono](/learn/cards/hono)) ระหว่างส่ง ปุ่มกดซ้ำไม่ได้ ลบสำเร็จแล้วเล่มนั้นหายจากรายการ ลบไม่สำเร็จต้องเห็นข้อความจาก API
 
-<Hint level={1}>เพิ่มฟังก์ชันใน `loans.api.ts` ก่อน ลองเรียกใน Console ของ browser ให้ได้ผลก่อนไปทำหน้าจอ</Hint>
-<Hint level={2}>ปุ่มต้องรู้ว่า "กำลังส่ง" อยู่ไหม นั่นคือ state อีกตัว ใช้คู่กับ `disabled`</Hint>
-<Hint level={3}>หลังคืนสำเร็จมี 2 ทาง: ดึงรายการใหม่ทั้งหมด หรือลบเล่มนั้นออกจาก state เอง ลองคิดว่าทางไหนพลาดยากกว่า</Hint>
+<Hint level={1}>เพิ่มฟังก์ชัน `remove` ใน `books.api.ts` ก่อน ลองเรียกจาก Console ของ browser ให้ได้ผลก่อนไปทำหน้าจอ (ใช้ `jsonBody` ไม่ได้เพราะไม่มี body ส่งแค่ `{ method: "DELETE" }`)</Hint>
+<Hint level={2}>ปุ่มต้องรู้ว่า "กำลังส่ง" อยู่ไหม นั่นคือ state อีกตัว ใช้คู่กับ `disabled` ส่วนการลบเกิดเพราะผู้ใช้กด จึงอยู่ใน `onClick` ไม่ใช่ `useEffect`</Hint>
+<Hint level={3}>หลังลบสำเร็จมี 2 ทาง: ดึงรายการใหม่ทั้งหมด หรือกรองเล่มนั้นออกจาก state เอง ลองคิดว่าทางไหนพลาดยากกว่าถ้ามีคนอื่นเพิ่มหนังสือพร้อมกัน</Hint>
 
 ## อ่านเพิ่ม
 

@@ -3,6 +3,7 @@
 import { BookOpen, Check, ChevronRight, LayoutGrid, Map } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Fragment } from "react";
 import { cardUrl, cards, cardsOf, LEARN_BASE, legacyOf, steps, stepOfUrl, stepUrl } from "@/data/learn";
 import { useProgress } from "@/hooks/use-progress";
 
@@ -54,32 +55,37 @@ export function LearnNav({ onNavigate }: { onNavigate?: () => void }) {
 
             {open && (
               <div className="mt-0.5 mb-2 ms-5.5 flex flex-col gap-px border-s border-fd-border ps-3">
-                {list.map((c) => {
-                  const url = cardUrl(c.slug);
-                  const active = url === pathname;
-                  const isDone = done.has(url);
-                  return (
-                    <Link
-                      key={c.slug}
-                      href={url}
-                      onClick={onNavigate}
-                      aria-current={active ? "page" : undefined}
-                      className={`flex min-h-9 items-center gap-2 rounded-md px-2 py-1 hover:bg-fd-accent ${active ? "bg-fd-primary/10 font-semibold text-fd-primary" : ""}`}
-                    >
-                      <span
-                        className={`flex size-4 shrink-0 items-center justify-center rounded-full border ${isDone ? "border-fd-primary bg-fd-primary text-fd-primary-foreground" : "border-fd-border"}`}
-                      >
-                        {isDone && <Check aria-label="เข้าใจแล้ว" className="size-2.5" strokeWidth={3} />}
-                      </span>
-                      <span className="min-w-0 flex-1 leading-snug">{c.title}</span>
-                    </Link>
-                  );
-                })}
-                {legacyOf(s.slug).map((l) => (
-                  <Link key={l.link} href={l.link} onClick={onNavigate} className="flex min-h-9 items-center gap-2 rounded-md px-2 py-1 text-fd-muted-foreground hover:bg-fd-accent">
-                    <span className="rounded bg-fd-muted px-1 text-[10px]">เดิม</span>
-                    <span className="min-w-0 flex-1 leading-snug">{l.title}</span>
-                  </Link>
+                {/* ขั้นที่มีช่วงย่อย เรียงตามช่วง (การ์ดก่อน บทเดิมตาม) ให้ตรงกับแท็บในหน้าขั้น */}
+                {(s.parts ?? [undefined]).map((part) => (
+                  <Fragment key={part ?? "all"}>
+                    {list.filter((c) => c.part === part).map((c) => {
+                      const url = cardUrl(c.slug);
+                      const active = url === pathname;
+                      const isDone = done.has(url);
+                      return (
+                        <Link
+                          key={c.slug}
+                          href={url}
+                          onClick={onNavigate}
+                          aria-current={active ? "page" : undefined}
+                          className={`flex min-h-9 items-center gap-2 rounded-md px-2 py-1 hover:bg-fd-accent ${active ? "bg-fd-primary/10 font-semibold text-fd-primary" : ""}`}
+                        >
+                          <span
+                            className={`flex size-4 shrink-0 items-center justify-center rounded-full border ${isDone ? "border-fd-primary bg-fd-primary text-fd-primary-foreground" : "border-fd-border"}`}
+                          >
+                            {isDone && <Check aria-label="เข้าใจแล้ว" className="size-2.5" strokeWidth={3} />}
+                          </span>
+                          <span className="min-w-0 flex-1 leading-snug">{c.title}</span>
+                        </Link>
+                      );
+                    })}
+                    {legacyOf(s.slug).filter((l) => l.part === part).map((l) => (
+                      <Link key={l.link} href={l.link} onClick={onNavigate} className="flex min-h-9 items-center gap-2 rounded-md px-2 py-1 text-fd-muted-foreground hover:bg-fd-accent">
+                        <span className="rounded bg-fd-muted px-1 text-[10px]">เดิม</span>
+                        <span className="min-w-0 flex-1 leading-snug">{l.title}</span>
+                      </Link>
+                    ))}
+                  </Fragment>
                 ))}
               </div>
             )}

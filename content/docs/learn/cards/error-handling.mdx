@@ -4,68 +4,86 @@ title: "จัดการ error ที่จุดเดียว"
 
 ## ความหมาย
 
-แทนที่จะเขียน `try/catch` ทุก route ให้ทุกชั้น **โยน error ขึ้นมา** แล้วมี **ตัวจัดการกลาง** ตัวเดียวแปลงเป็นคำตอบ: error ที่รู้จักได้ status กับข้อความที่ผู้ใช้อ่านรู้เรื่อง error ที่ไม่รู้จักได้ `500` และจดรายละเอียดลง log ฝั่ง server
+ให้โค้ดทุกชั้น **โยน error ออกมาเฉยๆ** แล้วมี **ตัวจับกลางตัวเดียว** แปลง error เป็นคำตอบที่ถูกต้อง: เรื่องที่รู้จัก (เช่น ยืมเกินโควตา) ตอบ status ที่ตรงพร้อมข้อความภาษาไทย ส่วนเรื่องที่ไม่รู้จัก ตอบ `500` แบบสุภาพ และเก็บรายละเอียดไว้ดูเองใน log
+
+**นึกภาพ:** ทุกแผนกในบริษัทส่งเรื่องร้องเรียนเข้าแผนกลูกค้าสัมพันธ์แผนกเดียว แผนกนี้รู้ว่าเรื่องไหนตอบลูกค้าว่าอะไร ส่วนเรื่องภายในที่ลูกค้าไม่ควรรู้ ก็จดเข้าสมุดภายในแทน
 
 ## ที่มา
 
-ถ้าแต่ละ route จับ error เอง ข้อความจะไม่เหมือนกัน (`"not found"`, `"ไม่พบ"`, `"Error: ..."`) บาง route ลืมจับ คำตอบกลายเป็นหน้า error ของ framework ที่ **โชว์ชื่อตารางหรือ path ในเครื่อง server** ให้คนนอกเห็น ซึ่งเป็นข้อมูลที่คนโจมตีอยากได้ จุดเดียวทำให้รูปแบบคำตอบเหมือนกันทุกตัว และกันข้อมูลข้างในรั่วได้ที่เดียว
+ถ้าทุก route เขียน [try-catch](/glossary#try-catch) เอง ไม่นานจะมี route ที่ลืม และแต่ละ route ตอบ error คนละหน้าตา หน้าเว็บต้องเขียนโค้ดเดาหลายแบบ ร้ายกว่านั้น ถ้าปล่อยให้ error หลุดออกไปทั้งก้อน คนนอกจะเห็น **stack trace** (รายชื่อไฟล์และบรรทัดที่พัง) บางครั้งมีชื่อตารางหรือ SQL ติดไปด้วย ซึ่งเป็นข้อมูลให้คนไม่หวังดีเดาโครงระบบ framework อย่าง Hono จึงมีช่องให้ใส่ตัวจับกลางไว้ตัวเดียว
 
 ## การใช้งาน
 
-```ts
-// middleware/error-handler.ts
-import type { Context } from "hono";
+ต่อจากการ์ด [แบ่งชั้น](/learn/cards/layers) ที่ service โยน `new Error("LOAN_LIMIT")` แล้วได้ `500`
 
-// รหัสที่ service โยนได้ → status + ข้อความที่ผู้ใช้อ่าน
-const KNOWN: Record<string, [400 | 404 | 409, string]> = {
+**1. ตัวจับกลาง** `server/src/middleware/error-handler.ts`
+
+```ts
+import type { Context } from "hono";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { fail } from "../lib/response";
+
+// รหัสที่เรารู้จัก → [status, ข้อความที่ผู้ใช้เห็น]
+const KNOWN: Record<string, [ContentfulStatusCode, string]> = {
   BOOK_NOT_FOUND: [404, "ไม่พบหนังสือ"],
   LOAN_LIMIT: [409, "ยืมได้ไม่เกิน 3 เล่ม คืนเล่มเก่าก่อน"],
 };
 
 export function errorHandler(err: Error, c: Context) {
   const known = KNOWN[err.message];
-  if (known) return c.json({ error: known[1] }, known[0]);
-  console.error(err);                                   // รายละเอียดเต็มอยู่ใน log เท่านั้น
-  return c.json({ error: "ระบบขัดข้อง" }, 500);          // คนนอกเห็นแค่นี้
+  if (known) return fail(c, known[0], err.message, known[1]);
+  console.error(err);                                    // รายละเอียดจริงอยู่ใน log ฝั่ง server เท่านั้น
+  return fail(c, 500, "INTERNAL_ERROR", "ระบบขัดข้อง");   // คนนอกเห็นแค่นี้
 }
 ```
 
+**2. ติดตั้ง** ใน `server/src/index.ts` เพิ่มบรรทัดเดียว
+
 ```ts
-// app.ts
+import { errorHandler } from "./middleware/error-handler";
+
 app.onError(errorHandler);
 ```
 
-ตอนนี้ service แค่ `throw new Error("LOAN_LIMIT")` ทุก route ที่เรียก service นั้นตอบ `409` เหมือนกันหมดโดยไม่ต้องเขียนอะไรเพิ่ม
+**ควรเห็น:** ยืมเล่มที่ 4 ได้ `409` แทน `500`
+
+```json
+{"success":false,"error":{"code":"LOAN_LIMIT","message":"ยืมได้ไม่เกิน 3 เล่ม คืนเล่มเก่าก่อน"}}
+```
+
+ลองทำให้พังจริง: ปิด Postgres (`docker stop pg`) แล้วยิงอีกครั้ง หน้าเว็บได้แค่ `ระบบขัดข้อง` ส่วน Terminal ที่รัน server มีรายละเอียดเต็ม (เสร็จแล้ว `docker start pg`)
 
 ## ทริคที่แนะนำ
 
-1. **คำตอบ error มีหน้าตาเดียวทั้งระบบ** เช่น `{ "error": "ข้อความ" }` หน้าเว็บเขียนโค้ดแสดง error ชุดเดียวใช้ได้ทุกที่
-2. **แปลง error ของฐานข้อมูลเป็นรหัสของเรา:** ใส่ข้อมูลซ้ำ Postgres ตอบรหัส `23505` ถ้าปล่อยหลุดจะได้ `500` ทั้งที่จริงควรเป็น `409` ให้ repository หรือ service จับรหัสนี้แล้วโยนรหัสของเราแทน
-3. **ข้อความถึงผู้ใช้บอกว่าต้องทำอะไรต่อ:** "ยืมได้ไม่เกิน 3 เล่ม คืนเล่มเก่าก่อน" ดีกว่า "เกินจำนวน"
+1. **โยนเป็น "รหัส" ไม่ใช่ข้อความภาษาคน:** service โยน `LOAN_LIMIT` แล้วตัวจับกลางแปลเป็นข้อความ วันหลังจะเปลี่ยนคำพูดหรือทำสองภาษา แก้ที่เดียว
+2. **ห้ามส่ง `err.message` ของเรื่องที่ไม่รู้จักออกไป:** error จาก Drizzle ขึ้นต้นด้วย `Failed query: insert into "books" ...` คือ SQL ทั้งคำสั่งพร้อมค่าที่คนอื่นกรอกไว้
+3. **error ที่ "เดาได้" ไม่ต้องรอถึงตัวจับกลาง:** ข้อมูลผิดรูปแบบตอบ `400` ใน route ได้เลย (การ์ด Zod) ตัวจับกลางไว้สำหรับกฎใน service และของที่พังแบบไม่คาดคิด
 
 ## ปรับไปใช้จริง
 
-`server/middleware/error-handler.ts` ของเว็บนี้มีรหัส 12 ตัว เช่น `TOO_MANY_ATTEMPTS` → `429` "ลองผิดหลายครั้งเกินไป รอ 15 นาที" และ `UNKNOWN_CHAPTER` → `400` ส่วนบรรทัดแรกจับ `HTTPException` ของ Hono (เช่นจากด่านกัน CSRF ที่ตอบ `403` โดยไม่มีข้อความ) แล้วเติมข้อความให้อ่านรู้เรื่อง
+**ในงาน STARTER:** Requirement ให้มีรหัส error เป็นคำภาษาอังกฤษตัวใหญ่ (เช่น `VALIDATION_ERROR`) และหัวข้อ Security บอกว่า "error 500 ห้ามส่ง stack trace กลับไป" ซึ่งตรวจในวันที่ 9 วิธีข้างบนผ่านทั้งสองข้อ ส่วนโฟลเดอร์ `middleware/` มีอยู่แล้วในโครงที่ Requirement กำหนด
 
-ลองคิด: ถ้าลืมเพิ่มรหัสใหม่ใน `KNOWN` ผู้ใช้จะเห็นอะไร และเราจะรู้ตัวจากที่ไหน
+**เว็บคู่มือนี้:** ใช้หลักเดียวกัน ดู `app.onError` ใน [server/app.ts บน GitHub](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/server/app.ts) (เว็บนี้ตอบ error แบบสั้น `{ error: "..." }` เพราะทำก่อนมี Requirement หลักการเหมือนกัน)
+
+ลองคิด: ถ้าสองคนกดยืมเล่มสุดท้ายพร้อมกันพอดี ทั้งคู่ผ่านการนับโควตาแล้วฐานข้อมูลปฏิเสธคนหนึ่งด้วย unique constraint error นั้นจะออกมาเป็น status อะไร และควรเป็นอะไร
 
 ## ตัวเลือกอื่นที่คล้ายกัน
 
-| วิธี | หน้าตา | ข้อดี / ข้อควรระวัง |
+| วิธี | หน้าตา | ข้อดี / ข้อเสีย |
 |---|---|---|
-| **รหัสใน `Error` + ตารางแปลง (ทีมใช้)** | `throw new Error("LOAN_LIMIT")` | ง่าย service ไม่รู้จัก HTTP · ต้องจำเพิ่มรหัสในตาราง |
-| คลาส error ของตัวเอง | `class AppError { code; status }` | เช็กด้วย `instanceof` ได้ ใส่ข้อมูลเพิ่มได้ · service เริ่มรู้จัก status |
-| `HTTPException` ของ Hono | `throw new HTTPException(404, ...)` | มีให้ในตัว · ใช้ใน route/middleware ได้ ไม่ควรโยนจาก service |
-| คืนค่าแทนโยน (Result) | `return { ok: false, error: "LOAN_LIMIT" }` | ผู้เรียกลืมเช็กไม่ได้ (type บังคับ) · โค้ดยาวขึ้นทุกจุดที่เรียก |
+| **โยนรหัส + ตัวจับกลาง (การ์ดนี้)** | `throw new Error("LOAN_LIMIT")` | สั้น อ่านง่าย / ต้องจำว่ารหัสไหนมีในตาราง |
+| class error ของตัวเอง | `throw new AppError(409, "LOAN_LIMIT")` | status อยู่ติดกับที่โยน / service เริ่มรู้จัก HTTP |
+| `HTTPException` ของ Hono | `throw new HTTPException(409, { message })` | มีให้ใช้เลย / service ต้อง import Hono ผิดหลักแบ่งชั้น |
+| คืนค่าแทนโยน (Result) | `return { ok: false, code: "LOAN_LIMIT" }` | ลืมจัดการแล้ว TypeScript เตือน / โค้ดยาวกว่า |
 
 ## ลองเอง
 
-**โจทย์:** ทำให้การเพิ่มหนังสือที่มี ISBN ซ้ำตอบ `409` "มีหนังสือ ISBN นี้แล้ว" แทน `500` โดยใช้ unique constraint ของฐานข้อมูล ไม่ใช่ query เช็กก่อนเพิ่ม
+**โจทย์:** เพิ่มคอลัมน์ `isbn` (ห้ามซ้ำ) ให้ตาราง `books` แล้วทำให้การเพิ่มหนังสือที่ isbn ซ้ำได้ `409` พร้อมข้อความ "มีหนังสือ isbn นี้แล้ว" แทน `500`
 
-<Hint level={1}>ฐานข้อมูลกันซ้ำให้อยู่แล้วถ้าคอลัมน์เป็น unique ปัญหาคือ error ที่ได้ยังเป็นภาษาของฐานข้อมูล</Hint>
-<Hint level={2}>error จาก Drizzle ห่อ error ของ Postgres ไว้ใน `cause` ลอง `console.log` ดูว่ารหัสอยู่ช่องไหน</Hint>
-<Hint level={3}>จับเฉพาะรหัส `23505` แล้วโยนรหัสของเรา รหัสอื่นโยนต่อไปตามเดิม และอย่าลืมเพิ่มในตารางแปลง</Hint>
+<Hint level={1}>เริ่มจาก schema: Drizzle มี `.unique()` แล้วทำตามการ์ด [Migration](/learn/cards/migration) อย่าลืมว่าหนังสือที่ seed ไว้ยังไม่มี isbn</Hint>
+<Hint level={2}>ยิงซ้ำแล้วดู `console.error` ใน Terminal: Drizzle ห่อ error ของ Postgres ไว้ข้างใน รหัสอยู่ที่ `err.cause.code` (ไม่ใช่ `err.code`) และรหัสของ "ซ้ำ" คือ `23505`</Hint>
+<Hint level={3}>มีสองที่ให้เลือก: เช็กก่อนบันทึกใน service ("มี isbn นี้หรือยัง") หรือจับรหัส `23505` ในตัวจับกลาง ลองคิดว่าทางไหนรอดกรณีสองคนกดพร้อมกัน</Hint>
 
 ## อ่านเพิ่ม
 
-ตัวอย่างการแปลง error ของฐานข้อมูลทีละรหัส และกรณีสองคนกดพร้อมกัน อยู่ในบทเดิม [จากแบบฐานข้อมูลสู่ Backend](/08b-db-to-backend#error-ของฐานข้อมูล--คำตอบที่คนเข้าใจ)
+วิธีคิด try-catch และการ debug ตาม log อยู่ในบทเดิม [จากแบบฐานข้อมูลสู่ Backend](/08b-db-to-backend)

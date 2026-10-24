@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Clock } from "lucide-react";
+import { ArrowLeft, ArrowRight, Clock, FolderKanban } from "lucide-react";
 import Link from "next/link";
 import { cards, cardUrl, neighbors, stepBySlug, stepUrl, type LearnCard } from "@/data/learn";
 import { CardStatus } from "./card-done";
@@ -30,6 +30,11 @@ export function CardHeader({ card }: { card: LearnCard }) {
         {card.alsoIn && <span>ใช้ในขั้น: {[card.step, ...card.alsoIn].map((s) => stepBySlug(s).name).join(", ")}</span>}
         <CardStatus link={cardUrl(card.slug)} />
       </p>
+      {card.starter && (
+        <p className="inline-flex items-center gap-1">
+          <FolderKanban className="size-3.5" aria-hidden /> ใช้ในงาน STARTER: {card.starter}
+        </p>
+      )}
       {card.needs && (
         <p className="flex flex-wrap items-center gap-x-2">
           อ่านก่อน:

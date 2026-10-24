@@ -6,28 +6,35 @@ title: "ฟอร์ม: กรอก ตรวจ ส่ง"
 
 ฟอร์มที่ดีมี 4 จังหวะ: **เก็บค่าที่พิมพ์ → ตรวจก่อนส่ง → ส่งโดยกันกดซ้ำ → บอกผล** ทุกจังหวะต้องเห็นบนหน้าจอ ผู้ใช้ไม่ต้องเดาว่าเกิดอะไรขึ้น
 
+**นึกภาพ:** ยื่นเอกสารที่เคาน์เตอร์ราชการที่ดี เจ้าหน้าที่ดูก่อนเลยว่าช่องไหนยังไม่กรอก (ตรวจก่อนส่ง) รับเรื่องแล้วให้บัตรคิว (กำลังส่ง) และบอกผลชัดๆ ถ้าต้องแก้ ก็ชี้เฉพาะช่องที่ผิด ไม่ให้กรอกใหม่ทั้งแผ่น
+
+ฟอร์มที่ค่าในช่องเก็บอยู่ใน state แบบนี้ เรียกว่า **controlled form** (คำที่ Requirement ใช้)
+
 ## ที่มา
 
 ฟอร์มคือที่ที่ผู้ใช้เจอปัญหาบ่อยที่สุด: กดส่งแล้วเงียบ ไม่รู้ว่าส่งไปหรือยังเลยกดซ้ำ ได้ข้อมูลซ้ำ 3 แถว หรือกรอกผิดแล้วไม่บอกว่าผิดช่องไหน ต้องกรอกใหม่หมด ส่วนการตรวจฝั่งหน้าเว็บมีไว้ **ช่วยผู้ใช้** ให้รู้เร็ว ไม่ใช่กันคนไม่หวังดี เพราะคนยิง API ตรงได้เสมอ (ด่านจริงอยู่ที่ API ดูการ์ด Zod)
 
 ## การใช้งาน
 
+ต่อจากการ์ด [ดึงข้อมูลจาก API](/learn/cards/fetch-data) (มี `booksApi.create` และ `ApiError` แล้ว) สร้าง `src/components/new-book-form.tsx`
+
 ```tsx
 import { useState, type SubmitEvent } from "react";
+import { booksApi } from "../api/books.api";
+import { ApiError } from "../api/client";
 
-const empty = { title: "", isbn: "" };
+const empty = { title: "" };
 
 export function NewBookForm({ onSaved }: { onSaved: () => void }) {
   const [form, setForm] = useState(empty);
-  const [errors, setErrors] = useState<Partial<typeof empty>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof typeof empty, string>>>({});
   const [sending, setSending] = useState(false);
   const [serverError, setServerError] = useState("");
 
   async function onSubmit(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();                                   // ไม่ให้ browser โหลดหน้าใหม่
-    const found: Partial<typeof empty> = {};
-    if (!form.title.trim()) found.title = "กรอกชื่อหนังสือ";
-    if (!/^\d{13}$/.test(form.isbn)) found.isbn = "ISBN เป็นตัวเลข 13 หลัก";
+    const found: typeof errors = {};
+    if (!form.title.trim()) found.title = "กรอกชื่อหนังสือ";        // ตรวจก่อนส่ง ช่วยผู้ใช้รู้เร็ว
     setErrors(found);
     if (Object.keys(found).length > 0) return;
 
@@ -38,7 +45,9 @@ export function NewBookForm({ onSaved }: { onSaved: () => void }) {
       setForm(empty);
       onSaved();
     } catch (err) {
-      setServerError((err as Error).message);              // เช่น "มีหนังสือ ISBN นี้แล้ว" จาก API
+      const e = err as ApiError;
+      setServerError(e.message);                                    // ข้อความจาก API เช่น "ข้อมูลไม่ถูกต้อง"
+      if (e.details?.title) setErrors({ title: e.details.title[0] });   // error รายช่องจาก Zod ขึ้นใต้ช่องนั้น
     } finally {
       setSending(false);
     }
@@ -51,7 +60,6 @@ export function NewBookForm({ onSaved }: { onSaved: () => void }) {
         <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
       </label>
       {errors.title && <p role="alert">{errors.title}</p>}
-      {/* ช่อง ISBN เขียนแบบเดียวกัน */}
       {serverError && <p role="alert">{serverError}</p>}
       <button type="submit" disabled={sending}>{sending ? "กำลังบันทึก..." : "บันทึก"}</button>
     </form>
@@ -59,15 +67,21 @@ export function NewBookForm({ onSaved }: { onSaved: () => void }) {
 }
 ```
 
+วางฟอร์มไว้บนรายการใน `App.tsx` แล้วส่ง `onSaved` ไปให้รายการโหลดใหม่ (หรือใส่ `onSaved={() => location.reload()}` ไปก่อน)
+
+**ควรเห็น:** กดบันทึกตอนช่องว่าง ขึ้น "กรอกชื่อหนังสือ" ทันทีโดยไม่มีคำขอวิ่งออกไป (ดู DevTools แท็บ Network) กรอกแล้วกด ปุ่มเปลี่ยนเป็น "กำลังบันทึก..." แวบหนึ่ง แล้วช่องว่างพร้อมกรอกเล่มถัดไป
+
 ## ทริคที่แนะนำ
 
-1. **ข้อความผิดอยู่ใต้ช่องที่ผิด** และบอกวิธีแก้ ("ISBN เป็นตัวเลข 13 หลัก") ไม่ใช่แค่ "ข้อมูลไม่ถูกต้อง" รวมไว้บนสุด
+1. **ข้อความผิดอยู่ใต้ช่องที่ผิด** และบอกวิธีแก้ ("เบอร์โทรเป็นตัวเลข 9–10 หลัก") ไม่ใช่แค่ "ข้อมูลไม่ถูกต้อง" รวมไว้บนสุด
 2. **ทุกช่องมี `<label>`** คลิกที่ชื่อแล้วเคอร์เซอร์ไปที่ช่อง และโปรแกรมอ่านหน้าจอบอกได้ว่าช่องนี้คืออะไร placeholder ไม่ใช่ label เพราะหายไปตอนเริ่มพิมพ์
 3. **ส่งไม่สำเร็จห้ามล้างฟอร์ม** ผู้ใช้ต้องแก้แค่ช่องที่ผิดแล้วส่งใหม่ ล้างฟอร์มเฉพาะตอนสำเร็จ
 
 ## ปรับไปใช้จริง
 
-ฟอร์มถามพี่เลี้ยงท้ายหน้าของเว็บนี้ (`src/components/new-thread-form.tsx` ที่ `ask-question.tsx` เรียกใช้) ทำครบ 4 จังหวะ: ปุ่มกดซ้ำไม่ได้ระหว่างส่ง, ข้อความ error จาก API ขึ้นในกล่อง, สำเร็จแล้วขึ้น toast "ส่งถึงพี่เลี้ยงแล้ว" พร้อมปุ่มเปิดแชท ส่วนช่องกรอกทุกฟอร์มในเว็บนี้ (login, หลังบ้าน, แชท) ใช้ชิ้นส่วนกลาง `Field` จาก `field.tsx` ตัวเดียวกัน label จึงหน้าตาและทำงานเหมือนกันทุกที่
+**ในงาน STARTER:** วันที่ 7 ทำ Contact form (ชื่อ, เบอร์, อีเมล, ข้อความ) Requirement กำหนดเบอร์ 9–10 หลัก ข้อความไม่เกิน 1,000 ตัวอักษร ตรวจทั้งฝั่งหน้าเว็บ (ช่วยผู้ใช้) และ Zod ฝั่ง API (ด่านจริง) ส่งสำเร็จแล้วต้องมีข้อความยืนยัน และ API ต้องจำกัด 5 ครั้งต่อ 10 นาที ฟอร์มจึงต้องรับมือ error จาก API ได้ด้วย
+
+**เว็บคู่มือนี้:** ฟอร์มถามพี่เลี้ยงท้ายหน้า ([src/components/new-thread-form.tsx](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/src/components/new-thread-form.tsx)) ทำครบ 4 จังหวะ: ปุ่มกดซ้ำไม่ได้ระหว่างส่ง, ข้อความ error จาก API ขึ้นในกล่อง, สำเร็จแล้วขึ้น toast "ส่งถึงพี่เลี้ยงแล้ว" พร้อมปุ่มเปิดแชท ส่วนช่องกรอกทุกฟอร์มในเว็บนี้ (login, หลังบ้าน, แชท) ใช้ชิ้นส่วนกลาง `Field` จาก [field.tsx](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/src/components/field.tsx) ตัวเดียวกัน label จึงหน้าตาและทำงานเหมือนกันทุกที่
 
 ลองคิด: ถ้าตรวจรูปแบบทั้งฝั่งหน้าเว็บและ API ข้อความ error ควรเหมือนกันไหม และจะทำยังไงให้ไม่ต้องเขียนกฎซ้ำสองที่
 
@@ -82,7 +96,7 @@ export function NewBookForm({ onSaved }: { onSaved: () => void }) {
 
 ## ลองเอง
 
-**โจทย์:** ทำฟอร์มสมัครสมาชิกห้องสมุด (ชื่อ, อีเมล, เบอร์โทร) ที่ตรวจทุกช่องก่อนส่ง ปุ่มกดซ้ำไม่ได้ระหว่างส่ง ถ้า API ตอบว่าอีเมลซ้ำ ต้องขึ้นข้อความโดยค่าที่กรอกไว้ยังอยู่ครบ
+**โจทย์:** ทำฟอร์มสมัครสมาชิกห้องสมุด (ชื่อ, อีเมล, เบอร์โทร 9–10 หลัก) ที่ตรวจทุกช่องก่อนส่ง ปุ่มกดซ้ำไม่ได้ระหว่างส่ง ถ้า API ตอบ error ต้องขึ้นข้อความโดยค่าที่กรอกไว้ยังอยู่ครบ (API ใช้ schema ที่เขียนในโจทย์การ์ด [Zod](/learn/cards/validation) ต่อกับ `POST /api/members` ที่ทำเพิ่มเอง)
 
 <Hint level={1}>นับ state ที่ต้องมีก่อนเขียน: ค่าที่กรอก, ข้อความผิดแต่ละช่อง, กำลังส่ง, error จาก server</Hint>
 <Hint level={2}>ลองทดสอบกดส่งรัวๆ ใน DevTools แท็บ Network ต้องเห็นคำขอแค่ 1 ตัว</Hint>

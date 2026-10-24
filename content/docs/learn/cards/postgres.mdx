@@ -4,27 +4,51 @@ title: "Postgres และที่ที่มันรัน"
 
 ## ความหมาย
 
-Postgres (ชื่อเต็ม PostgreSQL) คือ **โปรแกรมที่เก็บข้อมูลและตอบคำสั่ง SQL** เรียกรวมๆ ว่า DBMS เวลาพูดว่า "ฐานข้อมูล" ในงานจริง ต้องแยกให้ออกเป็น 3 ส่วน:
+Postgres (ชื่อเต็ม PostgreSQL) คือ **โปรแกรม[ฐานข้อมูล](/glossary#database)** ที่เก็บข้อมูลเป็นตาราง และรับคำสั่งภาษา [SQL](/glossary#sql)
 
-| ส่วน | คืออะไร | ตัวอย่าง |
+**นึกภาพ:** ห้องเก็บเอกสาร มี 3 อย่างที่ต้องแยกให้ออก
+
+| ส่วน | เปรียบเหมือน | ในงานจริง |
 |---|---|---|
-| Engine | โปรแกรมฐานข้อมูล | Postgres, MySQL |
-| ที่ที่รัน | เครื่องที่เปิดโปรแกรมนั้นไว้ | Docker ในเครื่องเรา, Neon บนคลาวด์ |
-| Client | โปรแกรมที่เราใช้ต่อเข้าไปดู | `psql`, pgAdmin, DBeaver |
+| Engine (ตัวฐานข้อมูล) | ตู้เอกสารและระบบจัดเก็บ | Postgres, MySQL |
+| ที่ที่รัน | ห้องที่วางตู้ | [Docker](/glossary#docker) ในเครื่องเรา, Neon บนคลาวด์ |
+| Client (ตัวเปิดดู) | คนที่เดินเข้าไปหยิบเอกสาร | pgAdmin (งาน STARTER ใช้ตัวนี้), `psql` |
 
 ## ที่มา
 
-เริ่มจากโปรเจกต์วิจัย POSTGRES ที่ UC Berkeley ช่วงกลางทศวรรษ 1980 ต่อมาเพิ่มภาษา SQL และเปลี่ยนชื่อเป็น PostgreSQL ในปี 1996 เป็นโอเพนซอร์สที่ไม่มีบริษัทเดียวเป็นเจ้าของ จึงมีผู้ให้บริการหลายเจ้าให้เลือก ย้ายค่ายได้ง่าย
+Postgres เริ่มจากโปรเจกต์วิจัยที่ UC Berkeley กลางทศวรรษ 1980 และเปลี่ยนชื่อเป็น PostgreSQL ในปี 1996 เป็น open source ที่ไม่มีบริษัทเดียวเป็นเจ้าของ จึงมีผู้ให้บริการหลายเจ้า ย้ายค่ายได้ง่าย เราแยก "engine" กับ "ที่ที่รัน" ออกจากกัน เพราะโค้ดชุดเดียวกันต่อได้ทั้งฐานในเครื่องและฐานบนคลาวด์ ต่างกันแค่ "ที่อยู่" ที่ใส่ให้
 
 ## การใช้งาน
 
-เปิด Postgres ในเครื่องด้วย Docker (พิมพ์เหมือนกันทั้ง Windows และ Mac):
+### 1. เปิด Postgres ในเครื่องด้วย Docker
+
+ต้องเปิดโปรแกรม Docker Desktop ไว้ก่อน แล้วพิมพ์ใน Terminal (เหมือนกันทั้ง Windows PowerShell และ Mac)
 
 ```bash
-docker run -d --name pg -e POSTGRES_PASSWORD=secret -p 5432:5432 postgres:17
+docker run -d --name pg -e POSTGRES_PASSWORD=secret -p 5432:5432 -v pgdata:/var/lib/postgresql/data postgres:17-alpine
 ```
 
-แล้วโค้ดต่อเข้าไปด้วย **connection string** หน้าตาแบบนี้:
+| ส่วนของคำสั่ง | แปลว่า |
+|---|---|
+| `--name pg` | ตั้งชื่อกล่องว่า `pg` ไว้เรียกทีหลัง |
+| `-e POSTGRES_PASSWORD=secret` | รหัสผ่านของผู้ใช้ `postgres` |
+| `-p 5432:5432` | เปิด[ประตูเลข](/glossary#port) 5432 ของเครื่องเรา ต่อเข้า 5432 ในกล่อง |
+| `-v pgdata:...` | เก็บข้อมูลไว้นอกกล่อง ([volume](/glossary#volume)) ลบกล่องแล้วข้อมูลไม่หาย |
+
+**ควรเห็น:** ตัวอักษรยาวๆ 1 บรรทัด (รหัสกล่อง) แล้วพิมพ์ `docker ps` ต้องเห็นกล่องชื่อ `pg` สถานะ `Up`
+
+### 2. ต่อด้วย pgAdmin
+
+เปิด pgAdmin → คลิกขวา **Servers** → **Register** → **Server...**
+
+- แท็บ General: Name ตั้งอะไรก็ได้ เช่น `local`
+- แท็บ Connection: Host `localhost` · Port `5432` · Username `postgres` · Password `secret`
+
+กด Save แล้วเปิด `local` → Databases → `postgres` → คลิกขวา **Query Tool** ไว้พิมพ์ SQL (ใช้ในการ์ดถัดไป)
+
+### 3. ที่อยู่ของฐานข้อมูล (connection string)
+
+โค้ดของเราต่อเข้าฐานด้วยข้อความบรรทัดเดียว เรียกว่า [connection string](/glossary#connection-string)
 
 ```
 postgres://postgres:secret@localhost:5432/postgres
@@ -33,15 +57,17 @@ postgres://postgres:secret@localhost:5432/postgres
 
 ## ทริคที่แนะนำ
 
-1. **port ชนกัน** (`port is already allocated`) แปลว่ามี Postgres ตัวอื่นจับ 5432 อยู่ เปลี่ยนฝั่งซ้ายเป็น `-p 5433:5432` แล้วแก้ port ใน connection string ให้ตรง
-2. **อยากให้ข้อมูลอยู่ต่อหลังลบกล่อง** เพิ่ม volume: `-v pgdata:/var/lib/postgresql/data` ไม่งั้น `docker rm` แล้วข้อมูลหายด้วย
-3. **connection string มีรหัสผ่าน** เก็บใน `.env` เสมอ ห้าม commit ขึ้น Git
+1. **ขึ้น `port is already allocated`** แปลว่ามีโปรแกรมอื่นใช้ 5432 อยู่ (มักเป็น Postgres ที่ติดตั้งไว้ในเครื่อง) เปลี่ยนเป็น `-p 5433:5432` แล้วใน pgAdmin กับ connection string ใช้ port `5433`
+2. **connection string มีรหัสผ่าน** เก็บในไฟล์ `.env` เสมอ และห้าม commit ไฟล์ `.env` (Requirement บังคับ ให้มี `.env.example` ที่บอกชื่อตัวแปรแทน)
+3. **ปิดเครื่องแล้วเปิดใหม่ กล่องไม่ขึ้นเอง** สั่ง `docker start pg` ไม่ต้อง `docker run` ใหม่
 
 ## ปรับไปใช้จริง
 
-เว็บคู่มือนี้ใช้ Postgres ทั้งสองที่: ในเครื่องใช้ Docker (`postgres:17-alpine`) ส่วนเว็บจริงใช้ Neon บนคลาวด์ โค้ดเหมือนกันทุกบรรทัด ต่างกันแค่ค่า `DATABASE_URL` ใน env นี่คือข้อดีของการแยก "engine" กับ "ที่ที่รัน"
+**ในงาน STARTER:** Requirement กำหนด PostgreSQL + pgAdmin ทำขั้น 1–2 ของการ์ดนี้ในวันที่ 1 (setup repo) ให้เรียบร้อย พอวันที่ 2 ต้องเปิด pgAdmin ดูข้อมูลที่ seed ได้ทันที
 
-ลองคิด: โปรเจกต์ของเราตอน deploy จะให้ Postgres รันที่ไหน แลกกับอะไร (ดูแลเอง หรือจ่ายให้คนอื่นดูแล)
+**เว็บคู่มือนี้:** ในเครื่องใช้ Docker แบบเดียวกับการ์ดนี้ ส่วนเว็บจริงใช้ Neon บนคลาวด์ โค้ดเหมือนกันทุกบรรทัด ต่างกันแค่ค่า `DATABASE_URL`
+
+ลองคิด: ถ้าวันส่งงาน พี่เลี้ยง clone โปรเจกต์ไปรันในเครื่องตัวเอง เขาต้องรู้อะไรบ้างถึงจะต่อฐานได้ และเราจะบอกเขาไว้ที่ไหน
 
 ## ตัวเลือกอื่นที่คล้ายกัน
 
@@ -51,12 +77,12 @@ postgres://postgres:secret@localhost:5432/postgres
 
 ## ลองเอง
 
-**โจทย์:** เปิด Postgres ใน Docker ให้ข้อมูลอยู่รอดหลัง `docker rm -f pg` แล้วสร้างกลับมาใหม่ พิสูจน์ด้วยตาราง `members` ที่มีข้อมูล 2 แถว
+**โจทย์:** พิสูจน์ว่าข้อมูลรอดจริงหลังลบกล่อง: สร้างฐานชื่อ `library` ใน pgAdmin → `docker rm -f pg` → เปิดกล่องใหม่ด้วยคำสั่งเดิม → ฐาน `library` ต้องยังอยู่
 
-<Hint level={1}>ข้อมูลหายตอนลบกล่องเพราะเก็บไว้ในกล่อง ต้องให้มันเก็บไว้ที่อื่นที่ไม่หายไปพร้อมกล่อง</Hint>
-<Hint level={2}>ดูทริคข้อ 2 แล้วใช้ client ตัวไหนก็ได้สร้างตารางและเพิ่มข้อมูล</Hint>
-<Hint level={3}>ลำดับ: `docker run` (มี volume) → สร้างตาราง + 2 แถว → `docker rm -f pg` → `docker run` คำสั่งเดิม → `SELECT` ดูว่ายังอยู่ไหม</Hint>
+<Hint level={1}>ฐานใหม่สร้างใน pgAdmin ได้: คลิกขวา Databases → Create → Database...</Hint>
+<Hint level={2}>ถ้าฐานหายหลังเปิดกล่องใหม่ ดูว่าคำสั่ง `docker run` มีส่วน `-v` ไหม</Hint>
+<Hint level={3}>ลองอีกครั้งโดยตัด `-v` ออก แล้วเทียบผล จะเห็นชัดว่า volume ทำหน้าที่อะไร (ลบ volume ทิ้งได้ด้วย `docker volume rm pgdata`)</Hint>
 
 ## อ่านเพิ่ม
 
-เทียบ Postgres กับ MySQL, ตั้งผู้ใช้ และ backup อยู่ในบทเดิม [ระบบจัดการฐานข้อมูล](/07-mysql-postgres)
+ติดตั้ง Docker ทีละขั้น อยู่ในบทเดิม [Docker](/02-docker) · เทียบ Postgres กับ MySQL, ผู้ใช้และสิทธิ์, backup อยู่ใน [ระบบจัดการฐานข้อมูล](/07-mysql-postgres)

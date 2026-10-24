@@ -4,7 +4,9 @@ title: "React: Component และ Props"
 
 ## ความหมาย
 
-React สร้างหน้าเว็บจาก **ชิ้นส่วน (component)** ชิ้นส่วนคือฟังก์ชันที่ **รับข้อมูลเข้า (props) แล้วคืนหน้าตา** เขียนหน้าตาด้วย **JSX** ซึ่งหน้าตาเหมือน HTML แต่อยู่ในไฟล์ TypeScript (`.tsx`) และแทรกค่าด้วย `{ }`
+[React](/glossary#react) สร้างหน้าเว็บจาก **ชิ้นส่วน ([component](/glossary#component))** ชิ้นส่วนคือฟังก์ชันที่ **รับข้อมูลเข้า ([props](/glossary#props)) แล้วคืนหน้าตา** เขียนหน้าตาด้วย **[JSX](/glossary#jsx)** ซึ่งหน้าตาเหมือน HTML แต่อยู่ในไฟล์ TypeScript (`.tsx`) และแทรกค่าด้วย `{ }`
+
+**นึกภาพ:** แม่พิมพ์ขนม แม่พิมพ์ (component) มีอันเดียว เทแป้งคนละสี (props) ก็ได้ขนมหน้าตาเดียวกันแต่ไส้ต่างกัน
 
 ## ที่มา
 
@@ -12,9 +14,29 @@ React สร้างหน้าเว็บจาก **ชิ้นส่ว�
 
 ## การใช้งาน
 
+### ตั้งค่าครั้งแรก (โฟลเดอร์ `client/` ตามโครงใน Requirement)
+
+ที่โฟลเดอร์บนสุดของโปรเจกต์ (ข้างๆ `server/`) พิมพ์ (เหมือนกันทั้ง Windows และ Mac)
+
+```bash
+bun create vite client --template react-ts
+cd client
+bun install
+bun run dev
+```
+
+**ควรเห็น:** `Local: http://localhost:5173/` เปิดแล้วเจอหน้าตัวอย่างของ [Vite](/glossary#vite) ต่อจากนี้แก้ไฟล์ใน `client/src/` แล้วหน้าเว็บเปลี่ยนเองทันที
+
+### 1. ชิ้นส่วนกล่องหนังสือ
+
+```tsx
+// src/types/book.ts · type ใช้ร่วมกันหลายไฟล์ เก็บไว้ที่เดียว
+export type Book = { id: number; title: string; available: boolean };
+```
+
 ```tsx
 // src/components/book-card.tsx
-export type Book = { id: number; title: string; available: boolean };
+import type { Book } from "../types/book";
 
 export function BookCard({ book }: { book: Book }) {
   return (
@@ -26,9 +48,12 @@ export function BookCard({ book }: { book: Book }) {
 }
 ```
 
+### 2. หน้าที่ใช้กล่องซ้ำหลายครั้ง
+
 ```tsx
 // src/pages/books-page.tsx
-import { BookCard, type Book } from "../components/book-card";
+import { BookCard } from "../components/book-card";
+import type { Book } from "../types/book";
 
 export function BooksPage({ books }: { books: Book[] }) {
   if (books.length === 0) return <p>ยังไม่มีหนังสือ</p>;
@@ -42,6 +67,25 @@ export function BooksPage({ books }: { books: Book[] }) {
 }
 ```
 
+### 3. ลองแสดงผล
+
+ยังไม่ต่อ API ใช้ข้อมูลเขียนตายตัวไปก่อน แก้ `src/App.tsx` ทั้งไฟล์เป็น
+
+```tsx
+import { BooksPage } from "./pages/books-page";
+
+const books = [
+  { id: 1, title: "เจ้าชายน้อย", available: true },
+  { id: 2, title: "ฮอบบิท", available: false },
+];
+
+export default function App() {
+  return <BooksPage books={books} />;
+}
+```
+
+**ควรเห็น:** กล่องหนังสือ 2 กล่อง เล่มที่ 2 ขึ้น "ถูกยืมอยู่" (ยังไม่สวย การ์ด [Tailwind](/learn/cards/tailwind) จะตกแต่ง)
+
 ต่างจาก HTML 3 จุดที่เจอบ่อย: ใช้ `className` แทน `class`, ทุกแท็กต้องปิด (`<img />`), และคืนได้ก้อนเดียว (หลายก้อนให้ห่อด้วย `<>...</>`)
 
 ## ทริคที่แนะนำ
@@ -52,7 +96,9 @@ export function BooksPage({ books }: { books: Book[] }) {
 
 ## ปรับไปใช้จริง
 
-เว็บคู่มือนี้สร้างด้วย React ทั้งหมด เปิด `src/components/step-cards.tsx` จะเห็นการ์ดในหน้าขั้นเป็นชิ้นส่วนที่รับ `step` เข้ามาแล้ว `.map` เป็นรายการ โดยใช้ `slug` ของการ์ดเป็น `key` ส่วนหน้าตาที่เปลี่ยนตามข้อมูล (วงกลมติ๊กถูกเมื่อเข้าใจแล้ว) ใช้ `isDone ? ... : ...` แบบเดียวกับตัวอย่างข้างบน
+**ในงาน STARTER:** Requirement ให้แยก `client/src/` เป็น `pages/` (หน้า) กับ `components/` (ชิ้นส่วนใช้ซ้ำ) ตรงกับตัวอย่างข้างบน ลองนับว่าหน้า Home, Services, About ใช้ชิ้นส่วนอะไรซ้ำกันบ้าง (เช่น กล่องบริการ, ปุ่ม) ก่อนลงมือเขียน
+
+**เว็บคู่มือนี้:** สร้างด้วย React ทั้งหมด เปิด [src/components/step-cards.tsx บน GitHub](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/src/components/step-cards.tsx) จะเห็นการ์ดในหน้าขั้นเป็นชิ้นส่วนที่รับ `step` เข้ามาแล้ว `.map` เป็นรายการ โดยใช้ `slug` ของการ์ดเป็น `key` ส่วนหน้าตาที่เปลี่ยนตามข้อมูล (วงกลมติ๊กถูกเมื่อเข้าใจแล้ว) ใช้ `isDone ? ... : ...` แบบเดียวกับตัวอย่างข้างบน
 
 ลองคิด: หน้า "คลังการ์ด" มีกล่องการ์ดหน้าตาเดียวกับหน้าขั้น ควรเป็นชิ้นส่วนเดียวกันไหม ถ้าวันหนึ่งสองหน้าต้องหน้าตาต่างกัน จะทำยังไง
 
@@ -69,7 +115,7 @@ export function BooksPage({ books }: { books: Book[] }) {
 
 ## ลองเอง
 
-**โจทย์:** ทำหน้ารายชื่อสมาชิกห้องสมุดที่แสดงชื่อ จำนวนเล่มที่ยืมอยู่ และป้าย "ยืมครบแล้ว" สีแดงเมื่อยืมครบ 3 เล่ม ถ้าไม่มีสมาชิกเลยต้องขึ้นข้อความแทนรายการว่าง
+**โจทย์:** ใช้ข้อมูลเขียนตายตัวแบบตัวอย่าง (สมาชิก 3 คน ยืมอยู่ 0, 2, 3 เล่ม) ทำหน้ารายชื่อสมาชิกห้องสมุดที่แสดงชื่อ จำนวนเล่มที่ยืมอยู่ และป้าย "ยืมครบแล้ว" สีแดงเมื่อยืมครบ 3 เล่ม ถ้าไม่มีสมาชิกเลยต้องขึ้นข้อความแทนรายการว่าง
 
 <Hint level={1}>เริ่มจากกล่องของสมาชิก 1 คน ให้ใช้ได้ก่อน แล้วค่อยทำรายการ</Hint>
 <Hint level={2}>ป้ายที่ขึ้นบ้างไม่ขึ้นบ้าง ใช้ `{เงื่อนไข && <span>...</span>}`</Hint>

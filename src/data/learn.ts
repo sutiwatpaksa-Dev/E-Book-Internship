@@ -14,7 +14,7 @@ export type LearnStep = {
   th: string;
   // ผลงานที่ได้เมื่อจบขั้น (บรรทัดเดียว)
   output: string;
-  // ช่วงย่อยในขั้น เรียงตามลำดับทำ (ขั้น Coding = DB → Backend → API → Frontend)
+  // ช่วงย่อยในขั้น เรียงตามลำดับทำ (ขั้น Coding เรียงตามวันในงาน STARTER: เตรียมเครื่อง → DB → API → Login → Frontend → หลังบ้าน)
   parts?: string[];
   // โจทย์ STARTER ของขั้นนี้แบบย่อ (หน้าวันนี้แสดง ตัวเต็มอยู่ในหน้าขั้น ส่วน "ลงมือกับโปรเจกต์ของเรา")
   task: string;
@@ -28,8 +28,10 @@ export type LearnCard = {
   minutes: number;
   // ขั้นอื่นที่ใช้การ์ดนี้ด้วย (การ์ดมีหน้าเดียว แต่บอกว่าใช้ที่ไหนบ้าง)
   alsoIn?: StepSlug[];
-  // การ์ดที่ควรอ่านก่อน (slug) · แสดงเป็นลิงก์บนหัวการ์ด
+  // การ์ดที่ควรอ่านก่อน (slug) · แสดงเป็นลิงก์บนหัวการ์ด · ต้องอยู่ก่อนการ์ดนี้ในรายการเสมอ (มีเทสต์ตรวจ)
   needs?: string[];
+  // ใช้ในงาน STARTER วันไหน ตามหัวข้อ "ควรศึกษาก่อน" ใน Requirement (หน้า 15–16)
+  starter?: string;
 };
 
 // บทเดิมที่ยังไม่ได้แปลงเป็นการ์ด แสดงในขั้นที่เกี่ยวข้องพร้อมป้าย "บทเดิม" จนกว่าจะแปลงเสร็จ
@@ -38,7 +40,7 @@ export type LegacyLink = { step: StepSlug; part?: string; title: string; link: s
 export const steps: LearnStep[] = [
   { slug: "problem", num: 1, name: "Problem", th: "เข้าใจปัญหา", output: "รายการความต้องการ (user story) และขอบเขตงาน", task: "เขียน user story ของ STARTER อย่างน้อย 8 ข้อ จัดลำดับ ต้องมี / ควรมี / ไว้ทีหลัง" },
   { slug: "design", num: 2, name: "Design", th: "ออกแบบ", output: "ภาพร่างหน้าจอ แบบตาราง และรายการ API", task: "วาดหน้าจอหลักทุกหน้า แล้วไล่ทีละช่องว่าต้องเก็บข้อมูลอะไร จดเป็นตารางและรายการ API" },
-  { slug: "coding", num: 3, name: "Coding", th: "เขียนโค้ด", output: "ระบบที่รันได้ในเครื่อง", parts: ["DB", "Backend", "API", "Frontend"], task: "เปลี่ยนแบบตารางเป็น schema แล้วสร้างด้วย migration จากนั้นทำ Backend ทีละ story ที่ต้องมี" },
+  { slug: "coding", num: 3, name: "Coding", th: "เขียนโค้ด", output: "ระบบที่รันได้ในเครื่อง", parts: ["เตรียมเครื่อง", "DB", "API", "Login", "Frontend", "หลังบ้าน"], task: "เปลี่ยนแบบตารางเป็น schema แล้วสร้างด้วย migration จากนั้นทำ Backend ทีละ story ที่ต้องมี" },
   { slug: "testing", num: 4, name: "Testing", th: "ทดสอบ", output: "เทสต์ที่รันซ้ำได้ และเช็กลิสต์ทดสอบด้วยมือ", task: "เขียนเช็กลิสต์ทดสอบจาก story ที่ต้องมี แล้วให้เพื่อนทำตามเช็กลิสต์ของเรา" },
   { slug: "documentation", num: 5, name: "Documentation", th: "เขียนเอกสาร", output: "README, .env.example และเอกสาร API", task: "เขียน README แล้วให้เพื่อน clone ไปรันโดยดูแค่ README จดทุกจุดที่เพื่อนติด" },
   { slug: "deploy", num: 6, name: "Deploy", th: "ขึ้นระบบจริง", output: "เว็บที่เปิดได้จาก URL จริง", task: "ขึ้น STARTER ด้วยบริการสำเร็จรูป แล้วไล่เช็กลิสต์จากขั้น 4 บนเว็บจริงทุกข้อ" },
@@ -46,31 +48,38 @@ export const steps: LearnStep[] = [
 ];
 
 export const cards: LearnCard[] = [
-  { slug: "sql-basics", title: "SQL ที่ใช้บ่อย", step: "coding", part: "DB", minutes: 10, alsoIn: ["design"] },
-  { slug: "postgres", title: "Postgres และที่ที่มันรัน", step: "coding", part: "DB", minutes: 8, alsoIn: ["deploy"] },
-  { slug: "orm-query-builder", title: "ORM กับ Query Builder", step: "coding", part: "DB", minutes: 8, needs: ["sql-basics"] },
-  { slug: "drizzle-orm", title: "Drizzle ORM", step: "coding", part: "DB", minutes: 10, needs: ["orm-query-builder"] },
-  { slug: "migration", title: "Migration", step: "coding", part: "DB", minutes: 8, alsoIn: ["deploy"], needs: ["sql-basics"] },
-  { slug: "layers", title: "แบ่งชั้น routes · services · repositories", step: "coding", part: "Backend", minutes: 10, needs: ["drizzle-orm"] },
-  { slug: "error-handling", title: "จัดการ error ที่จุดเดียว", step: "coding", part: "Backend", minutes: 8, needs: ["layers"] },
-  { slug: "http-rest", title: "HTTP และ REST", step: "coding", part: "API", minutes: 10, alsoIn: ["design"] },
-  { slug: "hono", title: "Hono", step: "coding", part: "API", minutes: 10, needs: ["http-rest"] },
-  { slug: "validation", title: "ตรวจข้อมูลขาเข้าด้วย Zod", step: "coding", part: "API", minutes: 8, needs: ["hono"] },
-  { slug: "api-testing", title: "ยิงทดสอบ API", step: "coding", part: "API", minutes: 8, alsoIn: ["testing"], needs: ["http-rest"] },
-  { slug: "react-components", title: "React: Component และ Props", step: "coding", part: "Frontend", minutes: 10 },
-  { slug: "react-state", title: "React: State และ useEffect", step: "coding", part: "Frontend", minutes: 10, needs: ["react-components"] },
-  { slug: "fetch-data", title: "หน้าเว็บดึงข้อมูลจาก API", step: "coding", part: "Frontend", minutes: 8, needs: ["react-state", "http-rest"] },
-  { slug: "react-forms", title: "ฟอร์ม: กรอก ตรวจ ส่ง", step: "coding", part: "Frontend", minutes: 8, needs: ["fetch-data"] },
-  { slug: "tailwind", title: "Tailwind และออกแบบมือถือก่อน", step: "coding", part: "Frontend", minutes: 8, alsoIn: ["design"], needs: ["react-components"] },
-  { slug: "router-seo", title: "หลายหน้า (React Router) และ SEO", step: "coding", part: "Frontend", minutes: 10, needs: ["react-components"] },
+  { slug: "postgres", title: "Postgres และที่ที่มันรัน", step: "coding", part: "DB", minutes: 10, alsoIn: ["deploy"], starter: "วันที่ 1–2 · เปิดฐานข้อมูล + ต่อ pgAdmin" },
+  { slug: "sql-basics", title: "SQL ที่ใช้บ่อย", step: "coding", part: "DB", minutes: 12, alsoIn: ["design"], needs: ["postgres"], starter: "วันที่ 2 · primary key / foreign key" },
+  { slug: "orm-query-builder", title: "ORM กับ Query Builder", step: "coding", part: "DB", minutes: 8, needs: ["sql-basics"], starter: "วันที่ 2 · แนวคิด ORM (ต่อจาก Prisma ในงาน Todo)" },
+  { slug: "drizzle-orm", title: "Drizzle ORM", step: "coding", part: "DB", minutes: 15, needs: ["orm-query-builder"], starter: "วันที่ 2 · Drizzle schema + ต่อฐานข้อมูล" },
+  { slug: "migration", title: "Migration และ Seed", step: "coding", part: "DB", minutes: 10, alsoIn: ["deploy"], needs: ["drizzle-orm"], starter: "วันที่ 2 · migration + seed script" },
+  { slug: "http-rest", title: "HTTP และ REST", step: "coding", part: "API", minutes: 10, alsoIn: ["design"], starter: "วันที่ 3 · REST, method, status code, รูปแบบคำตอบ" },
+  { slug: "hono", title: "Hono", step: "coding", part: "API", minutes: 12, needs: ["http-rest"], starter: "วันที่ 3 · Public API" },
+  { slug: "validation", title: "ตรวจข้อมูลขาเข้าด้วย Zod", step: "coding", part: "API", minutes: 8, needs: ["hono"], starter: "วันที่ 3 · Zod ทุก endpoint" },
+  { slug: "layers", title: "แบ่งชั้น routes · services · repositories", step: "coding", part: "API", minutes: 10, needs: ["validation", "drizzle-orm"], starter: "วันที่ 3–4 · โค้ดใน server/src ที่โตขึ้น" },
+  { slug: "error-handling", title: "จัดการ error ที่จุดเดียว", step: "coding", part: "API", minutes: 8, needs: ["layers"], starter: "วันที่ 3 รูปแบบ error · วันที่ 9 ไม่หลุด stack trace" },
+  { slug: "api-testing", title: "ยิงทดสอบ API", step: "coding", part: "API", minutes: 8, alsoIn: ["testing"], needs: ["hono"], starter: "วันที่ 3 · ทดสอบทุก endpoint + ส่ง collection" },
+  { slug: "react-components", title: "React: Component และ Props", step: "coding", part: "Frontend", minutes: 12, starter: "วันที่ 6 · React component พื้นฐาน" },
+  { slug: "tailwind", title: "Tailwind และออกแบบมือถือก่อน", step: "coding", part: "Frontend", minutes: 10, alsoIn: ["design"], needs: ["react-components"], starter: "วันที่ 6 · Tailwind theme + responsive 375/768/1280" },
+  { slug: "react-state", title: "React: State และ useEffect", step: "coding", part: "Frontend", minutes: 10, needs: ["react-components"], starter: "วันที่ 6–8 · ข้อมูลที่เปลี่ยนบนหน้าจอ" },
+  { slug: "fetch-data", title: "หน้าเว็บดึงข้อมูลจาก API", step: "coding", part: "Frontend", minutes: 10, needs: ["react-state", "hono"], starter: "วันที่ 6 · ดึงจาก API + loading/error ทุกหน้า" },
+  { slug: "react-forms", title: "ฟอร์ม: กรอก ตรวจ ส่ง", step: "coding", part: "Frontend", minutes: 10, needs: ["fetch-data", "validation"], starter: "วันที่ 7 · Contact form" },
+  { slug: "router-seo", title: "หลายหน้า (React Router) และ SEO", step: "coding", part: "Frontend", minutes: 12, needs: ["fetch-data"], starter: "วันที่ 6 หลายหน้า + 404 · วันที่ 9 SEO" },
 ];
 
 export const legacy: LegacyLink[] = [
   { step: "problem", title: "Requirement งาน STARTER (ต้อง login)", link: "/starter" },
   { step: "design", title: "ประเภทฐานข้อมูลและการออกแบบตาราง", link: "/06-sql-nosql" },
-  { step: "design", title: "จัดโครงสร้างโปรเจกต์", link: "/project-structure" },
+  { step: "coding", part: "เตรียมเครื่อง", title: "ก่อนเริ่ม: ติดตั้งเครื่องมือ + Terminal", link: "/00-start" },
+  { step: "coding", part: "เตรียมเครื่อง", title: "Git", link: "/01-git" },
+  { step: "coding", part: "เตรียมเครื่อง", title: "Docker", link: "/02-docker" },
+  { step: "coding", part: "เตรียมเครื่อง", title: "Runtime & Package Manager (Bun)", link: "/03-node-yarn-bun" },
+  { step: "coding", part: "เตรียมเครื่อง", title: "TypeScript", link: "/04-typescript" },
+  { step: "coding", part: "เตรียมเครื่อง", title: "จัดโครงสร้างโปรเจกต์ (client / server)", link: "/project-structure" },
   { step: "coding", part: "DB", title: "เก็บรูปภาพคู่กับฐานข้อมูล", link: "/08c-image-storage" },
-  { step: "coding", part: "API", title: "ระบบ login", link: "/15-auth" },
+  { step: "coding", part: "Login", title: "ระบบ login (JWT ใน httpOnly cookie)", link: "/15-auth" },
+  { step: "coding", part: "Login", title: "Security พื้นฐาน (hash รหัสผ่าน, middleware)", link: "/10-security" },
+  { step: "coding", part: "หลังบ้าน", title: "หน้าจัดการร้าน: หน้าซ้อนหน้า + หน้าที่ต้อง login", link: "/13-router-seo#5-หน้าจัดการร้าน-หน้าซ้อนหน้า--หน้าที่ต้อง-login" },
   { step: "testing", title: "Debugging", link: "/09-debugging" },
   { step: "deploy", title: "เน็ตเวิร์กพื้นฐาน", link: "/17-network" },
   { step: "deploy", title: "Domain และ DNS", link: "/18-domain-dns" },

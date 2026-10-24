@@ -8,30 +8,40 @@ title: "แบ่งชั้น routes · services · repositories"
 
 | ชั้น | รู้เรื่อง | ไม่รู้เรื่อง |
 |---|---|---|
-| **routes** | HTTP: อ่านคำขอ ตรวจรูปแบบ ตอบ status | กฎธุรกิจ, SQL |
+| **routes** | HTTP: อ่านคำขอ ตรวจรูปแบบด้วย Zod ตอบ status | กฎของระบบ, SQL |
 | **services** | กฎของระบบ: ใครทำอะไรได้ เมื่อไร | HTTP, status code |
-| **repositories** | อ่าน/เขียนฐานข้อมูล | กฎ, HTTP |
+| **repositories** | อ่าน/เขียนฐานข้อมูลด้วย Drizzle | กฎ, HTTP |
 
-คำขอเดินทางลงไปทีละชั้น: `routes → services → repositories → ฐานข้อมูล` แล้วผลไหลกลับขึ้นมาทางเดิม
+**นึกภาพ:** ร้านอาหาร พนักงานหน้าร้าน (routes) รับออเดอร์ เชฟ (services) ตัดสินว่าทำได้ไหม วัตถุดิบหมดหรือยัง คนดูแลห้องเก็บของ (repositories) หยิบของจากตู้ พนักงานหน้าร้านไม่ต้องรู้ว่าของอยู่ตู้ไหน
 
 ## ที่มา
 
-ตอนเริ่มโปรเจกต์ เขียนทุกอย่างในไฟล์ route เดียวเร็วที่สุด แต่พอระบบโต กฎ "ยืมได้ไม่เกิน 3 เล่ม" จะไปโผล่ทั้งใน route ยืมผ่านเว็บ route ยืมผ่านแอดมิน และสคริปต์นำเข้าข้อมูล แก้กฎทีต้องตามแก้ 3 ที่ แล้วสักที่ต้องหลุด การแบ่งชั้นทำให้ **กฎแต่ละข้อมีบ้านที่เดียว** ใครเรียกจากไหนก็ผ่านกฎเดียวกัน
+ตอนเริ่มโปรเจกต์ เขียนทุกอย่างในไฟล์ route เดียวเร็วที่สุด แต่พอระบบโต กฎ "ยืมได้ไม่เกิน 3 เล่ม" จะโผล่ทั้งใน route ยืมผ่านเว็บ route ยืมผ่านหลังบ้าน และสคริปต์นำเข้าข้อมูล แก้กฎทีต้องตามแก้ 3 ที่ แล้วสักที่ต้องหลุด การแบ่งชั้นทำให้ **กฎแต่ละข้อมีบ้านที่เดียว** ใครเรียกจากไหนก็ผ่านกฎเดียวกัน
 
 ## การใช้งาน
 
+ตัวอย่าง: สมาชิกยืมหนังสือ (`POST /api/loans`) กฎคือยืมค้างได้ไม่เกิน 3 เล่ม ต่อฐานจริงจากการ์ด [Drizzle](/learn/cards/drizzle-orm) ใช้ `ok` / `fail` จากการ์ด [Hono](/learn/cards/hono)
+
+**repository** `server/src/repositories/loan.repository.ts` · query อย่างเดียว ไม่ตัดสินอะไร
+
 ```ts
-// repositories/loan.repository.ts · query อย่างเดียว ไม่ตัดสินอะไร
+import { and, eq, isNull } from "drizzle-orm";
+import { db } from "../db";
+import { loans } from "../db/schema";
+
 export const loanRepository = {
   countOpen: (memberId: number) =>
     db.$count(loans, and(eq(loans.memberId, memberId), isNull(loans.returnedAt))),
   create: (memberId: number, bookId: number) =>
-    db.insert(loans).values({ memberId, bookId }).returning(),
+    db.insert(loans).values({ memberId, bookId, dueAt: new Date(Date.now() + 14 * 86400000) }).returning(),
 };
 ```
 
+**service** `server/src/services/loan.service.ts` · กฎอยู่ที่นี่ บอกผลด้วย "รหัส" ไม่ใช่ status
+
 ```ts
-// services/loan.service.ts · กฎอยู่ที่นี่ บอกผลด้วย "รหัส" ไม่ใช่ status
+import { loanRepository } from "../repositories/loan.repository";
+
 export const loanService = {
   async borrow(memberId: number, bookId: number) {
     if ((await loanRepository.countOpen(memberId)) >= 3) throw new Error("LOAN_LIMIT");
@@ -41,28 +51,43 @@ export const loanService = {
 };
 ```
 
+**route** `server/src/routes/loans.routes.ts` · HTTP อย่างเดียว
+
 ```ts
-// routes/loan.routes.ts · HTTP อย่างเดียว
+import { Hono } from "hono";
+import { z } from "zod";
+import { fail, ok } from "../lib/response";
+import { loanService } from "../services/loan.service";
+import { newLoanSchema } from "../validators/loan.validator";   // z.object({ memberId, bookId })
+
+export const loanRoutes = new Hono();
+
 loanRoutes.post("/", async (c) => {
   const parsed = newLoanSchema.safeParse(await c.req.json().catch(() => null));
-  if (!parsed.success) return c.json({ error: "ข้อมูลไม่ถูกต้อง" }, 400);
-  return c.json(await loanService.borrow(c.get("user").id, parsed.data.bookId), 201);
+  if (!parsed.success) return fail(c, 400, "VALIDATION_ERROR", "ข้อมูลไม่ถูกต้อง", z.flattenError(parsed.error).fieldErrors);
+  return ok(c, await loanService.borrow(parsed.data.memberId, parsed.data.bookId), 201);
 });
 ```
 
-รหัส `LOAN_LIMIT` จะถูกแปลงเป็น `409` พร้อมข้อความภาษาไทยที่จุดเดียว (ดูการ์ดจัดการ error)
+แล้วเพิ่ม `app.route("/loans", loanRoutes)` ใน `index.ts`
+
+**ควรเห็น:** ยืมเล่มที่ 1–3 ได้ `201` ทั้งหมด พอยืมเล่มที่ 4 ได้ `500` เพราะรหัส `LOAN_LIMIT` ยังไม่มีใครแปลงเป็นคำตอบ การ์ดถัดไป [จัดการ error ที่จุดเดียว](/learn/cards/error-handling) จะเปลี่ยนเป็น `409` พร้อมข้อความภาษาไทย
+
+> ตัวอย่างนี้ส่ง `memberId` มาใน body เพื่อให้ลองได้ทันที ระบบจริงต้องรู้ว่าใครยืมจากการ login ไม่ใช่เชื่อเลขที่ส่งมา (อยู่ในช่วง Login)
 
 ## ทริคที่แนะนำ
 
-1. **ถามว่า "ถ้าไม่มีเว็บ กฎนี้ยังต้องมีไหม"** ถ้าต้องมี มันคือกฎธุรกิจ อยู่ใน service ไม่ใช่ใน route และไม่ใช่ในหน้าเว็บ
-2. **service ห้าม import อะไรจาก Hono:** ถ้า service ต้องรู้จัก `c` แปลว่าชั้นรั่ว เรียก service จากเทสต์หรือสคริปต์จะทำไม่ได้
-3. **ไล่ระดับความลึกตามความจำเป็น:** route ที่แค่ดึงรายการโดยไม่มีกฎ ให้ service ส่งต่อ repository ตรงๆ บรรทัดเดียวก็พอ ไม่ต้องฝืนเขียนเพิ่ม
+1. **ถามว่า "ถ้าไม่มีเว็บ กฎนี้ยังต้องมีไหม"** ถ้าต้องมี มันคือกฎของระบบ อยู่ใน service ไม่ใช่ใน route และไม่ใช่ในหน้าเว็บ
+2. **service ห้าม import อะไรจาก Hono:** ถ้า service ต้องรู้จัก `c` แปลว่าชั้นรั่ว เรียก service จากเทสต์หรือจาก seed script จะทำไม่ได้
+3. **ไม่ต้องฝืนเขียนทุกชั้น:** route ที่แค่ดึงรายการโดยไม่มีกฎ ให้ service ส่งต่อ repository บรรทัดเดียวก็พอ
 
 ## ปรับไปใช้จริง
 
-เว็บคู่มือนี้แบ่งแบบนี้ทุกเรื่อง เปิด `server/` จะเห็นโฟลเดอร์ `routes/`, `services/`, `repositories/` ตามรอยคำขอ `PUT /api/progress` ได้ครบ 3 ไฟล์: route ตรวจรูปแบบ link → `progressService.set` เช็กว่ามีบทนี้จริง (`UNKNOWN_CHAPTER`) → `progressRepository.add` บันทึกแบบติ๊กซ้ำไม่ error
+**ในงาน STARTER:** โครงโฟลเดอร์ใน Requirement เป็น "ขั้นต่ำ" มี `routes/`, `db/`, `validators/`, `middleware/` เพิ่ม `services/` และ `repositories/` ได้ ตัวอย่างกฎที่ควรอยู่ใน service เช่น "ลบหมวดที่ยังมีสินค้าอยู่ไม่ได้" (ต้องตอบ `409`) และ "เปิดอ่านข้อความแล้วเปลี่ยนเป็นอ่านแล้ว"
 
-ลองคิด: กฎ "พี่เลี้ยงเท่านั้นที่ปิดบัญชีน้องได้" เว็บนี้เช็กที่ชั้นไหน (ดู `requireRole` ใน `server/middleware/`) และทำไมไม่ใส่ไว้ใน service
+**เว็บคู่มือนี้:** แบ่งแบบนี้ทุกเรื่อง ดูโฟลเดอร์ [server/ บน GitHub](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/tree/main/server) จะเห็น `routes/`, `services/`, `repositories/` ตามรอยคำขอ `PUT /api/progress` ได้ครบ 3 ไฟล์
+
+ลองคิด: กฎ "ลบหมวดที่ยังมีสินค้าอยู่ไม่ได้" ใช้ foreign key ของฐานข้อมูลกันได้อยู่แล้ว (การ์ด SQL ทริคข้อ 3) แล้วยังต้องมีใน service อีกไหม ถ้าไม่มี ผู้ใช้จะเห็นอะไร
 
 ## ตัวเลือกอื่นที่คล้ายกัน
 
@@ -71,16 +96,16 @@ loanRoutes.post("/", async (c) => {
 | **3 ชั้น (ทีมใช้)** | ตามหน้าที่: routes / services / repositories | ระบบเล็กถึงกลาง ทีมเล็ก |
 | แบ่งตามฟีเจอร์ | โฟลเดอร์ละเรื่อง `books/` `loans/` ข้างในค่อยแยกชั้น | ระบบที่มีหลายสิบเรื่อง |
 | Clean / Hexagonal | แกนกลางไม่รู้จักฐานข้อมูลหรือ framework เลย ต่อผ่าน interface | ระบบใหญ่ที่ต้องเปลี่ยนฐานข้อมูลหรือช่องทางได้ |
-| ไฟล์เดียว | ทุกอย่างใน route | ต้นแบบ หรือสคริปต์ทิ้งหลังใช้ |
+| ไฟล์เดียว | ทุกอย่างใน route | ต้นแบบ หรือสคริปต์ใช้ครั้งเดียว |
 
 ## ลองเอง
 
-**โจทย์:** เพิ่มกฎ "หนังสือที่ถูกยืมอยู่ ลบไม่ได้" ให้ API ลบหนังสือ ตอบ `409` พร้อมข้อความภาษาไทย โดยไฟล์ route ต้องไม่เปลี่ยนแม้แต่บรรทัดเดียว
+**โจทย์:** เพิ่มกฎ "หนังสือที่ถูกยืมอยู่ (ยังไม่คืน) ยืมซ้ำไม่ได้" ให้ `POST /api/loans` โดยไฟล์ route ต้องไม่เปลี่ยนแม้แต่บรรทัดเดียว
 
-<Hint level={1}>ถ้า route ห้ามเปลี่ยน กฎต้องไปอยู่ชั้นไหน และชั้นนั้นต้องรู้อะไรเพิ่มจากฐานข้อมูล</Hint>
-<Hint level={2}>repository ต้องมีฟังก์ชันใหม่ที่ตอบคำถามว่า "เล่มนี้มีการยืมที่ยังไม่คืนไหม" service เรียกก่อนลบ ถ้ามีก็โยนรหัส</Hint>
-<Hint level={3}>รหัสใหม่ต้องถูกแปลงเป็น 409 ที่ไหนสักที่ ที่นั่นไม่ใช่ route</Hint>
+<Hint level={1}>ถ้า route ห้ามเปลี่ยน กฎต้องไปอยู่ชั้นไหน และชั้นนั้นต้องถามฐานข้อมูลว่าอะไร</Hint>
+<Hint level={2}>repository ต้องมีฟังก์ชันใหม่ที่ตอบว่า "เล่มนี้มีการยืมที่ยังไม่คืนไหม" (ดู `countOpen` เป็นแบบ) service เรียกก่อนสร้างการยืม ถ้ามีก็โยนรหัสใหม่</Hint>
+<Hint level={3}>ตอนนี้รหัสใหม่จะได้ `500` เหมือน `LOAN_LIMIT` เก็บไว้ก่อน แล้วไปทำให้เป็น `409` ในการ์ดถัดไป</Hint>
 
 ## อ่านเพิ่ม
 
-พาทำทั้งระบบเช่าเครื่องทีละชั้น ตั้งแต่อ่านแบบจนทดสอบตามรายการกฎ อยู่ในบทเดิม [จากแบบฐานข้อมูลสู่ Backend](/08b-db-to-backend)
+พาทำทั้งระบบทีละชั้น ตั้งแต่อ่านแบบจนทดสอบตามรายการกฎ อยู่ในบทเดิม [จากแบบฐานข้อมูลสู่ Backend](/08b-db-to-backend)

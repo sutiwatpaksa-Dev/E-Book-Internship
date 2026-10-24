@@ -4,9 +4,11 @@ title: "หลายหน้า (React Router) และ SEO"
 
 ## ความหมาย
 
-**Router** ทำให้เว็บ React มีหลายหน้าตามที่อยู่ (`/books`, `/books/7`) โดยไม่ต้องโหลดหน้าใหม่จาก server ทุกครั้ง กดย้อนกลับได้ และส่งลิงก์ให้คนอื่นแล้วเปิดเจอหน้าเดียวกัน
+**[Router](/glossary#router)** ทำให้เว็บ React มีหลายหน้าตามที่อยู่ (`/books`, `/books/7`) โดยไม่ต้องโหลดหน้าใหม่จาก server ทุกครั้ง กดย้อนกลับได้ และส่งลิงก์ให้คนอื่นแล้วเปิดเจอหน้าเดียวกัน
 
-**SEO** คือการบอก Google และแอปแชตว่าหน้านี้คืออะไร ผ่าน `<title>`, `<meta name="description">` และแท็ก `og:` ที่ LINE กับ Facebook ใช้ทำการ์ดตอนแชร์ลิงก์
+**[SEO](/glossary#seo)** คือการบอก Google และแอปแชตว่าหน้านี้คืออะไร ผ่าน `<title>`, `<meta name="description">` และแท็ก [`og:`](/glossary#og) ที่ LINE กับ Facebook ใช้ทำการ์ดตอนแชร์ลิงก์
+
+**นึกภาพ:** ห้างสรรพสินค้า router คือป้ายบอกชั้นและเลขห้อง บอกเลขห้องให้เพื่อนแล้วเพื่อนเดินมาถูก ส่วน SEO คือป้ายหน้าร้านที่บอกคนเดินผ่าน (Google) ว่าร้านนี้ขายอะไร
 
 ## ที่มา
 
@@ -14,18 +16,37 @@ title: "หลายหน้า (React Router) และ SEO"
 
 ## การใช้งาน
 
+### ตั้งค่าครั้งแรก
+
+```bash
+cd client
+bun add react-router
+```
+
+### 1. ห่อทั้งแอปครั้งเดียว
+
+แก้ `src/main.tsx` เพิ่ม `BrowserRouter` ห่อ `<App />`
+
 ```tsx
-// src/main.tsx · ห่อทั้งแอปครั้งเดียว
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router";
+import "./index.css";
+import App from "./App.tsx";
+
 createRoot(document.getElementById("root")!).render(
-  <BrowserRouter>
-    <App />
-  </BrowserRouter>,
+  <StrictMode>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </StrictMode>,
 );
 ```
 
+### 2. ที่อยู่ → หน้า
+
 ```tsx
-// src/app.tsx · ที่อยู่ → หน้า
+// src/App.tsx · ที่อยู่ → หน้า (HomePage, BookPage, NotFoundPage เป็นชิ้นส่วนที่เขียนเองในโฟลเดอร์ pages/)
 import { Route, Routes } from "react-router";
 
 export default function App() {
@@ -41,23 +62,63 @@ export default function App() {
 }
 ```
 
-ใน `PublicLayout` วาง `<Outlet />` ไว้ตรงที่ให้หน้าลูกมาแสดง เมนูใช้ `<NavLink to="/books">` แทน `<a href>` เปลี่ยนหน้าได้โดยไม่โหลดใหม่ และรู้ว่าเมนูไหนคือหน้าที่เปิดอยู่ ในหน้าลูกอ่าน `:id` ด้วย `useParams()`
-
-ชื่อหน้าและคำอธิบาย: React 19 ให้เขียน `<title>` กับ `<meta>` ในชิ้นส่วนไหนก็ได้ แล้วย้ายไปไว้ส่วนหัวของหน้าให้เอง
+### 3. โครงหน้าร่วม
 
 ```tsx
+// src/components/public-layout.tsx
+import { NavLink, Outlet } from "react-router";
+
+export function PublicLayout() {
+  const link = ({ isActive }: { isActive: boolean }) => (isActive ? "font-bold text-brand" : "text-gray-600");
+  return (
+    <div className="mx-auto max-w-5xl px-4">
+      <nav className="flex gap-4 py-4">
+        <NavLink to="/" end className={link}>หน้าแรก</NavLink>
+        <NavLink to="/books" className={link}>หนังสือ</NavLink>
+      </nav>
+      <main>
+        <Outlet />     {/* หน้าลูกมาแสดงตรงนี้ */}
+      </main>
+    </div>
+  );
+}
+```
+
+`<NavLink>` ใช้แทน `<a href>` เปลี่ยนหน้าได้โดยไม่โหลดใหม่ และรู้ว่าเมนูไหนคือหน้าที่เปิดอยู่ (`isActive`)
+
+### 4. หน้าลูกอ่าน `:id` และตั้งชื่อหน้า
+
+React 19 ให้เขียน `<title>` กับ `<meta>` ในชิ้นส่วนไหนก็ได้ แล้วย้ายไปไว้ส่วนหัวของหน้าให้เอง
+
+```tsx
+// src/pages/book-page.tsx
+import { useEffect, useState } from "react";
+import { useParams } from "react-router";
+import { booksApi } from "../api/books.api";
+import type { Book } from "../types/book";
+
 export function BookPage() {
-  const { id } = useParams();
-  // ...ดึงหนังสือเล่มนั้น
+  const { id } = useParams();                       // /books/2 → "2"
+  const [book, setBook] = useState<Book | null>(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    booksApi.get(Number(id)).then(setBook).catch((e: Error) => setError(e.message));
+  }, [id]);                                         // เปลี่ยนเล่ม = ดึงใหม่
+
+  if (error) return <p role="alert">{error}</p>;
+  if (!book) return <p>กำลังโหลด...</p>;
   return (
     <>
       <title>{`${book.title} | ห้องสมุดบิต`}</title>
-      <meta name="description" content={book.summary} />
-      <h1>{book.title}</h1>
+      <meta name="description" content={`รายละเอียดหนังสือ ${book.title}`} />
+      <h1 className="text-2xl font-bold">{book.title}</h1>
     </>
   );
 }
 ```
+
+**ควรเห็น:** เปิด `http://localhost:5173/books/2` ชื่อแท็บเป็น `ฮอบบิท | ห้องสมุดบิต` เปิด `/books/99` ได้ "ไม่พบหนังสือ" (ข้อความจาก API) และเปิด `/อะไรก็ได้` ได้หน้า 404
 
 ## ทริคที่แนะนำ
 
@@ -67,7 +128,9 @@ export function BookPage() {
 
 ## ปรับไปใช้จริง
 
-เว็บคู่มือนี้ใช้ Next.js ที่มี router ในตัว: แต่ละโฟลเดอร์ใน `src/app/` คือที่อยู่หนึ่งหน้า (`src/app/(app)/today/page.tsx` คือ `/today`) แนวคิดเดียวกับ React Router คือ "ที่อยู่ → หน้า" + "โครงหน้าร่วม" (`layout.tsx` ทำหน้าที่เดียวกับ `PublicLayout` + `Outlet`) ส่วนชื่อหน้าตั้งด้วย `metadata` เช่น หน้าวันนี้ตั้ง `title: "วันนี้"`
+**ในงาน STARTER:** วันที่ 6 ทำ layout (Navbar + Footer) ด้วยโครงหน้าร่วมแบบข้อ 3 และวันที่ 9 ตรวจ SEO: ทุกหน้ามี title/description, มี OG tags, รูปมี `alt`, `<h1>` หน้าละ 1 ตัว, มี `robots.txt` และ `sitemap.xml` (ไฟล์ธรรมดาในโฟลเดอร์ `client/public/`) และ **README ต้องอธิบายข้อจำกัด SEO ของเว็บแบบ [SPA](/glossary#spa)** (ดูย่อหน้า "ข้อจำกัดของเว็บ Vite + React Router" ด้านล่าง)
+
+**เว็บคู่มือนี้:** ใช้ Next.js ที่มี router ในตัว: แต่ละโฟลเดอร์ใน `src/app/` คือที่อยู่หนึ่งหน้า (`src/app/(app)/today/page.tsx` คือ `/today`) แนวคิดเดียวกับ React Router คือ "ที่อยู่ → หน้า" + "โครงหน้าร่วม" (`layout.tsx` ทำหน้าที่เดียวกับ `PublicLayout` + `Outlet`) ส่วนชื่อหน้าตั้งด้วย `metadata` เช่น หน้าวันนี้ตั้ง `title: "วันนี้"`
 
 ข้อจำกัดของเว็บ Vite + React Router ที่ต้องอธิบายลูกค้าได้: server ส่ง HTML ว่างมาก่อน แล้ว JavaScript ค่อยวาดเนื้อหา Google รอวาดได้ แต่แอปแชตบางตัวไม่รอ การ์ดแชร์ลิงก์จึงอาจไม่ขึ้นตามชื่อหน้าที่ตั้งในชิ้นส่วน
 

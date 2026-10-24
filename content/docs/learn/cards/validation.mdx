@@ -4,68 +4,91 @@ title: "ตรวจข้อมูลขาเข้าด้วย Zod"
 
 ## ความหมาย
 
-ทุกอย่างที่ส่งเข้ามาทาง API เป็นของ **ที่เชื่อไม่ได้** จนกว่าจะตรวจ Zod ให้เราเขียน **schema** (หน้าตาที่ข้อมูลควรเป็น) แล้วเอาข้อมูลจริงไปเทียบ ผ่านได้ข้อมูลที่สะอาดพร้อม type ไม่ผ่านได้รายการว่าผิดช่องไหน
+ทุกอย่างที่ส่งเข้ามาทาง API **เชื่อไม่ได้** จนกว่าจะตรวจ [Zod](/glossary#zod) ให้เราเขียน **[schema](/glossary#schema-zod)** บอกว่าข้อมูลควรหน้าตาแบบไหน แล้วเอาข้อมูลจริงไปเทียบ ผ่านแล้วได้ข้อมูลที่สะอาดพร้อม type ไม่ผ่านก็ได้รายการว่าผิดช่องไหน
+
+**นึกภาพ:** พนักงานตรวจรับของหน้าโกดัง ถือใบรายการ (schema) เทียบของที่มาส่งทีละช่อง ของไม่ครบหรือผิดชนิดก็ส่งคืนพร้อมบอกว่าผิดตรงไหน ไม่ปล่อยเข้าโกดัง (ฐานข้อมูล)
 
 ## ที่มา
 
-type ของ TypeScript หายไปตอนรัน มันช่วยได้แค่โค้ดที่เราเขียนเอง แต่ช่วยไม่ได้กับ JSON ที่คนอื่นส่งมา คนยิง API ตรงๆ ด้วย `curl` ข้ามหน้าเว็บได้เสมอ ส่ง `title` เป็นตัวเลข ส่งค่าว่าง หรือส่งข้อความยาวล้านตัวอักษร ถ้าไม่ตรวจ ของพวกนี้จะไปพังในฐานข้อมูลหรือโผล่บนหน้าเว็บคนอื่น Zod เขียนครั้งเดียวได้ทั้งตัวตรวจตอนรันและ type ตอนเขียนโค้ด ไม่ต้องเขียนซ้ำสองที่
+type ของ TypeScript หายไปตอนรัน มันช่วยได้แค่โค้ดที่เราเขียนเอง ช่วยไม่ได้กับ JSON ที่คนอื่นส่งมา และคนยิง API ตรงๆ ข้ามหน้าเว็บได้เสมอ ส่ง `title` เป็นตัวเลข ส่งค่าว่าง หรือส่งข้อความยาวล้านตัวอักษรก็ได้ ถ้าไม่ตรวจ ของพวกนี้จะไปพังในฐานข้อมูลหรือโผล่บนหน้าเว็บคนอื่น Zod เขียนครั้งเดียว ได้ทั้งตัวตรวจตอนรันและ type ตอนเขียนโค้ด
 
 ## การใช้งาน
 
+### ตั้งค่าครั้งแรก
+
+```bash
+cd server
+bun add zod
+```
+
+### 1. เขียน schema `server/src/validators/book.validator.ts`
+
 ```ts
-// server/validators/book.validator.ts
 import { z } from "zod";
 
 export const newBookSchema = z.object({
   title: z.string().trim().min(1, "ต้องมีชื่อหนังสือ").max(200),
-  year: z.number().int().min(1400).optional(),
 });
 
-export type NewBook = z.infer<typeof newBookSchema>;   // { title: string; year?: number }
+export type NewBook = z.infer<typeof newBookSchema>;   // { title: string } ได้ type ไม่ต้องเขียนซ้ำ
 ```
+
+### 2. ใช้ใน route (ต่อจากการ์ด [Hono](/learn/cards/hono))
 
 ```ts
-// ใน route
+import { z } from "zod";
+import { newBookSchema } from "../validators/book.validator";
+
 bookRoutes.post("/", async (c) => {
-  // body ไม่ใช่ JSON → ได้ null → ไม่ผ่าน schema (ไม่ปล่อยให้ระบบตอบ 500)
+  // body ไม่ใช่ JSON → ได้ null → ไม่ผ่าน schema (ไม่ปล่อยให้กลายเป็น 500)
   const parsed = newBookSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) {
-    const details = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`);
-    return c.json({ error: "ข้อมูลไม่ถูกต้อง", details }, 400);
+    return fail(c, 400, "VALIDATION_ERROR", "ข้อมูลไม่ถูกต้อง", z.flattenError(parsed.error).fieldErrors);
   }
-  const book = await bookService.create(parsed.data);   // ตรงนี้ parsed.data เป็น NewBook แล้ว
-  return c.json(book, 201);
+  const book = { id: books.length + 1, title: parsed.data.title, available: true };   // parsed.data ผ่านการตรวจแล้ว
+  books.push(book);
+  return ok(c, book, 201);
 });
 ```
 
-ส่ง `{"title": ""}` จะได้ `400` กับ `"details": ["title: ต้องมีชื่อหนังสือ"]` ส่วน `" ฮอบบิท "` จะถูกตัดช่องว่างหัวท้ายเป็น `"ฮอบบิท"` ให้ก่อนบันทึก
+**ควรเห็น:** ส่ง `{ "title": "" }` ได้ `400`
+
+```json
+{"success":false,"error":{"code":"VALIDATION_ERROR","message":"ข้อมูลไม่ถูกต้อง","details":{"title":["ต้องมีชื่อหนังสือ"]}}}
+```
+
+ส่ง `{ "title": " ฮอบบิท 2 " }` ได้ `201` และชื่อถูกตัดช่องว่างหัวท้ายเป็น `"ฮอบบิท 2"` ให้ก่อนบันทึก (วิธียิงคำขอ `POST` ดูการ์ด [ยิงทดสอบ API](/learn/cards/api-testing))
+
+`details` บอกเป็นรายช่อง หน้าเว็บเอาไปขึ้นใต้ช่องที่ผิดได้ทันที (ดูการ์ด [ฟอร์ม](/learn/cards/react-forms))
 
 ## ทริคที่แนะนำ
 
-1. **ใช้ `safeParse` ไม่ใช่ `parse`:** `parse` โยน error ถ้าไม่มีใครจับ จะกลายเป็น `500` ทั้งที่ผิดที่คนส่ง
-2. **ใส่ `max` ให้ข้อความและ array เสมอ** กันคนส่งของใหญ่มาถมฐานข้อมูล (เว็บนี้รับ link ไม่เกิน 80 ตัวอักษร และนำเข้าทีละไม่เกิน 100 รายการ)
-3. **Zod ตรวจ "รูปแบบ" ส่วน "กฎ" อยู่ใน service:** "ชื่อห้ามว่าง" เป็นรูปแบบ แต่ "สมาชิกยืมได้ไม่เกิน 3 เล่ม" ต้องดูฐานข้อมูล จึงเป็นงานของ service (ดูการ์ดแบ่งชั้น)
+1. **ใช้ `safeParse` ไม่ใช่ `parse`:** `parse` โยน error ถ้าไม่มีใครจับจะกลายเป็น `500` ทั้งที่คนส่งเป็นฝ่ายผิด
+2. **ใส่ `max` ให้ข้อความและรายการเสมอ** กันคนส่งของใหญ่มาถมฐานข้อมูล (Requirement กำหนดข้อความติดต่อไม่เกิน 1,000 ตัวอักษร)
+3. **Zod ตรวจ "รูปแบบ" ส่วน "กฎ" ที่ต้องดูฐานข้อมูลอยู่ใน service:** "ชื่อห้ามว่าง" เป็นรูปแบบ แต่ "สมาชิกยืมได้ไม่เกิน 3 เล่ม" ต้องนับในฐานข้อมูลก่อน (ดูการ์ด [แบ่งชั้น](/learn/cards/layers))
 
 ## ปรับไปใช้จริง
 
-เว็บคู่มือนี้เก็บ schema ไว้ใน `server/validators/` แยกจาก route เปิด `progress.validator.ts` จะเห็น link ถูกบังคับด้วย regex ให้หน้าตาเป็น `/ชื่อ-บท` เท่านั้น แต่ "มีบทนี้จริงไหม" ไปเช็กต่อใน service ซึ่งตรงกับทริคข้อ 3
+**ในงาน STARTER:** Requirement บอกว่า "ทุก request body/query ผ่าน Zod ที่ backend เสมอ (validate frontend อย่างเดียวไม่นับ)" และ Zod ได้ 25 คะแนนในหมวด Backend/API เก็บ schema ไว้ใน `server/src/validators/` ตามโครงโฟลเดอร์ และ `pages.content` ที่เป็น [jsonb](/glossary#jsonb) ก็ต้องมี schema คุมหน้าตาทุกครั้งที่บันทึก
 
-Hono มีตัวช่วย `zValidator` (แพ็กเกจ `@hono/zod-validator`) ที่ตรวจให้ก่อนเข้า handler แล้วอ่านผลด้วย `c.req.valid("json")` สั้นกว่า แต่คำขอต้องมี header `Content-Type: application/json` ไม่งั้นจะได้ object ว่าง เว็บนี้เลือกเขียน `safeParse` เองเพื่อคุมข้อความ error เป็นภาษาไทยได้ทุกตัว
+**เว็บคู่มือนี้:** ดู [server/validators/progress.validator.ts บน GitHub](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/server/validators/progress.validator.ts) link ถูกบังคับด้วย regex ให้หน้าตาเป็น `/ชื่อ-บท` เท่านั้น ส่วน "มีบทนี้จริงไหม" ไปเช็กต่อใน service ตรงกับทริคข้อ 3
 
-ลองคิด: schema ตอน "สร้าง" กับตอน "แก้บางช่อง" ควรต่างกันตรงไหน (ลองค้น `.partial()` ในเอกสาร Zod)
+ลองคิด: schema ตอน "สร้าง" กับตอน "แก้บางช่อง" (`PATCH`) ควรต่างกันตรงไหน (ลองค้น `.partial()` ในเอกสาร Zod)
 
 ## ตัวเลือกอื่นที่คล้ายกัน
+
+Hono มีตัวช่วย `zValidator` (แพ็กเกจ `@hono/zod-validator`) ที่ตรวจให้ก่อนเข้า handler สั้นกว่า แต่คำขอต้องมี header `Content-Type: application/json` ไม่งั้นได้ object ว่าง และต้องตั้งค่าเพิ่มถ้าอยากให้คำตอบตอนไม่ผ่านเป็นรูปแบบเดียวกับ Requirement
 
 <ToolTable group="ts-validator" />
 
 ## ลองเอง
 
-**โจทย์:** เขียน schema สำหรับสมัครสมาชิกห้องสมุด: ชื่อ, อีเมล, เบอร์โทรไทย 10 หลักขึ้นต้นด้วย 0 และปีเกิดที่ทำให้อายุอย่างน้อย 7 ขวบ แล้วลองยิงข้อมูลผิดทีละช่อง ต้องได้ข้อความที่บอกช่องที่ผิดถูกต้อง
+**โจทย์:** เขียน schema สมัครสมาชิกห้องสมุด: ชื่อ (บังคับ), อีเมล (ไม่บังคับ แต่ถ้ากรอกต้องถูกรูปแบบ), เบอร์โทรตัวเลข 9–10 หลัก แล้วยิงข้อมูลผิดทีละช่อง `details` ต้องบอกช่องที่ผิดถูกต้อง
 
 <Hint level={1}>แต่ละช่องคือ 1 บรรทัดใน `z.object({...})` ลองหาในเอกสาร Zod ว่ามีตัวตรวจอีเมลสำเร็จรูปไหม</Hint>
-<Hint level={2}>เบอร์โทรใช้ `.regex()` คิดรูปแบบเป็นคำพูดก่อน: "0 ตามด้วยตัวเลขอีก 9 ตัว ไม่มีอย่างอื่น" แล้วค่อยแปลงเป็น regex</Hint>
-<Hint level={3}>ปีที่ "ทำให้อายุ 7 ขวบ" ขึ้นกับปีปัจจุบัน ต้องคำนวณจาก `new Date().getFullYear()` ไม่ใช่เขียนเลขตายตัว</Hint>
+<Hint level={2}>เบอร์โทรใช้ `.regex()` คิดรูปแบบเป็นคำพูดก่อน: "ตัวเลขล้วน 9 ถึง 10 ตัว ไม่มีอย่างอื่น" แล้วค่อยแปลงเป็น regex</Hint>
+<Hint level={3}>"ไม่บังคับ" ใช้ `.optional()` แต่ระวัง ช่องอีเมลในฟอร์มที่ไม่กรอกมักส่งมาเป็น `""` (ข้อความว่าง) ไม่ใช่ไม่ส่ง ลองยิงทั้งสองแบบแล้วดูผล</Hint>
 
 ## อ่านเพิ่ม
 
-ทำไม type ของ TypeScript ถึงหายตอนรัน และเทียบ Zod กับตัวอื่นแบบละเอียด อยู่ในบทเดิม [TypeScript](/04-typescript)
+ทำไม type ของ TypeScript หายตอนรัน และเทียบ Zod กับตัวอื่นแบบละเอียด อยู่ในบทเดิม [TypeScript](/04-typescript)

@@ -4,51 +4,111 @@ title: "Drizzle ORM"
 
 ## ความหมาย
 
-Drizzle คือ library ภาษา TypeScript ที่ให้เรา **ประกาศหน้าตาตารางเป็นโค้ด** แล้วใช้โค้ดนั้นทั้งสร้างตาราง (ผ่าน migration) และเขียนคำสั่งดึงข้อมูลที่มี type ถูกต้อง ไฟล์ schema ไฟล์เดียวจึงเป็น "ความจริงหนึ่งเดียว" ของหน้าตาฐานข้อมูล
+Drizzle คือ library ภาษา TypeScript ที่ให้เรา **เขียนหน้าตาตารางเป็นโค้ด** ([schema](/glossary#schema)) แล้วใช้โค้ดนั้นทั้งสร้างตารางจริงและดึงข้อมูลแบบมี [type](/glossary#type)
+
+**นึกภาพ:** แบบแปลนบ้านฉบับเดียว ช่างก่อสร้าง (migration) สร้างบ้านตามแปลน และคนในบ้าน (โค้ดเรา) ก็ดูแปลนเดียวกันว่าห้องไหนอยู่ตรงไหน
 
 ## ที่มา
 
-ORM รุ่นก่อนหลายตัวซ่อน SQL ไว้จนคนใช้ไม่รู้ว่าเกิดอะไรขึ้น และต้องมีขั้นตอนสร้างโค้ดแยก Drizzle เกิดขึ้นช่วงปี 2022 ด้วยแนวคิด "ถ้ารู้ SQL ก็ใช้ Drizzle เป็น" คำสั่งหน้าตาเหมือน SQL ตัวเล็ก ไม่ต้องสร้างโค้ดเพิ่ม และ type มาจาก schema โดยตรง
+ORM รุ่นก่อนหลายตัวซ่อน SQL จนคนใช้ไม่รู้ว่าเกิดอะไร และต้องมีขั้นสร้างโค้ดแยก (เช่น `prisma generate`) Drizzle เกิดราวปี 2022 ด้วยแนวคิด "รู้ SQL ก็ใช้ Drizzle เป็น" คำสั่งหน้าตาเหมือน SQL ไม่ต้องสร้างโค้ดเพิ่ม และ type มาจาก schema ทันที
 
 ## การใช้งาน
 
-ประกาศตาราง (ห้องสมุด):
+### ตั้งค่าครั้งแรก (โฟลเดอร์ `server/` ตามโครงใน Requirement)
+
+```bash
+cd server
+bun add drizzle-orm pg
+bun add -d drizzle-kit @types/pg
+```
+
+สร้างไฟล์ `server/.env` (ห้าม commit) ใส่ที่อยู่ฐานจากการ์ด [Postgres](/learn/cards/postgres) แล้วทำ `.env.example` ที่มีแค่ชื่อตัวแปรไว้ commit แทน
+
+```bash
+DATABASE_URL=postgres://postgres:secret@localhost:5432/postgres
+```
+
+### 1. ประกาศตาราง `server/src/db/schema.ts`
 
 ```ts
 import { integer, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
 
+export const members = pgTable("members", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const books = pgTable("books", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
 export const loans = pgTable("loans", {
   id: serial("id").primaryKey(),
+  memberId: integer("member_id").notNull().references(() => members.id),   // foreign key
   bookId: integer("book_id").notNull().references(() => books.id),
-  returnedAt: timestamp("returned_at", { withTimezone: true }),
+  dueAt: timestamp("due_at", { withTimezone: true }).notNull(),
+  returnedAt: timestamp("returned_at", { withTimezone: true }),             // ว่าง = ยังไม่คืน
 });
 ```
 
-ดึงการยืมที่ยังไม่คืน:
+เทียบกับ `CREATE TABLE` ในการ์ด SQL ทีละบรรทัด: `serial("id").primaryKey()` = `id serial PRIMARY KEY`, `.notNull()` = `NOT NULL`, `.references()` = `REFERENCES`
+
+### 2. ต่อฐานข้อมูล `server/src/db/index.ts`
 
 ```ts
+import { drizzle } from "drizzle-orm/node-postgres";
+import * as schema from "./schema";
+
+export const db = drizzle(process.env.DATABASE_URL!, { schema });
+```
+
+Bun อ่านไฟล์ `.env` ให้เองตอนรัน `process.env.DATABASE_URL` จึงมีค่า ส่วน `!` ท้ายบอก TypeScript ว่า "ค่านี้มีแน่นอน"
+
+### 3. บอก drizzle-kit ว่า schema อยู่ไหน `server/drizzle.config.ts`
+
+```ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "postgresql",
+  schema: "./src/db/schema.ts",
+  out: "./drizzle",                                // ไฟล์ migration จะอยู่ในโฟลเดอร์นี้
+  dbCredentials: { url: process.env.DATABASE_URL! },
+});
+```
+
+ตารางยังไม่ถูกสร้างนะ ไฟล์พวกนี้เป็นแค่แบบแปลน การสร้างจริงอยู่ในการ์ด [Migration และ Seed](/learn/cards/migration)
+
+### 4. ดึงข้อมูล (หลังสร้างตารางแล้ว)
+
+```ts
+import { isNull } from "drizzle-orm";
+import { db } from "./db";
+import { loans } from "./db/schema";
+
 const open = await db.select().from(loans).where(isNull(loans.returnedAt));
 ```
 
-`open` มี type เป็น "รายการแถวของ loans" ให้เอง พิมพ์ `open[0].returndAt` (สะกดผิด) editor ขีดแดงทันที
+`open` มี type เป็น "รายการแถวของ loans" ให้เอง ลองพิมพ์ `open[0].returndAt` (สะกดผิด) editor จะขีดแดงทันที
 
 ## ทริคที่แนะนำ
 
-1. **ชื่อในโค้ดกับชื่อในฐานข้อมูลแยกกันได้:** โค้ดใช้ `bookId` ฐานข้อมูลใช้ `book_id` ตามธรรมเนียมของแต่ละฝั่ง
+1. **ชื่อในโค้ดกับชื่อในฐานข้อมูลแยกกันได้:** โค้ดใช้ `bookId` ฐานข้อมูลใช้ `book_id` (Requirement ใช้ชื่อแบบ `category_id` ในฐานข้อมูล)
 2. **ดึง type ของแถวจาก schema** ด้วย `typeof books.$inferSelect` ไม่ต้องเขียน type ซ้ำเอง
-3. **เปิดดูข้อมูลในฐานแบบหน้าเว็บ** ด้วย `npx drizzle-kit studio` (ใช้ได้ทั้ง Windows และ Mac)
+3. **ดูข้อมูลในฐานแบบหน้าเว็บ** ด้วย `bunx drizzle-kit studio` หรือเปิดใน pgAdmin ก็ได้
 
 ## ปรับไปใช้จริง
 
-เว็บคู่มือนี้ใช้ Drizzle จริง ไฟล์ schema อยู่ที่ `server/db/schema.ts` และ **มีแค่ไฟล์ในโฟลเดอร์ `server/repositories/` ที่เรียก `db`** ไฟล์อื่นต้องเรียกผ่าน repository ทำให้รู้เสมอว่าโค้ดคุยกับฐานข้อมูลตรงไหน (ดูเหตุผลของการแบ่งชั้นในบทเดิม [จากแบบฐานข้อมูลสู่ Backend](/08b-db-to-backend))
+**ในงาน STARTER:** Requirement กำหนด 6 ตาราง และ **ทุกตารางต้องมี `id`, `created_at`, `updated_at`** ตัวอย่างข้างบนมีแค่ `created_at` ให้ดูเป็นแบบ ส่วน `updated_at` ลองหาในเอกสาร Drizzle ว่ามีตัวช่วยให้ค่าเปลี่ยนเองตอนแก้แถวไหม
 
-> ตอนเขียนการ์ดนี้ `npm install drizzle-orm` ได้รุ่น 0.45 ส่วนรุ่น 1.0 ยังเป็นรุ่นทดสอบ ซึ่งเขียนความสัมพันธ์และ `db.query` ต่างออกไป ถ้าติดตั้งได้ 1.x ให้ดูเอกสารของรุ่นนั้นที่ [orm.drizzle.team](https://orm.drizzle.team)
+**เว็บคู่มือนี้:** ใช้ Drizzle จริง ดูไฟล์ schema ได้ที่ [server/db/schema.ts บน GitHub](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/server/db/schema.ts)
 
-ลองคิด: ถ้าทุกไฟล์เรียก `db` ได้เอง แล้ววันหนึ่งต้องเปลี่ยนชื่อตาราง ต้องไล่แก้กี่ที่
+> ตอนเขียนการ์ดนี้ `bun add drizzle-orm` ได้รุ่น 0.45 ส่วนรุ่น 1.0 ยังเป็นรุ่นทดสอบ ซึ่งเขียนความสัมพันธ์ต่างออกไป ถ้าติดตั้งได้ 1.x ให้ดูเอกสารของรุ่นนั้นที่ [orm.drizzle.team](https://orm.drizzle.team)
+
+ลองคิด: ตาราง `site_settings` ใน Requirement "มีแถวเดียวทั้งระบบ" แล้วต้องมี foreign key ไปหาตารางอื่นไหม
 
 ## ตัวเลือกอื่นที่คล้ายกัน
 
@@ -56,12 +116,12 @@ const open = await db.select().from(loans).where(isNull(loans.returnedAt));
 
 ## ลองเอง
 
-**โจทย์:** เพิ่มตาราง `members` แล้วทำให้การยืมแต่ละครั้งรู้ว่าใครเป็นคนยืม จากนั้นดึง "ชื่อสมาชิก + ชื่อหนังสือ" ของการยืมที่ยังไม่คืน
+**โจทย์:** หลังสร้างตารางในการ์ด Migration แล้ว เขียนคำสั่ง Drizzle ดึง "ชื่อสมาชิก + ชื่อหนังสือ" ของการยืมที่ยังไม่คืน (ผลเดียวกับ SQL ในการ์ด SQL ที่ใช้บ่อย)
 
-<Hint level={1}>`loans` ต้องมีคอลัมน์ใหม่ที่ชี้ไปหา `members` แบบเดียวกับที่ `bookId` ชี้ไปหา `books`</Hint>
-<Hint level={2}>ดึงข้อมูลจาก 3 ตารางพร้อมกันใช้ `.innerJoin(ตาราง, eq(คอลัมน์, คอลัมน์))` ต่อกัน 2 ครั้ง</Hint>
-<Hint level={3}>โครง: `db.select({ name: ..., title: ... }).from(loans).innerJoin(...).innerJoin(...).where(...)` เติมช่องเอง แล้วอย่าลืมสร้าง migration ให้ตารางใหม่</Hint>
+<Hint level={1}>เลือกเฉพาะบางคอลัมน์ได้ด้วย `db.select({ name: members.name, ... })`</Hint>
+<Hint level={2}>ต่อตารางด้วย `.innerJoin(ตาราง, eq(คอลัมน์ฝั่งนี้, คอลัมน์ฝั่งนั้น))` ต้องต่อ 2 ครั้ง และ `eq` import มาจาก `drizzle-orm`</Hint>
+<Hint level={3}>โครง: `db.select({...}).from(loans).innerJoin(...).innerJoin(...).where(isNull(...))` เติมช่องเอง แล้วเปิด `logger: true` ดู SQL ที่ได้ เทียบกับ SQL ที่เขียนเองในการ์ดก่อน</Hint>
 
 ## อ่านเพิ่ม
 
-ตั้งโปรเจกต์ Drizzle ตั้งแต่ศูนย์และ seed ข้อมูล อยู่ในบทเดิม [ORM, Query Builder & Migration](/08-orm)
+ตั้งโปรเจกต์ Drizzle ตั้งแต่ศูนย์แบบละเอียด อยู่ในบทเดิม [ORM, Query Builder & Migration](/08-orm)
