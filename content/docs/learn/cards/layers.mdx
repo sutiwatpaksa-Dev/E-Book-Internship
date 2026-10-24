@@ -1,0 +1,86 @@
+---
+title: "แบ่งชั้น routes · services · repositories"
+---
+
+## ความหมาย
+
+แบ่งโค้ดฝั่ง server เป็น 3 ชั้น แต่ละชั้นรู้เรื่องเดียว
+
+| ชั้น | รู้เรื่อง | ไม่รู้เรื่อง |
+|---|---|---|
+| **routes** | HTTP: อ่านคำขอ ตรวจรูปแบบ ตอบ status | กฎธุรกิจ, SQL |
+| **services** | กฎของระบบ: ใครทำอะไรได้ เมื่อไร | HTTP, status code |
+| **repositories** | อ่าน/เขียนฐานข้อมูล | กฎ, HTTP |
+
+คำขอเดินทางลงไปทีละชั้น: `routes → services → repositories → ฐานข้อมูล` แล้วผลไหลกลับขึ้นมาทางเดิม
+
+## ที่มา
+
+ตอนเริ่มโปรเจกต์ เขียนทุกอย่างในไฟล์ route เดียวเร็วที่สุด แต่พอระบบโต กฎ "ยืมได้ไม่เกิน 3 เล่ม" จะไปโผล่ทั้งใน route ยืมผ่านเว็บ route ยืมผ่านแอดมิน และสคริปต์นำเข้าข้อมูล แก้กฎทีต้องตามแก้ 3 ที่ แล้วสักที่ต้องหลุด การแบ่งชั้นทำให้ **กฎแต่ละข้อมีบ้านที่เดียว** ใครเรียกจากไหนก็ผ่านกฎเดียวกัน
+
+## การใช้งาน
+
+```ts
+// repositories/loan.repository.ts · query อย่างเดียว ไม่ตัดสินอะไร
+export const loanRepository = {
+  countOpen: (memberId: number) =>
+    db.$count(loans, and(eq(loans.memberId, memberId), isNull(loans.returnedAt))),
+  create: (memberId: number, bookId: number) =>
+    db.insert(loans).values({ memberId, bookId }).returning(),
+};
+```
+
+```ts
+// services/loan.service.ts · กฎอยู่ที่นี่ บอกผลด้วย "รหัส" ไม่ใช่ status
+export const loanService = {
+  async borrow(memberId: number, bookId: number) {
+    if ((await loanRepository.countOpen(memberId)) >= 3) throw new Error("LOAN_LIMIT");
+    const [loan] = await loanRepository.create(memberId, bookId);
+    return loan;
+  },
+};
+```
+
+```ts
+// routes/loan.routes.ts · HTTP อย่างเดียว
+loanRoutes.post("/", async (c) => {
+  const parsed = newLoanSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: "ข้อมูลไม่ถูกต้อง" }, 400);
+  return c.json(await loanService.borrow(c.get("user").id, parsed.data.bookId), 201);
+});
+```
+
+รหัส `LOAN_LIMIT` จะถูกแปลงเป็น `409` พร้อมข้อความภาษาไทยที่จุดเดียว (ดูการ์ดจัดการ error)
+
+## ทริคที่แนะนำ
+
+1. **ถามว่า "ถ้าไม่มีเว็บ กฎนี้ยังต้องมีไหม"** ถ้าต้องมี มันคือกฎธุรกิจ อยู่ใน service ไม่ใช่ใน route และไม่ใช่ในหน้าเว็บ
+2. **service ห้าม import อะไรจาก Hono:** ถ้า service ต้องรู้จัก `c` แปลว่าชั้นรั่ว เรียก service จากเทสต์หรือสคริปต์จะทำไม่ได้
+3. **ไล่ระดับความลึกตามความจำเป็น:** route ที่แค่ดึงรายการโดยไม่มีกฎ ให้ service ส่งต่อ repository ตรงๆ บรรทัดเดียวก็พอ ไม่ต้องฝืนเขียนเพิ่ม
+
+## ปรับไปใช้จริง
+
+เว็บคู่มือนี้แบ่งแบบนี้ทุกเรื่อง เปิด `server/` จะเห็นโฟลเดอร์ `routes/`, `services/`, `repositories/` ตามรอยคำขอ `PUT /api/progress` ได้ครบ 3 ไฟล์: route ตรวจรูปแบบ link → `progressService.set` เช็กว่ามีบทนี้จริง (`UNKNOWN_CHAPTER`) → `progressRepository.add` บันทึกแบบติ๊กซ้ำไม่ error
+
+ลองคิด: กฎ "พี่เลี้ยงเท่านั้นที่ปิดบัญชีน้องได้" เว็บนี้เช็กที่ชั้นไหน (ดู `requireRole` ใน `server/middleware/`) และทำไมไม่ใส่ไว้ใน service
+
+## ตัวเลือกอื่นที่คล้ายกัน
+
+| แบบ | แบ่งยังไง | เหมาะกับ |
+|---|---|---|
+| **3 ชั้น (ทีมใช้)** | ตามหน้าที่: routes / services / repositories | ระบบเล็กถึงกลาง ทีมเล็ก |
+| แบ่งตามฟีเจอร์ | โฟลเดอร์ละเรื่อง `books/` `loans/` ข้างในค่อยแยกชั้น | ระบบที่มีหลายสิบเรื่อง |
+| Clean / Hexagonal | แกนกลางไม่รู้จักฐานข้อมูลหรือ framework เลย ต่อผ่าน interface | ระบบใหญ่ที่ต้องเปลี่ยนฐานข้อมูลหรือช่องทางได้ |
+| ไฟล์เดียว | ทุกอย่างใน route | ต้นแบบ หรือสคริปต์ทิ้งหลังใช้ |
+
+## ลองเอง
+
+**โจทย์:** เพิ่มกฎ "หนังสือที่ถูกยืมอยู่ ลบไม่ได้" ให้ API ลบหนังสือ ตอบ `409` พร้อมข้อความภาษาไทย โดยไฟล์ route ต้องไม่เปลี่ยนแม้แต่บรรทัดเดียว
+
+<Hint level={1}>ถ้า route ห้ามเปลี่ยน กฎต้องไปอยู่ชั้นไหน และชั้นนั้นต้องรู้อะไรเพิ่มจากฐานข้อมูล</Hint>
+<Hint level={2}>repository ต้องมีฟังก์ชันใหม่ที่ตอบคำถามว่า "เล่มนี้มีการยืมที่ยังไม่คืนไหม" service เรียกก่อนลบ ถ้ามีก็โยนรหัส</Hint>
+<Hint level={3}>รหัสใหม่ต้องถูกแปลงเป็น 409 ที่ไหนสักที่ ที่นั่นไม่ใช่ route</Hint>
+
+## อ่านเพิ่ม
+
+พาทำทั้งระบบเช่าเครื่องทีละชั้น ตั้งแต่อ่านแบบจนทดสอบตามรายการกฎ อยู่ในบทเดิม [จากแบบฐานข้อมูลสู่ Backend](/08b-db-to-backend)

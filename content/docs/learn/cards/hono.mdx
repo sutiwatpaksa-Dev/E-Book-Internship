@@ -1,0 +1,79 @@
+---
+title: "Hono"
+---
+
+## ความหมาย
+
+Hono คือ **framework ฝั่ง server** ช่วยรับคำขอ HTTP แล้วส่งให้ฟังก์ชันที่ถูกตัว (เรียกว่า routing) พร้อมตัวช่วยอ่านค่าและตอบ JSON ทีมเราใช้ Hono เป็นหลัก
+
+## ที่มา
+
+เขียน server ด้วยมือเปล่าได้ แต่ต้องแยก URL เอง อ่าน body เอง ตั้ง header เอง ทุก route ซ้ำเดิม framework รวบงานซ้ำๆ ไว้ให้ Express ทำแบบนี้มาตั้งแต่ปี 2010 แต่ผูกกับ Node.js Hono เกิดปี 2021 บนมาตรฐาน `Request`/`Response` ของเว็บ โค้ดชุดเดียวจึงรันได้ทั้ง Bun, Node, Deno และ Cloudflare Workers ไม่มี dependency และมี type ของ TypeScript มาในตัว
+
+## การใช้งาน
+
+```ts
+// server/routes/book.routes.ts
+import { Hono } from "hono";
+
+export const bookRoutes = new Hono();
+
+bookRoutes.get("/", (c) => {
+  const q = c.req.query("q") ?? "";            // ?q=เจ้า
+  return c.json(books.filter((b) => b.title.includes(q)));
+});
+
+bookRoutes.get("/:id", (c) => {
+  const book = books.find((b) => b.id === Number(c.req.param("id")));  // /7 → "7"
+  if (!book) return c.json({ error: "ไม่พบหนังสือ" }, 404);
+  return c.json(book);
+});
+
+bookRoutes.post("/", async (c) => {
+  const body = await c.req.json();             // อ่าน JSON ที่ส่งมา (ตรวจก่อนใช้ ดูการ์ด Zod)
+  // ...
+  return c.json(book, 201);
+});
+```
+
+```ts
+// server/app.ts
+import { Hono } from "hono";
+import { bookRoutes } from "./routes/book.routes";
+
+export const app = new Hono().basePath("/api");
+app.route("/books", bookRoutes);               // รวมทุก route ของหนังสือไว้ใต้ /api/books
+app.notFound((c) => c.json({ error: "ไม่พบ" }, 404));
+
+export default app;
+```
+
+รันด้วย `bun run server/app.ts` (Bun เปิด `http://localhost:3000` ให้เอง) คำสั่งเหมือนกันทั้ง Windows และ Mac ตัว `c` คือ **context** มีทุกอย่างของคำขอนี้: `c.req` สำหรับอ่าน, `c.json()` / `c.body()` สำหรับตอบ, `c.get()` / `c.set()` สำหรับส่งค่าระหว่าง middleware กับ route
+
+## ทริคที่แนะนำ
+
+1. **route เฉพาะต้องมาก่อน `/:id`:** ถ้าเขียน `get("/:id")` ก่อน `get("/popular")` คำขอ `/popular` จะเข้า `/:id` ด้วย id = `"popular"` ได้ 404 แบบงงๆ (ลองแล้วเจอจริง)
+2. **ทดสอบโดยไม่ต้องเปิด server:** `await app.request("/api/books/1")` ได้ `Response` กลับมาเลย ใช้เขียนเทสต์ได้ทันที
+3. **แยกไฟล์ route ตามของ** (`book.routes.ts`, `loan.routes.ts`) แล้วรวมด้วย `app.route()` ไฟล์ไม่บวม และเห็นภาพ API ทั้งหมดในไฟล์ `app.ts` ไฟล์เดียว
+
+## ปรับไปใช้จริง
+
+เปิด `server/app.ts` ของเว็บคู่มือนี้ จะเห็นโครงเดียวกันทุกบรรทัด: `basePath("/api")`, `app.route()` 5 กลุ่ม, `notFound` และ `onError` อันหลังรวมการจัดการ error ไว้ที่เดียว (ดูการ์ดจัดการ error) ส่วน `server/routes/progress.routes.ts` สั้นแค่ 20 บรรทัด เพราะงานจริงอยู่ใน service
+
+ลองคิด: route ที่ทุกตัวต้อง login ก่อน ควรเช็กในทุก handler หรือมีที่ที่เขียนครั้งเดียวได้ (ดู `progressRoutes.use(...)` ในไฟล์นั้น)
+
+## ตัวเลือกอื่นที่คล้ายกัน
+
+<ToolTable group="api-framework" />
+
+## ลองเอง
+
+**โจทย์:** เพิ่ม `GET /api/books/popular` ที่ตอบ 3 เล่มที่ถูกยืมบ่อยที่สุด และ `DELETE /api/books/:id` ที่ตอบ `204` เมื่อลบได้ และ `404` เมื่อไม่มีเล่มนั้น
+
+<Hint level={1}>ลองยิง `/api/books/popular` หลังเขียนเสร็จ ถ้าได้ "ไม่พบหนังสือ" แปลว่ามี route อื่นแย่งไปก่อน</Hint>
+<Hint level={2}>`204` แปลว่า "ไม่มีเนื้อหา" ตอบด้วย `c.body(null, 204)` ไม่ใช่ `c.json(...)`</Hint>
+<Hint level={3}>ตรวจด้วย `app.request("/api/books/99", { method: "DELETE" })` แล้วดู `.status` ต้องได้ 404 ก่อนจะไปทดสอบกรณีลบได้</Hint>
+
+## อ่านเพิ่ม
+
+เริ่มโปรเจกต์ Hono ตั้งแต่ศูนย์ ต่อฐานข้อมูล และต่อกับหน้าเว็บ React อยู่ในบทเดิม [สร้าง API ด้วย Bun + Hono](/14-hono-api) ถ้างานเก่าของทีมเป็น Express ดูตารางเทียบคำสั่งในบทเดียวกัน

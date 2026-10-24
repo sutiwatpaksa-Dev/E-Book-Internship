@@ -137,7 +137,7 @@ export const toolGroups = {
     checkedAt: "22 ต.ค. 2569",
     tools: [
       { name: "Hono", url: "https://hono.dev/docs/", detail: "Bun, Node, Deno, Cloudflare Workers …", level: "team", summary: "สร้างบน Web Standards โค้ดชุดเดียวย้าย runtime ได้ · ไม่มี dependency · มีโหมด RPC ให้ client ได้ type จาก server" },
-      { name: "Express", url: "https://expressjs.com/en/guide/migrating-5.html", detail: "Node.js 18+ (v5)", level: "know", summary: "ตัวที่บทนี้ใช้ฝึก ตัวอย่างในเน็ตเยอะที่สุด · v5 ส่ง error จาก async handler ไปหา error handler ให้เอง และ req.body เป็น undefined ถ้าไม่ได้อ่าน body" },
+      { name: "Express", url: "https://expressjs.com/en/guide/migrating-5.html", detail: "Node.js 18+ (v5)", level: "know", summary: "บทที่ 5 ใช้ฝึก และงานเก่าของทีมยังใช้อยู่ ตัวอย่างในเน็ตเยอะที่สุด · v5 ส่ง error จาก async handler ไปหา error handler ให้เอง และ req.body เป็น undefined ถ้าไม่ได้อ่าน body" },
       { name: "NestJS", url: "https://docs.nestjs.com/", detail: "Node.js (ข้างในใช้ Express หรือ Fastify)", level: "know", summary: "โครงใหญ่ได้แรงบันดาลใจจาก Angular แบ่งโค้ดเป็น module / controller / provider · ค่าเริ่มต้นรันบน Express เปลี่ยนเป็น Fastify ได้" },
       { name: "Fastify", url: "https://fastify.dev/docs/latest/Reference/Validation-and-Serialization/", detail: "Node.js", level: "aware", summary: "ใช้ JSON Schema ตรวจ request และแปลง response เป็น JSON โดย compile schema เป็นฟังก์ชันเพื่อความเร็ว" },
       { name: "Elysia", url: "https://elysiajs.com/at-glance.html", detail: "Bun (หลัก), Node, Deno, Cloudflare Workers", level: "aware", summary: "ปรับมาให้เร็วที่สุดบน Bun แต่ไม่จำกัดแค่ Bun · client Eden ได้ type จาก server โดยไม่ต้อง generate · ใช้ Zod ได้ผ่าน Standard Schema" },

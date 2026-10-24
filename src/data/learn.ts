@@ -51,16 +51,19 @@ export const cards: LearnCard[] = [
   { slug: "orm-query-builder", title: "ORM กับ Query Builder", step: "coding", part: "DB", minutes: 8, needs: ["sql-basics"] },
   { slug: "drizzle-orm", title: "Drizzle ORM", step: "coding", part: "DB", minutes: 10, needs: ["orm-query-builder"] },
   { slug: "migration", title: "Migration", step: "coding", part: "DB", minutes: 8, alsoIn: ["deploy"], needs: ["sql-basics"] },
+  { slug: "layers", title: "แบ่งชั้น routes · services · repositories", step: "coding", part: "Backend", minutes: 10, needs: ["drizzle-orm"] },
+  { slug: "error-handling", title: "จัดการ error ที่จุดเดียว", step: "coding", part: "Backend", minutes: 8, needs: ["layers"] },
+  { slug: "http-rest", title: "HTTP และ REST", step: "coding", part: "API", minutes: 10, alsoIn: ["design"] },
+  { slug: "hono", title: "Hono", step: "coding", part: "API", minutes: 10, needs: ["http-rest"] },
+  { slug: "validation", title: "ตรวจข้อมูลขาเข้าด้วย Zod", step: "coding", part: "API", minutes: 8, needs: ["hono"] },
+  { slug: "api-testing", title: "ยิงทดสอบ API", step: "coding", part: "API", minutes: 8, alsoIn: ["testing"], needs: ["http-rest"] },
 ];
 
 export const legacy: LegacyLink[] = [
   { step: "problem", title: "Requirement งาน STARTER (ต้อง login)", link: "/starter" },
   { step: "design", title: "ประเภทฐานข้อมูลและการออกแบบตาราง", link: "/06-sql-nosql" },
-  { step: "design", title: "HTTP & รูปแบบ API", link: "/05-http-api" },
   { step: "design", title: "จัดโครงสร้างโปรเจกต์", link: "/project-structure" },
   { step: "coding", part: "DB", title: "เก็บรูปภาพคู่กับฐานข้อมูล", link: "/08c-image-storage" },
-  { step: "coding", part: "Backend", title: "จากแบบฐานข้อมูลสู่ Backend", link: "/08b-db-to-backend" },
-  { step: "coding", part: "API", title: "สร้าง API ด้วย Bun + Hono", link: "/14-hono-api" },
   { step: "coding", part: "API", title: "ระบบ login", link: "/15-auth" },
   { step: "coding", part: "Frontend", title: "สร้างหน้าเว็บด้วย React", link: "/11-react" },
   { step: "coding", part: "Frontend", title: "Tailwind", link: "/12-tailwind" },
