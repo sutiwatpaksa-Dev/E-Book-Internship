@@ -59,12 +59,17 @@ export const cards: LearnCard[] = [
   { slug: "layers", title: "แบ่งชั้น routes · services · repositories", step: "coding", part: "API", minutes: 10, needs: ["validation", "drizzle-orm"], starter: "วันที่ 3–4 · โค้ดใน server/src ที่โตขึ้น" },
   { slug: "error-handling", title: "จัดการ error ที่จุดเดียว", step: "coding", part: "API", minutes: 8, needs: ["layers"], starter: "วันที่ 3 รูปแบบ error · วันที่ 9 ไม่หลุด stack trace" },
   { slug: "api-testing", title: "ยิงทดสอบ API", step: "coding", part: "API", minutes: 8, alsoIn: ["testing"], needs: ["hono"], starter: "วันที่ 3 · ทดสอบทุก endpoint + ส่ง collection" },
+  { slug: "password-hash", title: "เก็บรหัสผ่านด้วย hash", step: "coding", part: "Login", minutes: 8, needs: ["migration"], starter: "วันที่ 4 · ทำไมต้อง hash password (ตาราง admins + seed ทำวันที่ 2)" },
+  { slug: "jwt-cookie", title: "Login: JWT ใน httpOnly cookie", step: "coding", part: "Login", minutes: 15, needs: ["password-hash", "error-handling"], starter: "วันที่ 4 · JWT, httpOnly cookie ต่างจาก localStorage, login/logout" },
+  { slug: "auth-middleware", title: "Middleware กัน API หลังบ้าน", step: "coding", part: "Login", minutes: 10, needs: ["jwt-cookie"], starter: "วันที่ 4 · middleware เช็ก token ทุก /api/admin/* (ไม่ login ได้ 401)" },
   { slug: "react-components", title: "React: Component และ Props", step: "coding", part: "Frontend", minutes: 12, starter: "วันที่ 6 · React component พื้นฐาน" },
   { slug: "tailwind", title: "Tailwind และออกแบบมือถือก่อน", step: "coding", part: "Frontend", minutes: 10, alsoIn: ["design"], needs: ["react-components"], starter: "วันที่ 6 · Tailwind theme + responsive 375/768/1280" },
   { slug: "react-state", title: "React: State และ useEffect", step: "coding", part: "Frontend", minutes: 10, needs: ["react-components"], starter: "วันที่ 6–8 · ข้อมูลที่เปลี่ยนบนหน้าจอ" },
   { slug: "fetch-data", title: "หน้าเว็บดึงข้อมูลจาก API", step: "coding", part: "Frontend", minutes: 10, needs: ["react-state", "hono"], starter: "วันที่ 6 · ดึงจาก API + loading/error ทุกหน้า" },
   { slug: "react-forms", title: "ฟอร์ม: กรอก ตรวจ ส่ง", step: "coding", part: "Frontend", minutes: 10, needs: ["fetch-data", "validation"], starter: "วันที่ 7 · Contact form" },
   { slug: "router-seo", title: "หลายหน้า (React Router) และ SEO", step: "coding", part: "Frontend", minutes: 12, needs: ["fetch-data"], starter: "วันที่ 6 หลายหน้า + 404 · วันที่ 9 SEO" },
+  { slug: "protected-routes", title: "หน้าหลังบ้านที่ต้อง login", step: "coding", part: "หลังบ้าน", minutes: 12, needs: ["router-seo", "react-forms", "auth-middleware"], starter: "วันที่ 8 · /admin/login, เด้งกลับเมื่อไม่ login, logout" },
+  { slug: "crud-ui", title: "หน้าจัดการข้อมูล: ตาราง ค้นหา แบ่งหน้า เพิ่ม แก้ ลบ", step: "coding", part: "หลังบ้าน", minutes: 15, needs: ["protected-routes"], starter: "วันที่ 8 · CRUD UI (list/add/edit/delete) + state ของฟอร์มและตาราง" },
 ];
 
 export const legacy: LegacyLink[] = [
@@ -77,9 +82,6 @@ export const legacy: LegacyLink[] = [
   { step: "coding", part: "เตรียมเครื่อง", title: "TypeScript", link: "/04-typescript" },
   { step: "coding", part: "เตรียมเครื่อง", title: "จัดโครงสร้างโปรเจกต์ (client / server)", link: "/project-structure" },
   { step: "coding", part: "DB", title: "เก็บรูปภาพคู่กับฐานข้อมูล", link: "/08c-image-storage" },
-  { step: "coding", part: "Login", title: "ระบบ login (JWT ใน httpOnly cookie)", link: "/15-auth" },
-  { step: "coding", part: "Login", title: "Security พื้นฐาน (hash รหัสผ่าน, middleware)", link: "/10-security" },
-  { step: "coding", part: "หลังบ้าน", title: "หน้าจัดการร้าน: หน้าซ้อนหน้า + หน้าที่ต้อง login", link: "/13-router-seo#5-หน้าจัดการร้าน-หน้าซ้อนหน้า--หน้าที่ต้อง-login" },
   { step: "testing", title: "Debugging", link: "/09-debugging" },
   { step: "deploy", title: "เน็ตเวิร์กพื้นฐาน", link: "/17-network" },
   { step: "deploy", title: "Domain และ DNS", link: "/18-domain-dns" },

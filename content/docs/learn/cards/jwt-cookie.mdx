@@ -1,0 +1,222 @@
+---
+title: "Login: JWT ใน httpOnly cookie"
+---
+
+## ความหมาย
+
+login สำเร็จแล้ว server ออก **บัตรผ่าน** ให้ 1 ใบ เรียกว่า **[JWT](/glossary#jwt)** แล้วใส่ไว้ใน **[cookie](/glossary#cookie)** แบบ **[httpOnly](/glossary#httponly)** หลังจากนั้น browser แนบบัตรนี้ไปกับทุกคำขอเอง server ดูบัตรก็รู้ว่าใครเรียก โดยไม่ต้องให้กรอกรหัสผ่านซ้ำ
+
+**นึกภาพ:** สายรัดข้อมือเข้างานคอนเสิร์ต ตรวจบัตรประชาชนครั้งเดียวที่ประตู แล้วได้สายรัดข้อมือ จะเข้าโซนไหนก็แค่โชว์สายรัด สายรัดมีลายพิมพ์ของผู้จัดงาน ทำปลอมไม่ได้ และหมดอายุเมื่อจบงาน
+
+## ที่มา
+
+HTTP ไม่จำอะไรเลย ทุกคำขอเป็นคำขอใหม่ ถ้าไม่มีบัตรผ่าน ผู้ใช้ต้องส่งรหัสผ่านไปกับทุกคำขอ ซึ่งเสี่ยงหลุดหลายเท่า บัตรผ่านจึงต้องมี 2 อย่าง: **ปลอมไม่ได้** (JWT มีลายเซ็นที่ทำได้เฉพาะคนที่มีกุญแจลับ) และ **ขโมยยาก** ถ้าเก็บบัตรใน `localStorage` โค้ดทุกบรรทัดในหน้าเว็บอ่านได้ วันไหนมีสคริปต์แปลกปลอมหลุดเข้ามา ([XSS](/glossary#xss)) บัตรถูกส่งออกไปทันที cookie แบบ httpOnly โค้ดในหน้าเว็บอ่านไม่ได้เลย
+
+| | `localStorage` | cookie แบบ `httpOnly` |
+|---|---|---|
+| โค้ดในหน้าเว็บอ่านได้ไหม | ได้ สคริปต์แปลกปลอมขโมยได้ | ไม่ได้ |
+| ต้องเขียนโค้ดแนบบัตรเองไหม | ต้อง ทุกคำขอ | ไม่ต้อง browser แนบให้ |
+| ใครลบได้ | โค้ดหน้าเว็บ | server เท่านั้น (ผ่าน `Set-Cookie`) |
+
+## การใช้งาน
+
+ต่อจากการ์ด [เก็บรหัสผ่านด้วย hash](/learn/cards/password-hash) (มีตาราง `librarians` และบัญชีแรกแล้ว) ใช้ `ok` / `fail` จากการ์ด [Hono](/learn/cards/hono) และตัวจับ error กลางจากการ์ด [จัดการ error](/learn/cards/error-handling) ตัวช่วย `hono/jwt` และ `hono/cookie` มากับ Hono แล้ว ไม่ต้องติดตั้งเพิ่ม
+
+### ตั้งค่าครั้งแรก: กุญแจลับ
+
+สุ่มกุญแจสำหรับเซ็นบัตร (ใช้ได้ทั้ง Windows และ Mac)
+
+```bash
+bun -e "console.log(require('crypto').randomBytes(48).toString('base64'))"
+```
+
+ได้ข้อความยาว 64 ตัว เอาไปใส่ใน `server/.env` **ห้ามคิดกุญแจเอง** เช่น `library-secret` เพราะเดาได้ ใครรู้กุญแจก็ทำบัตรของบรรณารักษ์ปลอมได้ (ใส่แค่ชื่อ `JWT_SECRET=` ใน `.env.example`)
+
+```
+JWT_SECRET=<ค่าที่สุ่มได้>
+```
+
+### 1. ออกบัตร + อ่านบัตร `server/src/lib/session.ts`
+
+```ts
+import { sign, verify } from "hono/jwt";
+
+const secret = process.env.JWT_SECRET ?? "";
+if (secret.length < 32) throw new Error("JWT_SECRET ใน .env ต้องยาวอย่างน้อย 32 ตัวอักษร");   // ลืมตั้ง = server ไม่ยอมเปิด
+
+export const SESSION_COOKIE = "session";
+const ONE_DAY = 60 * 60 * 24;                     // วินาที
+
+export const sessionCookie = {
+  httpOnly: true,                                 // โค้ดในหน้าเว็บอ่าน cookie นี้ไม่ได้
+  secure: process.env.NODE_ENV === "production",  // ขึ้นระบบจริง (https) ค่อยเปิด
+  sameSite: "Lax",                                // เว็บอื่นส่ง POST มาหาเรา browser ไม่แนบ cookie ให้
+  path: "/",
+  maxAge: ONE_DAY,                                // หมดอายุใน 1 วัน
+} as const;
+
+export const createToken = (librarianId: number) =>
+  sign({ sub: String(librarianId), exp: Math.floor(Date.now() / 1000) + ONE_DAY }, secret, "HS256");
+
+// บัตรถูกต้องและยังไม่หมดอายุ → คืน id · ปลอม แก้ หรือหมดอายุ → null
+export async function readToken(token: string): Promise<number | null> {
+  try {
+    const payload = await verify(token, secret, "HS256");   // ตรวจลายเซ็นและวันหมดอายุ (exp) ให้เอง
+    const id = Number(payload.sub);
+    return Number.isInteger(id) ? id : null;
+  } catch {
+    return null;
+  }
+}
+```
+
+ในบัตรมี `sub` (subject = บัตรนี้เป็นของใคร เราใส่ id ของบรรณารักษ์) และ `exp` (หมดอายุเมื่อไร นับเป็นวินาทีตั้งแต่ปี 1970) ส่วน `HS256` คือวิธีเซ็นที่ใช้กุญแจลับตัวเดียวทั้งตอนเซ็นและตอนตรวจ
+
+### 2. ตรวจรหัสผ่าน: repository + service
+
+```ts
+// server/src/repositories/librarian.repository.ts
+import { eq } from "drizzle-orm";
+import { db } from "../db";
+import { librarians } from "../db/schema";
+
+export const librarianRepository = {
+  findByEmail: async (email: string) => (await db.select().from(librarians).where(eq(librarians.email, email)))[0],
+};
+```
+
+```ts
+// server/src/services/auth.service.ts
+import { librarianRepository } from "../repositories/librarian.repository";
+
+// hash หลอก: ใช้ตอนไม่พบอีเมล ให้เวลาตอบพอๆ กับตอนรหัสผิด คนนอกจะจับเวลาเดาไม่ได้ว่าอีเมลไหนมีจริง
+const DUMMY_HASH = await Bun.password.hash("not-a-real-password");
+
+export const authService = {
+  async login(email: string, password: string) {
+    const librarian = await librarianRepository.findByEmail(email.toLowerCase());
+    const valid = await Bun.password.verify(password, librarian?.passwordHash ?? DUMMY_HASH);
+    if (!librarian || !valid) throw new Error("INVALID_CREDENTIALS");    // รหัสเดียวทั้งอีเมลผิดและรหัสผิด
+    return { id: librarian.id, email: librarian.email, name: librarian.name };
+  },
+};
+```
+
+`DUMMY_HASH` ใช้ `await` นอกฟังก์ชันได้ เพราะ Bun รันไฟล์เป็น module ซึ่งยอมให้ `await` ระดับบนสุด บรรทัดนี้ทำครั้งเดียวตอน server เปิด ทำไมต้องมี: `Bun.password.verify` ใช้เวลาราว 0.1 วินาที ถ้าอีเมลไม่มีในระบบแล้วตอบทันทีโดยไม่ verify คนนอกจับเวลาก็รู้ว่า "ตอบเร็ว = อีเมลนี้ไม่มี ตอบช้า = มีบัญชีนี้" การ verify กับ hash หลอกทำให้ทั้งสองกรณีช้าเท่ากัน
+
+เพิ่มรหัสใหม่ใน `KNOWN` ของ `server/src/middleware/error-handler.ts`
+
+```ts
+  INVALID_CREDENTIALS: [401, "อีเมลหรือรหัสผ่านไม่ถูกต้อง"],
+```
+
+### 3. route
+
+```ts
+// server/src/validators/auth.validator.ts
+import { z } from "zod";
+
+export const loginSchema = z.object({
+  email: z.email("อีเมลไม่ถูกรูปแบบ"),
+  password: z.string("กรอกรหัสผ่าน").min(1, "กรอกรหัสผ่าน"),   // ไม่ส่งมาเลย หรือส่งค่าว่าง ได้ข้อความเดียวกัน
+});
+```
+
+```ts
+// server/src/routes/auth.routes.ts
+import { Hono } from "hono";
+import { deleteCookie, setCookie } from "hono/cookie";
+import { z } from "zod";
+import { createToken, SESSION_COOKIE, sessionCookie } from "../lib/session";
+import { fail, ok } from "../lib/response";
+import { authService } from "../services/auth.service";
+import { loginSchema } from "../validators/auth.validator";
+
+export const authRoutes = new Hono();
+
+authRoutes.post("/login", async (c) => {
+  const parsed = loginSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return fail(c, 400, "VALIDATION_ERROR", "ข้อมูลไม่ถูกต้อง", z.flattenError(parsed.error).fieldErrors);
+  const librarian = await authService.login(parsed.data.email, parsed.data.password);
+  setCookie(c, SESSION_COOKIE, await createToken(librarian.id), sessionCookie);   // ออกบัตร ใส่ใน cookie
+  return ok(c, librarian);
+});
+
+authRoutes.post("/logout", (c) => {
+  deleteCookie(c, SESSION_COOKIE, { path: "/" });    // cookie แบบ httpOnly มีแต่ server ที่ลบได้
+  return ok(c, null);
+});
+```
+
+แล้วเพิ่มใน `server/src/index.ts`: `app.route("/admin", authRoutes);` (ได้ `/api/admin/login` และ `/api/admin/logout`)
+
+### 4. ลองด้วย curl
+
+บน Windows PowerShell พิมพ์ `curl.exe` แทน `curl` และใช้ Git Bash จะพิมพ์ตามนี้ได้ตรงๆ
+
+```bash
+# รหัสผิด
+curl -i -H "Content-Type: application/json" -d '{"email":"librarian@library.local","password":"wrong"}' http://localhost:3000/api/admin/login
+
+# รหัสถูก: -c เก็บ cookie ลงไฟล์ cookies.txt
+curl -i -c cookies.txt -H "Content-Type: application/json" -d '{"email":"librarian@library.local","password":"correct-horse-battery"}' http://localhost:3000/api/admin/login
+```
+
+**ควรเห็น:** รหัสผิดและอีเมลที่ไม่มีในระบบ ได้คำตอบเหมือนกันทุกตัวอักษร
+
+```
+HTTP/1.1 401 Unauthorized
+{"success":false,"error":{"code":"INVALID_CREDENTIALS","message":"อีเมลหรือรหัสผ่านไม่ถูกต้อง"}}
+```
+
+รหัสถูกได้บรรทัด `set-cookie` ที่มี `HttpOnly` และ `SameSite=Lax`
+
+```
+HTTP/1.1 200 OK
+set-cookie: session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzkzMDAwMTkzfQ.KmqsziJ6...; Max-Age=86400; Path=/; HttpOnly; SameSite=Lax
+{"success":true,"data":{"id":1,"email":"librarian@library.local","name":"บรรณารักษ์"}}
+```
+
+**JWT อ่านได้ แต่แก้ไม่ได้:** บัตรมี 3 ท่อนคั่นด้วยจุด ลองถอดท่อนกลาง
+
+```bash
+bun -e "console.log(atob('eyJzdWIiOiIxIiwiZXhwIjoxNzkzMDAwMTkzfQ'))"
+```
+
+ได้ `{"sub":"1","exp":1793000193}` ใครก็อ่านได้ ไม่ใช่การเข้ารหัส **ห้ามใส่ของลับในบัตร** ส่วนท่อนที่ 3 คือลายเซ็น ถ้าแก้ `sub` เป็น `2` ลายเซ็นจะไม่ตรง และ `verify` จะไม่ยอมรับ
+
+## ทริคที่แนะนำ
+
+1. **ข้อความเดียวทั้งอีเมลผิดและรหัสผิด:** ถ้าบอกว่า "ไม่พบอีเมลนี้" คนนอกจะรู้ว่าอีเมลไหนเป็นบัญชีจริง แล้วไปเดารหัสเฉพาะบัญชีนั้น `DUMMY_HASH` กันอีกชั้น ลองยิง 3 รอบในเครื่องที่เขียนการ์ด: รหัสผิดใช้เวลา 0.097 ถึง 0.119 วินาที อีเมลที่ไม่มีอยู่ใช้ 0.102 ถึง 0.105 วินาที แยกไม่ออก
+2. **logout ต้องเรียก server:** หน้าเว็บมองไม่เห็น cookie แบบ httpOnly จึงลบเองไม่ได้ ต้องให้ server ตอบ `Set-Cookie` แบบหมดอายุ (`Max-Age=0`)
+3. **`sameSite: "Lax"` คือด่านแรกกัน [CSRF](/glossary#csrf):** cookie ถูกแนบไปเองทุกคำขอ ถ้าบรรณารักษ์ login ค้างไว้แล้วเปิดเว็บของคนร้าย หน้านั้นสั่ง browser ส่ง `POST` มาที่ API เราได้ `Lax` ทำให้ browser ไม่แนบ cookie ไปกับคำขอแบบนี้ที่มาจากโดเมนอื่น ด่านที่สองอยู่ใน "อ่านเพิ่ม"
+4. **`secure` เปิดตอนเป็น https เท่านั้น:** ถ้าเปิดตอนพัฒนาบน `http://` ที่ไม่ใช่ `localhost` browser จะไม่เก็บ cookie แล้ว login ไม่ติดแบบงงๆ ตอนขึ้นระบบจริงต้องเป็น https และเปิด `secure` เสมอ
+
+## ปรับไปใช้จริง
+
+**ในงาน STARTER:** วันที่ 4 ทำ `POST /api/admin/login` และ `POST /api/admin/logout` Requirement กำหนดว่า JWT อยู่ใน cookie httpOnly + `sameSite=lax` **ห้ามเก็บใน localStorage**, session หมดอายุใน 1 วัน (`maxAge` ข้างบน) และรหัสผิดต้องขึ้น "อีเมลหรือรหัสผ่านไม่ถูกต้อง" ห้ามบอกว่าผิดช่องไหน
+
+**เว็บคู่มือนี้:** ใช้วิธีเดียวกัน ดู [server/lib/session.ts](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/server/lib/session.ts) (บัตรอายุ 12 ชั่วโมง) และ [server/routes/auth.routes.ts](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/server/routes/auth.routes.ts) เว็บนี้มี cookie ตัวที่สอง `bt_role` ที่ JavaScript อ่านได้ ไว้บอกหน้าเว็บแค่ว่าจะโชว์ปุ่มไหน ไม่ได้ใช้ตัดสินสิทธิ์ (เว็บนี้ตอบ error แบบสั้น `{ error: "..." }` เพราะทำก่อนมี Requirement)
+
+ลองคิด: บัตรมีอายุ 1 วัน ถ้าลบบัญชีบรรณารักษ์คนหนึ่งทิ้งตอนบ่าย บัตรที่เขาถืออยู่ยังใช้ได้ถึงพรุ่งนี้ไหม จะทำยังไงให้ใช้ไม่ได้ทันที
+
+## ตัวเลือกอื่นที่คล้ายกัน
+
+| วิธี | บัตรเก็บอะไร | ข้อดี / ข้อเสีย |
+|---|---|---|
+| **JWT ใน cookie httpOnly (การ์ดนี้)** | ข้อมูลอยู่ในบัตร มีลายเซ็น | ไม่ต้องถามฐานข้อมูลทุกคำขอ / ยกเลิกบัตรก่อนหมดอายุยาก |
+| [Session](/glossary#session) ในฐานข้อมูล | บัตรเป็นแค่รหัส ข้อมูลอยู่ในตาราง | ยกเลิกได้ทันทีโดยลบแถว / ต้องถามฐานข้อมูลทุกคำขอ |
+| Better Auth | ไลบรารีที่ทำ login ให้ครบ ต่อกับ Hono ได้ เก็บ session ในฐานข้อมูลเป็นค่าเริ่มต้น ([เอกสาร](https://www.better-auth.com/docs/integrations/hono)) | ได้ฟีเจอร์เยอะ เช่น login ด้วย Google / ต้องเข้าใจพื้นฐานในการ์ดนี้ก่อน ไม่งั้นแก้ปัญหาไม่เป็น |
+| JWT ใน `localStorage` | เหมือนการ์ดนี้ | ไม่ต้องตั้ง cookie / ถูกขโมยได้ถ้ามี XSS **Requirement ห้าม** |
+
+## ลองเอง
+
+**โจทย์:** ทำให้ login ผิดเกิน 5 ครั้งใน 15 นาที (ต่ออีเมลเดียวกัน) ตอบ `429` "ลองหลายครั้งเกินไป รอ 15 นาทีแล้วลองใหม่" โดยไม่ต้องสร้างตารางใหม่ (เก็บในหน่วยความจำของ server ก็พอ) และ login ถูกแล้วต้องล้างตัวนับของอีเมลนั้น
+
+<Hint level={1}>กฎ "ผิดเกินกี่ครั้ง" เป็นกฎของระบบ ตามการ์ด [แบ่งชั้น](/learn/cards/layers) ควรอยู่ชั้นไหน แล้ว route ต้องเปลี่ยนไหม</Hint>
+<Hint level={2}>`Map` ของ JavaScript เก็บได้ว่าอีเมลไหนผิดไปกี่ครั้ง และครั้งแรกเมื่อไร (`Date.now()`) ส่วน status `429` ใส่เป็นรหัสใหม่ในตาราง `KNOWN`</Hint>
+<Hint level={3}>ตรวจ: ยิงรหัสผิด 5 ครั้งต้องได้ `401` ครั้งที่ 6 ต้องได้ `429` แม้รหัสถูก แล้วลองกับอีเมลอื่นต้องยังได้ `401` ตามปกติ ลองคิดต่อว่าถ้ารีสตาร์ท server ตัวนับหายไหม และยอมรับได้ไหม</Hint>
+
+## อ่านเพิ่ม
+
+รูปลำดับขั้นตอน login, ด่านกัน [CSRF](/glossary#csrf) ด้วย `hono/csrf` และตารางปัญหาที่เจอบ่อย อยู่ในบทเดิม [ระบบ login](/15-auth) ส่วนหลุมของ JWT ที่คนตกบ่อย อยู่ใน [Security พื้นฐาน](/10-security#32-jwt-หลุมที่คนตกบ่อย)

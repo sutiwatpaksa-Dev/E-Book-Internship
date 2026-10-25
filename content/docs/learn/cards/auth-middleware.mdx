@@ -1,0 +1,156 @@
+---
+title: "Middleware กัน API หลังบ้าน"
+---
+
+## ความหมาย
+
+**[Middleware](/glossary#middleware)** คือฟังก์ชันที่คำขอต้องผ่านก่อนถึง route จริง มันเลือกได้ 2 ทาง: ปล่อยไปต่อ (`await next()`) หรือตอบกลับเลยโดยไม่ให้ไปถึง route ด่านตรวจ login เขียนครั้งเดียว แล้วครอบทุกที่อยู่ใต้ `/api/admin/*`
+
+**นึกภาพ:** รปภ. หน้าลิฟต์ขึ้นชั้นสำนักงาน ไม่มีบัตรพนักงานก็ไม่ได้ขึ้น ห้องทำงานแต่ละห้องข้างบนไม่ต้องจ้างยามของตัวเอง เพราะทุกคนที่ขึ้นมาถึงผ่านด่านเดียวกันมาแล้ว
+
+## ที่มา
+
+ถ้าทุก route หลังบ้านเช็ก cookie เอง วันหนึ่งจะมี route ใหม่ที่ลืมเช็ก และ route นั้นเปิดให้ทุกคนแก้ข้อมูลได้ทันที ปัญหาแบบนี้ไม่มี error ให้เห็น ระบบทำงานปกติ จนมีคนนอกมาเจอ middleware แก้ด้วยการกลับด้าน: **ทุกอย่างใต้ `/api/admin/*` ถูกล็อกไว้ก่อน** route ใหม่ที่เพิ่มเข้ามาถูกล็อกเองโดยไม่ต้องจำ
+
+## การใช้งาน
+
+ต่อจากการ์ด [Login: JWT ใน httpOnly cookie](/learn/cards/jwt-cookie) (มี `readToken`, `SESSION_COOKIE` และ route login/logout แล้ว)
+
+### 1. ด่านตรวจ `server/src/middleware/require-librarian.ts`
+
+```ts
+import { getCookie } from "hono/cookie";
+import { createMiddleware } from "hono/factory";
+import { fail } from "../lib/response";
+import { readToken, SESSION_COOKIE } from "../lib/session";
+
+// บอก TypeScript ว่าหลังผ่านด่านนี้ c.get("librarianId") มีค่าเป็นตัวเลข
+export type LibrarianEnv = { Variables: { librarianId: number } };
+
+export const requireLibrarian = createMiddleware<LibrarianEnv>(async (c, next) => {
+  const token = getCookie(c, SESSION_COOKIE);
+  const librarianId = token ? await readToken(token) : null;
+  if (!librarianId) return fail(c, 401, "UNAUTHORIZED", "กรุณาเข้าสู่ระบบ");   // ไม่มีบัตร / บัตรปลอม / หมดอายุ
+
+  c.set("librarianId", librarianId);   // ส่งต่อให้ route ข้างหลังรู้ว่าใครเรียก
+  await next();                        // ผ่านด่าน ไปทำ route จริง
+});
+```
+
+`createMiddleware<LibrarianEnv>` บอก Hono ว่าด่านนี้ฝากค่าอะไรไว้ใน `c` บ้าง (`Variables`) ด่านเก็บด้วย `c.set("librarianId", ...)` แล้ว route ข้างหลังอ่านด้วย `c.get("librarianId")` ถ้าไม่ประกาศ type ไว้ TypeScript จะไม่รู้ว่า `c.get` คืนค่าอะไร
+
+ส่วน `fail` กับตาราง `KNOWN` ใช้ต่างกัน: ด่านกับ route รู้เรื่อง HTTP อยู่แล้ว จึงตอบ `fail(c, 401, ...)` ได้เลย ส่วน service ไม่รู้จัก HTTP (การ์ด[แบ่งชั้น](/learn/cards/layers)) จึงโยนรหัสให้ตัวจับกลางแปลงผ่าน `KNOWN` แบบ `INVALID_CREDENTIALS` ในการ์ดก่อน
+
+### 2. route ที่ต้อง login `server/src/routes/admin.routes.ts`
+
+เริ่มจาก `GET /api/admin/me` ("ตอนนี้ใคร login อยู่") ซึ่งหน้าเว็บจะใช้ถามในการ์ดถัดไป
+
+```ts
+import { Hono } from "hono";
+import { fail, ok } from "../lib/response";
+import type { LibrarianEnv } from "../middleware/require-librarian";
+import { librarianRepository } from "../repositories/librarian.repository";
+
+// ทุก route ในไฟล์นี้ผ่านด่าน requireLibrarian มาแล้ว (ติดตั้งใน index.ts)
+export const adminRoutes = new Hono<LibrarianEnv>();
+
+adminRoutes.get("/me", async (c) => {
+  const me = await librarianRepository.findById(c.get("librarianId"));
+  if (!me) return fail(c, 401, "UNAUTHORIZED", "กรุณาเข้าสู่ระบบ");   // บัตรยังไม่หมดอายุ แต่บัญชีถูกลบไปแล้ว
+  return ok(c, me);
+});
+```
+
+เพิ่ม `findById` ใน `librarian.repository.ts` โดย **เลือกเฉพาะคอลัมน์ที่ตอบออกไปได้**
+
+```ts
+  findById: async (id: number) =>
+    (await db
+      .select({ id: librarians.id, email: librarians.email, name: librarians.name })   // ไม่ดึง password_hash ออกไป
+      .from(librarians)
+      .where(eq(librarians.id, id)))[0],
+```
+
+### 3. ติดตั้งด่าน `server/src/index.ts`
+
+ทั้งไฟล์ ต่างจากของการ์ดก่อน 4 บรรทัด: import `requireLibrarian` กับ `adminRoutes` และบรรทัด ② ③
+
+```ts
+import { Hono } from "hono";
+import { errorHandler } from "./middleware/error-handler";
+import { requireLibrarian } from "./middleware/require-librarian";
+import { fail } from "./lib/response";
+import { adminRoutes } from "./routes/admin.routes";
+import { authRoutes } from "./routes/auth.routes";
+import { bookRoutes } from "./routes/books.routes";
+import { loanRoutes } from "./routes/loans.routes";
+
+const app = new Hono().basePath("/api");
+app.route("/books", bookRoutes);
+app.route("/loans", loanRoutes);
+app.route("/admin", authRoutes);               // ① login / logout ไม่ต้องมีบัตร
+app.use("/admin/*", requireLibrarian);         // ② ทุก /api/admin/* ที่ประกาศหลังบรรทัดนี้ ต้องผ่านด่าน
+app.route("/admin", adminRoutes);              // ③ route ที่ต้อง login
+app.notFound((c) => fail(c, 404, "NOT_FOUND", "ไม่พบ"));
+app.onError(errorHandler);
+
+export default app;
+```
+
+**ลำดับบรรทัดคือหัวใจ:** Hono ไล่จับคู่จากบนลงล่าง คำขอ `/api/admin/login` ตรงกับ route ใน ① ก่อน handler ของ login ตอบกลับไปเลยโดยไม่เรียก `next()` ต่อ คำขอจึงจบตรงนั้น ไม่เคยไปถึงด่าน ② ส่วนคำขอ `/api/admin/me` ไม่ตรงกับอะไรใน ① จึงเลื่อนลงมาเจอด่าน ② ก่อนถึง ③ ถ้าสลับ ② ขึ้นไปไว้ก่อน ① จะไม่มีใคร login ได้เลย (ลองแล้ว: login ด้วยรหัสถูกได้ `401 UNAUTHORIZED`)
+
+### 4. ลองด้วย curl
+
+ใช้ `cookies.txt` ที่ได้จาก login ในการ์ดก่อน (Windows PowerShell พิมพ์ `curl.exe`)
+
+```bash
+curl -i http://localhost:3000/api/admin/me                    # ไม่มีบัตร
+curl -i -b cookies.txt http://localhost:3000/api/admin/me     # -b ส่ง cookie จากไฟล์
+```
+
+**ควรเห็น:**
+
+```
+HTTP/1.1 401 Unauthorized
+{"success":false,"error":{"code":"UNAUTHORIZED","message":"กรุณาเข้าสู่ระบบ"}}
+
+HTTP/1.1 200 OK
+{"success":true,"data":{"id":1,"email":"librarian@library.local","name":"บรรณารักษ์"}}
+```
+
+ลองแกล้งด่าน: เปิด `cookies.txt` ด้วย VS Code บรรทัดสุดท้ายคือ cookie ของเรา ช่องขวาสุดคือตัวบัตร (ขึ้นต้นด้วย `eyJ`) แก้ตัวอักษรท้ายบัตรสัก 1 ตัว บันทึก แล้วยิงใหม่ ต้องได้ `401` และที่อยู่ที่ไม่มีจริงอย่าง `/api/admin/nothing` ตอนไม่มีบัตรก็ได้ `401` (ไม่ใช่ `404`) คนนอกจึงเดาไม่ได้ว่าหลังบ้านมี route อะไรบ้าง
+
+## ทริคที่แนะนำ
+
+1. **ติดตั้งด่านด้วย path ไม่ใช่ใส่ทีละ route:** `app.use("/admin/*", ...)` ครอบ route ที่ยังไม่ได้เขียนด้วย ส่วนการใส่ middleware ทีละ route (`get("/x", requireLibrarian, handler)`) มีวันลืม
+2. **ด่านส่งต่อ "ใคร" ไม่ใช่แค่ "ผ่าน":** route ข้างหลังใช้ `c.get("librarianId")` ได้ทันที ห้ามเชื่อ id ที่หน้าเว็บส่งมาใน body เพราะใครก็แก้ได้
+3. **[401 กับ 403](/glossary#401) ต่างกัน:** 401 = ยังไม่รู้ว่าเป็นใคร (ไม่มีบัตร) 403 = รู้แล้วว่าเป็นใคร แต่ไม่มีสิทธิ์ทำสิ่งนี้ งาน STARTER มี admin ระดับเดียวจึงใช้แค่ 401 ระบบที่มีหลายบทบาทจะได้ใช้ 403
+
+## ปรับไปใช้จริง
+
+**ในงาน STARTER:** วันที่ 4 ทุก `/api/admin/*` (ยกเว้น login/logout) ต้องผ่าน middleware เช็ก token ตรวจเสร็จเมื่อ **เรียก admin API โดยไม่ login แล้วได้ 401** ข้อนี้เป็นเกณฑ์ "ไม่ผ่านทันที" ถ้า admin API เรียกได้โดยไม่ login Requirement ให้วาง middleware ไว้ในโฟลเดอร์ `server/src/middleware/` ตรงกับการ์ดนี้ และมี `GET /api/admin/me` ไว้ให้หน้าเว็บถาม
+
+**เว็บคู่มือนี้:** ด่าน [server/middleware/require-role.ts](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/server/middleware/require-role.ts) รับบทบาทที่อนุญาต (`requireRole("dev")`) จึงตอบได้ทั้ง 401 และ 403 และถามฐานข้อมูลทุกครั้งว่าบัญชียังเปิดอยู่ไหม ปิดบัญชีแล้วเรียก API ไม่ได้ทันที แม้บัตรยังไม่หมดอายุ
+
+ลองคิด: ในการ์ด[แบ่งชั้น](/learn/cards/layers) `POST /api/loans` รับ `memberId` จาก body ใครก็ยิงยืมหนังสือแทนคนอื่นได้ ถ้าย้ายไปไว้หลังด่าน การยืมควรบันทึกอะไรเพิ่มจาก `c.get("librarianId")`
+
+## ตัวเลือกอื่นที่คล้ายกัน
+
+| วิธี | ใช้ตอนไหน |
+|---|---|
+| **`createMiddleware` + `app.use(path)` (การ์ดนี้)** | ด่านที่เขียนเอง เห็นทุกบรรทัด เหมาะกับงาน STARTER |
+| `jwt()` middleware สำเร็จรูปของ Hono (`hono/jwt`) | อ่านบัตรจาก header หรือ cookie ให้ ([เอกสาร](https://hono.dev/docs/middleware/builtin/jwt)) แต่ตอบ error ในรูปแบบของ Hono ไม่ใช่ของ Requirement ต้องจับแปลงเอง |
+| ใส่ middleware ทีละ route | route เดียวที่ต้องการด่านพิเศษ เช่น จำกัดจำนวนครั้ง (rate limit) เฉพาะฟอร์มติดต่อ |
+| เช็กใน handler เอง | ไม่ควรใช้กับเรื่อง login เพราะลืมได้ |
+
+## ลองเอง
+
+**โจทย์:** ย้าย `POST /api/loans` ไปเป็น `POST /api/admin/loans` ที่ต้อง login และบันทึกว่าบรรณารักษ์คนไหนเป็นคนทำรายการยืม (เพิ่มคอลัมน์ `librarian_id` ในตาราง `loans`) โดยไม่รับ `librarianId` จาก body เลย
+
+<Hint level={1}>เริ่มจากตาราง: คอลัมน์ใหม่อ้างถึงตาราง `librarians` แบบเดียวกับที่ `member_id` อ้างถึง `members` แล้วทำ migration แถวยืมเก่าที่มีอยู่จะมีค่าอะไรในคอลัมน์นี้</Hint>
+<Hint level={2}>service ไม่รู้จัก Hono (การ์ด[แบ่งชั้น](/learn/cards/layers) ทริคข้อ 2) route จึงต้องอ่าน `c.get("librarianId")` แล้วส่งเป็นพารามิเตอร์ให้ `loanService.borrow`</Hint>
+<Hint level={3}>ตรวจ 3 อย่าง: ยิงไม่มีบัตรได้ `401`, ยิงมีบัตรได้ `201` และแถวใหม่ใน `loans` มี `librarian_id` ตรงกับคนที่ login, ยิงที่อยู่เดิม `/api/loans` ได้ `404`</Hint>
+
+## อ่านเพิ่ม
+
+ด่านกัน [CSRF](/glossary#csrf) ที่ควรวางไว้หน้าด่านนี้ อยู่ในบทเดิม [ระบบ login หัวข้อ CSRF](/15-auth#ด่านกันคำขอปลอมจากเว็บอื่น-csrf) พร้อมคำสั่ง curl ที่แกล้งเป็นเว็บคนร้ายให้ดู

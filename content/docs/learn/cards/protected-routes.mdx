@@ -1,0 +1,228 @@
+---
+title: "หน้าหลังบ้านที่ต้อง login"
+---
+
+## ความหมาย
+
+หน้าเว็บส่วนหลังบ้าน (`/admin/*`) ต้อง **ถาม server ก่อนว่า login อยู่ไหม** ถ้าไม่ ให้พาไปหน้า login และพอ login เสร็จก็พากลับมาหน้าที่ตั้งใจจะเข้า ทุกหน้าหลังบ้านใช้โครงหน้าร่วมเดียวกันที่มีเมนูและปุ่มออกจากระบบ
+
+**นึกภาพ:** ประตูห้องพนักงานในร้าน ลูกค้าเดินมาเปิด พนักงานจะพาไปจุดลงชื่อก่อน ลงชื่อเสร็จก็พากลับมาที่ห้องเดิม ไม่ใช่ส่งไปยืนหน้าร้าน
+
+## ที่มา
+
+การซ่อนลิงก์ "หลังบ้าน" ไม่ได้ทำให้ปลอดภัย ใครก็พิมพ์ `/admin` เองได้ การกันหน้าเว็บจึงมีไว้เพื่อ **ประสบการณ์ใช้งาน** คือไม่ให้เห็นหน้าว่างหรือ error แดงเต็มจอ ส่วน **ด่านจริงคือ API** ที่ตอบ `401` (การ์ด [Middleware](/learn/cards/auth-middleware)) ถึงคนนอกจะแก้โค้ดหน้าเว็บในเครื่องตัวเองให้ข้ามการเช็กได้ ก็ยังดึงข้อมูลหลังบ้านไม่ได้อยู่ดี
+
+อีกเรื่องคือ cookie แบบ httpOnly ทำให้โค้ดหน้าเว็บ **ไม่รู้เอง** ว่า login อยู่หรือเปล่า เพราะอ่าน cookie ไม่ได้ วิธีเดียวคือถาม server ผ่าน `GET /api/admin/me`
+
+## การใช้งาน
+
+ต่อจากการ์ด [หลายหน้า (React Router)](/learn/cards/router-seo) และ [ฟอร์ม](/learn/cards/react-forms) ฝั่ง client และ API login/logout/me จากช่วง Login หน้าเว็บเรียก API ผ่าน proxy ของ Vite (การ์ด [ดึงข้อมูลจาก API](/learn/cards/fetch-data)) หน้าเว็บกับ API จึงอยู่ "บ้านเดียวกัน" ในสายตา browser และ browser แนบ cookie ให้เองโดยไม่ต้องเขียนโค้ดเพิ่ม
+
+การ์ดนี้ใช้เครื่องมือของ React Router เพิ่ม 3 ตัว
+
+| ตัว | ทำอะไร |
+|---|---|
+| `useLocation()` | บอกว่าตอนนี้อยู่ที่อยู่ไหน (`pathname`, `search`) และมี `state` ที่หน้าก่อนฝากมา |
+| `<Navigate to="..." />` | วาดเมื่อไรก็ย้ายไปที่อยู่นั้นทันที ใช้ตอนตัดสินใจระหว่างวาดหน้า |
+| `useNavigate()` | ได้ฟังก์ชัน `navigate("/...")` ไว้ย้ายหน้าหลังทำอะไรเสร็จ เช่น หลัง login สำเร็จ |
+
+### 1. ชั้นเรียก API ของเรื่อง login
+
+```ts
+// client/src/types/librarian.ts
+export type Librarian = { id: number; email: string; name: string };
+```
+
+```ts
+// client/src/api/auth.api.ts
+import type { Librarian } from "../types/librarian";
+import { jsonBody, request } from "./client";
+
+export const authApi = {
+  login: (email: string, password: string) => request<Librarian>("/admin/login", jsonBody("POST", { email, password })),
+  logout: () => request<null>("/admin/logout", { method: "POST" }),
+  me: () => request<Librarian>("/admin/me"),
+};
+```
+
+### 2. ด่านหน้าเว็บ `client/src/components/require-librarian.tsx`
+
+มี 3 สถานะ: กำลังถาม / login อยู่ / ไม่ได้ login
+
+```tsx
+import { useEffect, useState, type ReactNode } from "react";
+import { Navigate, useLocation } from "react-router";
+import { authApi } from "../api/auth.api";
+
+export function RequireLibrarian({ children }: { children: ReactNode }) {
+  const location = useLocation();
+  const [state, setState] = useState<"checking" | "in" | "out">("checking");
+
+  useEffect(() => {
+    authApi.me().then(() => setState("in")).catch(() => setState("out"));
+  }, [location.pathname]);                   // เปลี่ยนหน้าแล้วถามใหม่ เผื่อบัตรหมดอายุระหว่างใช้งาน
+
+  if (state === "checking") return <p className="p-8">กำลังตรวจสอบสิทธิ์...</p>;
+  if (state === "out") return <Navigate to="/admin/login" replace state={{ from: location.pathname + location.search }} />;
+  return <>{children}</>;
+}
+```
+
+`state={{ from }}` ฝากที่อยู่เดิมไว้ให้หน้า login โดยไม่โชว์ใน URL (รวม `?q=...` ด้วย ไม่งั้นคำค้นหาหายตอนกลับมา ลองแล้วเจอจริง)
+
+### 3. หน้า login `client/src/pages/admin/login-page.tsx`
+
+```tsx
+import { useState, type SubmitEvent } from "react";
+import { useLocation, useNavigate } from "react-router";
+import { authApi } from "../../api/auth.api";
+
+export function LoginPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as { from?: string } | null)?.from ?? "/admin";   // หน้าที่ตั้งใจจะเข้าตอนแรก
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [sending, setSending] = useState(false);
+
+  async function onSubmit(e: SubmitEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setSending(true);
+    setError("");
+    try {
+      await authApi.login(email, password);          // server ตอบ Set-Cookie browser เก็บให้เอง
+      navigate(from, { replace: true });
+    } catch (err) {
+      setError((err as Error).message);              // "อีเมลหรือรหัสผ่านไม่ถูกต้อง" จาก API
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="mx-auto mt-24 max-w-sm space-y-4 p-6">
+      <title>เข้าสู่ระบบหลังบ้าน | ห้องสมุดบิต</title>
+      <h1 className="text-2xl font-bold">เข้าสู่ระบบหลังบ้าน</h1>
+      <label className="block">
+        อีเมล
+        <input type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)}
+          className="mt-1 w-full rounded border p-2" />
+      </label>
+      <label className="block">
+        รหัสผ่าน
+        <input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)}
+          className="mt-1 w-full rounded border p-2" />
+      </label>
+      {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+      <button disabled={sending} className="w-full rounded bg-blue-700 py-2 text-white disabled:opacity-50">
+        {sending ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
+      </button>
+    </form>
+  );
+}
+```
+
+บรรทัด `from` อ่านทีละท่อน: `location.state` เป็นอะไรก็ได้ (TypeScript ไม่รู้) เราจึงบอกด้วย `as` ว่ามันคือ `{ from?: string }` หรือ `null` แล้ว `?.from` อ่าน `from` เฉพาะตอนที่ไม่ใช่ `null` และ `?? "/admin"` ใช้ `/admin` แทนถ้าไม่มีค่า (เช่น เปิดหน้า login ตรงๆ)
+
+### 4. โครงหน้าหลังบ้าน + ออกจากระบบ `client/src/components/admin-layout.tsx`
+
+แบบเดียวกับ `PublicLayout` ในการ์ด Router: แถบบน + `<Outlet />`
+
+```tsx
+import { NavLink, Outlet, useNavigate } from "react-router";
+import { authApi } from "../api/auth.api";
+
+export function AdminLayout() {
+  const navigate = useNavigate();
+
+  async function onLogout() {
+    await authApi.logout();                          // ให้ server ลบ cookie (หน้าเว็บลบเองไม่ได้)
+    navigate("/admin/login", { replace: true });
+  }
+
+  const link = ({ isActive }: { isActive: boolean }) => (isActive ? "font-bold" : "text-gray-600");
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <header className="flex items-center gap-4 border-b bg-white px-4 py-3">
+        <span className="font-bold">ห้องสมุดบิต · หลังบ้าน</span>
+        <NavLink to="/admin" end className={link}>หน้าแรก</NavLink>
+        <NavLink to="/admin/books" className={link}>หนังสือ</NavLink>
+        <button onClick={onLogout} className="ml-auto rounded border px-3 py-1 text-sm">ออกจากระบบ</button>
+      </header>
+      <main className="p-4">
+        <Outlet />
+      </main>
+    </div>
+  );
+}
+```
+
+### 5. ต่อ route ใน `client/src/App.tsx`
+
+เพิ่ม import 4 ตัวบนสุด แล้วเพิ่ม route ต่อจาก route หน้าบ้านเดิม (`AdminHomePage` เป็นหน้าธรรมดามี `<h1>หลังบ้าน</h1>` เขียนเองได้เลย)
+
+```tsx
+import { AdminLayout } from "./components/admin-layout";
+import { RequireLibrarian } from "./components/require-librarian";
+import { AdminHomePage } from "./pages/admin/admin-home-page";
+import { LoginPage } from "./pages/admin/login-page";
+```
+
+```tsx
+      {/* หลังบ้าน: อยู่นอก PublicLayout จึงไม่มีเมนูของหน้าบ้าน */}
+      <Route path="/admin/login" element={<LoginPage />} />
+      <Route path="/admin" element={<RequireLibrarian><AdminLayout /></RequireLibrarian>}>
+        <Route index element={<AdminHomePage />} />
+      </Route>
+```
+
+`/admin/login` ต้องอยู่ **นอก** `RequireLibrarian` ถ้าอยู่ข้างใน คนที่ยังไม่ login จะถูกส่งไปหน้า login ซึ่งต้อง login ก่อนอีกที วนไม่จบ
+
+**ควรเห็น:** (เปิด `bun run dev` ทั้ง `server/` และ `client/`)
+
+1. เปิด `http://localhost:5173/admin` ตอนยังไม่ login ถูกพาไป `/admin/login`
+2. กรอกรหัสผิด ขึ้น "อีเมลหรือรหัสผ่านไม่ถูกต้อง" ใต้ฟอร์ม
+3. กรอกรหัสถูก กลับมาที่ `/admin`
+4. พิมพ์ `document.cookie` ใน Console ของ DevTools ได้ `""` เพราะบัตรเป็น httpOnly (ดูได้ในแท็บ Application → Cookies เท่านั้น)
+5. กด "ออกจากระบบ" กลับไปหน้า login แล้วกดย้อนกลับ ก็เข้าหลังบ้านไม่ได้แล้ว
+
+เมนู "หนังสือ" ยังเป็นหน้าว่าง เพราะหน้านั้นทำในการ์ดถัดไป
+
+ในแท็บ Network จะเห็น `/api/admin/me` ตอบ `401` ตอนยังไม่ login เป็นเรื่องปกติ คือคำตอบว่า "ยังไม่ login" ไม่ใช่ระบบพัง
+
+## ทริคที่แนะนำ
+
+1. **อย่าเก็บ "login แล้ว" ไว้ใน `localStorage` เพื่อจะได้ไม่ต้องถาม server:** ค่านี้ไม่ตรงกับความจริงได้ง่าย เช่น บัตรหมดอายุแล้วแต่ค่ายังบอกว่า login อยู่ ผู้ใช้เห็นหน้าหลังบ้านที่โหลดอะไรไม่ได้เลย ถาม `/me` ใช้เวลาไม่กี่มิลลิวินาที
+2. **ใช้ `replace` ตอนพาไปหน้า login และตอนกลับ:** ไม่งั้นกดปุ่มย้อนกลับแล้วเด้งไปมาระหว่างหน้า login กับหน้าที่ถูกกัน
+3. **ใส่ `autoComplete="username"` และ `"current-password"`:** ตัวจัดการรหัสผ่านของ browser กรอกให้ได้ถูกช่อง เจ้าของร้านที่ไม่ถนัดคอมพิวเตอร์ใช้ง่ายขึ้นมาก
+
+## ปรับไปใช้จริง
+
+**ในงาน STARTER:** วันที่ 8 ทำหน้าหลังบ้านที่ `/admin` Requirement ข้อ 5.1 ให้มีหน้า `/admin/login` (อีเมล + รหัสผ่าน), **เข้า `/admin/*` โดยไม่ login ต้องเด้งกลับหน้า login** และมีปุ่ม logout ส่วนหน้า dashboard, settings, pages, services, messages เป็นหน้าลูกใต้ `AdminLayout` แบบเดียวกับ `AdminHomePage` และหน้าหนังสือในการ์ดถัดไป
+
+**เว็บคู่มือนี้:** ใช้ Next.js จึงกันหน้าได้ตั้งแต่ฝั่ง server ก่อนส่งหน้าเว็บ ดูรายการหน้าที่ต้อง login และบทบาทที่เข้าได้ใน [src/lib/page-access.ts บน GitHub](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/src/lib/page-access.ts) แต่หลักเหมือนกัน: หน้าเว็บกันเพื่อประสบการณ์ใช้งาน API กันจริง (route หลังบ้านทุกตัวผ่าน `requireRole`)
+
+ลองคิด: บรรณารักษ์เปิดหน้าหนังสือทิ้งไว้ข้ามคืนจนบัตรหมดอายุ เช้ามากด "บันทึก" โดยไม่เปลี่ยนหน้า จะเห็นอะไร และควรเห็นอะไร
+
+## ตัวเลือกอื่นที่คล้ายกัน
+
+| วิธี | กันหน้าที่ไหน | หมายเหตุ |
+|---|---|---|
+| **ชิ้นส่วนห่อ route (การ์ดนี้)** | ในหน้าเว็บ หลังโหลดเสร็จ | เห็นทุกขั้น เหมาะกับ Vite + React Router |
+| `loader` ของ React Router (data mode) | ก่อนวาดหน้า | ถาม `/me` ใน loader แล้ว `redirect` ได้ ไม่มีจังหวะ "กำลังตรวจสอบ" แต่ต้องเปลี่ยนวิธีประกาศ route ทั้งแอป |
+| ฝั่ง server (Next.js, เว็บคู่มือนี้) | ก่อนส่งหน้าเว็บ | ไม่เห็นหน้าหลังบ้านแวบเลย แต่ต้องมี server ที่วาดหน้าเว็บ |
+| ซ่อนลิงก์อย่างเดียว | ไม่ได้กัน | ห้ามใช้ พิมพ์ที่อยู่เองก็เข้าได้ |
+
+## ลองเอง
+
+**โจทย์:** ให้แถบบนของหลังบ้านแสดงชื่อคนที่ login อยู่ ("สวัสดี บรรณารักษ์") โดย **เรียก `/api/admin/me` แค่ครั้งเดียวต่อการเปลี่ยนหน้า** (ตอนนี้ `RequireLibrarian` เรียกอยู่แล้ว ห้ามให้ `AdminLayout` เรียกซ้ำ)
+
+<Hint level={1}>`RequireLibrarian` ได้ข้อมูลคนที่ login มาแล้วแต่ทิ้งไป ลองเก็บไว้ใน state แทน `"in"`</Hint>
+<Hint level={2}>ส่งข้อมูลจากชิ้นส่วนแม่ลงไปหาหน้าที่อยู่ใน `<Outlet />` ทำได้ด้วย prop `context` ของ `<Outlet>` คู่กับ `useOutletContext()` (หาในเอกสาร React Router) หรือส่งให้ `AdminLayout` เป็น props ตรงๆ เพราะมันเป็นลูกโดยตรงของ `RequireLibrarian`</Hint>
+<Hint level={3}>ตรวจในแท็บ Network: กดเปลี่ยนเมนูหลังบ้าน 1 ครั้ง ต้องเห็น `/api/admin/me` 1 ครั้ง (โหมดพัฒนาของ React มี `StrictMode` ที่ทำให้ effect ทำงาน 2 รอบตอนเปิดหน้าครั้งแรก เป็นเรื่องปกติ)</Hint>
+
+## อ่านเพิ่ม
+
+รูปสถานะทั้ง 3 ของด่านหน้าเว็บ และวิธีพาไปหน้า login เมื่อบัตรหมดอายุระหว่างใช้งาน อยู่ในบทเดิม [ระบบ login ส่วนฝั่งหน้าเว็บ](/15-auth#ยังไม่-login--พาไปหน้า-login) และหน้าซ้อนหน้าแบบละเอียดอยู่ใน [หลายหน้า + Google หาเจอ](/13-router-seo)

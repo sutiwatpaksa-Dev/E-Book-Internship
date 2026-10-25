@@ -13,11 +13,16 @@
     "layers",
     "error-handling",
     "api-testing",
+    "password-hash",
+    "jwt-cookie",
+    "auth-middleware",
     "react-components",
     "tailwind",
     "react-state",
     "fetch-data",
     "react-forms",
-    "router-seo"
+    "router-seo",
+    "protected-routes",
+    "crud-ui"
   ]
 }

@@ -1,0 +1,357 @@
+---
+title: "หน้าจัดการข้อมูล: ตาราง ค้นหา แบ่งหน้า เพิ่ม แก้ ลบ"
+---
+
+## ความหมาย
+
+หน้าจัดการข้อมูลหลังบ้านมี 4 งานหลัก ([CRUD](/glossary#rest)): ดูรายการ (พร้อมค้นหาและ[แบ่งหน้า](/glossary#pagination)), เพิ่ม, แก้, ลบ ทุกงานคุยกับ API ชุดเดียวกัน และหน้าจอต้องบอกตลอดว่ากำลังทำอะไร: กำลังโหลด, ไม่พบ, กำลังบันทึก, ลบแล้ว
+
+**นึกภาพ:** สมุดทะเบียนหนังสือของห้องสมุด เปิดดูทีละหน้า หาเล่มจากชื่อได้ เพิ่มบรรทัดใหม่ แก้ชื่อที่สะกดผิด และขีดฆ่าเล่มที่ทิ้งไปแล้ว ก่อนขีดฆ่าต้องดูให้แน่ใจก่อนว่าบรรทัดถูก
+
+## ที่มา
+
+เจ้าของร้านไม่รู้เรื่องโค้ด ทุกครั้งที่อยากแก้ราคาหรือเพิ่มสินค้าแล้วต้องโทรหาโปรแกรมเมอร์ ระบบก็ไม่ได้ช่วยเขา หน้าจัดการข้อมูลจึงต้อง **ใช้ง่ายและพลาดยาก** ลบผิดแล้วกู้ไม่ได้ จึงต้องถามยืนยันก่อน ข้อมูลเยอะขึ้นทุกวัน จึงต้องแบ่งหน้าตั้งแต่ฝั่ง API ไม่ใช่ดึงมาทั้งหมดแล้วค่อยตัดในหน้าเว็บ ถ้าวันหนึ่งมี 5,000 รายการ หน้าเว็บจะช้าจนใช้ไม่ได้
+
+## การใช้งาน
+
+ต่อจากการ์ด [หน้าหลังบ้านที่ต้อง login](/learn/cards/protected-routes) (มี `AdminLayout` และด่าน `/api/admin/*` แล้ว) ใช้ตาราง `books` เดิม
+
+### 1. API: list ที่แบ่งหน้า
+
+Requirement มีรูปแบบคำตอบสำหรับ list ที่แบ่งหน้าโดยเฉพาะ: `{ success, data: [...], meta: { page, limit, total } }` เพิ่มตัวช่วยใน `server/src/lib/response.ts`
+
+```ts
+// list ที่แบ่งหน้า: { success, data: [...], meta: { page, limit, total } }
+export const okPage = (c: Context, data: unknown[], meta: { page: number; limit: number; total: number }) =>
+  c.json({ success: true, data, meta });
+```
+
+```ts
+// server/src/repositories/book.repository.ts
+import { desc, eq, ilike } from "drizzle-orm";
+import { db } from "../db";
+import { books } from "../db/schema";
+
+export const bookRepository = {
+  async list(q: string, page: number, limit: number) {
+    const where = q ? ilike(books.title, `%${q}%`) : undefined;     // ilike = ค้นแบบไม่สนตัวพิมพ์เล็ก-ใหญ่
+    const [rows, total] = await Promise.all([
+      db.select().from(books).where(where).orderBy(desc(books.id)).limit(limit).offset((page - 1) * limit),
+      db.$count(books, where),                                       // นับทั้งหมด ไว้คำนวณจำนวนหน้า
+    ]);
+    return { rows, total };
+  },
+  create: async (title: string) => (await db.insert(books).values({ title }).returning())[0]!,
+  update: async (id: number, title: string) => (await db.update(books).set({ title }).where(eq(books.id, id)).returning())[0],
+  remove: async (id: number) => (await db.delete(books).where(eq(books.id, id)).returning())[0],
+};
+```
+
+อ่านทีละส่วน:
+
+- **แบ่งหน้าด้วย `limit` + `offset`:** หน้าละ 10 เล่ม หน้า 1 ข้าม 0 เล่ม หน้า 2 ข้าม 10 เล่ม หน้า 3 ข้าม 20 เล่ม สูตรจึงเป็น `(page - 1) * limit`
+- **`db.$count(books, where)`** นับจำนวนแถวที่ตรงเงื่อนไขทั้งหมด (ไม่ใช่แค่หน้านี้) หน้าเว็บเอาไปคำนวณว่ามีกี่หน้า
+- **`Promise.all([...])`** สั่งสองคำสั่งพร้อมกันแล้วรอทั้งคู่ เร็วกว่ารอทีละคำสั่ง
+- **เรียง `desc(books.id)`** เล่มที่เพิ่มล่าสุดอยู่บนสุด และลำดับต้องแน่นอนทุกครั้ง ไม่งั้นเปลี่ยนหน้าแล้วบางเล่มโผล่ซ้ำหรือหายไป
+
+```ts
+// server/src/validators/admin-book.validator.ts
+import { z } from "zod";
+
+export const bookListQuery = z.object({
+  q: z.string().trim().max(100).default(""),
+  page: z.coerce.number().int().min(1).default(1),       // query เป็นข้อความเสมอ coerce แปลงเป็นตัวเลขให้
+});
+
+export const idParam = z.object({ id: z.coerce.number().int().positive() });
+```
+
+```ts
+// server/src/routes/admin-books.routes.ts
+import { Hono } from "hono";
+import { z } from "zod";
+import { fail, ok, okPage } from "../lib/response";
+import type { LibrarianEnv } from "../middleware/require-librarian";
+import { bookRepository } from "../repositories/book.repository";
+import { bookListQuery, idParam } from "../validators/admin-book.validator";
+import { newBookSchema } from "../validators/book.validator";
+
+const LIMIT = 10;
+export const adminBookRoutes = new Hono<LibrarianEnv>();
+
+adminBookRoutes.get("/", async (c) => {
+  const parsed = bookListQuery.safeParse(c.req.query());
+  if (!parsed.success) return fail(c, 400, "VALIDATION_ERROR", "ข้อมูลไม่ถูกต้อง", z.flattenError(parsed.error).fieldErrors);
+  const { q, page } = parsed.data;
+  const { rows, total } = await bookRepository.list(q, page, LIMIT);
+  return okPage(c, rows, { page, limit: LIMIT, total });
+});
+
+adminBookRoutes.post("/", async (c) => {
+  const parsed = newBookSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return fail(c, 400, "VALIDATION_ERROR", "ข้อมูลไม่ถูกต้อง", z.flattenError(parsed.error).fieldErrors);
+  return ok(c, await bookRepository.create(parsed.data.title), 201);
+});
+
+adminBookRoutes.patch("/:id", async (c) => {
+  const id = idParam.safeParse(c.req.param());
+  if (!id.success) return fail(c, 404, "NOT_FOUND", "ไม่พบหนังสือ");    // /books/abc ไม่มีเล่มนี้แน่นอน
+  const body = newBookSchema.safeParse(await c.req.json().catch(() => null));
+  if (!body.success) return fail(c, 400, "VALIDATION_ERROR", "ข้อมูลไม่ถูกต้อง", z.flattenError(body.error).fieldErrors);
+  const book = await bookRepository.update(id.data.id, body.data.title);
+  if (!book) return fail(c, 404, "NOT_FOUND", "ไม่พบหนังสือ");
+  return ok(c, book);
+});
+
+adminBookRoutes.delete("/:id", async (c) => {
+  const id = idParam.safeParse(c.req.param());
+  if (!id.success) return fail(c, 404, "NOT_FOUND", "ไม่พบหนังสือ");
+  const book = await bookRepository.remove(id.data.id);
+  if (!book) return fail(c, 404, "NOT_FOUND", "ไม่พบหนังสือ");
+  return ok(c, { id: book.id });                       // ลบสำเร็จตอบ 200 (Requirement ไม่ใช้ 204)
+});
+```
+
+ต่อเข้า `server/src/routes/admin.routes.ts`: เพิ่ม `import { adminBookRoutes } from "./admin-books.routes";` บนสุด และ `adminRoutes.route("/books", adminBookRoutes);` ท้ายไฟล์ จึงอยู่หลังด่าน login เองโดยไม่ต้องทำอะไรเพิ่ม
+
+แบ่งหน้าต้องมีหนังสือเกิน 10 เล่มถึงจะเห็นผล เพิ่มบรรทัดนี้ใน `seed.ts` (ก่อน `process.exit`) แล้วรัน `bun run seed`
+
+```ts
+await db.insert(books).values(Array.from({ length: 20 }, (_, i) => ({ title: `นิยายเล่มที่ ${i + 1}` })));
+```
+
+**ควรเห็น:** (`-b cookies.txt` จากการ์ด Login, Windows PowerShell พิมพ์ `curl.exe`)
+
+```bash
+curl "http://localhost:3000/api/admin/books?page=1" -b cookies.txt
+```
+
+```json
+{"success":true,"data":[{"id":10,"title":"ดาวเคราะห์ดวงใหม่","createdAt":"..."}, ...],"meta":{"page":1,"limit":10,"total":21}}
+```
+
+`?page=0` ได้ `400` พร้อม `"details":{"page":["Too small: expected number to be >=1"]}` และไม่มีบัตรได้ `401` ทุกตัว
+
+### 2. หน้าเว็บ: ชั้นเรียก API
+
+`request` เดิมคืนแค่ `data` แต่ list ที่แบ่งหน้าต้องได้ `meta` ด้วย เพิ่มท้าย `client/src/api/client.ts` (ไฟล์เดียวกัน จึงใช้ `ApiResponse` และ `ApiError` ที่มีอยู่แล้วได้เลย)
+
+```ts
+// list ที่แบ่งหน้า: ต้องได้ทั้ง data และ meta (request ธรรมดาคืนแค่ data)
+export type Page<T> = { items: T[]; meta: { page: number; limit: number; total: number } };
+
+export async function requestPage<T>(path: string): Promise<Page<T>> {
+  const res = await fetch(`/api${path}`, { credentials: "same-origin" });
+  const body = (await res.json().catch(() => null)) as (ApiResponse<T[]> & { meta?: Page<T>["meta"] }) | null;
+  if (!body) throw new ApiError(`ผิดพลาด (${res.status})`);
+  if (!body.success) throw new ApiError(body.error.message, body.error.details);
+  return { items: body.data, meta: body.meta! };
+}
+```
+
+```ts
+// client/src/api/admin-books.api.ts (เพิ่ม type AdminBook = { id: number; title: string; createdAt: string } ใน types/book.ts)
+import type { AdminBook } from "../types/book";
+import { jsonBody, request, requestPage } from "./client";
+
+export const adminBooksApi = {
+  list: (q: string, page: number) =>
+    requestPage<AdminBook>(`/admin/books?${new URLSearchParams({ q, page: String(page) })}`),
+  create: (title: string) => request<AdminBook>("/admin/books", jsonBody("POST", { title })),
+  update: (id: number, title: string) => request<AdminBook>(`/admin/books/${id}`, jsonBody("PATCH", { title })),
+  remove: (id: number) => request<{ id: number }>(`/admin/books/${id}`, { method: "DELETE" }),
+};
+```
+
+`URLSearchParams` แปลงคำค้นภาษาไทยหรือเครื่องหมาย `&` ให้ส่งใน URL ได้ถูกต้อง ถ้าต่อข้อความเอง คำค้น `a&page=9` จะกลายเป็นพารามิเตอร์ใหม่
+
+### 3. ฟอร์มเดียวใช้ทั้งเพิ่มและแก้ `client/src/components/book-editor.tsx`
+
+```tsx
+import { useState, type SubmitEvent } from "react";
+import { ApiError } from "../api/client";
+
+// ฟอร์มเดียวใช้ทั้ง "เพิ่ม" และ "แก้" ต่างกันแค่ค่าเริ่มต้นกับฟังก์ชันที่ส่ง
+export function BookEditor({ initial, onSave, onDone }: {
+  initial: string;
+  onSave: (title: string) => Promise<unknown>;
+  onDone: () => void;
+}) {
+  const [title, setTitle] = useState(initial);
+  const [error, setError] = useState("");
+  const [sending, setSending] = useState(false);
+
+  async function onSubmit(e: SubmitEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!title.trim()) return setError("กรอกชื่อหนังสือ");
+    setSending(true);
+    setError("");
+    try {
+      await onSave(title);
+      onDone();
+    } catch (err) {
+      const e = err as ApiError;
+      setError(e.details?.title?.[0] ?? e.message);
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <form onSubmit={onSubmit} noValidate className="flex flex-wrap items-start gap-2">
+      <label className="flex-1">
+        <span className="sr-only">ชื่อหนังสือ</span>
+        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="ชื่อหนังสือ"
+          className="w-full rounded border p-2" />
+        {error && <span role="alert" className="text-sm text-red-600">{error}</span>}
+      </label>
+      <button disabled={sending} className="rounded bg-blue-700 px-4 py-2 text-white disabled:opacity-50">
+        {sending ? "กำลังบันทึก..." : "บันทึก"}
+      </button>
+      <button type="button" onClick={onDone} className="rounded border px-4 py-2">ยกเลิก</button>
+    </form>
+  );
+}
+```
+
+### 4. หน้าจัดการ `client/src/pages/admin/admin-books-page.tsx`
+
+```tsx
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router";
+import { adminBooksApi } from "../../api/admin-books.api";
+import type { Page } from "../../api/client";
+import { BookEditor } from "../../components/book-editor";
+import type { AdminBook } from "../../types/book";
+
+export function AdminBooksPage() {
+  const [params, setParams] = useSearchParams();       // ค้นหาและหน้าอยู่ใน URL รีเฟรชแล้วไม่หาย
+  const q = params.get("q") ?? "";
+  const page = Math.max(1, Number(params.get("page")) || 1);   // ?page=abc หรือไม่มี → หน้า 1
+
+  const [result, setResult] = useState<Page<AdminBook> | null>(null);
+  const [error, setError] = useState("");
+  const [editing, setEditing] = useState<AdminBook | "new" | null>(null);   // กำลังแก้เล่มไหน หรือกำลังเพิ่ม
+  const [reload, setReload] = useState(0);             // เพิ่มเลข = สั่งโหลดใหม่
+
+  useEffect(() => {
+    let ignore = false;
+    setError("");                                      // โหลดรอบใหม่ ล้าง error ของรอบก่อน
+    adminBooksApi.list(q, page)
+      .then((r) => !ignore && setResult(r))
+      .catch((e: Error) => !ignore && setError(e.message));
+    return () => { ignore = true; };
+  }, [q, page, reload]);
+
+  async function onDelete(book: AdminBook) {
+    if (!confirm(`ลบ "${book.title}" ใช่ไหม`)) return;  // ลบแล้วกู้ไม่ได้ ต้องถามก่อน
+    try {
+      await adminBooksApi.remove(book.id);
+      setReload((n) => n + 1);
+    } catch (e) {
+      alert((e as Error).message);
+    }
+  }
+
+  const done = () => { setEditing(null); setReload((n) => n + 1); };
+  const pages = result ? Math.max(1, Math.ceil(result.meta.total / result.meta.limit)) : 1;
+
+  return (
+    <section className="space-y-4">
+      <title>จัดการหนังสือ | ห้องสมุดบิต</title>
+      <div className="flex flex-wrap items-center gap-2">
+        <h1 className="text-xl font-bold">หนังสือ</h1>
+        <input defaultValue={q} placeholder="ค้นหาชื่อ" aria-label="ค้นหาชื่อหนังสือ"
+          onKeyDown={(e) => e.key === "Enter" && setParams({ q: e.currentTarget.value, page: "1" })}
+          className="rounded border p-2" />
+        <button onClick={() => setEditing("new")} className="ml-auto rounded bg-blue-700 px-4 py-2 text-white">เพิ่มหนังสือ</button>
+      </div>
+
+      {editing && (
+        <BookEditor
+          key={editing === "new" ? "new" : editing.id}  // เปลี่ยนเล่ม = ฟอร์มใหม่ ค่าเริ่มต้นใหม่
+          initial={editing === "new" ? "" : editing.title}
+          onSave={(title) => (editing === "new" ? adminBooksApi.create(title) : adminBooksApi.update(editing.id, title))}
+          onDone={done}
+        />
+      )}
+
+      {error && <p role="alert">โหลดไม่สำเร็จ: {error}</p>}
+      {!result && !error && <p>กำลังโหลด...</p>}
+      {result && result.items.length === 0 && <p>ไม่พบหนังสือ{q && ` ที่ชื่อมีคำว่า "${q}"`}</p>}
+      {result && result.items.length > 0 && (
+        <div className="overflow-x-auto">                {/* มือถือ: ตารางเลื่อนในกรอบ ไม่ล้นจอ */}
+          <table className="w-full min-w-md bg-white text-left">
+            <thead><tr className="border-b"><th className="p-2">ชื่อ</th><th className="p-2">เพิ่มเมื่อ</th><th /></tr></thead>
+            <tbody>
+              {result.items.map((b) => (
+                <tr key={b.id} className="border-b">
+                  <td className="p-2">{b.title}</td>
+                  <td className="p-2">{new Date(b.createdAt).toLocaleDateString("th-TH")}</td>
+                  <td className="space-x-2 p-2 text-right">
+                    <button onClick={() => setEditing(b)} className="underline">แก้</button>
+                    <button onClick={() => onDelete(b)} className="text-red-700 underline">ลบ</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <nav className="flex items-center gap-2">
+        <button disabled={page <= 1} onClick={() => setParams({ q, page: String(page - 1) })} className="rounded border px-3 py-1 disabled:opacity-40">ก่อนหน้า</button>
+        <span>หน้า {page} / {pages}</span>
+        <button disabled={page >= pages} onClick={() => setParams({ q, page: String(page + 1) })} className="rounded border px-3 py-1 disabled:opacity-40">ถัดไป</button>
+      </nav>
+    </section>
+  );
+}
+```
+
+ใน `App.tsx` เพิ่ม `import { AdminBooksPage } from "./pages/admin/admin-books-page";` และ `<Route path="books" element={<AdminBooksPage />} />` ใต้ `<Route index ...>` ของหลังบ้าน
+
+`let ignore` มาจากการ์ด[ดึงข้อมูลจาก API](/learn/cards/fetch-data) ส่วน `reload` เป็นตัวเลขที่ไม่มีความหมายอะไร มีไว้ให้ `useEffect` เห็นว่า "มีอะไรเปลี่ยน" แล้วดึงรายการใหม่ หลังเพิ่ม แก้ หรือลบ
+
+**ควรเห็น:** (หลัง seed เพิ่ม 20 เล่ม รวมมีราว 21 เล่ม)
+
+- `/admin/books` ขึ้น `หน้า 1 / 3` และ 10 แถว กด "ถัดไป" ที่อยู่เป็น `?q=&page=2` รีเฟรชแล้วยังอยู่หน้า 2 พิมพ์ `?page=abc` เองก็ได้หน้า 1 ไม่พัง
+- พิมพ์ "นิยาย" แล้วกด Enter ที่อยู่เป็น `?q=นิยาย&page=1` ค้นคำที่ไม่มี ขึ้น `ไม่พบหนังสือ ที่ชื่อมีคำว่า "..."`
+- กด "เพิ่มหนังสือ" แล้วบันทึกตอนช่องว่าง ขึ้น "กรอกชื่อหนังสือ" กรอกแล้วบันทึก เล่มใหม่ขึ้นแถวแรก
+- กด "แก้" ฟอร์มมีชื่อเดิมให้แก้ กด "ลบ" ต้องมีกล่องถามยืนยันก่อน
+- จอกว้าง 375 px ตารางเลื่อนซ้ายขวาได้ในกรอบ ส่วนหน้าเว็บทั้งหน้าไม่มีแถบเลื่อนแนวนอน
+
+## ทริคที่แนะนำ
+
+1. **ค้นหาและเลขหน้าเก็บใน URL:** บรรณารักษ์ส่งลิงก์ "หนังสือที่ชื่อมีคำว่า นิยาย หน้า 2" ให้เพื่อนได้ และกดย้อนกลับก็กลับไปหน้าก่อน (หลักเดียวกับทริคข้อ 1 ของการ์ด [Router](/learn/cards/router-seo))
+2. **บันทึกเสร็จแล้วโหลดรายการใหม่จาก API:** ง่ายกว่าและพลาดยากกว่าการแก้ state เอง เพราะลำดับ, จำนวนหน้า และ `total` ถูกต้องเสมอ (ตัว `reload` ข้างบน) ค่อยเปลี่ยนเป็นแก้ state เองเมื่อช้าจนรู้สึกได้
+3. **`key` บนฟอร์มแก้:** ถ้าไม่ใส่ กด "แก้" เล่ม A แล้วกด "แก้" เล่ม B ฟอร์มยังค้างชื่อเล่ม A เพราะ React ใช้ชิ้นส่วนตัวเดิมและ `useState(initial)` อ่านค่าเริ่มต้นแค่ครั้งแรก การเปลี่ยน `key` บอก React ให้สร้างฟอร์มใหม่
+
+## ปรับไปใช้จริง
+
+**ในงาน STARTER:** วันที่ 8 ทำหน้า `/admin/services` ตาม Requirement ข้อ 5.5: ตารางค้นหาด้วยชื่อ, กรองตามหมวด, **แบ่งหน้า 10 รายการ**, เพิ่ม/แก้/ลบ และ **ลบต้องถามยืนยันก่อน** API คือ `GET /api/admin/services?q=&category=&page=` ที่ตอบ `meta` แบบในการ์ดนี้ ส่วนหัวข้อ Responsive ให้ "ตาราง admin บนมือถือต้อง scroll ในกรอบได้ ไม่ล้นจอ" ตรงกับ `overflow-x-auto` ข้างบน หน้า categories และ messages ใช้โครงเดียวกัน
+
+**เว็บคู่มือนี้:** หน้าจัดการบัญชีน้องในหลังบ้าน ([src/components/admin-users.tsx บน GitHub](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/src/components/admin-users.tsx)) ใช้หลักเดียวกัน: เปลี่ยนแล้วโหลดใหม่ และการกระทำที่ย้อนไม่ได้ต้องยืนยันก่อน แต่ใช้กล่องยืนยันที่ทำเองแทน `confirm()` เพื่อให้หน้าตาเข้ากับเว็บ
+
+ลองคิด: ถ้าลบเล่มสุดท้ายของหน้า 3 จนหน้า 3 ว่าง หน้าจอจะขึ้นอะไร และควรขึ้นอะไร
+
+## ตัวเลือกอื่นที่คล้ายกัน
+
+| วิธี | เหมาะกับ | ระดับ |
+|---|---|---|
+| **ตาราง HTML + Tailwind + state เอง (การ์ดนี้)** | ตารางไม่เกินราว 5 คอลัมน์ เห็นทุกขั้น | ใช้กับงาน STARTER |
+| TanStack Table | ตารางที่เรียง กรอง ซ่อนคอลัมน์ได้หลายแบบ ([เอกสาร](https://tanstack.com/table/latest)) | ควรรู้จัก |
+| กล่องยืนยันที่ทำเอง หรือ `<dialog>` ของ HTML | ยืนยันที่หน้าตาเข้ากับเว็บ ใส่รายละเอียดได้ | ควรทำเมื่องานหลักครบ |
+| แบ่งหน้าแบบ cursor (`?after=id`) | ข้อมูลเป็นแสน หรือเลื่อนลงเรื่อยๆ แบบฟีด | รู้ว่ามี |
+
+## ลองเอง
+
+**โจทย์:** ยืมหนังสือสักเล่มด้วย `POST /api/loans` (จากการ์ด[แบ่งชั้น](/learn/cards/layers)) แล้วลองลบเล่มนั้นในหน้าจัดการ จะได้ `500` "ระบบขัดข้อง" ทำให้เป็น `409` พร้อมข้อความ "หนังสือเล่มนี้มีประวัติการยืม ลบไม่ได้" และให้หน้าเว็บแสดงข้อความนั้น
+
+<Hint level={1}>ดู log ของ server ตอนได้ `500` จะเห็นรหัสจาก Postgres `23503` แปลว่ามีแถวในตารางอื่นอ้างถึงแถวที่จะลบอยู่ (foreign key)</Hint>
+<Hint level={2}>กฎ "ลบไม่ได้ถ้ามีการยืม" เป็นกฎของระบบ ตามการ์ด[แบ่งชั้น](/learn/cards/layers) ควรมีบ้านอยู่ที่ service: นับการยืมของเล่มนั้นก่อน (`countOpen` ใน `loan.repository.ts` นับตามสมาชิก ลองเขียนอีกตัวที่นับตาม `bookId`) แล้วโยนรหัสใหม่ที่ตัวจับกลางรู้จัก</Hint>
+<Hint level={3}>ตรวจ: ลบเล่มที่มีการยืมได้ `409` และหน้าเว็บขึ้นข้อความ, ลบเล่มที่ไม่มีการยืมยังได้ `200`, ยิง `DELETE` เลขที่ไม่มีได้ `404` ลองคิดต่อว่าการยืมที่คืนแล้วควรนับไหม</Hint>
+
+## อ่านเพิ่ม
+
+โครงหน้าหลังบ้านทั้งชุด (dashboard, settings, services) ของร้านตัวอย่าง อยู่ในบทเดิม [ระบบ login ส่วนฝั่งหน้าเว็บ](/15-auth#โครงหน้าหลังบ้าน--ปุ่มออกจากระบบ) และเปิดอ่านข้อความแล้วเปลี่ยนเป็น "อ่านแล้ว" ด้วย `PATCH` (ไม่ใช่ `GET`) อยู่ใน[บทเดียวกัน](/15-auth#เปิดอ่านข้อความแล้วเปลี่ยนเป็น-อ่านแล้ว)
