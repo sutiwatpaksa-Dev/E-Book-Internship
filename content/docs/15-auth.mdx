@@ -78,7 +78,7 @@ bun run db:generate && bun run db:migrate
 ```bash
 openssl rand -base64 48
 ```
-ถ้าเครื่องไม่มี `openssl` (เช่น PowerShell บน Windows) ใช้ Bun ที่ติดตั้งไว้แล้วสุ่มแทน ได้ผลแบบเดียวกัน
+Git Bash บน Windows มี `openssl` มาให้แล้ว ถ้าเครื่องไหนพิมพ์แล้วขึ้น `command not found` ใช้ Bun ที่ติดตั้งไว้แล้วสุ่มแทน ได้ผลแบบเดียวกัน
 ```bash
 bun -e "console.log(require('crypto').randomBytes(48).toString('base64'))"
 ```

@@ -40,7 +40,7 @@ members 3 columns 0 indexes 0 fks
 bunx drizzle-kit migrate
 ```
 
-**ควรเห็น:** `[✓] migrations applied successfully!` แล้วใน pgAdmin คลิกขวาที่ฐาน `postgres` → Refresh แล้วเปิด Schemas → public → Tables จะเห็นตาราง `members`, `books`, `loans` และตาราง `__drizzle_migrations` ที่จดว่ารันไฟล์ไหนไปแล้ว (อยู่ใต้ schema ชื่อ `drizzle`)
+**ควรเห็น:** `[✓] migrations applied successfully!` แล้วใน pgAdmin คลิกขวาที่ฐาน `postgres` → Refresh แล้วเปิด Schemas → public → Tables จะเห็นตาราง `members`, `books`, `loans` และตาราง `__drizzle_migrations` ที่จดว่ารันไฟล์ไหนไปแล้ว (อยู่ใต้ schema ชื่อ `drizzle` คำว่า schema ใน pgAdmin หมายถึง "กลุ่มตาราง" ในฐานข้อมูล เช่น `public` คนละเรื่องกับไฟล์ `schema.ts`)
 
 > **ขึ้น `relation "members" already exists`?** แปลว่าเคยสร้างตารางเองในฐาน `postgres` (การ์ด SQL รุ่นก่อนให้ทำแบบนั้น) ใน Query Tool ของฐาน `postgres` รัน `DROP TABLE loans, books, members;` (ต้องลบสามตารางในคำสั่งเดียว ถ้าลบ `members` ตัวเดียว จะติด foreign key ที่ `loans` ชี้มา) แล้ว `bunx drizzle-kit migrate` ใหม่ ข้อมูลที่ลองใส่ไว้จะหายไป ซึ่งไม่เป็นไร seed ขั้นถัดไปใส่ให้ใหม่
 
@@ -74,7 +74,7 @@ process.exit(0);   // ปิด connection ที่ค้างอยู่ ไ
 ## ทริคที่แนะนำ
 
 1. **อ่านไฟล์ SQL ทุกครั้งก่อน migrate:** เปลี่ยนชื่อคอลัมน์อาจถูกเข้าใจว่า "ลบแล้วสร้างใหม่" (`DROP` + `ADD`) ข้อมูลเดิมหาย drizzle-kit จะถามตอน generate ให้ตอบว่าเป็นการเปลี่ยนชื่อ (rename)
-2. **ไฟล์ที่ push ไปแล้วห้ามแก้** เพื่อนหรือพี่เลี้ยงอาจรันไปแล้ว อยากเปลี่ยนให้แก้ schema แล้ว generate ไฟล์ใหม่ทับ
+2. **ไฟล์ที่ push ไปแล้วห้ามแก้** เพื่อนหรือพี่เลี้ยงอาจรันไปแล้ว อยากเปลี่ยนให้แก้ schema แล้ว generate ใหม่ จะได้ไฟล์ migration ใบถัดไปต่อท้าย (ไฟล์เดิมไม่ถูกแตะ)
 3. **seed รันซ้ำแล้วข้อมูลเบิ้ล** ถ้าจะให้รันซ้ำได้ ให้ลบข้อมูลเก่าก่อนใส่ใหม่ หรือเช็กก่อนว่ามีแล้วหรือยัง ส่วน `drizzle-kit push` (ดัน schema เข้าฐานตรงๆ ไม่สร้างไฟล์) ใช้ได้แค่ตอนทดลองกับฐานของตัวเอง
 
 ## ปรับไปใช้จริง

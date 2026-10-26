@@ -130,6 +130,7 @@ bun add hono zod drizzle-orm pg
 bun add -d drizzle-kit @types/pg typescript
 mkdir -p src/routes src/db src/validators src/middleware src/http
 ```
+`bun init` สร้าง `index.ts` ไว้ที่ `server/` ด้วย ลบทิ้งได้ เพราะโค้ดของเราจะอยู่ใน `src/` ทั้งหมด
 
 `server/.env` (ไฟล์นี้ต้องอยู่ใน `.gitignore` ห้ามขึ้น Git)
 ```
@@ -560,8 +561,12 @@ GET http://localhost:3000/api/nope
 ## 6. 🔧 ต่อหน้าเว็บเข้ากับ API
 
 ### ให้ Vite ส่งต่อคำขอ `/api`
-`client/vite.config.ts`
+`client/vite.config.ts` (ของเดิมจากบทที่ 12 เพิ่มแค่ส่วน `server`)
 ```ts
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
@@ -661,10 +666,12 @@ const [serverError, setServerError] = useState<string | null>(null);
 // ...แล้วแสดงไว้เหนือปุ่มส่ง
 {serverError && <p className="error">{serverError}</p>}
 ```
-จากนั้นแทนที่ส่วน `try` ใน `onSubmit`:
+เพิ่ม import บนสุดของไฟล์ (ต่อจาก import เดิม):
 ```ts
 import { api, ApiError } from "../api/client";
-
+```
+จากนั้นแทนที่ส่วน `try` ใน `onSubmit`:
+```ts
 try {
   await api("/api/contact", { method: "POST", body: JSON.stringify(form) });
   setDone(true);

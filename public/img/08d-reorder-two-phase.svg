@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 420" role="img" aria-label="สลับลำดับรูปตรงๆ ชน unique index ระหว่างทาง วิธีแก้คือย้ายไปเลขติดลบก่อนแล้วค่อยใส่เลขจริง ใน transaction เดียว">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 420" role="img" aria-label="สลับลำดับรูปตรงๆ ชน unique index ระหว่างทาง วิธีแก้คือย้ายไปเลขติดลบก่อนแล้วค่อยใส่เลขจริง ใน transaction เดียว"><title>สลับลำดับรูปตรงๆ ชน unique index ระหว่างทาง วิธีแก้คือย้ายไปเลขติดลบก่อนแล้วค่อยใส่เลขจริง ใน transaction เดียว</title>
 <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker>
 <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker></defs>
 <rect x="1" y="1" width="798" height="418" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>

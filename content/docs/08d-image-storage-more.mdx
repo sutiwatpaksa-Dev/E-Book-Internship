@@ -513,7 +513,7 @@ npm install -D autocannon@8.0.0
 npx autocannon -c 50 -d 12 http://localhost:3000/laptops/1/blob-photos/1/thumb
 npx autocannon -c 50 -d 12 http://localhost:9000/laptop-photos/laptops/1/<key>-400.webp
 ```
-`-c 50` = 50 คนพร้อมกัน `-d 12` = 12 วินาที ระหว่างยิง อีกหน้าต่างหนึ่งวัด CPU/RAM ของ API (`ps -o %cpu,rss -p <pid>`) และเวลาตอบของ `GET /laptops` (endpoint อื่นที่ไม่เกี่ยวกับรูป) ด้วย `curl -w "%{time_total}"` 40 ครั้ง
+`-c 50` = 50 คนพร้อมกัน `-d 12` = 12 วินาที ระหว่างยิง อีกหน้าต่างหนึ่งวัด CPU/RAM ของ API (Mac: `ps -o %cpu,rss -p <pid>` · Windows: `ps` ของ Git Bash ไม่มี `-o` ให้เปิด Task Manager แท็บ Details ดูแถว `node.exe` คอลัมน์ CPU และ Memory) และเวลาตอบของ `GET /laptops` (endpoint อื่นที่ไม่เกี่ยวกับรูป) ด้วย `curl -w "%{time_total}"` 40 ครั้ง
 
 รูปเล็ก (`-400.webp` ราว 2.6 KB)
 
@@ -681,7 +681,7 @@ test-images
 uploads
 .env
 ```
-`disk.env` (ให้ container คุยกับ Postgres ที่อยู่บนเครื่องเรา ผ่านชื่อพิเศษ `host.docker.internal`)
+`disk.env` (ให้ container คุยกับ Postgres ที่อยู่บนเครื่องเรา ผ่านชื่อพิเศษ `host.docker.internal` ที่ Docker Desktop บน Mac และ Windows มีให้เอง ถ้าใช้ Docker บน Linux ต้องเติม `--add-host=host.docker.internal:host-gateway` ใน `docker run`)
 ```
 DATABASE_URL=postgres://postgres:secret@host.docker.internal:5432/postgres
 PUBLIC_BASE_URL=http://localhost:3000/files

@@ -1621,7 +1621,7 @@ curl -s -o /dev/null -w "%{http_code}\n" -X DELETE http://localhost:9000/laptop-
 | เปลี่ยนรูปแล้ว browser ยังเห็นรูปเก่า | เขียนทับ key เดิม ทั้งที่ตั้ง cache 1 ปี | ใช้ key ใหม่ทุกครั้งที่เปลี่ยนรูป |
 | ลบเครื่องแล้วไฟล์รูปยังอยู่ใน storage | คิดว่า `on delete cascade` ลบไฟล์ให้ด้วย | cascade ลบแค่แถว ต้องตามลบไฟล์เองแบบ `laptop.service.ts` และมีงานเก็บกวาด |
 | server RAM พุ่งตอนมีคนอัปโหลดพร้อมกัน | `memoryStorage` ไม่มี `limits` | ใส่ `limits.fileSize` เสมอ ไฟล์ใหญ่ใช้ presigned PUT |
-| `npm install` ขึ้น `npm warn install-scripts ... esbuild` | npm รุ่นใหม่ถามก่อนรันสคริปต์ติดตั้งของ package | ตอนเราทดสอบ `tsx` ยังใช้ได้ปกติ ถ้ารันไม่ได้ให้อ่านคำแนะนำในข้อความนั้น (`npm install-scripts approve <ชื่อ>`) |
+| `npm install` ขึ้น `npm warn install-scripts ... esbuild` | npm รุ่นใหม่ถามก่อนรันสคริปต์ติดตั้งของ package | ตอนเราทดสอบ `tsx` ยังใช้ได้ปกติ ถ้ารันไม่ได้ให้อ่านคำแนะนำในข้อความนั้น (`npm install-scripts approve <ชื่อ>` มีใน npm 11 รุ่นใหม่ ดูคำอธิบายด้วย `npm help install-scripts`) |
 
 ---
 

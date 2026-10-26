@@ -96,7 +96,7 @@ export default function App() {
 
 ## ปรับไปใช้จริง
 
-**ในงาน STARTER:** Requirement ให้แยก `client/src/` เป็น `pages/` (หน้า) กับ `components/` (ชิ้นส่วนใช้ซ้ำ) ตรงกับตัวอย่างข้างบน ลองนับว่าหน้า Home, Services, About ใช้ชิ้นส่วนอะไรซ้ำกันบ้าง (เช่น กล่องบริการ, ปุ่ม) ก่อนลงมือเขียน
+**ในงาน STARTER:** Requirement ให้แยก `client/src/` เป็น `pages/` (หน้า) กับ `components/` (ชิ้นส่วนใช้ซ้ำ) ตรงกับตัวอย่างข้างบน ลองนับว่าหน้าแรก (`/`), เกี่ยวกับร้าน (`/about`) และติดต่อ (`/contact`) ใช้ชิ้นส่วนอะไรซ้ำกันบ้าง (เช่น กล่องบริการ, ปุ่ม) ก่อนลงมือเขียน
 
 **เว็บคู่มือนี้:** สร้างด้วย React ทั้งหมด เปิด [src/components/step-cards.tsx บน GitHub](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/src/components/step-cards.tsx) จะเห็นการ์ดในหน้าขั้นเป็นชิ้นส่วนที่รับ `step` เข้ามาแล้ว `.map` เป็นรายการ โดยใช้ `slug` ของการ์ดเป็น `key` ส่วนหน้าตาที่เปลี่ยนตามข้อมูล (วงกลมติ๊กถูกเมื่อเข้าใจแล้ว) ใช้ `isDone ? ... : ...` แบบเดียวกับตัวอย่างข้างบน
 
