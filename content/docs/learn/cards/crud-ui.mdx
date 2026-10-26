@@ -122,7 +122,7 @@ adminBookRoutes.delete("/:id", async (c) => {
 await db.insert(books).values(Array.from({ length: 20 }, (_, i) => ({ title: `นิยายเล่มที่ ${i + 1}` })));
 ```
 
-**ควรเห็น:** (`-b cookies.txt` จากการ์ด Login, Windows PowerShell พิมพ์ `curl.exe`)
+**ควรเห็น:** (`-b cookies.txt` จากการ์ด Login, Windows ใช้ Git Bash)
 
 ```bash
 curl "http://localhost:3000/api/admin/books?page=1" -b cookies.txt

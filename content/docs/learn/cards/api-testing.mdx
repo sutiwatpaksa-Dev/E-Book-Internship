@@ -54,15 +54,9 @@ Content-Type: application/json
 เก็บ body ไว้ในไฟล์ `book.json` (มีแค่ `{ "title": "ฮอบบิท" }`) จะได้ไม่ต้องสู้กับเครื่องหมายคำพูดที่แต่ละ Terminal ไม่เหมือนกัน
 
 ```bash
-# Mac / Linux
+# Mac และ Windows (Git Bash) พิมพ์เหมือนกัน
 curl -i http://localhost:3000/api/books/1
 curl -i --json @book.json http://localhost:3000/api/books
-```
-
-```powershell
-# Windows (PowerShell) พิมพ์ curl.exe ไม่ใช่ curl
-curl.exe -i http://localhost:3000/api/books/1
-curl.exe -i --json "@book.json" http://localhost:3000/api/books
 ```
 
 `-i` ให้โชว์ status กับ header ด้วย ส่วน `--json @book.json` ส่งเนื้อไฟล์เป็น body และใส่ header JSON ให้เอง
@@ -71,7 +65,7 @@ curl.exe -i --json "@book.json" http://localhost:3000/api/books
 
 1. **ตั้งชื่อคำขอเป็น "ผลที่ควรได้"** เช่น `ยืมเล่มที่ 4 (ควรได้ 409)` collection จะกลายเป็นเช็กลิสต์ทดสอบที่ใครเปิดก็รู้ว่าผ่านหรือไม่ผ่าน
 2. **ยิงทางพังให้ครบทุกตัว:** ข้อมูลผิด, ไม่มีของ, ซ้ำ, ยังไม่ login ทางสำเร็จมักใช้ได้ตั้งแต่แรก ทางพังคือที่ซ่อนบั๊ก
-3. **บน Windows พิมพ์ `curl.exe`:** ใน Windows PowerShell 5.1 คำว่า `curl` เฉยๆ คือคำสั่งอื่น (`Invoke-WebRequest`) ที่ไม่รู้จัก `-i` หรือ `--json`
+3. **บน Windows ใช้ [Git Bash](/00-start#-windows-ใช้-git-bash-เท่านั้น) ไม่ใช่ PowerShell:** ใน PowerShell 5.1 คำว่า `curl` คือคำสั่งอื่น (`Invoke-WebRequest`) ที่ไม่รู้จัก `-i` หรือ `--json` และเครื่องหมายคำพูดใน JSON ถูกตัดทิ้ง ส่วน Git Bash มี curl ตัวจริงมาให้ พิมพ์เหมือน Mac ทุกตัวอักษร
 
 ## ปรับไปใช้จริง
 

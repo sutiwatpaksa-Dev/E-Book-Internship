@@ -5,6 +5,11 @@ title: "📝 มีอะไรใหม่"
 
 บันทึกการเปลี่ยนแปลงของคู่มือในแต่ละเวอร์ชัน เวอร์ชันล่าสุดอยู่บนสุด
 
+## v2.0.16 · 26 ต.ค. 2569
+
+- **คำสั่งในการ์ดใช้ Git Bash บน Windows ทั้งหมดแล้ว** ตรงกับกฎของ[บท 0](/00-start#-windows-ใช้-git-bash-เท่านั้น): เลิกสอนทาง PowerShell / `curl.exe` ใน [Login: JWT](/learn/cards/jwt-cookie), [ยิงทดสอบ API](/learn/cards/api-testing), [Middleware](/learn/cards/auth-middleware), [หน้าจัดการข้อมูล](/learn/cards/crud-ui) และ [Postgres](/learn/cards/postgres) พร้อมบอกเหตุผล (PowerShell 5.1 ตัด `"` ใน JSON ทิ้ง ได้ `400` แทนผลที่การ์ดบอก)
+- การ์ด [เก็บรหัสผ่านด้วย hash](/learn/cards/password-hash): `docker exec` ไม่ใส่ `-it` แล้ว จึงไม่ขึ้น `not a TTY` บน Git Bash
+
 ## v2.0.15 · 26 ต.ค. 2569
 
 - **การ์ด [หลายหน้า (React Router)](/learn/cards/router-seo) ทำตามแล้วไม่จอขาว:** `App.tsx` มี import ครบ, มีหน้า `/books` (รายการหนังสือจากการ์ดดึงข้อมูล) ที่เมนูลิงก์ไป, มีไฟล์หน้าแรกและหน้า 404 ให้ และบอกว่าฟอร์มเพิ่มหนังสือย้ายไปอยู่หลังบ้านเพราะอะไร
