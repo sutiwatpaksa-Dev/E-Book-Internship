@@ -16,16 +16,27 @@ ORM รุ่นก่อนหลายตัวซ่อน SQL จนคน�
 
 ### ตั้งค่าครั้งแรก (โฟลเดอร์ `server/` ตามโครงใน Requirement)
 
+สร้างโฟลเดอร์ `server/` ในโฟลเดอร์โปรเจกต์ (ที่เดียวกับที่จะมี `client/` ทีหลัง) แล้วติดตั้ง (Mac และ Windows Git Bash พิมพ์เหมือนกัน)
+
 ```bash
-cd server
+mkdir server && cd server
+bun init -y
 bun add drizzle-orm pg
 bun add -d drizzle-kit @types/pg
 ```
 
-สร้างไฟล์ `server/.env` (ห้าม commit) ใส่ที่อยู่ฐานจากการ์ด [Postgres](/learn/cards/postgres) แล้วทำ `.env.example` ที่มีแค่ชื่อตัวแปรไว้ commit แทน
+**ควรเห็น:** `bun init -y` สร้าง `package.json`, `tsconfig.json` (ตั้งค่า TypeScript) และ `.gitignore` ที่มีบรรทัด `.env` อยู่แล้ว (ไฟล์ `.env` จึงไม่ถูก commit) ส่วน `index.ts` ที่ได้มาด้วยลบทิ้งได้ เพราะโค้ดของเราจะอยู่ใน `src/` (บางเครื่องได้ `README.md`, `CLAUDE.md` ด้วย ไม่ใช้ ลบได้)
 
-```bash
+สร้างไฟล์ `server/.env` (ห้าม commit) ใส่ที่อยู่ฐานจากการ์ด [Postgres](/learn/cards/postgres)
+
+```text
 DATABASE_URL=postgres://postgres:secret@localhost:5432/postgres
+```
+
+แล้วทำ `server/.env.example` ไว้ commit แทน ให้คนอื่นรู้ว่าต้องตั้งตัวแปรอะไร **มีแค่ชื่อ ไม่มีค่าจริง**
+
+```text
+DATABASE_URL=
 ```
 
 ### 1. ประกาศตาราง `server/src/db/schema.ts`
@@ -65,6 +76,8 @@ import * as schema from "./schema";
 export const db = drizzle(process.env.DATABASE_URL!, { schema });
 ```
 
+`import * as schema` = ดึงทุกอย่างที่ `schema.ts` export (`members`, `books`, `loans`) มารวมเป็น object เดียวชื่อ `schema` ส่งให้ Drizzle รู้จักทุกตารางในทีเดียว
+
 Bun อ่านไฟล์ `.env` ให้เองตอนรัน `process.env.DATABASE_URL` จึงมีค่า ส่วน `!` ท้ายบอก TypeScript ว่า "ค่านี้มีแน่นอน"
 
 ### 3. บอก drizzle-kit ว่า schema อยู่ไหน `server/drizzle.config.ts`
@@ -84,15 +97,21 @@ export default defineConfig({
 
 ### 4. ดึงข้อมูล (หลังสร้างตารางแล้ว)
 
+ไฟล์ทดลอง `server/src/try-query.ts` รันหลังทำการ์ด [Migration](/learn/cards/migration) แล้ว ด้วย `bun run src/try-query.ts`
+
 ```ts
 import { isNull } from "drizzle-orm";
 import { db } from "./db";
 import { loans } from "./db/schema";
 
 const open = await db.select().from(loans).where(isNull(loans.returnedAt));
+console.log(open);
+process.exit(0);   // ปิด connection ที่ค้าง ไม่งั้นคำสั่งไม่จบ
 ```
 
-`open` มี type เป็น "รายการแถวของ loans" ให้เอง ลองพิมพ์ `open[0].returndAt` (สะกดผิด) editor จะขีดแดงทันที
+**ควรเห็น:** `[]` (ยังไม่มีใครยืม) ไฟล์นี้ลบทิ้งได้หลังลองเสร็จ
+
+`open` มี type เป็น "รายการแถวของ loans" ให้เอง ลองพิมพ์ `open.map((l) => l.returndAt)` (สะกดผิด) editor จะขีดแดงทันที พร้อมบอก `Did you mean 'returnedAt'?`
 
 ## ทริคที่แนะนำ
 

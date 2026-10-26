@@ -26,6 +26,7 @@ bunx drizzle-kit generate
 
 **ควรเห็น:**
 ```text
+books 3 columns 0 indexes 0 fks
 loans 5 columns 0 indexes 2 fks
 members 3 columns 0 indexes 0 fks
 [✓] Your SQL migration file ➜ drizzle/0000_xxxx.sql 🚀
@@ -39,7 +40,7 @@ members 3 columns 0 indexes 0 fks
 bunx drizzle-kit migrate
 ```
 
-**ควรเห็น:** `[✓] migrations applied successfully!` แล้วเปิด pgAdmin กด Refresh จะเห็นตาราง `members`, `books`, `loans` และตาราง `__drizzle_migrations` ที่จดว่ารันไฟล์ไหนไปแล้ว (อยู่ใต้ schema ชื่อ `drizzle`)
+**ควรเห็น:** `[✓] migrations applied successfully!` แล้วใน pgAdmin คลิกขวาที่ฐาน `postgres` → Refresh แล้วเปิด Schemas → public → Tables จะเห็นตาราง `members`, `books`, `loans` และตาราง `__drizzle_migrations` ที่จดว่ารันไฟล์ไหนไปแล้ว (อยู่ใต้ schema ชื่อ `drizzle`)
 
 > **ขึ้น `relation "members" already exists`?** แปลว่าเคยสร้างตารางเองในฐาน `postgres` (การ์ด SQL รุ่นก่อนให้ทำแบบนั้น) ใน Query Tool ของฐาน `postgres` รัน `DROP TABLE loans, books, members;` (ต้องลบสามตารางในคำสั่งเดียว ถ้าลบ `members` ตัวเดียว จะติด foreign key ที่ `loans` ชี้มา) แล้ว `bunx drizzle-kit migrate` ใหม่ ข้อมูลที่ลองใส่ไว้จะหายไป ซึ่งไม่เป็นไร seed ขั้นถัดไปใส่ให้ใหม่
 
@@ -55,11 +56,16 @@ console.log("seed เสร็จ");
 process.exit(0);   // ปิด connection ที่ค้างอยู่ ไม่งั้นคำสั่งไม่จบ
 ```
 
-เพิ่มใน `server/package.json` แล้วรัน `bun run seed`
+เพิ่ม `"scripts"` ใน `server/package.json` เป็น key ระดับเดียวกับ `"dependencies"` (อยู่ใน `{ }` นอกสุด) และคั่นกับ key ข้างๆ ด้วย `,` แล้วรัน `bun run seed`
 
 ```json
-"scripts": {
-  "seed": "bun run src/db/seed.ts"
+{
+  "name": "server",
+  "type": "module",
+  "scripts": {
+    "seed": "bun run src/db/seed.ts"
+  },
+  "dependencies": { ... }
 }
 ```
 

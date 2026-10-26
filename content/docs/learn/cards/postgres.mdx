@@ -25,8 +25,10 @@ Postgres เริ่มจากโปรเจกต์วิจัยที�
 ต้องเปิดโปรแกรม Docker Desktop ไว้ก่อน แล้วพิมพ์ใน Terminal (เหมือนกันทั้ง Mac และ Windows ที่ใช้ [Git Bash](/00-start#-windows-ใช้-git-bash-เท่านั้น))
 
 ```bash
-docker run -d --name pg -e POSTGRES_PASSWORD=secret -p 5432:5432 -v pgdata:/var/lib/postgresql/data postgres:17-alpine
+MSYS_NO_PATHCONV=1 docker run -d --name pg -e POSTGRES_PASSWORD=secret -p 5432:5432 -v pgdata:/var/lib/postgresql/data postgres:17-alpine
 ```
+
+`MSYS_NO_PATHCONV=1` ข้างหน้ามีไว้กัน Git Bash บน Windows แปลง `/var/lib/...` (path **ในกล่อง**) เป็น path ของ Windows ([กล่องนิสัยของ Git Bash](/00-start#-windows-ใช้-git-bash-เท่านั้น) ข้อ 1) บน Mac ไม่มีผลอะไร พิมพ์เหมือนกันได้เลย
 
 | ส่วนของคำสั่ง | แปลว่า |
 |---|---|
@@ -38,6 +40,8 @@ docker run -d --name pg -e POSTGRES_PASSWORD=secret -p 5432:5432 -v pgdata:/var/
 **ควรเห็น:** ตัวอักษรยาวๆ 1 บรรทัด (รหัสกล่อง) แล้วพิมพ์ `docker ps` ต้องเห็นกล่องชื่อ `pg` สถานะ `Up`
 
 ### 2. ต่อด้วย pgAdmin
+
+[pgAdmin](https://www.pgadmin.org/download/) คือโปรแกรมดูและแก้ฐานข้อมูล Postgres แบบมีหน้าจอ (Requirement ใช้ตัวนี้) ติดตั้งครั้งแรก: เข้าหน้า Download เลือก **Windows** หรือ **macOS** แล้วติดตั้งแบบโปรแกรมทั่วไป (ตัวติดตั้งของ Windows เป็นไฟล์ `.exe` ของ Mac เป็นไฟล์ `.dmg`) เปิดครั้งแรกจะถามให้ตั้งรหัสผ่านหลัก (master password) ของ pgAdmin เอง คนละตัวกับรหัสของฐานข้อมูล
 
 เปิด pgAdmin → คลิกขวา **Servers** → **Register** → **Server...**
 

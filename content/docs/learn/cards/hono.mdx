@@ -45,6 +45,12 @@ export const fail = (c: Context, status: ContentfulStatusCode, code: string, mes
   c.json({ success: false, error: { code, message, details } }, status);
 ```
 
+อ่านทีละส่วน:
+
+- **`import type`** = เอามาแค่ "type" ไว้ให้ TypeScript ตรวจ ไม่ได้เอาโค้ดมารัน
+- **`ContentfulStatusCode`** = type ของ Hono แปลว่า "status ที่มี body ได้" (200, 201, 400, 404, ...) ใส่ 204 จะขีดแดง เพราะ 204 ห้ามมี body ตรงกับที่ Requirement ไม่ใช้ 204
+- **`status = 200`** = ไม่ส่งมา ใช้ 200 · **`details?`** = ส่งหรือไม่ส่งก็ได้ · **`unknown`** = เป็นอะไรก็ได้ แต่ต้องเช็กก่อนใช้ (ปลอดภัยกว่า `any`)
+
 ### 2. route ของหนังสือ `server/src/routes/books.routes.ts`
 
 การ์ดนี้ยังไม่ต่อฐานข้อมูล ใช้ array ไปก่อน จะได้เห็นเฉพาะเรื่อง HTTP (การ์ด [แบ่งชั้น](/learn/cards/layers) จะเปลี่ยนเป็นฐานข้อมูลจริง)
@@ -61,7 +67,7 @@ const books = [
 export const bookRoutes = new Hono();
 
 bookRoutes.get("/", (c) => {
-  const q = c.req.query("q") ?? "";                       // /api/books?q=เจ้า
+  const q = c.req.query("q") ?? "";                       // /api/books?q=เจ้า · ไม่ส่ง ?q= มา (?? = ถ้าไม่มีค่า) ใช้ "" แทน
   return ok(c, books.filter((b) => b.title.includes(q)));
 });
 

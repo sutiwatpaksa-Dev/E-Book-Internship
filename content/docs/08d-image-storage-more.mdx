@@ -1687,8 +1687,12 @@ npm run dev
 
 ### ① อัปโหลดหลายรูป + ตัวแทนรูป (P13, P18)
 
+ตั้งตัวแปร 2 ตัวไว้ใช้ทั้งข้อนี้ `U` คือที่อยู่ API ส่วน `json` เป็นฟังก์ชันสั้นๆ ของ shell อ่าน JSON ที่ curl ส่งมาเป็น `d` แล้วพิมพ์เฉพาะส่วนที่เราสนใจ (ใช้ `node` ที่มีอยู่แล้ว ไม่ต้องติดตั้งอะไรเพิ่ม) เช่น `curl ... | json 'd.map(p => p.id)'` = เอาแค่ id ของทุกรูป ปิดหน้าต่าง Terminal แล้วต้องพิมพ์ 2 บรรทัดนี้ใหม่
 ```bash
 U=http://localhost:3000/laptops
+json() { node -pe "JSON.stringify((d => $1)(JSON.parse(require('fs').readFileSync(0))))"; }
+```
+```bash
 curl -s -F "photos=@dataset/0010.jpg" -F "photos=@dataset/0011.jpg" -F "photos=@dataset/0012.jpg" $U/1/photos/batch
 ```
 ```text
@@ -1746,12 +1750,12 @@ curl -s -o /dev/null -w "%{http_code}\n" -F "photo=@dataset/0011.jpg" $U/2/photo
 ### ⑤ เรียงใหม่ (P11, P12)
 
 ```bash
-curl -s -X PUT -H "Content-Type: application/json" -d '{"photoIds":[8,1,2,6,7]}' $U/1/photos/order | python3 -c 'import json,sys; print([(p["id"],p["position"]) for p in json.load(sys.stdin)])'
+curl -s -X PUT -H "Content-Type: application/json" -d '{"photoIds":[8,1,2,6,7]}' $U/1/photos/order | json 'd.map(p => [p.id, p.position])'
 curl -s -w "\n%{http_code}\n" -X PUT -H "Content-Type: application/json" -d '{"photoIds":[8,1]}' $U/1/photos/order
 curl -s -w "\n%{http_code}\n" -X PUT -H "Content-Type: application/json" -d '{"photoIds":[8,1,2,7,7]}' $U/1/photos/order
 ```
 ```text
-[(8, 1), (1, 2), (2, 3), (6, 4), (7, 5)]
+[[8,1],[1,2],[2,3],[6,4],[7,5]]
 {"error":"ต้องส่ง id ของรูปทุกรูปในเครื่องนี้ ครบและไม่ซ้ำ","code":"VALIDATION_ERROR","details":{"expected":[1,2,6,7,8]}}
 400
 {"error":"ข้อมูลไม่ถูกต้อง","code":"VALIDATION_ERROR","details":{"photoIds":["id ห้ามซ้ำ"]}}
@@ -1767,23 +1771,23 @@ curl -s -w "\n%{http_code}\n" -X PUT -H "Content-Type: application/json" -d '{"p
 เครื่อง 2 ตอนนี้: id 4 (ปก, ลำดับ 1), 3, 5, 9
 ```bash
 curl -s -o /dev/null -w "%{http_code}\n" -X DELETE $U/2/photos/4
-curl -s $U/2/photos | python3 -c 'import json,sys; print([p["id"] for p in json.load(sys.stdin)])'
-curl -s $U/2/photos/trash | python3 -c 'import json,sys; print([{k: p[k] for k in ("id","position","isCover","deletedAt","restoreUntil")} for p in json.load(sys.stdin)])'
+curl -s $U/2/photos | json 'd.map(p => p.id)'
+curl -s $U/2/photos/trash | json 'd.map(p => ({ id: p.id, position: p.position, isCover: p.isCover, deletedAt: p.deletedAt, restoreUntil: p.restoreUntil }))'
 ```
 ```text
 204
-[3, 5, 9]
-[{'id': 4, 'position': 1, 'isCover': True, 'deletedAt': '2026-10-22T18:54:34.047Z', 'restoreUntil': '2026-10-29T18:54:34.047Z'}]
+[3,5,9]
+[{"id":4,"position":1,"isCover":true,"deletedAt":"2026-10-22T18:54:34.047Z","restoreUntil":"2026-10-29T18:54:34.047Z"}]
 ```
 ระหว่างอยู่ในถังขยะ ตั้งรูป 5 เป็นปกใหม่ (ได้ เพราะ `one_cover_per_laptop` ไม่นับรูปในถังขยะ) แล้วกู้คืนรูป 4
 ```bash
 curl -s -o /dev/null -w "%{http_code}\n" -X POST $U/2/photos/5/cover
-curl -s -X POST $U/2/photos/4/restore | python3 -c 'import json,sys; p=json.load(sys.stdin); print({k: p[k] for k in ("id","position","isCover")})'
+curl -s -X POST $U/2/photos/4/restore | json '({ id: d.id, position: d.position, isCover: d.isCover })'
 curl -s -w "\n%{http_code}\n" -X POST $U/2/photos/4/restore
 ```
 ```text
 200
-{'id': 4, 'position': 5, 'isCover': False}
+{"id":4,"position":5,"isCover":false}
 {"error":"ไม่พบรูปนี้ในถังขยะ","code":"NOT_FOUND"}
 404
 ```
@@ -1820,10 +1824,10 @@ curl -s -w "\n%{http_code}\n" -X POST $U/2/photos/9/restore
 
 **ลบทั้งเครื่องที่มีรูปในถังขยะ** ใช้เครื่องใหม่ (เครื่อง 4 ของบท 8c ข้อ ⑨ ถูกลบไปแล้ว ส่วนเครื่องเดิมส่วนใหญ่มีประวัติเช่า ลบไม่ได้) ขั้นเตรียม: สร้างเครื่อง จด id ไว้ในตัวแปร `L` อัปโหลด 5 รูป แล้วลบ 1 รูปลงถังขยะ
 ```bash
-L=$(curl -s -X POST -H "Content-Type: application/json" -d '{"brand":"Acer","model":"Swift 3","serial":"ACER-TRASH-1","pricePerMonth":900}' $U | node -pe 'JSON.parse(require("fs").readFileSync(0)).id')
+L=$(curl -s -X POST -H "Content-Type: application/json" -d '{"brand":"Acer","model":"Swift 3","serial":"ACER-TRASH-1","pricePerMonth":900}' $U | json 'd.id')
 echo "เครื่องใหม่ id = $L"
 curl -s -o /dev/null -w "%{http_code}\n" $(for i in 90 91 92 93 94; do echo "-F photos=@dataset/00$i.jpg"; done) $U/$L/photos/batch
-P=$(curl -s $U/$L/photos | node -pe 'JSON.parse(require("fs").readFileSync(0)).at(-1).id')
+P=$(curl -s $U/$L/photos | json 'd.at(-1).id')
 curl -s -o /dev/null -w "%{http_code}\n" -X DELETE $U/$L/photos/$P
 ```
 ```text
@@ -1831,7 +1835,7 @@ curl -s -o /dev/null -w "%{http_code}\n" -X DELETE $U/$L/photos/$P
 201
 204
 ```
-เลข id ของเครื่องอาจไม่ใช่ 5 (ขึ้นกับว่าเคยสร้างเครื่องไปกี่ครั้ง) ไม่เป็นไร คำสั่งต่อไปใช้ `$L` ทั้งหมด `node -pe` อ่าน JSON ที่ curl ส่งมาแล้วพิมพ์เฉพาะ `id` ออกมา (`-p` = พิมพ์ผลของโค้ด) ตอนนี้เครื่องมี 5 รูป (10 ไฟล์ รูปละ 2 ขนาด) อยู่ในถังขยะ 1 รูป ซึ่งไฟล์ยังอยู่ครบ
+เลข id ของเครื่องอาจไม่ใช่ 5 (ขึ้นกับว่าเคยสร้างเครื่องไปกี่ครั้ง) ไม่เป็นไร คำสั่งต่อไปใช้ `$L` ทั้งหมด (`json 'd.id'` คือฟังก์ชันจากต้นข้อ 10 เอาแค่ `id` ออกมา) ตอนนี้เครื่องมี 5 รูป (10 ไฟล์ รูปละ 2 ขนาด) อยู่ในถังขยะ 1 รูป ซึ่งไฟล์ยังอยู่ครบ
 ```bash
 docker exec laptop-api-storage-1 sh -c "ls /data/laptop-photos/laptops/$L 2>/dev/null | wc -l"
 curl -s -o /dev/null -w "%{http_code}\n" -X DELETE $U/$L

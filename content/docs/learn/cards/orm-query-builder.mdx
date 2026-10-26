@@ -26,7 +26,7 @@ title: "ORM กับ Query Builder"
 // Driver (pg): SQL เป็นข้อความ ค่าแยกส่งด้วย $1 กัน SQL Injection
 await pool.query("SELECT * FROM books WHERE id = $1", [5]);
 
-// Query Builder (Drizzle): หน้าตาเหมือน SQL แต่เป็นฟังก์ชันที่มี type
+// Drizzle แบบ Query Builder (ส่วนที่ทีมใช้): หน้าตาเหมือน SQL แต่เป็นฟังก์ชันที่มี type
 await db.select().from(books).where(eq(books.id, 5));
 
 // ORM (Prisma ที่ใช้ในงาน Todo): บอกสิ่งที่อยากได้เป็น object

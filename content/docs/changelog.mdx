@@ -5,6 +5,14 @@ title: "📝 มีอะไรใหม่"
 
 บันทึกการเปลี่ยนแปลงของคู่มือในแต่ละเวอร์ชัน เวอร์ชันล่าสุดอยู่บนสุด
 
+## v2.0.19 · 26 ต.ค. 2569
+
+- **ช่วง DB ทำตามได้จากเครื่องเปล่า:** การ์ด [Drizzle](/learn/cards/drizzle-orm) เริ่มด้วย `mkdir server` + `bun init -y` (ได้ `tsconfig.json` และ `.gitignore` ที่กัน `.env` ไว้แล้ว) เดิมสั่ง `cd server` ทั้งที่ยังไม่มีโฟลเดอร์ · มีตัวอย่าง `.env.example` และไฟล์ทดลองดึงข้อมูลที่รันได้จริง
+- การ์ด [Postgres](/learn/cards/postgres) มีขั้นติดตั้ง pgAdmin และคำสั่ง `docker run` กัน Git Bash แปลง path
+- การ์ด [Migration](/learn/cards/migration): ผลที่ควรเห็นครบ 3 ตาราง, บอกที่เปิดดูตารางใน pgAdmin และวาง `"scripts"` ตรงไหนใน `package.json`
+- การ์ด [Hono](/learn/cards/hono) อธิบาย `import type`, `?`, `unknown`, `??` · โจทย์การ์ด [HTTP และ REST](/learn/cards/http-rest) ใช้ระบบห้องสมุดเหมือนการ์ดอื่น
+- บท [8d](/08d-image-storage-more) ไม่ใช้ `python3` แล้ว (บท 0 ไม่ได้ให้ติดตั้ง) ใช้ฟังก์ชัน `json` สั้นๆ ที่เรียก `node` แทน
+
 ## v2.0.18 · 26 ต.ค. 2569
 
 - **การ์ด [Login: JWT](/learn/cards/jwt-cookie) ไม่ทำ server ล้มแล้ว:** บอกให้ import `authRoutes` ด้วย และบอกว่าแก้ `.env` แล้วต้องรีสตาร์ท server (`--hot` ไม่อ่าน `.env` ใหม่)
