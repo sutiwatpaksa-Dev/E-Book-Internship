@@ -2,6 +2,10 @@
   "title": "คลังการ์ด",
   "pages": [
     "index",
+    "read-requirement",
+    "business-brief",
+    "user-stories",
+    "scope-questions",
     "postgres",
     "sql-basics",
     "orm-query-builder",

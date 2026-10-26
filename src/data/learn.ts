@@ -48,6 +48,10 @@ export const steps: LearnStep[] = [
 ];
 
 export const cards: LearnCard[] = [
+  { slug: "read-requirement", title: "อ่าน Requirement ให้เป็น", step: "problem", minutes: 10, starter: "วันที่ 1 · อ่าน Requirement ทั้งฉบับ + จดคำถาม" },
+  { slug: "business-brief", title: "Brief: สรุปร้านที่เป็นกติกาของทั้งงาน", step: "problem", minutes: 8, needs: ["read-requirement"], starter: "วันที่ 1 · brief ผ่านพี่เลี้ยง" },
+  { slug: "user-stories", title: "User story และเกณฑ์ว่าเสร็จ", step: "problem", minutes: 10, alsoIn: ["testing"], needs: ["read-requirement"], starter: "วันที่ 1 · แปลง Requirement เป็นงานที่ตรวจได้" },
+  { slug: "scope-questions", title: "ขอบเขตงาน และถามให้ได้คำตอบ", step: "problem", minutes: 8, needs: ["business-brief", "user-stories"], starter: "วันที่ 1 รายการไม่ทำ + คำถาม · วันที่ 5 Review · ทุกวัน: หลุดแผนแจ้งภายในวันนั้น" },
   { slug: "postgres", title: "Postgres และที่ที่มันรัน", step: "coding", part: "DB", minutes: 10, alsoIn: ["deploy"], starter: "วันที่ 1–2 · เปิดฐานข้อมูล + ต่อ pgAdmin" },
   { slug: "sql-basics", title: "SQL ที่ใช้บ่อย", step: "coding", part: "DB", minutes: 12, alsoIn: ["design"], needs: ["postgres"], starter: "วันที่ 2 · primary key / foreign key" },
   { slug: "orm-query-builder", title: "ORM กับ Query Builder", step: "coding", part: "DB", minutes: 8, needs: ["sql-basics"], starter: "วันที่ 2 · แนวคิด ORM (ต่อจาก Prisma ในงาน Todo)" },

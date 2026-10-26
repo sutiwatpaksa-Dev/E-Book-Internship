@@ -5,6 +5,16 @@ title: "📝 มีอะไรใหม่"
 
 บันทึกการเปลี่ยนแปลงของคู่มือในแต่ละเวอร์ชัน เวอร์ชันล่าสุดอยู่บนสุด
 
+## v2.0.23 · 26 ต.ค. 2569
+
+- **ขั้น [1 · Problem](/learn/problem) มีการ์ดของตัวเองแล้ว 4 ใบ** ใช้ทำของส่งวันที่ 1 ของงาน STARTER ได้ครบ:
+  - [อ่าน Requirement ให้เป็น](/learn/cards/read-requirement): ติดป้าย ต้อง / ห้าม / ควร / ตัวอย่าง แล้วจดคำถามพร้อมข้อเสนอ
+  - [Brief](/learn/cards/business-brief): ทุกช่องบอกว่าจะไปใช้ตรงไหนในเว็บ และเช็กสีให้อ่านออกด้วย Contrast Checker
+  - [User story และเกณฑ์ว่าเสร็จ](/learn/cards/user-stories): ตัวอย่าง 9 story ของห้องสมุดที่ต่อกับการ์ดช่วง Coding
+  - [ขอบเขตงาน และถามให้ได้คำตอบ](/learn/cards/scope-questions): ไฟล์ `NOTES.md` (ไม่ทำ / ข้อสมมติ / คำถาม) และวิธีแจ้งเมื่องานหลุดแผน
+- ปุ่ม "ทำต่อ" เริ่มที่การ์ดของขั้น 1 ก่อน ตามลำดับ 7 ขั้น · [ศัพท์](/glossary) มีหมวดใหม่ (Requirement, Brief, User story, เกณฑ์ว่าเสร็จ, Scope creep)
+- การ์ด [Hono](/learn/cards/hono) และ [HTTP และ REST](/learn/cards/http-rest) อ้างเลขหน้า Requirement ตรงกับที่โปรแกรมเปิด PDF แสดง
+
 ## v2.0.22 · 26 ต.ค. 2569
 
 - **บท [8d](/08d-image-storage-more) บอกชัดว่าโค้ดแต่ละชิ้นวางตรงไหน:** `upload.ts` ให้ทั้งไฟล์ (ของเดิมเขียนว่า "single เหมือนเดิม" และไม่มี `requireFile` ที่ route เดิมยังใช้) · `image.ts` บอกว่าลบบรรทัด `return` เดิมแล้วใส่ของใหม่แทน · `photo.routes.ts` มีบรรทัด import ให้ และบอกว่า route ใหม่วางก่อน `PUT /:photoId` เพราะ Express ลองตามลำดับ · ซ้อมกู้คืนดึง URL รูปจาก API ให้เอง ไม่ต้องเดา
