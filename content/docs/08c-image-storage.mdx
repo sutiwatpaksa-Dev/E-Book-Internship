@@ -1253,7 +1253,7 @@ npx tsx src/scripts/inspect-image.ts test-images/large.webp
 ### ④ ฐานข้อมูลเก็บแค่ข้อมูลของรูป
 
 ```bash
-docker exec -it laptop-db psql -U postgres -c "select id, laptop_id, key, size_bytes, width, height, is_cover from laptop_photos order by id"
+docker exec laptop-db psql -U postgres -c "select id, laptop_id, key, size_bytes, width, height, is_cover from laptop_photos order by id"
 ```
 ```text
  id | laptop_id |                      key                       | size_bytes | width | height | is_cover
@@ -1392,7 +1392,7 @@ HTTP/1.1 403 Forbidden
 ```bash
 curl -s -w "\n%{http_code}\n" -X POST -H "Content-Type: application/json" -d '{"brand":"HP","model":"Pavilion 14","serial":"HP-001","pricePerMonth":1100}' http://localhost:3000/laptops
 curl -s -o /dev/null -w "%{http_code}\n" -F "photo=@test-images/new.png" http://localhost:3000/laptops/4/photos
-docker exec -it laptop-db psql -U postgres -c "select id, key from laptop_photos where laptop_id = 4"
+docker exec laptop-db psql -U postgres -c "select id, key from laptop_photos where laptop_id = 4"
 curl -s -w "%{http_code}\n" -X DELETE http://localhost:3000/laptops/4
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:9000/laptop-photos/laptops/4/605f4cb4-6a35-455e-bdcc-c046a5d4697e-400.webp
 ```
@@ -1445,7 +1445,7 @@ const detected = { mime: "image/jpeg" }; // ❌ เชื่อว่าเป�
 ```bash
 docker compose stop storage
 curl -s -w "\n%{http_code}\n" -F "photo=@test-images/new.png" http://localhost:3000/laptops/2/photos
-docker exec -it laptop-db psql -U postgres -c "select id, key from laptop_photos order by id"
+docker exec laptop-db psql -U postgres -c "select id, key from laptop_photos order by id"
 curl -s -w "%{http_code}\n" -X DELETE http://localhost:3000/laptops/2/photos/1
 docker compose start storage
 ```
@@ -1550,7 +1550,7 @@ console.log(await Promise.all(shots));
 ```
 ```bash
 npx tsx race-cover.ts
-docker exec -it laptop-db psql -U postgres -c "select id, is_cover from laptop_photos where laptop_id = 1 order by id"
+docker exec laptop-db psql -U postgres -c "select id, is_cover from laptop_photos where laptop_id = 1 order by id"
 ```
 ```text
 [

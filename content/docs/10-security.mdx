@@ -737,7 +737,7 @@ GRANT
 ```
 พิมพ์ `\q` ออก แล้ว **พิสูจน์ด้วยตาตัวเอง** ว่าสิทธิ์ถูกจำกัดจริง โดยต่อเข้าไปในฐานะ `app_rw` แล้วลองทั้งสิ่งที่ควรทำได้และทำไม่ได้
 ```bash
-docker exec -it laptop-db psql "postgres://app_rw:rw_demo_pw@localhost:5432/postgres" -c "SELECT count(*) FROM laptops;" -c "DELETE FROM rentals;" -c "DROP TABLE rentals;"
+docker exec laptop-db psql "postgres://app_rw:rw_demo_pw@localhost:5432/postgres" -c "SELECT count(*) FROM laptops;" -c "DELETE FROM rentals;" -c "DROP TABLE rentals;"
 ```
 **ควรเห็น**
 ```

@@ -334,8 +334,9 @@ SELECT * FROM notes;
 ```bash
 docker rm -f pg-test
 docker run -d --name pg-test -e POSTGRES_PASSWORD=secret postgres:17
-docker exec -it pg-test psql -U postgres -c "SELECT * FROM notes;"
+docker exec pg-test psql -U postgres -c "SELECT * FROM notes;"
 ```
+(`-c` = สั่ง SQL คำสั่งเดียวแล้วออกเลย ไม่ต้องพิมพ์โต้ตอบ จึงไม่ต้องใส่ `-it` และบน Git Bash ก็ไม่ขึ้น `not a TTY`)
 ควรเห็น: `ERROR: relation "notes" does not exist` → **ข้อมูลหายหมด** 😱
 
 ### 🔧 ลงมือ B: ฐานข้อมูลแบบมี volume (ข้อมูลอยู่)

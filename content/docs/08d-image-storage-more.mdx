@@ -405,9 +405,9 @@ Content-Length: 246586
 Postgres เก็บข้อมูลเป็น "หน้า" ขนาด 8 KB แถวหนึ่งต้องลงในหน้าเดียว แล้วรูป 250 KB อยู่ได้ยังไง คำตอบคือ **TOAST** (The Oversized-Attribute Storage Technique): ค่าที่ใหญ่เกินราว 2 KB จะถูก **บีบอัด** ก่อน ถ้ายังใหญ่ก็ถูก **ย้ายไปเก็บในตารางลับคู่กัน** (TOAST table) แถวหลักเก็บแค่ตัวชี้
 
 ```bash
-docker exec -it laptop-db psql -U postgres -c "select relname as table_name, pg_size_pretty(pg_relation_size(c.oid)) as main, pg_size_pretty(pg_relation_size(reltoastrelid)) as toast, pg_size_pretty(pg_total_relation_size(c.oid)) as total from pg_class c where relname = 'blob_photos'"
-docker exec -it laptop-db psql -U postgres -c "select attname, attstorage from pg_attribute where attrelid='blob_photos'::regclass and attname in ('large','thumb')"
-docker exec -it laptop-db psql -U postgres -c "select id, octet_length(large) as bytes, pg_column_size(large) as stored from blob_photos order by id limit 1"
+docker exec laptop-db psql -U postgres -c "select relname as table_name, pg_size_pretty(pg_relation_size(c.oid)) as main, pg_size_pretty(pg_relation_size(reltoastrelid)) as toast, pg_size_pretty(pg_total_relation_size(c.oid)) as total from pg_class c where relname = 'blob_photos'"
+docker exec laptop-db psql -U postgres -c "select attname, attstorage from pg_attribute where attrelid='blob_photos'::regclass and attname in ('large','thumb')"
+docker exec laptop-db psql -U postgres -c "select id, octet_length(large) as bytes, pg_column_size(large) as stored from blob_photos order by id limit 1"
 ```
 (หลังอัปโหลด 300 รูปเข้าทั้งสองแบบด้วย `load-photos.ts` ส่วนวัดผลด้านล่าง)
 ```text
@@ -428,7 +428,7 @@ docker exec -it laptop-db psql -U postgres -c "select id, octet_length(large) as
 - `attstorage = x` (extended) = "บีบอัดได้ และย้ายออกไปได้" เป็นค่าเริ่มต้นของ `bytea`
 - `stored` เท่ากับ `bytes` ทุกไบต์ (ทั้งตารางก็เช่นกัน: ไบต์ดิบ 76 MB เก็บจริง 76 MB): **WebP ถูกบีบอัดมาแล้ว Postgres บีบซ้ำไม่ได้อีก** เทียบกับข้อความที่ซ้ำกันเยอะ
 ```bash
-docker exec -it laptop-db psql -U postgres -c "create temp table t(v text); insert into t values (repeat('ร้านเช่าโน้ตบุ๊ก ', 10000)); select octet_length(v) as bytes, pg_column_size(v) as stored from t;"
+docker exec laptop-db psql -U postgres -c "create temp table t(v text); insert into t values (repeat('ร้านเช่าโน้ตบุ๊ก ', 10000)); select octet_length(v) as bytes, pg_column_size(v) as stored from t;"
 ```
 ```text
  bytes  | stored
@@ -451,7 +451,7 @@ npx tsx src/scripts/lab/load-photos.ts blob-photos 3   # แบบ bytea
 
 **① ขนาด**
 ```bash
-docker exec -it laptop-db psql -U postgres -c "select pg_size_pretty(pg_database_size('postgres')) as database_size"
+docker exec laptop-db psql -U postgres -c "select pg_size_pretty(pg_database_size('postgres')) as database_size"
 docker exec laptop-api-storage-1 du -sh /data/laptop-photos
 ```
 
@@ -704,7 +704,7 @@ curl -s -o /dev/null -w "%{http_code}\n" $F
 docker rm -f laptop-api-disk                      # ③ ลบแล้วสร้างใหม่ (= deploy เวอร์ชันใหม่)
 docker run -d --name laptop-api-disk -p 3000:3000 --env-file disk.env laptop-api:disk
 curl -s -o /dev/null -w "%{http_code}\n" $F
-docker exec -it laptop-db psql -U postgres -c "select id, laptop_id, key from laptop_photos where id = 301"
+docker exec laptop-db psql -U postgres -c "select id, laptop_id, key from laptop_photos where id = 301"
 ```
 ```text
 HTTP/1.1 200 OK
@@ -806,10 +806,10 @@ for p in "/files/../package.json" "/files/..%2fpackage.json" "/files/%2e%2e/%2e%
 
 ในฐานข้อมูล (ใช้รูปใหญ่ 300 รูปจาก `blob_photos` ของข้อ 2)
 ```bash
-docker exec -it laptop-db psql -U postgres -c "create table photos_base64 as select id, laptop_id, replace(encode(large, 'base64'), E'\n', '') as large_b64 from blob_photos"
-docker exec -it laptop-db psql -U postgres -c "select pg_size_pretty(sum(octet_length(large))) as bytea_raw, (select pg_size_pretty(sum(octet_length(large_b64))) from photos_base64) as base64_text, round((select sum(octet_length(large_b64)) from photos_base64)::numeric / sum(octet_length(large)), 3) as ratio from blob_photos"
-docker exec -it laptop-db psql -U postgres -c "select pg_size_pretty(sum(pg_column_size(large_b64))) as stored_after_toast from photos_base64"
-docker exec -it laptop-db psql -U postgres -c "drop table photos_base64"
+docker exec laptop-db psql -U postgres -c "create table photos_base64 as select id, laptop_id, replace(encode(large, 'base64'), E'\n', '') as large_b64 from blob_photos"
+docker exec laptop-db psql -U postgres -c "select pg_size_pretty(sum(octet_length(large))) as bytea_raw, (select pg_size_pretty(sum(octet_length(large_b64))) from photos_base64) as base64_text, round((select sum(octet_length(large_b64)) from photos_base64)::numeric / sum(octet_length(large)), 3) as ratio from blob_photos"
+docker exec laptop-db psql -U postgres -c "select pg_size_pretty(sum(pg_column_size(large_b64))) as stored_after_toast from photos_base64"
+docker exec laptop-db psql -U postgres -c "drop table photos_base64"
 ```
 ```text
  bytea_raw | base64_text | ratio
@@ -963,7 +963,7 @@ Next.js <Image>              /_next/image?url=%2Flaptops%2F2%2F9f3c….jpg&w=640
 > ```
 > อ่านแล้ว `npm run db:migrate` ส่วนรูป 300 รูปในตาราง `laptop_photos` (เครื่องละ 100 รูป) เกินโควตาที่ภาค B จะตั้ง ล้างทิ้งก่อน แล้วอัปโหลดใหม่ไม่กี่รูปแบบบท 8c
 > ```bash
-> docker exec -it laptop-db psql -U postgres -c "truncate laptop_photos restart identity"
+> docker exec laptop-db psql -U postgres -c "truncate laptop_photos restart identity"
 > npm run storage:cleanup -- 0
 > ```
 > ส่วน `storage/types.ts`, `storage/disk.ts` และการแก้ `app.ts` ของข้อ 3–4 เก็บไว้ได้ (ไม่ตั้ง `STORAGE_DRIVER` = ใช้ S3 ตามเดิม)
@@ -1048,7 +1048,7 @@ exit=1
 ```
 drizzle-kit ล้มโดย **ไม่บอกเหตุผล** (ตอนที่เราทดสอบ) ลองรันคำสั่งเดียวกันใน `psql` เพื่อดู error จริง
 ```bash
-docker exec -it laptop-db psql -U postgres -c 'ALTER TABLE "laptop_photos" ADD COLUMN "position" integer NOT NULL;'
+docker exec laptop-db psql -U postgres -c 'ALTER TABLE "laptop_photos" ADD COLUMN "position" integer NOT NULL;'
 ```
 ```text
 ERROR:  column "position" of relation "laptop_photos" contains null values
@@ -1067,7 +1067,7 @@ ALTER TABLE "laptop_photos" ALTER COLUMN "position" SET NOT NULL;--> statement-b
 `row_number() OVER (PARTITION BY laptop_id ORDER BY is_cover DESC, id)` = "นับเลข 1, 2, 3, ... แยกทีละเครื่อง รูปปกได้เลข 1 ที่เหลือเรียงตาม id" ลำดับที่ได้จึงตรงกับที่ API ของบท 8c เคยแสดง (ปกขึ้นก่อน) ผู้ใช้ไม่เห็นอะไรเปลี่ยน
 ```bash
 npm run db:migrate
-docker exec -it laptop-db psql -U postgres -c "select id, laptop_id, is_cover, position from laptop_photos order by laptop_id, position"
+docker exec laptop-db psql -U postgres -c "select id, laptop_id, is_cover, position from laptop_photos order by laptop_id, position"
 ```
 ```text
 [✓] migrations applied successfully!
@@ -1123,11 +1123,21 @@ export function pgConstraint(err: unknown): string | undefined {
 
 ### `src/http/upload.ts` รับหลายไฟล์ (P10 ด่านเร็ว)
 
+เขียนทับทั้งไฟล์ของบท 8c ส่วนที่เปลี่ยนมี 3 จุด (ติดป้าย `8d:`): ตัวรับหลายไฟล์ `many`, ฟังก์ชัน `wrap` ที่ใช้ห่อได้ทั้ง `single` และ `many` (ของเดิมห่อในตัว `uploadPhoto` ตรงๆ) และ `requireFiles` ส่วน `single` กับ `requireFile` เหมือนเดิม เพราะ route อัปโหลดทีละรูปยังใช้อยู่
+
 ```ts
+import type { Request, RequestHandler } from "express";
+import multer from "multer";
+import { AppError } from "./errors.js";
+
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
 export const MAX_PHOTOS_PER_LAPTOP = 8;          // 8d: เครื่องหนึ่งมีรูป (ที่ยังไม่ถูกลบ) ได้ไม่เกิน 8 รูป
 
-// ...single เหมือนเดิม
+// เก็บไฟล์ไว้ใน RAM ชั่วคราว (เราต้องย่อรูปก่อนเก็บอยู่แล้ว) จึงต้องจำกัดขนาดเสมอ
+const single = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_UPLOAD_BYTES, files: 1, fields: 5 },
+}).single("photo");
 
 // 8d: รับหลายไฟล์ในช่อง photos ได้ไม่เกิน 8 ไฟล์ต่อคำขอ (ด่านแรก ตัดตั้งแต่กำลังรับ)
 const many = multer({
@@ -1135,7 +1145,7 @@ const many = multer({
   limits: { fileSize: MAX_UPLOAD_BYTES, files: MAX_PHOTOS_PER_LAPTOP, fields: 5 },
 }).array("photos", MAX_PHOTOS_PER_LAPTOP);
 
-// ห่อ multer เพื่อแปลง error ของมันเป็น AppError ภาษาเดียวกับทั้งระบบ
+// 8d: ห่อ multer เพื่อแปลง error ของมันเป็น AppError ภาษาเดียวกับทั้งระบบ (ใช้ได้กับทั้ง single และ many)
 const wrap = (handler: RequestHandler): RequestHandler => (req, res, next) => {
   handler(req, res, (err: unknown) => {
     if (err instanceof multer.MulterError) {
@@ -1154,6 +1164,12 @@ const wrap = (handler: RequestHandler): RequestHandler => (req, res, next) => {
 export const uploadPhoto = wrap(single);
 export const uploadPhotos = wrap(many);
 
+export function requireFile(req: Request): Buffer {
+  if (!req.file) throw new AppError("VALIDATION_ERROR", "ต้องแนบไฟล์รูปในช่องชื่อ photo (multipart/form-data)");
+  return req.file.buffer;
+}
+
+// 8d: หลายไฟล์ multer เก็บไว้ที่ req.files (เป็น array) แทน req.file
 export function requireFiles(req: Request): Buffer[] {
   const files = (req.files ?? []) as Express.Multer.File[];
   if (files.length === 0) throw new AppError("VALIDATION_ERROR", "ต้องแนบไฟล์รูปในช่องชื่อ photos อย่างน้อย 1 ไฟล์");
@@ -1166,7 +1182,7 @@ export function requireFiles(req: Request): Buffer[] {
 
 ### `src/lib/image.ts` เพิ่มตัวแทนรูป (P18)
 
-ต่อจาก `const [large, thumb] = await Promise.all(...)` ของบท 8c
+ในไฟล์ของบท 8c บรรทัด `const [large, thumb] = await Promise.all(...)` คงไว้ แล้ว**ลบบรรทัด** `return { large, thumb, contentType: "image/webp" };` ที่อยู่ใต้มัน ใส่โค้ดนี้แทน (ยังอยู่ใน `try` เหมือนเดิม)
 ```ts
     // ④ (8d) ตัวแทนรูประหว่างรอโหลด: รูปจิ๋วด้านยาว 16px (เก็บเป็นข้อความ data URL) + สีหลักของรูป
     const tiny = await base.clone().resize(16, 16, { fit: "inside" }).webp({ quality: 50 }).toBuffer();
@@ -1581,7 +1597,14 @@ export const ReorderInput = z.object({
     .refine((ids) => new Set(ids).size === ids.length, "id ห้ามซ้ำ"),
 });
 ```
-เพิ่มใน `photo.routes.ts` (และ import `requireFiles`, `uploadPhotos`, `ReorderInput`)
+โค้ดชิ้นบนเพิ่มท้าย `src/http/validate.ts` (ไฟล์นี้ import `z` ไว้แล้ว)
+
+ต่อไปแก้ `src/routes/photo.routes.ts` ของบท 8c 2 บรรทัด import ด้านบนให้มีของใหม่
+```ts
+import { requireFile, requireFiles, uploadPhoto, uploadPhotos } from "../http/upload.js";
+import { ConfirmUploadInput, IdParam, parse, ReorderInput, UploadUrlInput } from "../http/validate.js";
+```
+แล้ววาง 3 route แรกข้างล่าง (ถังขยะ, batch, order) **ต่อจาก `photoRoutes.get("/:laptopId/photos", ...)` ก่อน `photoRoutes.put("/:laptopId/photos/:photoId", ...)`** ส่วน route `restore` วางท้ายไฟล์ ลำดับสำคัญเพราะ Express ลอง route ตามลำดับที่เขียน ตัวแรกที่ path เข้ากันได้ชนะ
 ```ts
 // 8d: ถังขยะ (รูปที่ลบแล้ว ยังกู้คืนได้)
 photoRoutes.get("/:laptopId/photos/trash", async (req, res) => {
@@ -1798,7 +1821,7 @@ curl -s -w "\n%{http_code}\n" -X POST $U/2/photos/4/restore
 **เลยเวลากู้คืน** จำลองว่าลบไปแล้ว 8 วัน (แก้เวลาในฐานข้อมูลตรงๆ เพื่อทดสอบเท่านั้น)
 ```bash
 curl -s -o /dev/null -X DELETE $U/2/photos/3
-docker exec -it laptop-db psql -U postgres -c "update laptop_photos set deleted_at = now() - interval '8 days' where id = 3"
+docker exec laptop-db psql -U postgres -c "update laptop_photos set deleted_at = now() - interval '8 days' where id = 3"
 curl -s -w "\n%{http_code}\n" -X POST $U/2/photos/3/restore
 npm run photos:purge
 ```
@@ -2000,7 +2023,7 @@ HERE=$(pwd -W 2>/dev/null || pwd)
 
 # ① ภัยพิบัติ: ลบ storage พร้อม volume และล้างฐานข้อมูล
 docker compose down -v
-docker exec -it laptop-db psql -U postgres -c "drop schema public cascade; drop schema drizzle cascade; create schema public;"
+docker exec laptop-db psql -U postgres -c "drop schema public cascade; drop schema drizzle cascade; create schema public;"
 
 # ② กู้ storage: เปิดใหม่ + สร้าง bucket/policy/CORS (สคริปต์เดิมของบท 8c)
 docker compose up -d && npm run storage:setup
@@ -2014,7 +2037,8 @@ docker run --rm --network laptop-api_default --env-file rclone.env -v "$HERE/bac
 
 # ⑤ ตรวจ
 npm run photos:verify
-curl -s -o /dev/null -D - <URL ของรูปสักรูป> | grep -i -E "content-type|cache-control"
+IMG=$(curl -s http://localhost:3000/laptops/1/photos | node -pe "JSON.parse(require('fs').readFileSync(0))[0].urls.thumb")
+curl -s -o /dev/null -D - "$IMG" | grep -i -E "content-type|cache-control"
 ```
 ```text
 สร้าง bucket "laptop-photos" แล้ว
@@ -2023,6 +2047,8 @@ curl -s -o /dev/null -D - <URL ของรูปสักรูป> | grep -i -
 ตรวจ 15 รูป (30 ไฟล์): ไฟล์หาย 0 []
 Content-Type: image/webp
 ```
+(บรรทัด `IMG=` ถาม API ว่าเครื่อง 1 มีรูปอะไร แล้วเก็บ URL รูปเล็กของรูปแรกไว้ใน `IMG` ต้องเปิด API ค้างไว้ด้วย `npm run dev` ส่วน `-D -` = พิมพ์ header ของคำตอบ)
+
 ไฟล์ครบ แต่ **`Cache-Control` หายไป** ซ้อมแล้วถึงเห็น: header ของ object (`CacheControl: immutable` ที่ใส่ตอน `put`) เป็นข้อมูลที่อยู่กับ object ใน storage พอสำรองลงดิสก์ธรรมดา เหลือแค่ไฟล์ ข้อมูลนี้หายไป rclone เดา `Content-Type` กลับจากนามสกุลได้ แต่ `Cache-Control` เดาไม่ได้ ผลคือหลังกู้คืน browser ต้องถามรูปใหม่ทุกครั้ง (ไม่พัง แต่ช้าและเปลืองโดยไม่มีใครรู้ตัว) แก้ด้วยการบอก rclone ให้ใส่ header ตอนอัปโหลดกลับ
 ```bash
 docker run --rm --network laptop-api_default --env-file rclone.env -v "$HERE/backup:/backup" \
@@ -2061,8 +2087,8 @@ Cache-Control: public, max-age=31536000, immutable
 ### ❷ สลับลำดับด้วย SQL ตรงๆ
 
 ```bash
-docker exec -it laptop-db psql -U postgres -c "update laptop_photos set position = 2 where id = 8"
-docker exec -it laptop-db psql -U postgres -c "update laptop_photos set position = case id when 1 then 3 when 2 then 2 end where id in (1, 2)"
+docker exec laptop-db psql -U postgres -c "update laptop_photos set position = 2 where id = 8"
+docker exec laptop-db psql -U postgres -c "update laptop_photos set position = case id when 1 then 3 when 2 then 2 end where id in (1, 2)"
 ```
 (ตอนนั้นรูป 1 อยู่ลำดับ 2 และรูป 2 อยู่ลำดับ 3 คำสั่งที่สองสลับสองรูปใน UPDATE เดียว)
 ```text

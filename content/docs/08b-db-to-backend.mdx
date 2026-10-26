@@ -875,7 +875,7 @@ npx tsx race.ts
 
 **1) คืนเครื่อง 3 ก่อน** ตอนนี้เครื่อง 3 ถูกเช่าอยู่จากรอบที่แล้ว ถ้าไม่คืน ทุกคำขอจะได้ `409` เพราะเครื่องไม่ว่าง หา id ของรายการที่ยังไม่คืน แล้วสั่งคืนผ่าน API
 ```bash
-docker exec -it laptop-db psql -U postgres -c "SELECT id FROM rentals WHERE laptop_id = 3 AND returned_at IS NULL;"
+docker exec laptop-db psql -U postgres -c "SELECT id FROM rentals WHERE laptop_id = 3 AND returned_at IS NULL;"
 curl -s -X POST http://localhost:3000/rentals/<id ที่ได้>/return
 ```
 
@@ -899,7 +899,7 @@ DETAIL:  Key (laptop_id)=(3) is duplicated.
 
 **5) หาแถวที่ผิดกฎ แล้วแก้ข้อมูลก่อน**
 ```bash
-docker exec -it laptop-db psql -U postgres -c "SELECT laptop_id, count(*) AS open_rentals FROM rentals WHERE returned_at IS NULL GROUP BY laptop_id HAVING count(*) > 1;"
+docker exec laptop-db psql -U postgres -c "SELECT laptop_id, count(*) AS open_rentals FROM rentals WHERE returned_at IS NULL GROUP BY laptop_id HAVING count(*) > 1;"
 ```
 ```text
  laptop_id | open_rentals
@@ -909,7 +909,7 @@ docker exec -it laptop-db psql -U postgres -c "SELECT laptop_id, count(*) AS ope
 ```
 query นี้นับรายการที่ยังไม่คืนของแต่ละเครื่อง แล้วเอาเฉพาะเครื่องที่มีเกิน 1 (ตรงกับเงื่อนไขของ index พอดี) ในงานจริงต้องถามเจ้าของร้านว่ารายการไหนเป็นของจริง ในแบบฝึกนี้ให้เก็บรายการแรก (id น้อยสุด) ไว้ แล้วปิดรายการอื่นด้วยการใส่เวลาคืน
 ```bash
-docker exec -it laptop-db psql -U postgres -c "UPDATE rentals SET returned_at = now() WHERE laptop_id = 3 AND returned_at IS NULL AND id <> (SELECT min(id) FROM rentals WHERE laptop_id = 3 AND returned_at IS NULL);"
+docker exec laptop-db psql -U postgres -c "UPDATE rentals SET returned_at = now() WHERE laptop_id = 3 AND returned_at IS NULL AND id <> (SELECT min(id) FROM rentals WHERE laptop_id = 3 AND returned_at IS NULL);"
 ```
 ควรเห็น `UPDATE 4` แล้ว `npm run db:migrate` อีกครั้ง ควรเห็น `migrations applied successfully!` (ไม่ต้อง generate ใหม่ ไฟล์ migration ยังเป็นไฟล์เดิม แค่ตอนนี้ข้อมูลผ่านกฎแล้ว)
 
