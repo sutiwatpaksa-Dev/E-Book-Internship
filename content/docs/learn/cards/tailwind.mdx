@@ -45,13 +45,17 @@ export default defineConfig({
 }
 ```
 
+`--font-sans` แค่บอกชื่อฟอนต์ ถ้าเครื่องไม่มีฟอนต์นี้ browser จะใช้ฟอนต์สำรอง ถ้าอยากได้จริงต้องโหลดฟอนต์เพิ่ม (ดูบทเดิม [Tailwind](/12-tailwind))
+
 **เขียนสำหรับมือถือก่อน** คลาสที่ไม่มีคำนำหน้าใช้กับทุกจอ แล้วเติม `sm:` `md:` `lg:` สำหรับจอที่ **กว้างขึ้น**
+
+ลองกับหน้ารายการ: ใน `src/pages/books-page.tsx` เปลี่ยน `<section>...</section>` ที่ return อยู่ เป็น
 
 ```tsx
 <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
   {books.map((b) => (
-    <li key={b.id} className="rounded-xl border p-4 hover:bg-gray-50">
-      <h3 className="text-lg font-semibold">{b.title}</h3>
+    <li key={b.id} className="rounded-xl hover:bg-gray-50">
+      <BookCard book={b} />
     </li>
   ))}
 </ul>

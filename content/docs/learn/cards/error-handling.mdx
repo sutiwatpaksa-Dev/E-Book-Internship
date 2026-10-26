@@ -37,7 +37,7 @@ export function errorHandler(err: Error, c: Context) {
 }
 ```
 
-**2. ติดตั้ง** ใน `server/src/index.ts` เพิ่มบรรทัดเดียว
+**2. ติดตั้ง** ใน `server/src/index.ts` เพิ่ม 2 บรรทัด: import ไว้บนสุด และ `app.onError(...)` ไว้หลัง `app.notFound(...)` ก่อน `export default app`
 
 ```ts
 import { errorHandler } from "./middleware/error-handler";
@@ -57,7 +57,7 @@ app.onError(errorHandler);
 {"success":false,"error":{"code":"BOOK_NOT_FOUND","message":"ไม่พบหนังสือ"}}
 ```
 
-ลองทำให้พังจริง: ปิด Postgres (`docker stop pg`) แล้วยิงอีกครั้ง หน้าเว็บได้แค่ `ระบบขัดข้อง` ส่วน Terminal ที่รัน server มีรายละเอียดเต็ม (เสร็จแล้ว `docker start pg`)
+ลองทำให้พังจริง: ปิด Postgres (`docker stop pg`) แล้วยิงอีกครั้ง คำตอบได้แค่ `ระบบขัดข้อง` ส่วน Terminal ที่รัน server มีรายละเอียดเต็ม (เสร็จแล้ว `docker start pg`)
 
 ## ทริคที่แนะนำ
 

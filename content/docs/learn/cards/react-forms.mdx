@@ -67,7 +67,23 @@ export function NewBookForm({ onSaved }: { onSaved: () => void }) {
 }
 ```
 
-วางฟอร์มไว้บนรายการใน `App.tsx` แล้วส่ง `onSaved` ไปให้รายการโหลดใหม่ (หรือใส่ `onSaved={() => location.reload()}` ไปก่อน)
+วางฟอร์มไว้บนรายการใน `src/App.tsx`
+
+```tsx
+import { NewBookForm } from "./components/new-book-form";
+import { BooksPage } from "./pages/books-page";
+
+export default function App() {
+  return (
+    <>
+      <NewBookForm onSaved={() => location.reload()} />
+      <BooksPage />
+    </>
+  );
+}
+```
+
+`location.reload()` = โหลดทั้งหน้าใหม่ รายการจึงดึงข้อมูลล่าสุด เป็นทางลัดที่หน้ากะพริบ การ์ด [หน้าจัดการข้อมูล](/learn/cards/crud-ui) จะสอนวิธีสั่งให้รายการโหลดใหม่เองโดยไม่โหลดทั้งหน้า
 
 **ควรเห็น:** กดบันทึกตอนช่องว่าง ขึ้น "กรอกชื่อหนังสือ" ทันทีโดยไม่มีคำขอวิ่งออกไป (ดู DevTools แท็บ Network) กรอกแล้วกด ปุ่มเปลี่ยนเป็น "กำลังบันทึก..." แวบหนึ่ง แล้วช่องว่างพร้อมกรอกเล่มถัดไป
 

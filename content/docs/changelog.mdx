@@ -5,6 +5,14 @@ title: "📝 มีอะไรใหม่"
 
 บันทึกการเปลี่ยนแปลงของคู่มือในแต่ละเวอร์ชัน เวอร์ชันล่าสุดอยู่บนสุด
 
+## v2.0.18 · 26 ต.ค. 2569
+
+- **การ์ด [Login: JWT](/learn/cards/jwt-cookie) ไม่ทำ server ล้มแล้ว:** บอกให้ import `authRoutes` ด้วย และบอกว่าแก้ `.env` แล้วต้องรีสตาร์ท server (`--hot` ไม่อ่าน `.env` ใหม่)
+- **ทุก snippet บอกแล้วว่าวางไฟล์ไหน ตรงไหน:** [Zod](/learn/cards/validation) (พร้อมคำสั่ง curl ยิง POST ได้ทันที), [State](/learn/cards/react-state), [Tailwind](/learn/cards/tailwind), [ฟอร์ม](/learn/cards/react-forms) (มี `App.tsx` ให้), [จัดการ error](/learn/cards/error-handling), [หน้าหลังบ้าน](/learn/cards/protected-routes)
+- [ดึงข้อมูลจาก API](/learn/cards/fetch-data) อธิบาย `<T>`, `class ... extends Error`, `super()` และ `as` ทีละส่วน
+- [หน้าจัดการข้อมูล](/learn/cards/crud-ui): บอกชัดว่าเพิ่มฟังก์ชันใน `bookRepository` เดิม, ปิด `POST /api/books` ที่ไม่ต้อง login (ด่าน login จึงมีความหมาย) และผลที่ควรเห็นตรงกับข้อมูลจริง
+- [แบ่งชั้น](/learn/cards/layers): แก้ขั้นยืมหนังสือให้ทำตามได้กับหนังสือ 2 เล่มที่ seed ไว้
+
 ## v2.0.17 · 26 ต.ค. 2569
 
 - **บท [8d](/08d-image-storage-more) ใช้บน Windows (Git Bash) ได้:** มีกล่องต้นบทให้พิมพ์ `export MSYS_NO_PATHCONV=1` (กัน Git Bash แปลง path ในกล่องอย่าง `/data/...`, `/backup` จน docker ได้ error) และ `backup.sh` ใช้ได้ทั้ง Mac และ Windows ด้วยสคริปต์เดียว

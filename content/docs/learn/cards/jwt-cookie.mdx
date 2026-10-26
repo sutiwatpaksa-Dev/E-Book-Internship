@@ -36,6 +36,8 @@ bun -e "console.log(require('crypto').randomBytes(48).toString('base64'))"
 JWT_SECRET=<ค่าที่สุ่มได้>
 ```
 
+แก้ `.env` แล้ว **ต้องหยุด server (Ctrl+C) แล้ว `bun run dev` ใหม่** เพราะ Bun อ่าน `.env` ครั้งเดียวตอนเปิด ส่วน `--hot` โหลดแค่โค้ดใหม่ ไม่อ่าน `.env` ซ้ำ (ลองแล้ว) ถ้าไม่รีสตาร์ท ไฟล์ข้างล่างจะยังเห็น `JWT_SECRET` ว่าง แล้ว server ไม่ยอมเปิด
+
 ### 1. ออกบัตร + อ่านบัตร `server/src/lib/session.ts`
 
 ```ts
@@ -148,7 +150,7 @@ authRoutes.post("/logout", (c) => {
 });
 ```
 
-แล้วเพิ่มใน `server/src/index.ts`: `app.route("/admin", authRoutes);` (ได้ `/api/admin/login` และ `/api/admin/logout`)
+แล้วเพิ่มใน `server/src/index.ts`: `import { authRoutes } from "./routes/auth.routes";` บนสุด และ `app.route("/admin", authRoutes);` ต่อจากบรรทัด loans (ได้ `/api/admin/login` และ `/api/admin/logout`)
 
 ### 4. ลองด้วย curl
 

@@ -26,7 +26,7 @@ export const okPage = (c: Context, data: unknown[], meta: { page: number; limit:
   c.json({ success: true, data, meta });
 ```
 
-`bookRepository` มีอยู่แล้วจากการ์ด [แบ่งชั้น](/learn/cards/layers) (`list`, `get`, `create`) **เพิ่มต่อในไฟล์เดิม** อีก 3 ตัว และเพิ่ม `desc` ใน import บนสุด
+`bookRepository` มีอยู่แล้วจากการ์ด [แบ่งชั้น](/learn/cards/layers) (`list`, `get`, `create`) **ไม่ต้องสร้างใหม่** วาง 3 ฟังก์ชันข้างล่าง (`listPage`, `update`, `remove`) ไว้ใน `{ }` ของ `bookRepository` เดิม ต่อจาก `create` (อย่าพิมพ์บรรทัด `export const bookRepository = {` ซ้ำ) และเพิ่ม `desc` ใน import บนสุด
 
 ```ts
 // server/src/repositories/book.repository.ts
@@ -116,6 +116,10 @@ adminBookRoutes.delete("/:id", async (c) => {
 
 ต่อเข้า `server/src/routes/admin.routes.ts`: เพิ่ม `import { adminBookRoutes } from "./admin-books.routes";` บนสุด และ `adminRoutes.route("/books", adminBookRoutes);` ท้ายไฟล์ จึงอยู่หลังด่าน login เองโดยไม่ต้องทำอะไรเพิ่ม
 
+**ปิดทางเพิ่มหนังสือแบบไม่ login:** ตอนนี้มี 2 ทาง คือ `POST /api/books` จากการ์ดแบ่งชั้น ที่ใครก็ยิงได้ และ `POST /api/admin/books` ที่ต้อง login ถ้าเก็บทางแรกไว้ ด่าน login ก็ไม่มีความหมาย ใน `server/src/routes/books.routes.ts` ลบ `bookRoutes.post(...)` ทั้งก้อน (และ `bookRoutes.delete` ถ้าทำโจทย์ข้อ 2 ของการ์ดแบ่งชั้นไว้) พร้อม import `z` กับ `newBookSchema` ที่ไม่ได้ใช้แล้ว ส่วน `GET` สองตัวเก็บไว้ หน้าบ้านยังใช้อยู่
+
+**ควรเห็น:** `curl -i --json '{"title":"x"}' http://localhost:3000/api/books` ได้ `404` (Hono ไม่เจอ route ที่ตรง method จึงตกไปที่ `notFound`)
+
 แบ่งหน้าต้องมีหนังสือเกิน 10 เล่มถึงจะเห็นผล เพิ่มบรรทัดนี้ใน `seed.ts` (ก่อน `process.exit`) แล้วรัน `bun run seed`
 
 ```ts
@@ -129,8 +133,10 @@ curl "http://localhost:3000/api/admin/books?page=1" -b cookies.txt
 ```
 
 ```json
-{"success":true,"data":[{"id":10,"title":"ดาวเคราะห์ดวงใหม่","createdAt":"..."}, ...],"meta":{"page":1,"limit":10,"total":21}}
+{"success":true,"data":[{"id":27,"title":"นิยายเล่มที่ 20","createdAt":"..."}, ...],"meta":{"page":1,"limit":10,"total":27}}
 ```
+
+แถวแรกเป็น `นิยายเล่มที่ 20` เพราะเรียงจาก id มากไปน้อย ส่วน `id` กับ `total` ของแต่ละคนไม่เท่ากัน ขึ้นกับว่าเคยรัน seed และเพิ่มหนังสือจากการ์ดก่อนๆ ไปกี่ครั้ง (seed ใส่ข้อมูลซ้ำทุกครั้งที่รัน ดูทริคข้อ 3 ของการ์ด [Migration](/learn/cards/migration))
 
 `?page=0` ได้ `400` พร้อม `"details":{"page":["Too small: expected number to be >=1"]}` และไม่มีบัตรได้ `401` ทุกตัว
 
@@ -152,7 +158,12 @@ export async function requestPage<T>(path: string): Promise<Page<T>> {
 ```
 
 ```ts
-// client/src/api/admin-books.api.ts (เพิ่ม type AdminBook = { id: number; title: string; createdAt: string } ใน types/book.ts)
+// client/src/types/book.ts · เพิ่มต่อจาก type Book เดิม (หลังบ้านเห็น createdAt ด้วย)
+export type AdminBook = { id: number; title: string; createdAt: string };
+```
+
+```ts
+// client/src/api/admin-books.api.ts
 import type { AdminBook } from "../types/book";
 import { jsonBody, request, requestPage } from "./client";
 
@@ -315,9 +326,9 @@ export function AdminBooksPage() {
 
 `let ignore` มาจากการ์ด[ดึงข้อมูลจาก API](/learn/cards/fetch-data) ส่วน `reload` เป็นตัวเลขที่ไม่มีความหมายอะไร มีไว้ให้ `useEffect` เห็นว่า "มีอะไรเปลี่ยน" แล้วดึงรายการใหม่ หลังเพิ่ม แก้ หรือลบ
 
-**ควรเห็น:** (หลัง seed เพิ่ม 20 เล่ม รวมมีราว 21 เล่ม)
+**ควรเห็น:** (หลัง seed เพิ่ม 20 เล่ม รวมราว 22–30 เล่ม)
 
-- `/admin/books` ขึ้น `หน้า 1 / 3` และ 10 แถว กด "ถัดไป" ที่อยู่เป็น `?q=&page=2` รีเฟรชแล้วยังอยู่หน้า 2 พิมพ์ `?page=abc` เองก็ได้หน้า 1 ไม่พัง
+- `/admin/books` ขึ้น `หน้า 1 / 3` (ถ้ารวมเกิน 30 เล่มเป็น `1 / 4`) และ 10 แถว กด "ถัดไป" ที่อยู่เป็น `?q=&page=2` รีเฟรชแล้วยังอยู่หน้า 2 พิมพ์ `?page=abc` เองก็ได้หน้า 1 ไม่พัง
 - พิมพ์ "นิยาย" แล้วกด Enter ที่อยู่เป็น `?q=นิยาย&page=1` ค้นคำที่ไม่มี ขึ้น `ไม่พบหนังสือ ที่ชื่อมีคำว่า "..."`
 - กด "เพิ่มหนังสือ" แล้วบันทึกตอนช่องว่าง ขึ้น "กรอกชื่อหนังสือ" กรอกแล้วบันทึก เล่มใหม่ขึ้นแถวแรก
 - กด "แก้" ฟอร์มมีชื่อเดิมให้แก้ กด "ลบ" ต้องมีกล่องถามยืนยันก่อน
@@ -348,7 +359,7 @@ export function AdminBooksPage() {
 
 ## ลองเอง
 
-**โจทย์:** ยืมหนังสือสักเล่มด้วย `POST /api/loans` (จากการ์ด[แบ่งชั้น](/learn/cards/layers)) แล้วลองลบเล่มนั้นในหน้าจัดการ จะได้ `500` "ระบบขัดข้อง" ทำให้เป็น `409` พร้อมข้อความ "หนังสือเล่มนี้มีประวัติการยืม ลบไม่ได้" และให้หน้าเว็บแสดงข้อความนั้น
+**โจทย์:** ยืมหนังสือสักเล่มด้วย `POST /api/loans` (จากการ์ด[แบ่งชั้น](/learn/cards/layers) หรือ `/api/admin/loans` ถ้าทำโจทย์ของการ์ด Middleware ไว้แล้ว) แล้วลองลบเล่มนั้นในหน้าจัดการ จะได้ `500` "ระบบขัดข้อง" ทำให้เป็น `409` พร้อมข้อความ "หนังสือเล่มนี้มีประวัติการยืม ลบไม่ได้" และให้หน้าเว็บแสดงข้อความนั้น
 
 <Hint level={1}>ดู log ของ server ตอนได้ `500` จะเห็นรหัสจาก Postgres `23503` แปลว่ามีแถวในตารางอื่นอ้างถึงแถวที่จะลบอยู่ (foreign key)</Hint>
 <Hint level={2}>กฎ "ลบไม่ได้ถ้ามีการยืม" เป็นกฎของระบบ ตามการ์ด[แบ่งชั้น](/learn/cards/layers) ควรมีบ้านอยู่ที่ service: นับการยืมของเล่มนั้นก่อน (`countOpen` ใน `loan.repository.ts` นับตามสมาชิก ลองเขียนอีกตัวที่นับตาม `bookId`) แล้วโยนรหัสใหม่ที่ตัวจับกลางรู้จัก</Hint>

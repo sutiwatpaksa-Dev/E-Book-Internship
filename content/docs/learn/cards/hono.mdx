@@ -21,10 +21,11 @@ cd server
 bun add hono
 ```
 
-เพิ่มใน `server/package.json` แล้วรัน `bun run dev` (`--hot` = แก้ไฟล์แล้ว server โหลดใหม่เอง)
+เพิ่มบรรทัด `dev` ใน `scripts` ของ `server/package.json` (คง `seed` จากการ์ด Migration ไว้ คั่นด้วย `,`) แล้วรัน `bun run dev` (`--hot` = แก้ไฟล์แล้ว server โหลดใหม่เอง)
 
 ```json
 "scripts": {
+  "seed": "bun run src/db/seed.ts",
   "dev": "bun run --hot src/index.ts"
 }
 ```

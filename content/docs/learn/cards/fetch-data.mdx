@@ -64,6 +64,13 @@ export const jsonBody = (method: string, data: unknown): RequestInit => ({
 });
 ```
 
+อ่านทีละส่วน (syntax ใหม่ของ TypeScript ทบทวนพื้นฐานได้ที่[บท TypeScript](/04-typescript)):
+
+- **`<T>`** (generic) คือช่องว่างของ type ที่คนเรียกเติมเอง `request<Book[]>("/books")` แปลว่า "data ที่ได้คือ `Book[]`" ฟังก์ชันเดียวจึงใช้ได้ทุก endpoint และ editor ยังรู้ type ของผล
+- **`ApiResponse<T>`** บอกว่าคำตอบมีได้ 2 หน้าตา (`|` = หรือ) พอเช็ก `body.success` แล้ว TypeScript รู้เองว่าเป็นแบบไหน จึงอ่าน `body.data` หรือ `body.error` ได้ถูกตัว
+- **`class ApiError extends Error`** สร้าง error ชนิดใหม่ที่เป็น `Error` ทุกอย่าง (`throw` / `catch` ได้ปกติ) แต่มีช่อง `details` เพิ่ม ส่วน `super(message)` คือเรียกตัวสร้างของ `Error` ให้ตั้งข้อความก่อน แล้วค่อยเก็บของเราเพิ่ม
+- **`as ApiResponse<T> | null`** บอก TypeScript ว่า "เชื่อเถอะ JSON นี้หน้าตาแบบนี้" เพราะ TypeScript ตรวจของที่มาจาก server ตอนรันไม่ได้ เราจึงรับรองเอง
+
 ```ts
 // src/api/books.api.ts · ไฟล์ละเรื่อง
 import type { Book } from "../types/book";
@@ -138,7 +145,7 @@ export function BooksPage() {
 
 ## ลองเอง
 
-**โจทย์:** เพิ่มปุ่ม "ลบ" ในกล่องหนังสือแต่ละเล่ม ที่เรียก `DELETE /api/books/:id` (จากโจทย์การ์ด [Hono](/learn/cards/hono)) ระหว่างส่ง ปุ่มกดซ้ำไม่ได้ ลบสำเร็จแล้วเล่มนั้นหายจากรายการ ลบไม่สำเร็จต้องเห็นข้อความจาก API
+**โจทย์:** เพิ่มปุ่ม "ลบ" ในกล่องหนังสือแต่ละเล่ม ที่เรียก `DELETE /api/books/:id` (จากโจทย์ข้อ 2 ของการ์ด [แบ่งชั้น](/learn/cards/layers)) ระหว่างส่ง ปุ่มกดซ้ำไม่ได้ ลบสำเร็จแล้วเล่มนั้นหายจากรายการ ลบไม่สำเร็จต้องเห็นข้อความจาก API
 
 <Hint level={1}>เพิ่มฟังก์ชัน `remove` ใน `books.api.ts` ก่อน ลองเรียกจาก Console ของ browser ให้ได้ผลก่อนไปทำหน้าจอ (ใช้ `jsonBody` ไม่ได้เพราะไม่มี body ส่งแค่ `{ method: "DELETE" }`)</Hint>
 <Hint level={2}>ปุ่มต้องรู้ว่า "กำลังส่ง" อยู่ไหม นั่นคือ state อีกตัว ใช้คู่กับ `disabled` ส่วนการลบเกิดเพราะผู้ใช้กด จึงอยู่ใน `onClick` ไม่ใช่ `useEffect`</Hint>

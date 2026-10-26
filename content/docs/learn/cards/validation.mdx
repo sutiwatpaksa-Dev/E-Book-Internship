@@ -35,6 +35,8 @@ export type NewBook = z.infer<typeof newBookSchema>;   // { title: string } ไ�
 
 ### 2. ใช้ใน route (ต่อจากการ์ด [Hono](/learn/cards/hono))
 
+เพิ่มใน `server/src/routes/books.routes.ts`: import 2 บรรทัดแรกไว้บนสุดของไฟล์ (ใต้ import เดิม) ส่วน `bookRoutes.post` ไว้ท้ายไฟล์
+
 ```ts
 import { z } from "zod";
 import { newBookSchema } from "../validators/book.validator";
@@ -57,7 +59,14 @@ bookRoutes.post("/", async (c) => {
 {"success":false,"error":{"code":"VALIDATION_ERROR","message":"ข้อมูลไม่ถูกต้อง","details":{"title":["ต้องมีชื่อหนังสือ"]}}}
 ```
 
-ส่ง `{ "title": " ฮอบบิท 2 " }` ได้ `201` และชื่อถูกตัดช่องว่างหัวท้ายเป็น `"ฮอบบิท 2"` ให้ก่อนบันทึก (วิธียิงคำขอ `POST` ดูการ์ด [ยิงทดสอบ API](/learn/cards/api-testing))
+ส่ง `{ "title": " ฮอบบิท 2 " }` ได้ `201` และชื่อถูกตัดช่องว่างหัวท้ายเป็น `"ฮอบบิท 2"` ให้ก่อนบันทึก
+
+ยิง `POST` ได้จาก Terminal (Mac และ Windows Git Bash พิมพ์เหมือนกัน) วิธีอื่นและการเก็บคำขอไว้ใช้ซ้ำอยู่ในการ์ด [ยิงทดสอบ API](/learn/cards/api-testing)
+
+```bash
+curl -i --json '{"title":""}' http://localhost:3000/api/books
+curl -i --json '{"title":" ฮอบบิท 2 "}' http://localhost:3000/api/books
+```
 
 `details` บอกเป็นรายช่อง หน้าเว็บเอาไปขึ้นใต้ช่องที่ผิดได้ทันที (ดูการ์ด [ฟอร์ม](/learn/cards/react-forms))
 

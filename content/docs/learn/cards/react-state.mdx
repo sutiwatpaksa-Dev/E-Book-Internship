@@ -17,6 +17,7 @@ title: "React: State และ useEffect"
 ## การใช้งาน
 
 ```tsx
+// src/components/borrow-button.tsx
 import { useEffect, useState } from "react";
 
 export function BorrowButton({ title }: { title: string }) {
@@ -30,7 +31,18 @@ export function BorrowButton({ title }: { title: string }) {
 }
 ```
 
-ลองวาง `<BorrowButton title="เจ้าชายน้อย" />` ใน `App.tsx` กดปุ่มแล้วดูตัวเลขบนปุ่มกับชื่อแท็บ browser เปลี่ยนพร้อมกัน
+ลองวางใน `src/App.tsx` ชั่วคราว: เพิ่ม `import { BorrowButton } from "./components/borrow-button";` บนสุด แล้วห่อด้วย `<>...</>` เพราะ component คืนได้ก้อนเดียว
+
+```tsx
+return (
+  <>
+    <BooksPage books={books} />
+    <BorrowButton title="เจ้าชายน้อย" />
+  </>
+);
+```
+
+กดปุ่มแล้วดูตัวเลขบนปุ่มกับชื่อแท็บ browser เปลี่ยนพร้อมกัน
 
 ท้าย `useEffect` คือ **รายการค่าที่ต้องเฝ้าดู** ([dependency array](/glossary#dependency-array))
 

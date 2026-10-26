@@ -161,7 +161,14 @@ export function AdminLayout() {
 
 ### 5. ต่อ route ใน `client/src/App.tsx`
 
-เพิ่ม import 4 ตัวบนสุด แล้วเพิ่ม route ต่อจาก route หน้าบ้านเดิม (`AdminHomePage` เป็นหน้าธรรมดามี `<h1>หลังบ้าน</h1>` เขียนเองได้เลย)
+เพิ่ม import 4 ตัวบนสุด แล้ววาง route หลังบ้าน **หลัง `</Route>` ที่ปิด `PublicLayout` และก่อน `</Routes>`** และสร้างหน้าแรกของหลังบ้าน
+
+```tsx
+// client/src/pages/admin/admin-home-page.tsx
+export function AdminHomePage() {
+  return <h1 className="text-2xl font-bold">หลังบ้าน</h1>;
+}
+```
 
 ```tsx
 import { AdminLayout } from "./components/admin-layout";
