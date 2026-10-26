@@ -67,7 +67,7 @@ export const cards: LearnCard[] = [
   { slug: "react-state", title: "React: State และ useEffect", step: "coding", part: "Frontend", minutes: 10, needs: ["react-components"], starter: "วันที่ 6–8 · ข้อมูลที่เปลี่ยนบนหน้าจอ" },
   { slug: "fetch-data", title: "หน้าเว็บดึงข้อมูลจาก API", step: "coding", part: "Frontend", minutes: 10, needs: ["react-state", "hono"], starter: "วันที่ 6 · ดึงจาก API + loading/error ทุกหน้า" },
   { slug: "react-forms", title: "ฟอร์ม: กรอก ตรวจ ส่ง", step: "coding", part: "Frontend", minutes: 10, needs: ["fetch-data", "validation"], starter: "วันที่ 7 · Contact form" },
-  { slug: "router-seo", title: "หลายหน้า (React Router) และ SEO", step: "coding", part: "Frontend", minutes: 12, needs: ["fetch-data"], starter: "วันที่ 6 หลายหน้า + 404 · วันที่ 9 SEO" },
+  { slug: "router-seo", title: "หลายหน้า (React Router) และ SEO", step: "coding", part: "Frontend", minutes: 15, needs: ["fetch-data"], starter: "วันที่ 6 หลายหน้า + 404 · วันที่ 9 SEO" },
   { slug: "protected-routes", title: "หน้าหลังบ้านที่ต้อง login", step: "coding", part: "หลังบ้าน", minutes: 12, needs: ["router-seo", "react-forms", "auth-middleware"], starter: "วันที่ 8 · /admin/login, เด้งกลับเมื่อไม่ login, logout" },
   { slug: "crud-ui", title: "หน้าจัดการข้อมูล: ตาราง ค้นหา แบ่งหน้า เพิ่ม แก้ ลบ", step: "coding", part: "หลังบ้าน", minutes: 15, needs: ["protected-routes"], starter: "วันที่ 8 · CRUD UI (list/add/edit/delete) + state ของฟอร์มและตาราง" },
 ];

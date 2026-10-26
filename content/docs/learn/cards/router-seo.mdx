@@ -45,22 +45,64 @@ createRoot(document.getElementById("root")!).render(
 
 ### 2. ที่อยู่ → หน้า
 
+แก้ `src/App.tsx` **ทั้งไฟล์** เดิม App แสดง `BooksPage` ตรงๆ ตอนนี้ App มีหน้าที่เดียว คือจับคู่ที่อยู่กับหน้า
+
 ```tsx
-// src/App.tsx · ที่อยู่ → หน้า (HomePage, BookPage, NotFoundPage เป็นชิ้นส่วนที่เขียนเองในโฟลเดอร์ pages/)
+// src/App.tsx
 import { Route, Routes } from "react-router";
+import { PublicLayout } from "./components/public-layout";
+import { BookPage } from "./pages/book-page";
+import { BooksPage } from "./pages/books-page";
+import { HomePage } from "./pages/home-page";
+import { NotFoundPage } from "./pages/not-found-page";
 
 export default function App() {
   return (
     <Routes>
       <Route element={<PublicLayout />}>            {/* เมนูบน + ส่วนท้าย ทุกหน้าใช้ร่วม */}
         <Route path="/" element={<HomePage />} />
+        <Route path="/books" element={<BooksPage />} />
         <Route path="/books/:id" element={<BookPage />} />
-        <Route path="*" element={<NotFoundPage />} />
+        <Route path="*" element={<NotFoundPage />} />   {/* ไม่ตรงข้างบนเลย = 404 */}
       </Route>
     </Routes>
   );
 }
 ```
+
+`BooksPage` คือไฟล์เดิมจากการ์ด [ดึงข้อมูล](/learn/cards/fetch-data) ย้ายมาอยู่ที่ `/books` ส่วน `PublicLayout` กับ `BookPage` เขียนในข้อ 3–4 ข้างล่าง และอีก 2 หน้าสั้นๆ:
+
+```tsx
+// src/pages/home-page.tsx
+import { Link } from "react-router";
+
+export function HomePage() {
+  return (
+    <>
+      <title>ห้องสมุดบิต</title>
+      <meta name="description" content="ยืมหนังสือออนไลน์ เช็กได้ว่าเล่มไหนว่าง" />
+      <h1 className="text-2xl font-bold">ห้องสมุดบิต</h1>
+      <Link to="/books">ดูหนังสือทั้งหมด</Link>
+    </>
+  );
+}
+```
+
+```tsx
+// src/pages/not-found-page.tsx
+export function NotFoundPage() {
+  return (
+    <>
+      <title>ไม่พบหน้านี้ | ห้องสมุดบิต</title>
+      <h1 className="text-2xl font-bold">ไม่พบหน้านี้</h1>
+    </>
+  );
+}
+```
+
+`<Link>` ใช้แทน `<a href>` เปลี่ยนหน้าโดยไม่โหลดใหม่จาก server ถ้าใช้ `<a href>` ทั้งแอปจะโหลดใหม่ state ที่มีอยู่หายหมด
+
+ฟอร์ม `NewBookForm` จากการ์ด [ฟอร์ม](/learn/cards/react-forms) ไม่อยู่ในหน้าบ้านแล้ว เพราะคนทั่วไปไม่ควรเพิ่มหนังสือเองได้ การเพิ่มหนังสือย้ายไปหลังบ้านในการ์ด [หน้าจัดการข้อมูล](/learn/cards/crud-ui) (ไฟล์เก็บไว้ดูเป็นแบบได้) ส่วนฟอร์มที่หน้าบ้านต้องมีในงาน STARTER คือฟอร์มติดต่อ
 
 ### 3. โครงหน้าร่วม
 
@@ -118,7 +160,7 @@ export function BookPage() {
 }
 ```
 
-**ควรเห็น:** เปิด `http://localhost:5173/books/2` ชื่อแท็บเป็น `ฮอบบิท | ห้องสมุดบิต` เปิด `/books/99` ได้ "ไม่พบหนังสือ" (ข้อความจาก API) และเปิด `/อะไรก็ได้` ได้หน้า 404
+**ควรเห็น:** (เปิด `bun run dev` ทั้ง `server/` และ `client/`) เปิด `http://localhost:5173/` เห็นหัวข้อ "ห้องสมุดบิต" กดเมนู "หนังสือ" ได้รายการจากฐานข้อมูล และที่อยู่เปลี่ยนเป็น `/books` โดยหน้าไม่กะพริบ เปิด `/books/2` ชื่อแท็บเป็น `ฮอบบิท | ห้องสมุดบิต` เปิด `/books/99` ได้ "ไม่พบหนังสือ" (ข้อความจาก API) และเปิด `/อะไรก็ได้` ได้ "ไม่พบหน้านี้"
 
 ## ทริคที่แนะนำ
 
