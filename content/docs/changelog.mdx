@@ -5,6 +5,11 @@ title: "📝 มีอะไรใหม่"
 
 บันทึกการเปลี่ยนแปลงของคู่มือในแต่ละเวอร์ชัน เวอร์ชันล่าสุดอยู่บนสุด
 
+## v2.0.17 · 26 ต.ค. 2569
+
+- **บท [8d](/08d-image-storage-more) ใช้บน Windows (Git Bash) ได้:** มีกล่องต้นบทให้พิมพ์ `export MSYS_NO_PATHCONV=1` (กัน Git Bash แปลง path ในกล่องอย่าง `/data/...`, `/backup` จน docker ได้ error) และ `backup.sh` ใช้ได้ทั้ง Mac และ Windows ด้วยสคริปต์เดียว
+- **ทดสอบ "ลบทั้งเครื่องที่มีรูปในถังขยะ" ทำตามได้แล้ว:** เดิมใช้เครื่อง 4 ที่บท 8c ลบไปแล้ว ตอนนี้สร้างเครื่องใหม่ จด id ไว้ในตัวแปร แล้วใช้ต่อทุกคำสั่ง
+
 ## v2.0.16 · 26 ต.ค. 2569
 
 - **คำสั่งในการ์ดใช้ Git Bash บน Windows ทั้งหมดแล้ว** ตรงกับกฎของ[บท 0](/00-start#-windows-ใช้-git-bash-เท่านั้น): เลิกสอนทาง PowerShell / `curl.exe` ใน [Login: JWT](/learn/cards/jwt-cookie), [ยิงทดสอบ API](/learn/cards/api-testing), [Middleware](/learn/cards/auth-middleware), [หน้าจัดการข้อมูล](/learn/cards/crud-ui) และ [Postgres](/learn/cards/postgres) พร้อมบอกเหตุผล (PowerShell 5.1 ตัด `"` ใน JSON ทิ้ง ได้ `400` แทนผลที่การ์ดบอก)

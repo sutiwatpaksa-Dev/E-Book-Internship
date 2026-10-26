@@ -36,6 +36,12 @@ title: "บทที่ 8d: รูปภาพ ภาคต่อ: ลองท�
 
 ## 1. ทำไมต้องลองเอง และเตรียมรูปทดสอบ
 
+> 🪟 **Windows (Git Bash): พิมพ์บรรทัดนี้ก่อนเริ่มบท** ทุกครั้งที่เปิดหน้าต่าง Terminal ใหม่สำหรับบทนี้
+> ```bash
+> export MSYS_NO_PATHCONV=1
+> ```
+> บทนี้ส่ง path **ในกล่อง** ให้ docker หลายที่ (`/data/laptop-photos`, `-v laptop-uploads:/app/uploads`, `/backup`) Git Bash จะแปลงเป็น `C:/Program Files/Git/...` ก่อนถึง docker แล้วได้ error แปลกๆ บรรทัดนี้ปิดการแปลงในหน้าต่างนั้น (ปิดหน้าต่าง = หายไป) เหตุผลเต็มอยู่ในกล่อง "นิสัยของ Git Bash" ของ[บท 0](/00-start#-windows-ใช้-git-bash-เท่านั้น) ข้อ 1 · บน Mac ไม่ต้องพิมพ์ (พิมพ์ไปก็ไม่มีผลอะไร)
+
 ตารางเทียบในบท 8c ข้อ 1 บอกว่า `bytea` "ทำให้ backup ช้า" และ "ไบต์ต้องไหลผ่านฐานข้อมูล" แต่ไม่ได้บอกว่า **ช้าแค่ไหน** วิศวกรที่ดีตัดสินจากตัวเลขของงานตัวเอง ไม่ใช่จากความเชื่อ บทนี้จึงใช้รูปชุดเดียวกันใส่ทั้ง 2 ระบบแล้ววัด 5 อย่าง
 
 | วัดอะไร | ทำไมต้องสน |
@@ -758,6 +764,7 @@ for (const key of ["laptops/2/abc-400.webp", "../../.env", "laptops/../../etc/pa
 ```bash
 UPLOAD_DIR=/app/uploads npx tsx src/scripts/lab/try-keys.ts
 ```
+บน Windows path ด้านขวาจะขึ้นต้นด้วย `C:` แทน `/app` ไม่เป็นไร สิ่งที่ดูคือ key ไหนได้ ✅ key ไหนได้ ❌
 ```text
 ✅ laptops/2/abc-400.webp → /app/uploads/laptops/2/abc-400.webp
 ❌ ../../.env → key ไม่ปลอดภัย: ../../.env
@@ -1811,17 +1818,31 @@ curl -s -w "\n%{http_code}\n" -X POST $U/2/photos/9/restore
 ```
 อัปโหลดใหม่ได้ เพราะ `photo_hash_per_laptop` ไม่นับรูปในถังขยะ แต่กู้คืนไม่ได้ เพราะจะมีรูปซ้ำ 2 รูปที่ใช้งาน unique index ปฏิเสธ แล้ว `translateUniqueError` แปลเป็น `409` ที่อ่านรู้เรื่อง
 
-**ลบทั้งเครื่องที่มีรูปในถังขยะ** เครื่อง 4 มี 5 รูป (10 ไฟล์) ลบไปแล้ว 1 รูป
+**ลบทั้งเครื่องที่มีรูปในถังขยะ** ใช้เครื่องใหม่ (เครื่อง 4 ของบท 8c ข้อ ⑨ ถูกลบไปแล้ว ส่วนเครื่องเดิมส่วนใหญ่มีประวัติเช่า ลบไม่ได้) ขั้นเตรียม: สร้างเครื่อง จด id ไว้ในตัวแปร `L` อัปโหลด 5 รูป แล้วลบ 1 รูปลงถังขยะ
 ```bash
-docker exec laptop-api-storage-1 sh -c 'ls /data/laptop-photos/laptops/4 | wc -l'
-curl -s -o /dev/null -w "%{http_code}\n" -X DELETE $U/4
-docker exec laptop-api-storage-1 sh -c 'ls /data/laptop-photos/laptops/4 2>/dev/null | wc -l'
+L=$(curl -s -X POST -H "Content-Type: application/json" -d '{"brand":"Acer","model":"Swift 3","serial":"ACER-TRASH-1","pricePerMonth":900}' $U | node -pe 'JSON.parse(require("fs").readFileSync(0)).id')
+echo "เครื่องใหม่ id = $L"
+curl -s -o /dev/null -w "%{http_code}\n" $(for i in 90 91 92 93 94; do echo "-F photos=@dataset/00$i.jpg"; done) $U/$L/photos/batch
+P=$(curl -s $U/$L/photos | node -pe 'JSON.parse(require("fs").readFileSync(0)).at(-1).id')
+curl -s -o /dev/null -w "%{http_code}\n" -X DELETE $U/$L/photos/$P
+```
+```text
+เครื่องใหม่ id = 5
+201
+204
+```
+เลข id ของเครื่องอาจไม่ใช่ 5 (ขึ้นกับว่าเคยสร้างเครื่องไปกี่ครั้ง) ไม่เป็นไร คำสั่งต่อไปใช้ `$L` ทั้งหมด `node -pe` อ่าน JSON ที่ curl ส่งมาแล้วพิมพ์เฉพาะ `id` ออกมา (`-p` = พิมพ์ผลของโค้ด) ตอนนี้เครื่องมี 5 รูป (10 ไฟล์ รูปละ 2 ขนาด) อยู่ในถังขยะ 1 รูป ซึ่งไฟล์ยังอยู่ครบ
+```bash
+docker exec laptop-api-storage-1 sh -c "ls /data/laptop-photos/laptops/$L 2>/dev/null | wc -l"
+curl -s -o /dev/null -w "%{http_code}\n" -X DELETE $U/$L
+docker exec laptop-api-storage-1 sh -c "ls /data/laptop-photos/laptops/$L 2>/dev/null | wc -l"
 ```
 ```text
 10
 204
 0
 ```
+ใช้ `"` ครอบคำสั่งของ `sh -c` (ไม่ใช่ `'`) เพื่อให้ `$L` ถูกแทนด้วยเลขก่อนส่งเข้ากล่อง ส่วน `2>/dev/null` ซ่อน error ของ `ls` ตอนที่โฟลเดอร์ถูกลบไปแล้ว
 ไฟล์ของรูปในถังขยะถูกลบไปด้วย เพราะ `laptop.service.ts` ใช้ `listAllByLaptop` แล้ว
 
 ### ⑦ ตรวจของเดิมจากบท 8c ยังทำงาน
@@ -1942,11 +1963,13 @@ RCLONE_CONFIG_PHOTOS_FORCE_PATH_STYLE=true
 #!/bin/bash
 # สำรองข้อมูลรูป: ① ฐานข้อมูลก่อน ② ไฟล์ทีหลัง (copy = เพิ่มอย่างเดียว ไม่ลบไฟล์เก่าใน backup)
 set -euo pipefail
+export MSYS_NO_PATHCONV=1                  # Windows Git Bash: อย่าแปลง /backup เป็น C:/Program Files/Git/backup
+HERE=$(pwd -W 2>/dev/null || pwd)          # Windows ได้ C:/Users/... ที่ Docker อ่านออก · Mac ไม่มี -W จึงใช้ pwd ธรรมดา
 STAMP=$(date +%Y%m%d-%H%M%S)
 mkdir -p backup/db
 docker exec laptop-db pg_dump -U postgres -Fc postgres > "backup/db/laptop-$STAMP.dump"
 echo "① ฐานข้อมูล → backup/db/laptop-$STAMP.dump ($(du -h "backup/db/laptop-$STAMP.dump" | cut -f1))"
-docker run --rm --network laptop-api_default --env-file rclone.env -v "$PWD/backup:/backup" \
+docker run --rm --network laptop-api_default --env-file rclone.env -v "$HERE/backup:/backup" \
   rclone/rclone:1.75.2 copy photos:laptop-photos /backup/photos --exclude "incoming/**" -q
 echo "② ไฟล์รูป → backup/photos ($(find backup/photos -type f | wc -l | tr -d ' ') ไฟล์)"
 ```
@@ -1962,12 +1985,15 @@ chmod +x backup.sh && ./backup.sh
 
 ของจริง backup ต้องอยู่ **นอกเครื่อง** เปลี่ยนปลายทางจากโฟลเดอร์ `/backup/photos` เป็น remote อีกตัว เช่น bucket ของผู้ให้บริการอื่นหรือคนละ region (`copy photos:laptop-photos offsite:laptop-photos-backup`) และเก็บ dump หลายรุ่นย้อนหลัง
 
-> 💡 **ใช้ aws-cli ก็ได้** `docker run --rm --network laptop-api_default -e AWS_ACCESS_KEY_ID=laptop-dev -e AWS_SECRET_ACCESS_KEY=... -e AWS_DEFAULT_REGION=us-east-1 -v "$PWD/backup-aws:/b" amazon/aws-cli:2.38.4 --endpoint-url http://storage:9000 s3 sync s3://laptop-photos /b --exclude "incoming/*"` (เราลองกับ RustFS แล้ว คัดลอก 30 ไฟล์ได้ครบ) `s3 sync` ของ aws-cli ไม่ลบไฟล์ปลายทางถ้าไม่ใส่ `--delete` จึงใช้ได้ ส่วน `mc` (โปรแกรมฝั่ง client ของ MinIO) ที่บทความเก่าๆ ชอบใช้ ตอนเราลอง `docker pull minio/mc` เมื่อ 23 ต.ค. 2569 ได้ "pull access denied" เหมือน `minio/minio` ในบท 8c ข้อ 2
+> 💡 **ใช้ aws-cli ก็ได้** `docker run --rm --network laptop-api_default -e AWS_ACCESS_KEY_ID=laptop-dev -e AWS_SECRET_ACCESS_KEY=... -e AWS_DEFAULT_REGION=us-east-1 -v "$HERE/backup-aws:/b" amazon/aws-cli:2.38.4 --endpoint-url http://storage:9000 s3 sync s3://laptop-photos /b --exclude "incoming/*"` (เราลองกับ RustFS แล้ว คัดลอก 30 ไฟล์ได้ครบ) `s3 sync` ของ aws-cli ไม่ลบไฟล์ปลายทางถ้าไม่ใส่ `--delete` จึงใช้ได้ ส่วน `mc` (โปรแกรมฝั่ง client ของ MinIO) ที่บทความเก่าๆ ชอบใช้ ตอนเราลอง `docker pull minio/mc` เมื่อ 23 ต.ค. 2569 ได้ "pull access denied" เหมือน `minio/minio` ในบท 8c ข้อ 2
 
 ### 🔥 ซ้อมกู้คืน: ทำลายทุกอย่างแล้วเอากลับมา
 
 backup ที่ไม่เคยลองกู้คืน = ยังไม่รู้ว่ามี backup ไหม ซ้อมทั้งกระบวนการ
+คำสั่งข้างล่างพิมพ์ใน Terminal เอง (ไม่ได้อยู่ใน `backup.sh`) จึงต้องตั้ง `HERE` ในหน้าต่างนี้ก่อน แบบเดียวกับในสคริปต์ (Windows: อย่าลืม `export MSYS_NO_PATHCONV=1` จากกล่องต้นบท)
 ```bash
+HERE=$(pwd -W 2>/dev/null || pwd)
+
 # ① ภัยพิบัติ: ลบ storage พร้อม volume และล้างฐานข้อมูล
 docker compose down -v
 docker exec -it laptop-db psql -U postgres -c "drop schema public cascade; drop schema drizzle cascade; create schema public;"
@@ -1979,7 +2005,7 @@ docker compose up -d && npm run storage:setup
 docker exec -i laptop-db pg_restore -U postgres -d postgres --no-owner < backup/db/laptop-20261023-024314.dump
 
 # ④ กู้ไฟล์
-docker run --rm --network laptop-api_default --env-file rclone.env -v "$PWD/backup:/backup" \
+docker run --rm --network laptop-api_default --env-file rclone.env -v "$HERE/backup:/backup" \
   rclone/rclone:1.75.2 copy /backup/photos photos:laptop-photos
 
 # ⑤ ตรวจ
@@ -1995,7 +2021,7 @@ Content-Type: image/webp
 ```
 ไฟล์ครบ แต่ **`Cache-Control` หายไป** ซ้อมแล้วถึงเห็น: header ของ object (`CacheControl: immutable` ที่ใส่ตอน `put`) เป็นข้อมูลที่อยู่กับ object ใน storage พอสำรองลงดิสก์ธรรมดา เหลือแค่ไฟล์ ข้อมูลนี้หายไป rclone เดา `Content-Type` กลับจากนามสกุลได้ แต่ `Cache-Control` เดาไม่ได้ ผลคือหลังกู้คืน browser ต้องถามรูปใหม่ทุกครั้ง (ไม่พัง แต่ช้าและเปลืองโดยไม่มีใครรู้ตัว) แก้ด้วยการบอก rclone ให้ใส่ header ตอนอัปโหลดกลับ
 ```bash
-docker run --rm --network laptop-api_default --env-file rclone.env -v "$PWD/backup:/backup" \
+docker run --rm --network laptop-api_default --env-file rclone.env -v "$HERE/backup:/backup" \
   rclone/rclone:1.75.2 copy /backup/photos photos:laptop-photos --ignore-times \
   --header-upload "Cache-Control: public, max-age=31536000, immutable"
 ```
