@@ -26,26 +26,28 @@ export const okPage = (c: Context, data: unknown[], meta: { page: number; limit:
   c.json({ success: true, data, meta });
 ```
 
+`bookRepository` มีอยู่แล้วจากการ์ด [แบ่งชั้น](/learn/cards/layers) (`list`, `get`, `create`) **เพิ่มต่อในไฟล์เดิม** อีก 3 ตัว และเพิ่ม `desc` ใน import บนสุด
+
 ```ts
 // server/src/repositories/book.repository.ts
-import { desc, eq, ilike } from "drizzle-orm";
-import { db } from "../db";
-import { books } from "../db/schema";
+import { and, desc, eq, ilike, isNull, notExists } from "drizzle-orm";
 
 export const bookRepository = {
-  async list(q: string, page: number, limit: number) {
-    const where = q ? ilike(books.title, `%${q}%`) : undefined;     // ilike = ค้นแบบไม่สนตัวพิมพ์เล็ก-ใหญ่
+  // list, get, create เดิมจากการ์ดแบ่งชั้น ...
+  async listPage(q: string, page: number, limit: number) {
+    const where = q ? ilike(books.title, `%${q}%`) : undefined;
     const [rows, total] = await Promise.all([
       db.select().from(books).where(where).orderBy(desc(books.id)).limit(limit).offset((page - 1) * limit),
       db.$count(books, where),                                       // นับทั้งหมด ไว้คำนวณจำนวนหน้า
     ]);
     return { rows, total };
   },
-  create: async (title: string) => (await db.insert(books).values({ title }).returning())[0]!,
   update: async (id: number, title: string) => (await db.update(books).set({ title }).where(eq(books.id, id)).returning())[0],
   remove: async (id: number) => (await db.delete(books).where(eq(books.id, id)).returning())[0],
 };
 ```
+
+ทำไมมีทั้ง `list` และ `listPage`: หน้าบ้านต้องรู้ว่าเล่มไหนยืมได้ (`available`) ส่วนหลังบ้านต้องการทุกคอลัมน์ (เช่น `createdAt`) และแบ่งหน้า คำถามต่างกันจึงเป็นคนละฟังก์ชัน ถ้าทำโจทย์ข้อ 2 ของการ์ดแบ่งชั้นแล้ว มี `remove` อยู่แล้ว ไม่ต้องเพิ่มซ้ำ
 
 อ่านทีละส่วน:
 
@@ -83,7 +85,7 @@ adminBookRoutes.get("/", async (c) => {
   const parsed = bookListQuery.safeParse(c.req.query());
   if (!parsed.success) return fail(c, 400, "VALIDATION_ERROR", "ข้อมูลไม่ถูกต้อง", z.flattenError(parsed.error).fieldErrors);
   const { q, page } = parsed.data;
-  const { rows, total } = await bookRepository.list(q, page, LIMIT);
+  const { rows, total } = await bookRepository.listPage(q, page, LIMIT);
   return okPage(c, rows, { page, limit: LIMIT, total });
 });
 

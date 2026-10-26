@@ -20,7 +20,100 @@ title: "แบ่งชั้น routes · services · repositories"
 
 ## การใช้งาน
 
-ตัวอย่าง: สมาชิกยืมหนังสือ (`POST /api/loans`) กฎคือยืมค้างได้ไม่เกิน 3 เล่ม ต่อฐานจริงจากการ์ด [Drizzle](/learn/cards/drizzle-orm) ใช้ `ok` / `fail` จากการ์ด [Hono](/learn/cards/hono)
+มี 2 ตัวอย่าง ต่อฐานจริงจากการ์ด [Drizzle](/learn/cards/drizzle-orm) ใช้ `ok` / `fail` จากการ์ด [Hono](/learn/cards/hono)
+
+1. **หนังสือ** ย้ายจาก array ในการ์ด Hono ลงฐานข้อมูล (ไม่มีกฎ มีแค่ 2 ชั้น)
+2. **ยืมหนังสือ** `POST /api/loans` มีกฎว่ายืมค้างได้ไม่เกิน 3 เล่ม (ครบ 3 ชั้น)
+
+### 1. หนังสือลงฐานข้อมูล
+
+**repository** `server/src/repositories/book.repository.ts`
+
+```ts
+import { and, eq, ilike, isNull, notExists } from "drizzle-orm";
+import { db } from "../db";
+import { books, loans } from "../db/schema";
+
+// ยืมได้ = ไม่มีการยืมเล่มนี้ที่ยังไม่คืน · คำนวณจาก loans ทุกครั้ง ไม่เก็บเป็นคอลัมน์
+const available = notExists(
+  db.select().from(loans).where(and(eq(loans.bookId, books.id), isNull(loans.returnedAt))),
+).mapWith(Boolean);
+
+const columns = { id: books.id, title: books.title, available };
+
+export const bookRepository = {
+  list: (q: string) =>
+    db.select(columns).from(books).where(q ? ilike(books.title, `%${q}%`) : undefined).orderBy(books.id),
+  get: async (id: number) => (await db.select(columns).from(books).where(eq(books.id, id)))[0],
+  create: async (title: string) => {
+    const [book] = await db.insert(books).values({ title }).returning();
+    return { ...book!, available: true };          // เล่มใหม่ยังไม่มีใครยืม
+  },
+};
+```
+
+อ่านทีละส่วน:
+
+- **ทำไมไม่มีคอลัมน์ `available` ในตาราง:** ถ้าเก็บไว้ ทุกครั้งที่ยืมหรือคืนต้องจำไปแก้คอลัมน์นี้ด้วย ลืมสักที่ หนังสือจะ "ถูกยืมอยู่" ตลอดไปทั้งที่คืนแล้ว ข้อมูลเรื่องเดียวควรมีที่เก็บที่เดียว ที่นี่คือ `loans` แล้วคำนวณ `available` ตอนอ่าน
+- **`notExists(...)`** = SQL `NOT EXISTS (SELECT ...)` ถามว่า "ไม่มีแถวในวงเล็บนี้ใช่ไหม" ได้ true/false ทีละเล่ม ในวงเล็บคือการยืมของเล่มนี้ (`loans.bookId = books.id`) ที่ยังไม่คืน (`returnedAt` ว่าง)
+- **`.mapWith(Boolean)`** บอก Drizzle ว่าค่านี้เป็น boolean ไม่งั้น type ของ `available` จะเป็น `unknown`
+- **`ilike`** ค้นแบบไม่สนตัวพิมพ์เล็ก-ใหญ่ `%q%` = มีคำนี้อยู่ตรงไหนก็ได้ ส่วน `q` ว่าง ส่ง `undefined` = ไม่กรอง
+- **`[0]`** select ได้ array เสมอ ไม่เจอได้ `[]` ตัวแรกจึงเป็น `undefined` route เอาไปเช็ก 404 ได้
+
+**route** `server/src/routes/books.routes.ts` · **แทนไฟล์เดิมทั้งไฟล์** (array หายไป) และ `POST` จากการ์ด [Zod](/learn/cards/validation) เปลี่ยนมาบันทึกลงฐาน
+
+```ts
+import { Hono } from "hono";
+import { z } from "zod";
+import { fail, ok } from "../lib/response";
+import { bookRepository } from "../repositories/book.repository";
+import { newBookSchema } from "../validators/book.validator";
+
+export const bookRoutes = new Hono();
+
+bookRoutes.get("/", async (c) => ok(c, await bookRepository.list(c.req.query("q") ?? "")));
+
+bookRoutes.get("/:id", async (c) => {
+  const id = Number(c.req.param("id"));
+  if (!Number.isInteger(id)) return fail(c, 404, "NOT_FOUND", "ไม่พบหนังสือ");   // /books/abc ไม่มีแน่นอน
+  const book = await bookRepository.get(id);
+  if (!book) return fail(c, 404, "NOT_FOUND", "ไม่พบหนังสือ");
+  return ok(c, book);
+});
+
+bookRoutes.post("/", async (c) => {
+  const parsed = newBookSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return fail(c, 400, "VALIDATION_ERROR", "ข้อมูลไม่ถูกต้อง", z.flattenError(parsed.error).fieldErrors);
+  return ok(c, await bookRepository.create(parsed.data.title), 201);
+});
+```
+
+`Number.isInteger` กันไว้ก่อน เพราะ `Number("abc")` ได้ `NaN` ถ้าส่งให้ฐานข้อมูล Postgres จะปฏิเสธแล้วกลายเป็น `500` ทั้งที่ควรเป็น `404`
+
+ไม่มี service เพราะหนังสือยังไม่มีกฎอะไร route เรียก repository ตรงได้ (ทริคข้อ 3)
+
+**ควรเห็น:** เปิด `http://localhost:3000/api/books` ใน browser ได้หนังสือที่ seed ไว้ในการ์ด [Migration](/learn/cards/migration) พร้อม `available`
+
+```json
+{"success":true,"data":[{"id":1,"title":"เจ้าชายน้อย","available":true},{"id":2,"title":"ฮอบบิท","available":true}]}
+```
+
+`/api/books/abc` และ `/api/books/99` ได้ `404` ส่วน `POST` หนังสือใหม่แล้วรีเฟรช จะเห็นเล่มนั้นในรายการ แม้ปิดเปิด server ใหม่ก็ยังอยู่ (ต่างจาก array ที่หายทุกครั้ง)
+
+> ถ้าทำโจทย์ของการ์ด Hono ไว้ (`/available`, `DELETE /:id`) route พวกนั้นหายไปพร้อม array ทำใหม่ให้ใช้ฐานข้อมูลในโจทย์ข้อ 2 ของการ์ดนี้
+
+### 2. ยืมหนังสือ: ครบ 3 ชั้น
+
+**validator** `server/src/validators/loan.validator.ts`
+
+```ts
+import { z } from "zod";
+
+export const newLoanSchema = z.object({
+  memberId: z.number().int().positive(),
+  bookId: z.number().int().positive(),
+});
+```
 
 **repository** `server/src/repositories/loan.repository.ts` · query อย่างเดียว ไม่ตัดสินอะไร
 
@@ -37,19 +130,25 @@ export const loanRepository = {
 };
 ```
 
+`14 * 86400000` = 14 วัน เป็นมิลลิวินาที (1 วัน = 24 × 60 × 60 × 1000 = 86,400,000) คือวันครบกำหนดคืน
+
 **service** `server/src/services/loan.service.ts` · กฎอยู่ที่นี่ บอกผลด้วย "รหัส" ไม่ใช่ status
 
 ```ts
+import { bookRepository } from "../repositories/book.repository";
 import { loanRepository } from "../repositories/loan.repository";
 
 export const loanService = {
   async borrow(memberId: number, bookId: number) {
+    if (!(await bookRepository.get(bookId))) throw new Error("BOOK_NOT_FOUND");
     if ((await loanRepository.countOpen(memberId)) >= 3) throw new Error("LOAN_LIMIT");
     const [loan] = await loanRepository.create(memberId, bookId);
     return loan;
   },
 };
 ```
+
+service เรียกได้หลาย repository: ถาม `bookRepository` ก่อนว่ามีเล่มนี้ไหม แล้วค่อยนับโควตาจาก `loanRepository`
 
 **route** `server/src/routes/loans.routes.ts` · HTTP อย่างเดียว
 
@@ -58,7 +157,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { fail, ok } from "../lib/response";
 import { loanService } from "../services/loan.service";
-import { newLoanSchema } from "../validators/loan.validator";   // z.object({ memberId, bookId })
+import { newLoanSchema } from "../validators/loan.validator";
 
 export const loanRoutes = new Hono();
 
@@ -69,9 +168,15 @@ loanRoutes.post("/", async (c) => {
 });
 ```
 
-แล้วเพิ่ม `app.route("/loans", loanRoutes)` ใน `index.ts`
+แล้วเพิ่มใน `server/src/index.ts`: `import { loanRoutes } from "./routes/loans.routes";` บนสุด และ `app.route("/loans", loanRoutes);` ต่อจากบรรทัด books
 
-**ควรเห็น:** ยืมเล่มที่ 1–3 ได้ `201` ทั้งหมด พอยืมเล่มที่ 4 ได้ `500` เพราะรหัส `LOAN_LIMIT` ยังไม่มีใครแปลงเป็นคำตอบ การ์ดถัดไป [จัดการ error ที่จุดเดียว](/learn/cards/error-handling) จะเปลี่ยนเป็น `409` พร้อมข้อความภาษาไทย
+**ควรเห็น:** (วิธียิง `POST` ดูการ์ด [ยิงทดสอบ API](/learn/cards/api-testing)) ส่ง `{ "memberId": 1, "bookId": 1 }` ได้ `201`
+
+```json
+{"success":true,"data":{"id":1,"memberId":1,"bookId":1,"dueAt":"2026-11-09T06:43:43.729Z","returnedAt":null}}
+```
+
+เปิด `/api/books` อีกครั้ง เล่ม 1 เป็น `"available":false` ทันทีโดยไม่ต้องแก้ตาราง books เลย ยืมเล่มที่ 2–3 ได้ `201` พอเล่มที่ 4 ได้ `500` และ `bookId: 99` ก็ได้ `500` เพราะรหัส `LOAN_LIMIT` กับ `BOOK_NOT_FOUND` ยังไม่มีใครแปลงเป็นคำตอบ การ์ดถัดไป [จัดการ error ที่จุดเดียว](/learn/cards/error-handling) จะเปลี่ยนเป็น `409` และ `404` พร้อมข้อความภาษาไทย
 
 > ตัวอย่างนี้ส่ง `memberId` มาใน body เพื่อให้ลองได้ทันที ระบบจริงต้องรู้ว่าใครทำรายการจากการ login ไม่ใช่เชื่อเลขที่ส่งมา (ทำในโจทย์ของการ์ด [Middleware กัน API หลังบ้าน](/learn/cards/auth-middleware))
 
@@ -79,7 +184,7 @@ loanRoutes.post("/", async (c) => {
 
 1. **ถามว่า "ถ้าไม่มีเว็บ กฎนี้ยังต้องมีไหม"** ถ้าต้องมี มันคือกฎของระบบ อยู่ใน service ไม่ใช่ใน route และไม่ใช่ในหน้าเว็บ
 2. **service ห้าม import อะไรจาก Hono:** ถ้า service ต้องรู้จัก `c` แปลว่าชั้นรั่ว เรียก service จากเทสต์หรือจาก seed script จะทำไม่ได้
-3. **ไม่ต้องฝืนเขียนทุกชั้น:** route ที่แค่ดึงรายการโดยไม่มีกฎ ให้ service ส่งต่อ repository บรรทัดเดียวก็พอ
+3. **ไม่ต้องฝืนเขียนทุกชั้น:** เรื่องที่ไม่มีกฎ (เช่น หนังสือในตัวอย่าง 1) route เรียก repository ตรงได้ พอมีกฎขึ้นมาเมื่อไรค่อยเพิ่ม service อย่าให้กฎไปงอกใน route
 
 ## ปรับไปใช้จริง
 
@@ -100,11 +205,17 @@ loanRoutes.post("/", async (c) => {
 
 ## ลองเอง
 
-**โจทย์:** เพิ่มกฎ "หนังสือที่ถูกยืมอยู่ (ยังไม่คืน) ยืมซ้ำไม่ได้" ให้ `POST /api/loans` โดยไฟล์ route ต้องไม่เปลี่ยนแม้แต่บรรทัดเดียว
+**โจทย์ 1:** เพิ่มกฎ "หนังสือที่ถูกยืมอยู่ (ยังไม่คืน) ยืมซ้ำไม่ได้" ให้ `POST /api/loans` โดยไฟล์ route ต้องไม่เปลี่ยนแม้แต่บรรทัดเดียว
 
 <Hint level={1}>ถ้า route ห้ามเปลี่ยน กฎต้องไปอยู่ชั้นไหน และชั้นนั้นต้องถามฐานข้อมูลว่าอะไร</Hint>
-<Hint level={2}>repository ต้องมีฟังก์ชันใหม่ที่ตอบว่า "เล่มนี้มีการยืมที่ยังไม่คืนไหม" (ดู `countOpen` เป็นแบบ) service เรียกก่อนสร้างการยืม ถ้ามีก็โยนรหัสใหม่</Hint>
+<Hint level={2}>`bookRepository.get` ตอบ `available` มาให้แล้ว service เรียกตัวเดียวได้ทั้ง "มีเล่มนี้ไหม" และ "ว่างไหม" ถ้าไม่ว่างก็โยนรหัสใหม่</Hint>
 <Hint level={3}>ตอนนี้รหัสใหม่จะได้ `500` เหมือน `LOAN_LIMIT` เก็บไว้ก่อน แล้วไปทำให้เป็น `409` ในการ์ดถัดไป</Hint>
+
+**โจทย์ 2:** ทำ `GET /api/books/available` (เฉพาะเล่มที่ยืมได้) และ `DELETE /api/books/:id` (ตอบ `{ id }` หรือ `404`) จากโจทย์การ์ด Hono ใหม่ ให้ใช้ฐานข้อมูล การ์ด [หน้าเว็บดึงข้อมูล](/learn/cards/fetch-data) จะใช้ `DELETE` นี้
+
+<Hint level={1}>เพิ่มฟังก์ชัน `remove` ใน `bookRepository` ดูแบบจาก `create`: Drizzle มี `db.delete(ตาราง).where(...).returning()` และอย่าลืมว่า route เฉพาะต้องมาก่อน `/:id`</Hint>
+<Hint level={2}>`/available` เขียน query ใหม่ก็ได้ หรือกรองผลจาก `list("")` ด้วย `.filter()` ก็ได้ ลองคิดว่าถ้ามีหนังสือหมื่นเล่ม แบบไหนดีกว่า</Hint>
+<Hint level={3}>ลองลบเล่มที่เคยถูกยืม จะได้ `500` ใน Terminal เห็นรหัส `23503` (foreign key: ยังมีแถวใน loans ชี้มา) เป็นคำตอบของ "ลองคิด" ข้างบน เก็บไว้ทำให้เป็น `409` ในการ์ดถัดไป</Hint>
 
 ## อ่านเพิ่ม
 

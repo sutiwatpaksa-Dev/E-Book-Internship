@@ -5,6 +5,12 @@ title: "📝 มีอะไรใหม่"
 
 บันทึกการเปลี่ยนแปลงของคู่มือในแต่ละเวอร์ชัน เวอร์ชันล่าสุดอยู่บนสุด
 
+## v2.0.14 · 26 ต.ค. 2569
+
+- **หนังสือลงฐานข้อมูลจริงแล้ว:** การ์ด [แบ่งชั้น](/learn/cards/layers) ย้าย `/api/books` จาก array ไปอ่านเขียนผ่าน `bookRepository` ส่วน `available` คำนวณจากการยืมที่ยังไม่คืน (ยืมแล้วหน้าบ้านเห็นทันที) หนังสือที่เพิ่มจากหลังบ้านใน [หน้าจัดการข้อมูล](/learn/cards/crud-ui) จึงโผล่หน้าบ้าน และโจทย์ "isbn ซ้ำได้ `409`" ใน [จัดการ error](/learn/cards/error-handling) ทำได้จริง
+- **การ์ด [SQL ที่ใช้บ่อย](/learn/cards/sql-basics) ฝึกในฐาน `sql_practice`** ไม่ชนกับตารางที่ migration จะสร้าง ถ้าเคยทำตามรุ่นก่อนแล้วเจอ `relation "members" already exists` การ์ด [Migration](/learn/cards/migration) มีวิธีแก้ให้
+- การ์ดแบ่งชั้นมีไฟล์ `loan.validator.ts` ให้ครบ, ยืมหนังสือที่ไม่มีอยู่ได้ `404` และโจทย์ใหม่ให้ทำ `DELETE` หนังสือด้วยฐานข้อมูล
+
 ## v2.0.13 · 25 ต.ค. 2569
 
 - **การ์ดช่วง Login 3 ใบ (งาน STARTER วันที่ 4):** [เก็บรหัสผ่านด้วย hash](/learn/cards/password-hash) · [Login: JWT ใน httpOnly cookie](/learn/cards/jwt-cookie) · [Middleware กัน API หลังบ้าน](/learn/cards/auth-middleware) ทำตามจบแล้วยิง API หลังบ้านโดยไม่ login ได้ `401` ตามเกณฑ์ของ Requirement

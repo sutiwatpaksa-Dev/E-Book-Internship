@@ -56,7 +56,7 @@ export const cards: LearnCard[] = [
   { slug: "http-rest", title: "HTTP และ REST", step: "coding", part: "API", minutes: 10, alsoIn: ["design"], starter: "วันที่ 3 · REST, method, status code, รูปแบบคำตอบ" },
   { slug: "hono", title: "Hono", step: "coding", part: "API", minutes: 12, needs: ["http-rest"], starter: "วันที่ 3 · Public API" },
   { slug: "validation", title: "ตรวจข้อมูลขาเข้าด้วย Zod", step: "coding", part: "API", minutes: 8, needs: ["hono"], starter: "วันที่ 3 · Zod ทุก endpoint" },
-  { slug: "layers", title: "แบ่งชั้น routes · services · repositories", step: "coding", part: "API", minutes: 10, needs: ["validation", "drizzle-orm"], starter: "วันที่ 3–4 · โค้ดใน server/src ที่โตขึ้น" },
+  { slug: "layers", title: "แบ่งชั้น routes · services · repositories", step: "coding", part: "API", minutes: 15, needs: ["validation", "drizzle-orm"], starter: "วันที่ 3–4 · โค้ดใน server/src ที่โตขึ้น" },
   { slug: "error-handling", title: "จัดการ error ที่จุดเดียว", step: "coding", part: "API", minutes: 8, needs: ["layers"], starter: "วันที่ 3 รูปแบบ error · วันที่ 9 ไม่หลุด stack trace" },
   { slug: "api-testing", title: "ยิงทดสอบ API", step: "coding", part: "API", minutes: 8, alsoIn: ["testing"], needs: ["hono"], starter: "วันที่ 3 · ทดสอบทุก endpoint + ส่ง collection" },
   { slug: "password-hash", title: "เก็บรหัสผ่านด้วย hash", step: "coding", part: "Login", minutes: 8, needs: ["migration"], starter: "วันที่ 4 · ทำไมต้อง hash password (ตาราง admins + seed ทำวันที่ 2)" },

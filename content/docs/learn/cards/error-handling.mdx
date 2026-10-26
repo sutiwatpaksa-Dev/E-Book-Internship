@@ -14,7 +14,7 @@ title: "จัดการ error ที่จุดเดียว"
 
 ## การใช้งาน
 
-ต่อจากการ์ด [แบ่งชั้น](/learn/cards/layers) ที่ service โยน `new Error("LOAN_LIMIT")` แล้วได้ `500`
+ต่อจากการ์ด [แบ่งชั้น](/learn/cards/layers) ที่ service โยน `new Error("LOAN_LIMIT")` และ `new Error("BOOK_NOT_FOUND")` แล้วได้ `500` ทั้งคู่
 
 **1. ตัวจับกลาง** `server/src/middleware/error-handler.ts`
 
@@ -51,6 +51,12 @@ app.onError(errorHandler);
 {"success":false,"error":{"code":"LOAN_LIMIT","message":"ยืมได้ไม่เกิน 3 เล่ม คืนเล่มเก่าก่อน"}}
 ```
 
+ส่ง `bookId: 99` ได้ `404`
+
+```json
+{"success":false,"error":{"code":"BOOK_NOT_FOUND","message":"ไม่พบหนังสือ"}}
+```
+
 ลองทำให้พังจริง: ปิด Postgres (`docker stop pg`) แล้วยิงอีกครั้ง หน้าเว็บได้แค่ `ระบบขัดข้อง` ส่วน Terminal ที่รัน server มีรายละเอียดเต็ม (เสร็จแล้ว `docker start pg`)
 
 ## ทริคที่แนะนำ
@@ -80,7 +86,7 @@ app.onError(errorHandler);
 
 **โจทย์:** เพิ่มคอลัมน์ `isbn` (ห้ามซ้ำ) ให้ตาราง `books` แล้วทำให้การเพิ่มหนังสือที่ isbn ซ้ำได้ `409` พร้อมข้อความ "มีหนังสือ isbn นี้แล้ว" แทน `500`
 
-<Hint level={1}>เริ่มจาก schema: Drizzle มี `.unique()` แล้วทำตามการ์ด [Migration](/learn/cards/migration) อย่าลืมว่าหนังสือที่ seed ไว้ยังไม่มี isbn</Hint>
+<Hint level={1}>เริ่มจาก schema: Drizzle มี `.unique()` แล้วทำตามการ์ด [Migration](/learn/cards/migration) (หนังสือที่ seed ไว้ไม่มี isbn ได้ ค่าว่างหลายแถวไม่นับว่าซ้ำ) จากนั้นให้ `newBookSchema` และ `bookRepository.create` จากการ์ดแบ่งชั้นรับ `isbn` ด้วย</Hint>
 <Hint level={2}>ยิงซ้ำแล้วดู `console.error` ใน Terminal: Drizzle ห่อ error ของ Postgres ไว้ข้างใน รหัสอยู่ที่ `err.cause.code` (ไม่ใช่ `err.code`) และรหัสของ "ซ้ำ" คือ `23505`</Hint>
 <Hint level={3}>มีสองที่ให้เลือก: เช็กก่อนบันทึกใน service ("มี isbn นี้หรือยัง") หรือจับรหัส `23505` ในตัวจับกลาง ลองคิดว่าทางไหนรอดกรณีสองคนกดพร้อมกัน</Hint>
 

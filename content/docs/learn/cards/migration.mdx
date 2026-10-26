@@ -41,6 +41,8 @@ bunx drizzle-kit migrate
 
 **ควรเห็น:** `[✓] migrations applied successfully!` แล้วเปิด pgAdmin กด Refresh จะเห็นตาราง `members`, `books`, `loans` และตาราง `__drizzle_migrations` ที่จดว่ารันไฟล์ไหนไปแล้ว (อยู่ใต้ schema ชื่อ `drizzle`)
 
+> **ขึ้น `relation "members" already exists`?** แปลว่าเคยสร้างตารางเองในฐาน `postgres` (การ์ด SQL รุ่นก่อนให้ทำแบบนั้น) ใน Query Tool ของฐาน `postgres` รัน `DROP TABLE loans, books, members;` (ต้องลบสามตารางในคำสั่งเดียว ถ้าลบ `members` ตัวเดียว จะติด foreign key ที่ `loans` ชี้มา) แล้ว `bunx drizzle-kit migrate` ใหม่ ข้อมูลที่ลองใส่ไว้จะหายไป ซึ่งไม่เป็นไร seed ขั้นถัดไปใส่ให้ใหม่
+
 **3. Seed ข้อมูลตั้งต้น** `server/src/db/seed.ts`
 
 ```ts
