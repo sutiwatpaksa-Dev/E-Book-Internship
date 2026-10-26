@@ -20,10 +20,24 @@ export type LearnStep = {
   task: string;
 };
 
+// หมวดของการ์ด ตัดข้ามขั้น: ER diagram (Design) กับ Drizzle (Coding) อยู่หมวดฐานข้อมูลเดียวกัน
+// คลังการ์ดกรองและแบ่งหัวข้อตามหมวดนี้ เรียงตามลำดับที่ใช้ในงานจริง
+export type TopicSlug = "plan" | "ux" | "db" | "api" | "auth" | "web";
+
+export const topics: { slug: TopicSlug; name: string }[] = [
+  { slug: "plan", name: "วางแผนงาน" },
+  { slug: "ux", name: "หน้าจอและผู้ใช้" },
+  { slug: "db", name: "ฐานข้อมูล" },
+  { slug: "api", name: "API" },
+  { slug: "auth", name: "Login และความปลอดภัย" },
+  { slug: "web", name: "หน้าเว็บ" },
+];
+
 export type LearnCard = {
   slug: string;
   title: string;
   step: StepSlug;
+  topic: TopicSlug;
   part?: string;
   minutes: number;
   // ขั้นอื่นที่ใช้การ์ดนี้ด้วย (การ์ดมีหน้าเดียว แต่บอกว่าใช้ที่ไหนบ้าง)
@@ -48,38 +62,38 @@ export const steps: LearnStep[] = [
 ];
 
 export const cards: LearnCard[] = [
-  { slug: "read-requirement", title: "อ่าน Requirement ให้เป็น", step: "problem", minutes: 10, starter: "วันที่ 1 · อ่าน Requirement ทั้งฉบับ + จดคำถาม" },
-  { slug: "business-brief", title: "Brief: สรุปร้านที่เป็นกติกาของทั้งงาน", step: "problem", minutes: 8, needs: ["read-requirement"], starter: "วันที่ 1 · brief ผ่านพี่เลี้ยง" },
-  { slug: "user-stories", title: "User story และเกณฑ์ว่าเสร็จ", step: "problem", minutes: 10, alsoIn: ["testing"], needs: ["read-requirement"], starter: "วันที่ 1 · แปลง Requirement เป็นงานที่ตรวจได้" },
-  { slug: "scope-questions", title: "ขอบเขตงาน และถามให้ได้คำตอบ", step: "problem", minutes: 8, needs: ["business-brief", "user-stories"], starter: "วันที่ 1 รายการไม่ทำ + คำถาม · วันที่ 5 Review · ทุกวัน: หลุดแผนแจ้งภายในวันนั้น" },
-  { slug: "wireframe", title: "Wireframe: วาดกล่องก่อนเลือกสี", step: "design", minutes: 8, needs: ["user-stories"], starter: "วันที่ 1 · wireframe 3 หน้า (กระดาษก็ได้)" },
-  { slug: "user-flow", title: "User flow และสถานะที่ทุกหน้าต้องมี", step: "design", minutes: 8, alsoIn: ["testing"], needs: ["wireframe"], starter: "วันที่ 1 ออกแบบ · วันที่ 9 ตรวจ Loading / Error / 404 ทุกหน้า" },
-  { slug: "screen-to-data", title: "จากหน้าจอสู่ข้อมูล: หน้านี้ต้องใช้อะไรบ้าง", step: "design", minutes: 8, needs: ["wireframe"], starter: "วันที่ 1–2 · ตรวจตาราง 6 ตารางกับ wireframe" },
-  { slug: "er-diagram", title: "ER diagram: ตารางเชื่อมกันยังไง", step: "design", minutes: 8, needs: ["screen-to-data"], starter: "วันที่ 2 · ER diagram (pgAdmin หรือวาดเอง)" },
-  { slug: "api-design", title: "ออกแบบรายการ API: สัญญาระหว่างหน้าเว็บกับ server", step: "design", minutes: 10, alsoIn: ["testing"], needs: ["screen-to-data", "user-flow"], starter: "วันที่ 1–3 · ตรวจ API Spec กับ wireframe · วันที่ 5 Review DB + API" },
-  { slug: "task-breakdown", title: "แบ่งงานเป็นชิ้นที่เสร็จได้ในครึ่งวัน", step: "design", minutes: 8, needs: ["api-design", "scope-questions"], starter: "วันที่ 1 วางแผน 10 วัน · ทุกเย็นเทียบแผน" },
-  { slug: "postgres", title: "Postgres และที่ที่มันรัน", step: "coding", part: "DB", minutes: 10, alsoIn: ["deploy"], starter: "วันที่ 1–2 · เปิดฐานข้อมูล + ต่อ pgAdmin" },
-  { slug: "sql-basics", title: "SQL ที่ใช้บ่อย", step: "coding", part: "DB", minutes: 12, alsoIn: ["design"], needs: ["postgres"], starter: "วันที่ 2 · primary key / foreign key" },
-  { slug: "orm-query-builder", title: "ORM กับ Query Builder", step: "coding", part: "DB", minutes: 8, needs: ["sql-basics"], starter: "วันที่ 2 · แนวคิด ORM (ต่อจาก Prisma ในงาน Todo)" },
-  { slug: "drizzle-orm", title: "Drizzle ORM", step: "coding", part: "DB", minutes: 15, needs: ["orm-query-builder"], starter: "วันที่ 2 · Drizzle schema + ต่อฐานข้อมูล" },
-  { slug: "migration", title: "Migration และ Seed", step: "coding", part: "DB", minutes: 10, alsoIn: ["deploy"], needs: ["drizzle-orm"], starter: "วันที่ 2 · migration + seed script" },
-  { slug: "http-rest", title: "HTTP และ REST", step: "coding", part: "API", minutes: 10, alsoIn: ["design"], starter: "วันที่ 3 · REST, method, status code, รูปแบบคำตอบ" },
-  { slug: "hono", title: "Hono", step: "coding", part: "API", minutes: 12, needs: ["http-rest"], starter: "วันที่ 3 · Public API" },
-  { slug: "validation", title: "ตรวจข้อมูลขาเข้าด้วย Zod", step: "coding", part: "API", minutes: 8, needs: ["hono"], starter: "วันที่ 3 · Zod ทุก endpoint" },
-  { slug: "layers", title: "แบ่งชั้น routes · services · repositories", step: "coding", part: "API", minutes: 15, needs: ["validation", "drizzle-orm"], starter: "วันที่ 3–4 · โค้ดใน server/src ที่โตขึ้น" },
-  { slug: "error-handling", title: "จัดการ error ที่จุดเดียว", step: "coding", part: "API", minutes: 8, needs: ["layers"], starter: "วันที่ 3 รูปแบบ error · วันที่ 9 ไม่หลุด stack trace" },
-  { slug: "api-testing", title: "ยิงทดสอบ API", step: "coding", part: "API", minutes: 8, alsoIn: ["testing"], needs: ["hono"], starter: "วันที่ 3 · ทดสอบทุก endpoint + ส่ง collection" },
-  { slug: "password-hash", title: "เก็บรหัสผ่านด้วย hash", step: "coding", part: "Login", minutes: 8, needs: ["migration"], starter: "วันที่ 4 · ทำไมต้อง hash password (ตาราง admins + seed ทำวันที่ 2)" },
-  { slug: "jwt-cookie", title: "Login: JWT ใน httpOnly cookie", step: "coding", part: "Login", minutes: 15, needs: ["password-hash", "error-handling"], starter: "วันที่ 4 · JWT, httpOnly cookie ต่างจาก localStorage, login/logout" },
-  { slug: "auth-middleware", title: "Middleware กัน API หลังบ้าน", step: "coding", part: "Login", minutes: 10, needs: ["jwt-cookie"], starter: "วันที่ 4 · middleware เช็ก token ทุก /api/admin/* (ไม่ login ได้ 401)" },
-  { slug: "react-components", title: "React: Component และ Props", step: "coding", part: "Frontend", minutes: 12, starter: "วันที่ 6 · React component พื้นฐาน" },
-  { slug: "tailwind", title: "Tailwind และออกแบบมือถือก่อน", step: "coding", part: "Frontend", minutes: 10, alsoIn: ["design"], needs: ["react-components"], starter: "วันที่ 6 · Tailwind theme + responsive 375/768/1280" },
-  { slug: "react-state", title: "React: State และ useEffect", step: "coding", part: "Frontend", minutes: 10, needs: ["react-components"], starter: "วันที่ 6–8 · ข้อมูลที่เปลี่ยนบนหน้าจอ" },
-  { slug: "fetch-data", title: "หน้าเว็บดึงข้อมูลจาก API", step: "coding", part: "Frontend", minutes: 10, needs: ["react-state", "hono"], starter: "วันที่ 6 · ดึงจาก API + loading/error ทุกหน้า" },
-  { slug: "react-forms", title: "ฟอร์ม: กรอก ตรวจ ส่ง", step: "coding", part: "Frontend", minutes: 10, needs: ["fetch-data", "validation"], starter: "วันที่ 7 · Contact form" },
-  { slug: "router-seo", title: "หลายหน้า (React Router) และ SEO", step: "coding", part: "Frontend", minutes: 15, needs: ["fetch-data"], starter: "วันที่ 6 หลายหน้า + 404 · วันที่ 9 SEO" },
-  { slug: "protected-routes", title: "หน้าหลังบ้านที่ต้อง login", step: "coding", part: "หลังบ้าน", minutes: 12, needs: ["router-seo", "react-forms", "auth-middleware"], starter: "วันที่ 8 · /admin/login, เด้งกลับเมื่อไม่ login, logout" },
-  { slug: "crud-ui", title: "หน้าจัดการข้อมูล: ตาราง ค้นหา แบ่งหน้า เพิ่ม แก้ ลบ", step: "coding", part: "หลังบ้าน", minutes: 15, needs: ["protected-routes"], starter: "วันที่ 8 · CRUD UI (list/add/edit/delete) + state ของฟอร์มและตาราง" },
+  { slug: "read-requirement", title: "อ่าน Requirement ให้เป็น", step: "problem", topic: "plan", minutes: 10, starter: "วันที่ 1 · อ่าน Requirement ทั้งฉบับ + จดคำถาม" },
+  { slug: "business-brief", title: "Brief: สรุปร้านที่เป็นกติกาของทั้งงาน", step: "problem", topic: "plan", minutes: 8, needs: ["read-requirement"], starter: "วันที่ 1 · brief ผ่านพี่เลี้ยง" },
+  { slug: "user-stories", title: "User story และเกณฑ์ว่าเสร็จ", step: "problem", topic: "plan", minutes: 10, alsoIn: ["testing"], needs: ["read-requirement"], starter: "วันที่ 1 · แปลง Requirement เป็นงานที่ตรวจได้" },
+  { slug: "scope-questions", title: "ขอบเขตงาน และถามให้ได้คำตอบ", step: "problem", topic: "plan", minutes: 8, needs: ["business-brief", "user-stories"], starter: "วันที่ 1 รายการไม่ทำ + คำถาม · วันที่ 5 Review · ทุกวัน: หลุดแผนแจ้งภายในวันนั้น" },
+  { slug: "wireframe", title: "Wireframe: วาดกล่องก่อนเลือกสี", step: "design", topic: "ux", minutes: 8, needs: ["user-stories"], starter: "วันที่ 1 · wireframe 3 หน้า (กระดาษก็ได้)" },
+  { slug: "user-flow", title: "User flow และสถานะที่ทุกหน้าต้องมี", step: "design", topic: "ux", minutes: 8, alsoIn: ["testing"], needs: ["wireframe"], starter: "วันที่ 1 ออกแบบ · วันที่ 9 ตรวจ Loading / Error / 404 ทุกหน้า" },
+  { slug: "screen-to-data", title: "จากหน้าจอสู่ข้อมูล: หน้านี้ต้องใช้อะไรบ้าง", step: "design", topic: "db", minutes: 8, needs: ["wireframe"], starter: "วันที่ 1–2 · ตรวจตาราง 6 ตารางกับ wireframe" },
+  { slug: "er-diagram", title: "ER diagram: ตารางเชื่อมกันยังไง", step: "design", topic: "db", minutes: 8, needs: ["screen-to-data"], starter: "วันที่ 2 · ER diagram (pgAdmin หรือวาดเอง)" },
+  { slug: "api-design", title: "ออกแบบรายการ API: สัญญาระหว่างหน้าเว็บกับ server", step: "design", topic: "api", minutes: 10, alsoIn: ["testing"], needs: ["screen-to-data", "user-flow"], starter: "วันที่ 1–3 · ตรวจ API Spec กับ wireframe · วันที่ 5 Review DB + API" },
+  { slug: "task-breakdown", title: "แบ่งงานเป็นชิ้นที่เสร็จได้ในครึ่งวัน", step: "design", topic: "plan", minutes: 8, needs: ["api-design", "scope-questions"], starter: "วันที่ 1 วางแผน 10 วัน · ทุกเย็นเทียบแผน" },
+  { slug: "postgres", title: "Postgres และที่ที่มันรัน", step: "coding", topic: "db", part: "DB", minutes: 10, alsoIn: ["deploy"], starter: "วันที่ 1–2 · เปิดฐานข้อมูล + ต่อ pgAdmin" },
+  { slug: "sql-basics", title: "SQL ที่ใช้บ่อย", step: "coding", topic: "db", part: "DB", minutes: 12, alsoIn: ["design"], needs: ["postgres"], starter: "วันที่ 2 · primary key / foreign key" },
+  { slug: "orm-query-builder", title: "ORM กับ Query Builder", step: "coding", topic: "db", part: "DB", minutes: 8, needs: ["sql-basics"], starter: "วันที่ 2 · แนวคิด ORM (ต่อจาก Prisma ในงาน Todo)" },
+  { slug: "drizzle-orm", title: "Drizzle ORM", step: "coding", topic: "db", part: "DB", minutes: 15, needs: ["orm-query-builder"], starter: "วันที่ 2 · Drizzle schema + ต่อฐานข้อมูล" },
+  { slug: "migration", title: "Migration และ Seed", step: "coding", topic: "db", part: "DB", minutes: 10, alsoIn: ["deploy"], needs: ["drizzle-orm"], starter: "วันที่ 2 · migration + seed script" },
+  { slug: "http-rest", title: "HTTP และ REST", step: "coding", topic: "api", part: "API", minutes: 10, alsoIn: ["design"], starter: "วันที่ 3 · REST, method, status code, รูปแบบคำตอบ" },
+  { slug: "hono", title: "Hono", step: "coding", topic: "api", part: "API", minutes: 12, needs: ["http-rest"], starter: "วันที่ 3 · Public API" },
+  { slug: "validation", title: "ตรวจข้อมูลขาเข้าด้วย Zod", step: "coding", topic: "api", part: "API", minutes: 8, needs: ["hono"], starter: "วันที่ 3 · Zod ทุก endpoint" },
+  { slug: "layers", title: "แบ่งชั้น routes · services · repositories", step: "coding", topic: "api", part: "API", minutes: 15, needs: ["validation", "drizzle-orm"], starter: "วันที่ 3–4 · โค้ดใน server/src ที่โตขึ้น" },
+  { slug: "error-handling", title: "จัดการ error ที่จุดเดียว", step: "coding", topic: "api", part: "API", minutes: 8, needs: ["layers"], starter: "วันที่ 3 รูปแบบ error · วันที่ 9 ไม่หลุด stack trace" },
+  { slug: "api-testing", title: "ยิงทดสอบ API", step: "coding", topic: "api", part: "API", minutes: 8, alsoIn: ["testing"], needs: ["hono"], starter: "วันที่ 3 · ทดสอบทุก endpoint + ส่ง collection" },
+  { slug: "password-hash", title: "เก็บรหัสผ่านด้วย hash", step: "coding", topic: "auth", part: "Login", minutes: 8, needs: ["migration"], starter: "วันที่ 4 · ทำไมต้อง hash password (ตาราง admins + seed ทำวันที่ 2)" },
+  { slug: "jwt-cookie", title: "Login: JWT ใน httpOnly cookie", step: "coding", topic: "auth", part: "Login", minutes: 15, needs: ["password-hash", "error-handling"], starter: "วันที่ 4 · JWT, httpOnly cookie ต่างจาก localStorage, login/logout" },
+  { slug: "auth-middleware", title: "Middleware กัน API หลังบ้าน", step: "coding", topic: "auth", part: "Login", minutes: 10, needs: ["jwt-cookie"], starter: "วันที่ 4 · middleware เช็ก token ทุก /api/admin/* (ไม่ login ได้ 401)" },
+  { slug: "react-components", title: "React: Component และ Props", step: "coding", topic: "web", part: "Frontend", minutes: 12, starter: "วันที่ 6 · React component พื้นฐาน" },
+  { slug: "tailwind", title: "Tailwind และออกแบบมือถือก่อน", step: "coding", topic: "web", part: "Frontend", minutes: 10, alsoIn: ["design"], needs: ["react-components"], starter: "วันที่ 6 · Tailwind theme + responsive 375/768/1280" },
+  { slug: "react-state", title: "React: State และ useEffect", step: "coding", topic: "web", part: "Frontend", minutes: 10, needs: ["react-components"], starter: "วันที่ 6–8 · ข้อมูลที่เปลี่ยนบนหน้าจอ" },
+  { slug: "fetch-data", title: "หน้าเว็บดึงข้อมูลจาก API", step: "coding", topic: "web", part: "Frontend", minutes: 10, needs: ["react-state", "hono"], starter: "วันที่ 6 · ดึงจาก API + loading/error ทุกหน้า" },
+  { slug: "react-forms", title: "ฟอร์ม: กรอก ตรวจ ส่ง", step: "coding", topic: "web", part: "Frontend", minutes: 10, needs: ["fetch-data", "validation"], starter: "วันที่ 7 · Contact form" },
+  { slug: "router-seo", title: "หลายหน้า (React Router) และ SEO", step: "coding", topic: "web", part: "Frontend", minutes: 15, needs: ["fetch-data"], starter: "วันที่ 6 หลายหน้า + 404 · วันที่ 9 SEO" },
+  { slug: "protected-routes", title: "หน้าหลังบ้านที่ต้อง login", step: "coding", topic: "auth", part: "หลังบ้าน", minutes: 12, needs: ["router-seo", "react-forms", "auth-middleware"], starter: "วันที่ 8 · /admin/login, เด้งกลับเมื่อไม่ login, logout" },
+  { slug: "crud-ui", title: "หน้าจัดการข้อมูล: ตาราง ค้นหา แบ่งหน้า เพิ่ม แก้ ลบ", step: "coding", topic: "web", part: "หลังบ้าน", minutes: 15, needs: ["protected-routes"], starter: "วันที่ 8 · CRUD UI (list/add/edit/delete) + state ของฟอร์มและตาราง" },
 ];
 
 export const legacy: LegacyLink[] = [

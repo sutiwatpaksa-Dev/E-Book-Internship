@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { setProgressSchema } from "../../server/validators/progress.validator";
-import { cardByUrl, cards, cardsOf, cardUrl, learnLinks, legacy, neighbors, nextUp, steps, stepOfUrl } from "./learn";
+import { cardByUrl, cards, cardsOf, cardUrl, learnLinks, legacy, neighbors, nextUp, steps, stepOfUrl, topics } from "./learn";
 
 describe("โครง 7 ขั้น", () => {
   test("ทุกขั้นและทุกการ์ดมีไฟล์เนื้อหาจริง (ลืมสร้างไฟล์ = ลิงก์ไปหน้า 404)", () => {
@@ -11,6 +11,10 @@ describe("โครง 7 ขั้น", () => {
 
   test("ลิงก์การ์ดผ่านด่านตรวจของ API ติ๊กผ่าน (ไม่งั้นกด 'เข้าใจแล้ว' แล้วบันทึกไม่ได้)", () => {
     for (const link of learnLinks) expect(setProgressSchema.safeParse({ link, done: true }).success).toBe(true);
+  });
+
+  test("ทุกหมวดมีการ์ด (หมวดว่างจะเป็นปุ่มกรองที่กดแล้วไม่เจออะไร)", () => {
+    for (const t of topics) expect(cards.some((c) => c.topic === t.slug)).toBe(true);
   });
 
   test("การ์ดที่อยู่ในช่วงย่อย ต้องเป็นช่วงที่ขั้นนั้นประกาศไว้", () => {
