@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { BrandMark } from "@/components/brand-mark";
 import { LoginForm } from "@/components/login-form";
@@ -14,8 +15,24 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col md:flex-row">
       <section
         aria-label="คู่มือนี้คืออะไร"
-        className="flex flex-col gap-5 bg-fd-primary px-5 py-7 text-fd-primary-foreground md:flex-1 md:gap-7 md:px-14 md:py-14"
+        className="relative isolate flex flex-col gap-5 overflow-hidden bg-(--login-panel-bg) px-5 py-7 text-(--login-panel-fg) md:flex-1 md:gap-7 md:px-14 md:py-14"
       >
+        {/* รูปเป็นของตกแต่ง (alt ว่าง ให้โปรแกรมอ่านหน้าจอข้ามไป)
+            จอกว้าง: เลื่อนรูปไปขวา (ล้นขอบขวาเล็กน้อย) ให้จุด 7 ขั้นในรูปไม่ทับรายการ 7 ขั้นที่เป็นตัวหนังสือ
+            ชั้นไล่สีซ้าย→ขวาทับอีกชั้น: ฝั่งตัวหนังสือทึบ อ่านได้เสมอ และกลบรอยต่อขอบซ้ายของรูป */}
+        <div aria-hidden className="absolute inset-0 -z-10 md:-right-[8%] md:left-[22%]">
+          <Image
+            src="/brand/login-bg.webp"
+            alt=""
+            fill
+            sizes="(min-width: 768px) 40vw, 100vw"
+            className="object-cover object-right-bottom"
+          />
+        </div>
+        <div
+          aria-hidden
+          className="absolute inset-0 -z-10 bg-linear-to-r from-(--login-panel-bg) from-25% via-(--login-panel-bg)/60 via-50% to-transparent max-md:via-(--login-panel-bg)/75"
+        />
         <Link href="/" className="flex w-fit items-center gap-2.5 text-lg font-bold">
           <span className="rounded-lg bg-fd-background p-1">
             <BrandMark size={28} />
@@ -28,7 +45,7 @@ export default function LoginPage() {
         <ol className="flex flex-col gap-2.5 max-md:hidden">
           {steps.map((s) => (
             <li key={s.slug} className="flex items-center gap-3">
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-fd-primary-foreground/15 text-sm font-bold">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-(--login-panel-fg)/15 text-sm font-bold">
                 {s.num}
               </span>
               <span className="font-semibold">{s.name}</span>
@@ -37,7 +54,7 @@ export default function LoginPage() {
           ))}
         </ol>
         <p className="text-sm opacity-80 md:hidden">{steps.map((s) => s.name).join(" → ")}</p>
-        <p className="mt-auto max-w-md text-sm opacity-80 max-md:hidden">
+        <p className="mt-auto max-w-xs text-sm opacity-80 max-md:hidden">
           เครื่องมืออย่าง Git, Docker, SQL เป็นการ์ดที่หยิบมาอ่านตอนต้องใช้ ไม่ต้องอ่านทั้งเล่มก่อนเริ่ม
         </p>
       </section>

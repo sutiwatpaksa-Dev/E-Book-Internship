@@ -17,6 +17,10 @@
   --footer-fg: #c9d3e6;
   --footer-line: #24345a;
   --footer-muted: #9fb0cf;
+  /* ฝั่งซ้ายของหน้า login: พื้นน้ำเงินมีรูปพื้นหลังโทนมืด ตัวหนังสือจึงต้องขาวทั้งสองโหมด
+     (ถ้าใช้ fd-primary ตรงๆ โหมดมืดจะเป็นฟ้าอ่อน + ตัวหนังสือดำ ซึ่งทับรูปมืดแล้วอ่านไม่ออก) */
+  --login-panel-bg: #0b3c91;
+  --login-panel-fg: #ffffff;
 
   /* ความสูง headbar (site-header.tsx) มือถือรวมแถบ "อยู่ด่านไหน" ด้วย
      ส่งต่อให้ Fumadocs ผ่าน --fd-banner-height: sidebar และสารบัญขวาจะติดอยู่ใต้ headbar พอดี */
@@ -41,6 +45,7 @@
   --rm-item-bg: #2b2a24;
   --rm-line: #4c8dff;
   --rm-done: #3fb950;
+  --login-panel-bg: #0f1b33;
 }
 
 /* ภาษาไทยอ่านสบายขึ้นเมื่อบรรทัดห่างกว่าค่าเริ่มต้น */
