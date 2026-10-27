@@ -8,11 +8,13 @@ export function Input(props: ComponentProps<"input">) {
   return <input className={inputClass} {...props} />;
 }
 
-export function Field({ label, children }: { label: string; children: ReactNode }) {
+// hint = คำอธิบายสั้นใต้ช่อง (ตัวเล็กสีจาง) อยู่ใน label เดียวกัน โปรแกรมอ่านหน้าจออ่านต่อจากชื่อช่อง
+export function Field({ label, hint, children }: { label: string; hint?: ReactNode; children: ReactNode }) {
   return (
     <label className="flex flex-col gap-1 text-sm font-medium">
       {label}
       {children}
+      {hint && <span className="text-xs font-normal text-fd-muted-foreground">{hint}</span>}
     </label>
   );
 }

@@ -2,6 +2,7 @@
 export const AUDIT_LABEL: Record<string, string> = {
   "user.create": "สร้างบัญชี",
   "user.reset_pin": "ออก PIN ใหม่",
+  "user.password": "ตั้งรหัสผ่าน",
   "user.disable": "ปิดบัญชี",
   "user.enable": "เปิดบัญชี",
   "user.unlock": "ปลดล็อก",

@@ -7,11 +7,12 @@ export const SESSION_COOKIE = "bt_session";
 export const ROLE_HINT_COOKIE = "bt_role";
 export const SESSION_SECONDS = 12 * 60 * 60;
 
-export type Session = { userId: number; username: string; role: Role };
+// ver = เลขรอบของบัตร (ต้องตรงกับ users.session_version ใน DB) · tmp = login ด้วย PIN ชั่วคราว ต้องตั้งรหัสผ่านก่อน
+export type Session = { userId: number; username: string; role: Role; ver: number; tmp: boolean };
 
 export function createSessionToken(s: Session, secret: string) {
   const exp = Math.floor(Date.now() / 1000) + SESSION_SECONDS;
-  return sign({ sub: String(s.userId), username: s.username, role: s.role, exp }, secret, "HS256");
+  return sign({ sub: String(s.userId), username: s.username, role: s.role, ver: s.ver, tmp: s.tmp, exp }, secret, "HS256");
 }
 
 export async function readSessionToken(token: string | undefined, secret: string): Promise<Session | null> {
@@ -19,7 +20,8 @@ export async function readSessionToken(token: string | undefined, secret: string
   try {
     const p = await verify(token, secret, "HS256"); // ตรวจลายเซ็น + exp
     if (p.role !== "intern" && p.role !== "dev") return null;
-    return { userId: Number(p.sub), username: String(p.username), role: p.role };
+    // บัตรที่ออกก่อนมี ver/tmp: ถือเป็นรอบ 0 (ค่าเริ่มของคอลัมน์) ไม่ต้องให้ทุกคน login ใหม่ตอนอัปเดต
+    return { userId: Number(p.sub), username: String(p.username), role: p.role, ver: Number(p.ver ?? 0), tmp: p.tmp === true };
   } catch {
     return null;
   }

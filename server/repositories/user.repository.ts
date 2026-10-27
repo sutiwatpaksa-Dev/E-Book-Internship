@@ -16,6 +16,14 @@ const publicColumns = {
   lastLoginAt: users.lastLoginAt,
   createdAt: users.createdAt,
   cohortId: users.cohortId,
+  // pin = ยังไม่ได้ตั้งรหัสผ่านเอง (หลังบ้านแสดงว่า "รอตั้งรหัสผ่าน") · ไม่ใช่ค่าลับ บอกแค่ชนิด
+  secretKind: users.secretKind,
+  fullName: users.fullName,
+  nickname: users.nickname,
+  schoolType: users.schoolType,
+  schoolName: users.schoolName,
+  major: users.major,
+  eduLevel: users.eduLevel,
 };
 export type PublicUser = { [K in keyof typeof publicColumns]: (typeof users.$inferSelect)[K] };
 

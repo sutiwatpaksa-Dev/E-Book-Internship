@@ -10,8 +10,12 @@ import { HOME, safeNext } from "@/lib/home-path";
 export async function proxy(req: NextRequest) {
   const secret = process.env.SESSION_SECRET ?? "";
   const token = req.cookies.get(SESSION_COOKIE)?.value;
-  const role = secret ? (await readSessionToken(token, secret))?.role : undefined;
+  const session = secret ? await readSessionToken(token, secret) : null;
+  const role = session?.role;
   const { pathname, searchParams } = req.nextUrl;
+
+  // เข้าด้วย PIN ชั่วคราว: ไปตั้งรหัสผ่านก่อน (หน้านั้นพาไปหน้าแรกของบทบาทต่อเอง)
+  if (session?.tmp) return NextResponse.redirect(new URL("/set-password", req.url));
 
   if (pathname === "/") return NextResponse.redirect(new URL(role ? HOME[role] : "/login", req.url));
   if (role) return NextResponse.redirect(new URL(safeNext(searchParams.get("next"), role), req.url));

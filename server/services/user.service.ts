@@ -79,9 +79,12 @@ export const userService = {
 
   // pin ส่งมาเองได้เฉพาะสคริปต์ใน Terminal (หน้า admin สุ่มให้เสมอ) · actor มีเฉพาะตอนสั่งจากหน้า admin
   // ออก PIN ใหม่ให้พี่เลี้ยงคนอื่น = ยึดบัญชีเขาได้ จึงต้องเป็น Super admin (ออกให้ตัวเองได้)
+  // ออก PIN ใหม่ = รหัสเดิมใช้ไม่ได้ และทุกเครื่องที่ login ค้างไว้หลุด (+1 เลขรอบ) · login ด้วย PIN แล้วต้องตั้งรหัสผ่านใหม่
   async resetPin(id: number, pin = newPin(), actor?: Actor) {
-    if (actor && actor.id !== id && (await userRepository.findById(id))?.role === "dev") needSuper(actor);
-    const user = await userRepository.update(id, { secretHash: await hashPin(pin), secretKind: "pin", failedCount: 0, lockedUntil: null });
+    const target = await userRepository.findById(id);
+    if (actor && actor.id !== id && target?.role === "dev") needSuper(actor);
+    if (!target) throw new Error("NOT_FOUND");
+    const user = await userRepository.update(id, { secretHash: await hashPin(pin), secretKind: "pin", sessionVersion: target.sessionVersion + 1, failedCount: 0, lockedUntil: null });
     if (!user) throw new Error("NOT_FOUND");
     if (actor) await auditService.log(actor.id, "user.reset_pin", user.username);
     return { user, pin };

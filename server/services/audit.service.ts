@@ -4,6 +4,7 @@ import { auditRepository } from "../repositories/audit.repository";
 export type AuditAction =
   | "user.create"
   | "user.reset_pin"
+  | "user.password"
   | "user.disable"
   | "user.enable"
   | "user.unlock"

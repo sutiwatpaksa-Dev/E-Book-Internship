@@ -1,9 +1,10 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { env } from "../config/env";
+import type { Role } from "../db/schema";
 import { createSessionToken, readSessionToken, ROLE_HINT_COOKIE, SESSION_COOKIE, SESSION_SECONDS } from "../lib/session";
 import { authService } from "../services/auth.service";
-import { loginSchema } from "../validators/auth.validator";
+import { loginSchema, setPasswordSchema } from "../validators/auth.validator";
 
 const secure = env.APP_ORIGIN.startsWith("https://");
 const cookieBase = { path: "/", secure, sameSite: "Lax" as const, maxAge: SESSION_SECONDS };
@@ -13,14 +14,27 @@ const clientIp = (h: (n: string) => string | undefined) => h("x-real-ip") ?? h("
 
 export const authRoutes = new Hono();
 
+// ออกบัตรผ่านให้เครื่องนี้ (ใช้ทั้งตอน login และหลังตั้งรหัสผ่าน ซึ่งบัตรเดิมหมดรอบไปแล้ว)
+async function issue(c: Context, u: { id: number; username: string; role: Role; ver: number; tmp: boolean }) {
+  const token = await createSessionToken({ userId: u.id, username: u.username, role: u.role, ver: u.ver, tmp: u.tmp }, env.SESSION_SECRET);
+  setCookie(c, SESSION_COOKIE, token, { ...cookieBase, httpOnly: true });
+  setCookie(c, ROLE_HINT_COOKIE, u.role, cookieBase);
+  return c.json({ username: u.username, role: u.role, mustSetPassword: u.tmp });
+}
+
 authRoutes.post("/login", async (c) => {
   const parsed = loginSchema.safeParse(await c.req.json().catch(() => null));
-  if (!parsed.success) return c.json({ error: "กรอก username และ PIN 6 หลัก" }, 400);
-  const user = await authService.login(parsed.data.username, parsed.data.pin, clientIp((n) => c.req.header(n)));
-  const token = await createSessionToken({ userId: user.id, username: user.username, role: user.role }, env.SESSION_SECRET);
-  setCookie(c, SESSION_COOKIE, token, { ...cookieBase, httpOnly: true });
-  setCookie(c, ROLE_HINT_COOKIE, user.role, cookieBase);
-  return c.json({ username: user.username, role: user.role });
+  if (!parsed.success) return c.json({ error: "กรอกชื่อผู้ใช้ และ PIN 6 หลัก หรือรหัสผ่าน (10 ตัวขึ้นไป)" }, 400);
+  return issue(c, await authService.login(parsed.data.username, parsed.data.secret, clientIp((n) => c.req.header(n))));
+});
+
+// ตั้ง/เปลี่ยนรหัสผ่าน · ไม่ผ่าน requireRole เพราะคนที่ยังถือ PIN ชั่วคราวต้องเรียกได้ (ด่านนั้นกันเขาไว้)
+authRoutes.post("/password", async (c) => {
+  const session = await readSessionToken(getCookie(c, SESSION_COOKIE), env.SESSION_SECRET);
+  if (!session || !(await authService.activeUser(session.userId, session.ver))) return c.json({ error: "ต้อง login ก่อน" }, 401);
+  const parsed = setPasswordSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: "กรอกรหัสผ่านใหม่" }, 400);
+  return issue(c, await authService.setPassword(session.userId, parsed.data.current, parsed.data.password));
 });
 
 authRoutes.post("/logout", (c) => {
@@ -31,6 +45,8 @@ authRoutes.post("/logout", (c) => {
 
 authRoutes.get("/me", async (c) => {
   const session = await readSessionToken(getCookie(c, SESSION_COOKIE), env.SESSION_SECRET);
-  if (!session) return c.json({ error: "ยังไม่ได้ login" }, 401);
-  return c.json({ username: session.username, role: session.role });
+  // ตรวจกับ DB ด้วย: เปลี่ยนรหัสผ่านจากเครื่องอื่นแล้ว เครื่องนี้ต้องเห็นว่าหลุด (เมนูบัญชีจะพา logout)
+  const user = session && (await authService.activeUser(session.userId, session.ver));
+  if (!session || !user) return c.json({ error: "ยังไม่ได้ login" }, 401);
+  return c.json({ username: session.username, role: session.role, mustSetPassword: user.mustSetPassword });
 });

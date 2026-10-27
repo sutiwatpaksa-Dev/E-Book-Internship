@@ -5,6 +5,7 @@ import type { Role } from "@/types";
 const RULES: { test: RegExp; roles: Role[] }[] = [
   { test: /^\/(starter|steps)(\/|$)/, roles: ["intern", "dev"] },
   { test: /^\/questions(\/|$)/, roles: ["intern", "dev"] },
+  { test: /^\/profile(\/|$)/, roles: ["intern", "dev"] },
   { test: /^\/dev(\/|$)/, roles: ["dev"] },
 ];
 

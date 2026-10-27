@@ -28,7 +28,7 @@ type Pending = { kind: "disable" | "reset"; user: User } | { kind: "role"; user:
 
 const CONFIRM_TEXT = {
   disable: "น้องเรียก API (เช่นเปิด PDF) ไม่ได้ทันที แต่หน้า STARTER จะเปิดได้จนบัตรผ่านหมดอายุ (ไม่เกิน 12 ชั่วโมง) เปิดบัญชีคืนได้ภายหลัง",
-  reset: "PIN เดิมจะใช้ไม่ได้ทันที PIN ใหม่แสดงครั้งเดียว ต้องส่งให้น้องเอง",
+  reset: "รหัสผ่านหรือ PIN เดิมใช้ไม่ได้ทันที และทุกเครื่องที่ login ค้างไว้จะหลุด · PIN ใหม่แสดงครั้งเดียว ส่งให้เจ้าของบัญชีเอง แล้วเขาจะตั้งรหัสผ่านใหม่ตอน login",
   // API อ่านบทบาทจากฐานข้อมูลทุกครั้ง (มีผลทันที) แต่ด่านหน้าเว็บอ่านจากบัตรผ่าน (มีผลเมื่อ login ใหม่)
   dev: "login ครั้งถัดไปจะเข้าหลังบ้านได้ เห็นแชทของน้องทุกคน สร้าง/ปิดบัญชีและออก PIN ให้คนอื่นได้",
   intern: "ใช้คำสั่งหลังบ้านไม่ได้ทันที ไม่เห็นแชทของน้องคนอื่นอีก เปลี่ยนกลับได้ภายหลัง",
@@ -80,7 +80,7 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-fd-muted-foreground">
-          PIN แสดงครั้งเดียวตอนสร้างหรือออกใหม่ · ใส่ PIN ผิด 5 ครั้งล็อก 15 นาที
+          PIN เป็นรหัสชั่วคราว แสดงครั้งเดียว · login ครั้งแรกแล้วเจ้าของบัญชีตั้งรหัสผ่านเอง · ใส่ผิด 5 ครั้งล็อก 15 นาที
           {admin.me && !isSuper && " · บัญชีพี่เลี้ยงสร้างและจัดการได้เฉพาะ Super admin"}
         </p>
         <div className="flex gap-2">
@@ -210,6 +210,7 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
               <tr key={u.id} className="border-t border-fd-border">
                 <td className="px-3 py-2 font-medium">
                   {u.username}
+                  {u.fullName && <span className="block text-xs font-normal text-fd-muted-foreground">{u.fullName}</span>}
                   {u.role === "dev" && u.superAdmin && <span className="ms-2 rounded-full bg-fd-primary/10 px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-fd-primary">Super admin</span>}
                 </td>
                 <td className="px-3 py-2">
@@ -228,7 +229,7 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
                 </td>
                 <td className="px-3 py-2 whitespace-nowrap text-fd-muted-foreground">{u.role === "intern" ? cohortName(u.cohortId) : "–"}</td>
                 <td className={`px-3 py-2 ${u.disabled || isLockedNow(u) ? "text-orange-700 dark:text-orange-400" : ""}`}>
-                  {u.disabled ? "ปิดอยู่" : isLockedNow(u) ? "ล็อกชั่วคราว" : "ใช้งาน"}
+                  {u.disabled ? "ปิดอยู่" : isLockedNow(u) ? "ล็อกชั่วคราว" : u.secretKind === "pin" ? "รอตั้งรหัสผ่าน" : "ใช้งาน"}
                 </td>
                 <td className="px-3 py-2 whitespace-nowrap">{fmt(u.lastLoginAt)}</td>
                 <td className="px-3 py-2">

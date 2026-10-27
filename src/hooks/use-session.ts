@@ -23,11 +23,11 @@ export function useSession() {
   // ตอน render ฝั่ง server ไม่มี cookie ของเบราว์เซอร์ จึงถือว่ายังไม่ login
   const role = useSyncExternalStore(subscribe, readRoleHint, () => null);
 
-  // คืน role ให้หน้า login เลือกว่าจะพาไปหน้าไหนต่อ
-  const login = async (username: string, pin: string) => {
-    const user = await authApi.login(username, pin);
+  // คืน role + ต้องตั้งรหัสผ่านไหม ให้หน้า login เลือกว่าจะพาไปหน้าไหนต่อ
+  const login = async (username: string, secret: string) => {
+    const user = await authApi.login(username, secret);
     notify();
-    return user.role;
+    return user;
   };
   const logout = async () => {
     await authApi.logout().catch(() => {});

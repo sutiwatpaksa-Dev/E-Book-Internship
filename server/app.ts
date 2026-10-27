@@ -9,6 +9,7 @@ import { authRoutes } from "./routes/auth.routes";
 import { contentRoutes } from "./routes/content.routes";
 import { fileRoutes } from "./routes/file.routes";
 import { notificationRoutes } from "./routes/notification.routes";
+import { profileRoutes } from "./routes/profile.routes";
 import { progressRoutes } from "./routes/progress.routes";
 import { threadRoutes } from "./routes/thread.routes";
 
@@ -37,6 +38,7 @@ app.route("/admin", adminRoutes);
 app.route("/files", fileRoutes);
 app.route("/threads", threadRoutes);
 app.route("/progress", progressRoutes);
+app.route("/profile", profileRoutes);
 app.route("/content", contentRoutes);
 app.route("/notifications", notificationRoutes);
 

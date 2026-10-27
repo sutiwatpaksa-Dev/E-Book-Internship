@@ -4,6 +4,7 @@ import { ArrowLeft, Check } from "lucide-react";
 import { useState } from "react";
 import { roadmap } from "@/data/roadmap";
 import { daysSince, isLockedNow, type AdminState } from "@/hooks/use-admin";
+import { eduSummary, SCHOOL_TYPE_LABEL } from "@/lib/education";
 import { summarize } from "@/lib/progress-summary";
 import { KIND_LABEL, timeAgo } from "@/lib/thread-labels";
 import type { AdminNav } from "./admin-panel";
@@ -43,6 +44,17 @@ export function AdminInternDetail({ admin, nav, userId }: { admin: AdminState; n
           {u.disabled ? "ปิดบัญชีอยู่" : isLockedNow(u) ? "ล็อกชั่วคราว" : "ใช้งาน"} · เข้าล่าสุด {fmt(u.lastLoginAt)}
           {days !== null && days > 7 && <span className="text-orange-700 dark:text-orange-400"> ({days} วันก่อน)</span>}
         </span>
+      </div>
+      {/* โปรไฟล์ที่น้องกรอกเอง (ยังไม่กรอก = บอกตรงๆ ไม่ซ่อน จะได้รู้ว่าต้องทักให้กรอก) */}
+      <div className="flex flex-col gap-0.5 rounded-xl border border-fd-border p-4 text-sm">
+        <strong className="text-base">
+          {u.fullName ?? <span className="font-normal text-fd-muted-foreground">ยังไม่ได้กรอกชื่อ-นามสกุล</span>}
+          {u.nickname && <span className="font-normal text-fd-muted-foreground"> ({u.nickname})</span>}
+        </strong>
+        <span className="text-fd-muted-foreground">
+          {eduSummary(u) ? `${u.schoolType ? `${SCHOOL_TYPE_LABEL[u.schoolType]} · ` : ""}${eduSummary(u)}` : "ยังไม่ได้กรอกข้อมูลการศึกษา (น้องกรอกเองที่เมนูบัญชี → โปรไฟล์ของฉัน)"}
+        </span>
+        {u.secretKind === "pin" && <span className="text-orange-700 dark:text-orange-400">ยังใช้ PIN ชั่วคราว: login ครั้งหน้าระบบจะให้ตั้งรหัสผ่าน</span>}
       </div>
 
       <div className="flex flex-wrap gap-2">

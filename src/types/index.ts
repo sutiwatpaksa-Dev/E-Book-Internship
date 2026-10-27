@@ -12,7 +12,22 @@ export type User = {
   lastLoginAt: string | null;
   // รุ่นของน้อง · null = พี่เลี้ยง หรือบัญชีที่ยังไม่ได้อยู่รุ่นไหน
   cohortId: number | null;
+  // pin = ยังไม่ได้ตั้งรหัสผ่านเอง
+  secretKind: "pin" | "password";
+} & ProfileFields;
+
+export type SchoolType = "university" | "vocational" | "other";
+export type EduLevel = "pvc" | "pvs" | "bachelor" | "other";
+// โปรไฟล์ที่เจ้าของบัญชีกรอกเอง ว่างได้ทุกช่อง
+export type ProfileFields = {
+  fullName: string | null;
+  nickname: string | null;
+  schoolType: SchoolType | null;
+  schoolName: string | null;
+  major: string | null;
+  eduLevel: EduLevel | null;
 };
+export type Profile = ProfileFields & { username: string; role: Role; passwordSet: boolean };
 
 // รุ่นฝึกงาน (รูปร่างตรงกับ server/repositories/cohort.repository.ts) · วันที่เป็น YYYY-MM-DD
 export type Cohort = {

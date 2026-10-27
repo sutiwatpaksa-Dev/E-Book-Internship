@@ -12,6 +12,8 @@ export async function requirePageAccess(pathname: string) {
   const secret = process.env.SESSION_SECRET ?? "";
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   const session = secret ? await readSessionToken(token, secret) : null;
+  // ยังถือ PIN ชั่วคราว: หน้าที่ล็อกเปิดไม่ได้จนกว่าจะตั้งรหัสผ่าน (API ก็กันไว้เหมือนกัน)
+  if (session?.tmp) redirect(`/set-password?next=${encodeURIComponent(pathname)}`);
   const result = gate(pathname, session?.role ?? null);
   if (result === "allow") return;
 

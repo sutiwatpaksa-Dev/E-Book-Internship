@@ -5,12 +5,18 @@ const bytea = customType<{ data: Buffer }>({ dataType: () => "bytea" });
 export const ROLES = ["intern", "dev"] as const;
 export type Role = (typeof ROLES)[number];
 
+// การศึกษาของน้อง: รองรับทั้งมหาวิทยาลัยและวิทยาลัย/อาชีวะ (ปวช. ปวส.) · ป้ายภาษาไทยอยู่ที่ src/lib/education.ts
+export const SCHOOL_TYPES = ["university", "vocational", "other"] as const;
+export type SchoolType = (typeof SCHOOL_TYPES)[number];
+export const EDU_LEVELS = ["pvc", "pvs", "bachelor", "other"] as const;
+export type EduLevel = (typeof EDU_LEVELS)[number];
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   // เก็บแค่ hash (argon2id) ไม่เก็บ PIN จริง
   secretHash: text("secret_hash").notNull(),
-  // ตอนนี้เป็น PIN ถ้าวันหน้าเปลี่ยนเป็นรหัสผ่านยาว แค่เพิ่มค่าใหม่ ไม่ต้องรื้อตาราง
+  // pin = รหัสชั่วคราว 6 หลักที่พี่เลี้ยงออกให้ (login แล้วต้องตั้งรหัสผ่านก่อนใช้งาน) · password = ตั้งเองแล้ว 10 ตัวขึ้นไป
   secretKind: text("secret_kind").$type<"pin" | "password">().notNull().default("pin"),
   role: text("role").$type<Role>().notNull(),
   // Super admin = พี่เลี้ยงที่จัดการบัญชีพี่เลี้ยงคนอื่นได้ (สร้าง เลื่อน ปิด ออก PIN) · มีผลเฉพาะ role dev
@@ -18,6 +24,15 @@ export const users = pgTable("users", {
   // ตั้งได้จาก Terminal เท่านั้น (scripts/set-super-admin.ts) บัญชีพี่เลี้ยงที่หลุดจึงตั้งตัวเองไม่ได้
   superAdmin: boolean("super_admin").notNull().default(false),
   disabled: boolean("disabled").notNull().default(false),
+  // เลขรอบของบัตรผ่าน: เปลี่ยนรหัสผ่านหรือออก PIN ใหม่ = +1 บัตรที่ออกก่อนหน้า (ทุกเครื่อง) ใช้ไม่ได้ทันที
+  sessionVersion: integer("session_version").notNull().default(0),
+  // โปรไฟล์ที่น้องกรอกเอง · ว่างได้ทั้งหมด (บัญชีเก่ายังไม่ได้กรอก) · ไม่เก็บเบอร์โทร/อีเมล เพราะยังไม่มีที่ใช้
+  fullName: text("full_name"),
+  nickname: text("nickname"),
+  schoolType: text("school_type").$type<SchoolType>(),
+  schoolName: text("school_name"),
+  major: text("major"),
+  eduLevel: text("edu_level").$type<EduLevel>(),
   failedCount: integer("failed_count").notNull().default(0),
   lockedUntil: timestamp("locked_until", { withTimezone: true }),
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),

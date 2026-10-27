@@ -1,9 +1,22 @@
 // ชั้นเรียก API ของหน้าเว็บ: component ไม่เรียก fetch เอง ต้องผ่านไฟล์ในโฟลเดอร์นี้
 // fetch ที่ส่ง cookie ไปด้วย แล้วแปลงข้อผิดพลาดเป็นข้อความจาก API
+
+// message = ข้อความภาษาไทยจาก API (แสดงได้เลย) · status ไว้ให้หน้าเว็บเลือกทำต่อ เช่น 401 = พาไป login
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
+
 export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch(`/api${path}`, { credentials: "same-origin", ...init });
   const body = res.status === 204 ? null : await res.json().catch(() => null);
-  if (!res.ok) throw new Error(body?.error ?? `ผิดพลาด (${res.status})`);
+  // ยังถือ PIN ชั่วคราว (เช่นเปิดแท็บค้างไว้): ทุกคำขอพาไปตั้งรหัสผ่าน ไม่ต้องให้แต่ละหน้าจัดการเอง
+  if (body?.code === "MUST_SET_PASSWORD" && location.pathname !== "/set-password") location.assign(`/set-password?next=${encodeURIComponent(location.pathname)}`);
+  if (!res.ok) throw new ApiError(body?.error ?? `ผิดพลาด (${res.status})`, res.status);
   return body as T;
 }
 

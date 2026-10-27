@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, FileText, LogIn, LogOut, MessageCircle, Package, Settings, Volume2, VolumeX } from "lucide-react";
+import { ChevronDown, FileText, LogIn, LogOut, MessageCircle, Package, Settings, UserRound, Volume2, VolumeX } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
@@ -32,7 +32,11 @@ export function AccountMenu() {
     if (!role) return;
     authApi
       .me()
-      .then((me) => setUsername(me.username))
+      .then((me) => {
+        setUsername(me.username);
+        // หน้าคู่มือเป็นไฟล์ static (server ไม่ได้ตรวจบัตรก่อนส่ง) จึงกันตรงนี้: ยังถือ PIN ชั่วคราว → ไปตั้งรหัสผ่าน
+        if (me.mustSetPassword && location.pathname !== "/set-password") location.assign(`/set-password?next=${encodeURIComponent(location.pathname)}`);
+      })
       // บัตรหมดอายุแต่ cookie บอก role ยังค้าง: ถือว่ายังไม่ได้ login
       .catch(() => logout());
     filesApi
@@ -98,6 +102,9 @@ export function AccountMenu() {
               <Settings className="size-4" /> หลังบ้านพี่เลี้ยง
             </Link>
           )}
+          <Link role="menuitem" href="/profile" className={itemClass}>
+            <UserRound className="size-4" /> โปรไฟล์ของฉัน
+          </Link>
           <Link role="menuitem" href={role === "dev" ? "/dev/admin?tab=questions" : "/questions"} className={itemClass}>
             <MessageCircle className="size-4" /> {role === "dev" ? "ข้อความจากน้อง" : "ข้อความถึงพี่เลี้ยง"}
             {unread > 0 && <span className="ms-auto rounded-full bg-orange-500 px-1.5 text-[11px] font-bold text-white">{unread}</span>}
