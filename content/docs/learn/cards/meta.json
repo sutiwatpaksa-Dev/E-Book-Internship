@@ -33,6 +33,8 @@
     "react-forms",
     "router-seo",
     "protected-routes",
-    "crud-ui"
+    "crud-ui",
+    "manual-testing",
+    "unit-test"
   ]
 }

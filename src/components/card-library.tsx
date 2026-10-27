@@ -1,14 +1,14 @@
 "use client";
 
 import { useSearchContext } from "fumadocs-ui/contexts/search";
-import { Check, ClipboardList, Database, LayoutTemplate, Monitor, Plug, Search, ShieldCheck, type LucideIcon } from "lucide-react";
+import { Check, ClipboardList, Database, LayoutTemplate, Monitor, Plug, Search, ShieldCheck, TestTube, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { cardUrl, cards, steps, topics, type LearnCard, type StepSlug, type TopicSlug } from "@/data/learn";
 import { useProgress } from "@/hooks/use-progress";
 import { useSite } from "./nav-provider";
 
-const topicIcon: Record<TopicSlug, LucideIcon> = { plan: ClipboardList, ux: LayoutTemplate, db: Database, api: Plug, auth: ShieldCheck, web: Monitor };
+const topicIcon: Record<TopicSlug, LucideIcon> = { plan: ClipboardList, ux: LayoutTemplate, db: Database, api: Plug, auth: ShieldCheck, web: Monitor, test: TestTube };
 
 // คลังการ์ด (/learn/cards): หยิบอ่านเรื่องที่ต้องใช้ ไม่ต้องเรียง
 // กรอง 3 ทางพร้อมกัน: ชื่อการ์ด, ขั้น (ใช้ตอนไหน), หมวด (เรื่องอะไร) · ผลแบ่งหัวข้อตามหมวด
