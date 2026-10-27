@@ -5,7 +5,10 @@ import { useSession } from "@/hooks/use-session";
 import type { Role } from "@/types";
 import { Button } from "./button";
 import { ErrorText } from "./error-text";
-import { Field, Input } from "./field";
+import { Field, Input, inputClass } from "./field";
+
+// หน้า login ใช้บนมือถือบ่อย ช่องกรอกและปุ่มสูง 48px (เกินขั้นต่ำ 44px) และตัวอักษร 16px กัน iOS ซูมเข้าเองตอนแตะช่อง
+const bigInput = `${inputClass} min-h-12 text-base`;
 
 // ไม่มี ?next= (กด "เข้าสู่ระบบ" จากเมนูเอง) → ไปหน้าที่ใช้บ่อยที่สุดของบทบาทนั้น: พี่เลี้ยงไปหลังบ้าน น้องไปหน้าวันนี้ (ทำต่อจากที่ค้าง)
 const HOME: Record<Role, string> = { dev: "/dev/admin", intern: "/today" };
@@ -40,9 +43,10 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={submit} className="not-prose my-6 flex max-w-sm flex-col gap-4">
-      <Field label="Username">
+    <form onSubmit={submit} className="flex flex-col gap-4">
+      <Field label="ชื่อผู้ใช้">
         <Input
+          className={bigInput}
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           autoComplete="username"
@@ -53,6 +57,7 @@ export function LoginForm() {
       </Field>
       <Field label="PIN 6 หลัก">
         <Input
+          className={`${bigInput} tracking-[0.4em]`}
           value={pin}
           onChange={(e) => setPin(e.target.value)}
           type="password"
@@ -64,7 +69,7 @@ export function LoginForm() {
         />
       </Field>
       {error && <ErrorText>{error}</ErrorText>}
-      <Button type="submit" disabled={busy}>
+      <Button type="submit" disabled={busy} className="min-h-12 text-base">
         {busy ? "กำลังตรวจ…" : "เข้าสู่ระบบ"}
       </Button>
     </form>
