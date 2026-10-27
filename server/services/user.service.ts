@@ -47,6 +47,7 @@ export const userService = {
   // ไม่จำกัดว่า "ต้องยังไม่มี Dev" เพราะคนที่แก้ env ของ Production ได้ ก็เปลี่ยน DATABASE_URL ได้อยู่แล้ว
   // การจำกัดแบบนั้นไม่ได้กันอะไรเพิ่ม แต่ทำให้พี่เลี้ยงที่ลืม PIN ทุกคนเข้าไม่ได้เลย
   async ensureFirstDev() {
+    await userService.ensureFirstSuperAdmin();
     const { FIRST_DEV_USERNAME: name, FIRST_DEV_PIN: pin } = env;
     if (!name || !pin) return;
     const username = name.toLowerCase();
@@ -57,6 +58,23 @@ export const userService = {
     // ระบบใหม่ที่ยังไม่มีใคร: บัญชีแรกต้องเป็น Super admin ไม่งั้นไม่มีใครสร้างพี่เลี้ยงคนต่อไปได้
     await userRepository.create({ username, role: "dev", superAdmin: true, secretHash: await hashPin(pin) });
     console.info(`FIRST_DEV: สร้างบัญชี Dev ${username} แล้ว login ได้แล้วให้ลบ FIRST_DEV_PIN ออกจาก env`);
+  },
+
+  // FIRST_SUPER_ADMIN: ทางตั้ง Super admin คนแรกโดยไม่ต้องเอา connection string ของฐานมาไว้ในเครื่อง
+  // ไม่ทำอะไรเลยถ้ามี Super admin อยู่แล้ว (env จึงใช้เพิ่มคนทีหลังหรือยึดสิทธิ์คืนไม่ได้)
+  // และต้องเป็นบัญชีพี่เลี้ยงที่มีอยู่และเปิดใช้ ไม่สร้างบัญชีให้ ไม่แตะ PIN
+  async ensureFirstSuperAdmin() {
+    const name = env.FIRST_SUPER_ADMIN?.toLowerCase();
+    if (!name) return;
+    const all = await userRepository.listPublic();
+    if (all.some((u) => u.role === "dev" && u.superAdmin && !u.disabled)) return;
+    const target = all.find((u) => u.username === name);
+    if (!target || target.role !== "dev" || target.disabled) {
+      console.warn(`FIRST_SUPER_ADMIN: ไม่มีบัญชีพี่เลี้ยง ${name} ที่เปิดใช้อยู่ ยังไม่ได้ตั้ง Super admin`);
+      return;
+    }
+    await userRepository.update(target.id, { superAdmin: true });
+    console.info(`FIRST_SUPER_ADMIN: ตั้ง ${name} เป็น Super admin แล้ว ลบ FIRST_SUPER_ADMIN ออกจาก env ได้`);
   },
 
   // pin ส่งมาเองได้เฉพาะสคริปต์ใน Terminal (หน้า admin สุ่มให้เสมอ) · actor มีเฉพาะตอนสั่งจากหน้า admin

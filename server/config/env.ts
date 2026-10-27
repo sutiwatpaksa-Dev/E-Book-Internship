@@ -13,6 +13,9 @@ const schema = z.object({
   // มี Dev แล้วค่านี้ไม่ถูกใช้อีก ลบออกจาก env ได้ · PIN ตั้งเป็น Sensitive ใน Vercel
   FIRST_DEV_USERNAME: z.string().min(1).optional(),
   FIRST_DEV_PIN: z.string().regex(/^\d{6}$/).optional(),
+  // Super admin คนแรกของฐานที่มีพี่เลี้ยงอยู่แล้ว (เช่นหลัง migration 0008): ใส่ชื่อบัญชีพี่เลี้ยงที่มีอยู่
+  // ใช้ได้เฉพาะตอนฐานยังไม่มี Super admin สักคน มีแล้วค่านี้ไม่ถูกใช้อีก ลบออกจาก env ได้
+  FIRST_SUPER_ADMIN: z.string().min(1).optional(),
 });
 
 // บอก "รูปร่าง" ของค่าที่ผิด ไม่บอกค่าจริง (อาจเป็นความลับ): พอให้รู้ว่าว่าง ติดอะไรมาหัวท้าย หรือมีอักขระแปลก
