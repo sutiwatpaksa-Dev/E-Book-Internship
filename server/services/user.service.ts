@@ -1,6 +1,7 @@
 import { env } from "../config/env";
 import type { Role } from "../db/schema";
 import { hashPin, newPin } from "../lib/pin";
+import { cohortRepository } from "../repositories/cohort.repository";
 import { userRepository, type PublicUser } from "../repositories/user.repository";
 import { auditService } from "./audit.service";
 
@@ -8,20 +9,22 @@ import { auditService } from "./audit.service";
 export const userService = {
   list: () => userRepository.listPublic(),
 
-  async create(actorId: number, username: string, role: Role) {
+  async create(actorId: number, username: string, role: Role, cohortId?: number | null) {
+    const inCohort = role === "intern" && cohortId ? cohortId : null;
+    if (inCohort && !(await cohortRepository.findById(inCohort))) throw new Error("COHORT_NOT_FOUND");
     const pin = newPin();
-    const user = await userRepository.create({ username, role, secretHash: await hashPin(pin) });
+    const user = await userRepository.create({ username, role, secretHash: await hashPin(pin), cohortId: inCohort });
     if (!user) throw new Error("USERNAME_TAKEN");
     await auditService.log(actorId, "user.create", username, role);
     return { user, pin };
   },
 
   // ชื่อซ้ำหรือมีอยู่แล้วไม่ทำให้ทั้งชุดล้ม: คนอื่นยังได้บัญชี แล้วบอกว่าชื่อไหนข้ามไป
-  async createMany(actorId: number, usernames: string[], role: Role) {
+  async createMany(actorId: number, usernames: string[], role: Role, cohortId?: number | null) {
     const results: ({ username: string; pin: string } | { username: string; error: string })[] = [];
     for (const username of [...new Set(usernames)]) {
       try {
-        const { pin } = await userService.create(actorId, username, role);
+        const { pin } = await userService.create(actorId, username, role, cohortId);
         results.push({ username, pin });
       } catch (e) {
         if ((e as Error).message !== "USERNAME_TAKEN") throw e;

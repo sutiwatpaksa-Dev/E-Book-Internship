@@ -3,9 +3,11 @@
 import { Search, UserPlus, Users } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { isLockedNow, type AdminState } from "@/hooks/use-admin";
+import { inCohort, type CohortFilter } from "@/lib/cohort";
 import type { Role, User } from "@/types";
 import { ROLE_BADGE, ROLE_LABEL } from "./account-menu";
 import { AdminBulkCreate } from "./admin-bulk-create";
+import { CohortSelect, defaultCohortId } from "./admin-cohorts";
 import { Button } from "./button";
 import { ConfirmBox } from "./confirm-box";
 import { Field, Input, inputClass } from "./field";
@@ -38,20 +40,28 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
   const [showBulk, setShowBulk] = useState(false);
   const [newUsername, setNewUsername] = useState("");
   const [newRole, setNewRole] = useState<Role>("intern");
+  // undefined = ยังไม่ได้เลือกเอง ใช้รุ่นที่กำลังฝึก (คิดตอน render เพราะเปิดหน้านี้ตรงๆ รายการรุ่นยังโหลดไม่เสร็จ)
+  const [pickedCohort, setNewCohort] = useState<number | null | undefined>(undefined);
+  const newCohort = pickedCohort === undefined ? defaultCohortId(admin.cohorts) : pickedCohort;
+  const [cohortFilter, setCohortFilter] = useState<CohortFilter>("all");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Role | "all">("all");
   const [page, setPage] = useState(1);
   const [pending, setPending] = useState<Pending>(null);
 
   // ค้นหาและกรองในหน้าเว็บ (บัญชีมีไม่กี่สิบคน ดึงมาทั้งหมดครั้งเดียวพอ)
-  const rows = admin.users.filter((u) => (filter === "all" || u.role === filter) && u.username.includes(query.trim().toLowerCase()));
+  // กรองรุ่นแล้วเหลือเฉพาะน้อง (พี่เลี้ยงไม่มีรุ่น) ยกเว้นเลือก "ทุกรุ่น"
+  const rows = admin.users.filter(
+    (u) => (filter === "all" || u.role === filter) && (cohortFilter === "all" || (u.role === "intern" && inCohort(u.cohortId, cohortFilter))) && u.username.includes(query.trim().toLowerCase()),
+  );
+  const cohortName = (id: number | null) => admin.cohorts.find((c) => c.id === id)?.name ?? "–";
   const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const current = Math.min(page, pages);
   const shown = rows.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
 
   const create = async (e: FormEvent) => {
     e.preventDefault();
-    await admin.createUser(newUsername, newRole);
+    await admin.createUser(newUsername, newRole, newRole === "intern" ? newCohort : null);
     setNewUsername("");
   };
 
@@ -92,6 +102,7 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
               <option value="dev">Dev (พี่เลี้ยง)</option>
             </select>
           </Field>
+          {newRole === "intern" && <CohortSelect cohorts={admin.cohorts} value={newCohort} onChange={setNewCohort} className={inputClass} />}
           <Button type="submit">สร้างและออก PIN</Button>
           <p className="w-full text-xs text-fd-muted-foreground">PIN 6 หลักจะแสดงครั้งเดียวหลังสร้าง ส่งให้น้องทางช่องทางส่วนตัว ระบบเก็บแค่ hash</p>
         </form>
@@ -128,6 +139,26 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
             </button>
           ))}
         </div>
+        <label className="flex items-center gap-2 text-sm font-medium">
+          รุ่น
+          <select
+            className={`${inputClass} w-auto`}
+            value={String(cohortFilter)}
+            onChange={(e) => {
+              const v = e.target.value;
+              setCohortFilter(v === "all" || v === "none" ? v : Number(v));
+              setPage(1);
+            }}
+          >
+            <option value="all">ทุกรุ่น</option>
+            {admin.cohorts.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+            <option value="none">ไม่มีรุ่น</option>
+          </select>
+        </label>
       </div>
 
       {pending && (
@@ -150,11 +181,12 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
 
       {/* จอแคบ: ตารางเลื่อนซ้าย-ขวาได้ แทนการบีบปุ่มจนแถวสูงเกินไป */}
       <div className="overflow-x-auto rounded-xl border border-fd-border">
-        <table className="w-full min-w-[760px] text-sm">
+        <table className="w-full min-w-[860px] text-sm">
           <thead className="bg-fd-muted text-left">
             <tr>
               <th className="px-3 py-2">ชื่อผู้ใช้</th>
               <th className="px-3 py-2">บทบาท</th>
+              <th className="px-3 py-2">รุ่น</th>
               <th className="px-3 py-2">สถานะ</th>
               <th className="px-3 py-2">เข้าล่าสุด</th>
               <th className="px-3 py-2 text-end">จัดการ</th>
@@ -163,7 +195,7 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
           <tbody>
             {shown.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-3 py-6 text-center text-fd-muted-foreground">
+                <td colSpan={6} className="px-3 py-6 text-center text-fd-muted-foreground">
                   {admin.loading ? "กำลังโหลด…" : "ไม่พบบัญชีที่ตรงกับที่ค้นหา"}
                 </td>
               </tr>
@@ -182,6 +214,7 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
                     <option value="dev">{ROLE_LABEL.dev}</option>
                   </select>
                 </td>
+                <td className="px-3 py-2 whitespace-nowrap text-fd-muted-foreground">{u.role === "intern" ? cohortName(u.cohortId) : "–"}</td>
                 <td className={`px-3 py-2 ${u.disabled || isLockedNow(u) ? "text-orange-700 dark:text-orange-400" : ""}`}>
                   {u.disabled ? "ปิดอยู่" : isLockedNow(u) ? "ล็อกชั่วคราว" : "ใช้งาน"}
                 </td>

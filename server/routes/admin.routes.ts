@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { requireRole, type AuthVars } from "../middleware/require-role";
+import { adminCohortRoutes } from "./admin-cohort.routes";
 import { adminContentRoutes } from "./admin-content.routes";
 import { auditService } from "../services/audit.service";
 import { fileService } from "../services/file.service";
@@ -12,19 +13,20 @@ import { createManySchema, createUserSchema, updateUserSchema } from "../validat
 export const adminRoutes = new Hono<AuthVars>();
 adminRoutes.use("*", requireRole("dev"));
 adminRoutes.route("/content", adminContentRoutes);
+adminRoutes.route("/cohorts", adminCohortRoutes);
 
 adminRoutes.get("/users", async (c) => c.json(await userService.list()));
 
 adminRoutes.post("/users", async (c) => {
   const parsed = createUserSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ error: "username ใช้ได้เฉพาะ a-z 0-9 . _ - ยาว 3–64 ตัว และต้องเลือก role" }, 400);
-  return c.json(await userService.create(c.get("user").id, parsed.data.username, parsed.data.role), 201);
+  return c.json(await userService.create(c.get("user").id, parsed.data.username, parsed.data.role, parsed.data.cohortId), 201);
 });
 
 adminRoutes.post("/users/bulk", async (c) => {
   const parsed = createManySchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ error: "ใส่ 1–50 ชื่อ บรรทัดละชื่อ ใช้ได้เฉพาะ a-z 0-9 . _ - ยาว 3–64 ตัว" }, 400);
-  return c.json(await userService.createMany(c.get("user").id, parsed.data.usernames, parsed.data.role), 201);
+  return c.json(await userService.createMany(c.get("user").id, parsed.data.usernames, parsed.data.role, parsed.data.cohortId), 201);
 });
 
 adminRoutes.post("/users/:id/reset-pin", async (c) => c.json(await userService.resetPin(Number(c.req.param("id")), undefined, c.get("user").id)));

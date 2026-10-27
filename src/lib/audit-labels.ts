@@ -19,11 +19,17 @@ export const AUDIT_LABEL: Record<string, string> = {
   "note.delete": "ลบโน้ต",
   "announcement.create": "ประกาศ",
   "announcement.end": "ปิดประกาศ",
+  "cohort.create": "สร้างรุ่น",
+  "cohort.update": "แก้ข้อมูลรุ่น",
+  "cohort.end": "จบรุ่น",
+  "cohort.reopen": "เปิดรุ่นกลับ",
+  "cohort.mentors": "ตั้งพี่เลี้ยงประจำรุ่น",
+  "cohort.assign": "ย้ายน้องเข้ารุ่น",
 };
 
 // กลุ่มของรหัส ใช้กรองในหน้าบันทึก: ดูจากคำหน้าจุด (user.create → user → บัญชี)
 export const AUDIT_GROUPS = [
-  { id: "user", label: "บัญชี", prefixes: ["user"] },
+  { id: "user", label: "บัญชี", prefixes: ["user", "cohort"] },
   { id: "content", label: "เนื้อหา", prefixes: ["card", "note", "announcement"] },
   { id: "thread", label: "แชท", prefixes: ["thread"] },
   { id: "file", label: "ไฟล์", prefixes: ["file"] },

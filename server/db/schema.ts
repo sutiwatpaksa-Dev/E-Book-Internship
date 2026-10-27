@@ -1,4 +1,4 @@
-import { boolean, customType, index, integer, pgTable, primaryKey, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { type AnyPgColumn, boolean, customType, date, index, integer, pgTable, primaryKey, serial, text, timestamp } from "drizzle-orm/pg-core";
 
 const bytea = customType<{ data: Buffer }>({ dataType: () => "bytea" });
 
@@ -18,7 +18,35 @@ export const users = pgTable("users", {
   lockedUntil: timestamp("locked_until", { withTimezone: true }),
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  // รุ่นที่น้องอยู่ · ว่าง = พี่เลี้ยง หรือบัญชีที่สร้างก่อนมีระบบรุ่น ("ไม่มีรุ่น") · ลบรุ่นแล้วบัญชียังอยู่
+  cohortId: integer("cohort_id").references((): AnyPgColumn => cohorts.id, { onDelete: "set null" }),
 });
+
+// รุ่นฝึกงาน: ช่วงเวลาที่น้องกลุ่มหนึ่งฝึกพร้อมกัน ใช้กรองภาพรวม แชท และประกาศในหลังบ้าน
+// วันเริ่ม/จบเป็น date (ไม่มีเวลา) เพราะนับเป็นวันทำงาน · สถานะคิดจากวันที่ + ended_at ไม่เก็บซ้ำ
+export const cohorts = pgTable("cohorts", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  startsOn: date("starts_on").notNull(),
+  endsOn: date("ends_on").notNull(),
+  // พี่เลี้ยงกด "จบรุ่น" แล้ว: น้องยังอ่านคู่มือได้ แต่เปิดเรื่องถามใหม่ไม่ได้ · กดเปิดรุ่นกลับได้ (ล้างค่า)
+  endedAt: timestamp("ended_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// พี่เลี้ยงประจำรุ่น (หลายคนต่อรุ่น, คนเดียวดูหลายรุ่นได้) · พี่เลี้ยงทุกคนยังเห็นทุกรุ่น ตารางนี้ใช้บอกว่าใครรับผิดชอบ
+export const cohortMentors = pgTable(
+  "cohort_mentors",
+  {
+    cohortId: integer("cohort_id")
+      .notNull()
+      .references(() => cohorts.id, { onDelete: "cascade" }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.cohortId, t.userId] })],
+);
 
 // นับครั้งที่ login ผิดต่อ IP เก็บใน DB เพราะบน Vercel แต่ละคำขออาจวิ่งไปคนละเครื่อง ตัวนับในหน่วยความจำจึงใช้ไม่ได้
 export const ipFailures = pgTable("ip_failures", {

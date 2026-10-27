@@ -2,6 +2,7 @@ import { QUESTION_STATUSES, REQUEST_STATUSES, type Role, type ThreadKind, type T
 import { threadRepository } from "../repositories/thread.repository";
 import { userRepository } from "../repositories/user.repository";
 import { auditService } from "./audit.service";
+import { cohortService } from "./cohort.service";
 import { notificationService } from "./notification.service";
 
 // กันเปิดเรื่องรัวๆ: ค้างได้ไม่เกินเท่านี้ (เรื่องที่ปิด/ทำเสร็จ/ไม่ทำ ไม่นับ)
@@ -51,6 +52,8 @@ export const threadService = {
   unreadMine: (userId: number) => threadRepository.countUnread("intern", userId),
 
   async create(userId: number, input: { kind: ThreadKind; subject: string; body: string; pageUrl?: string }) {
+    // รุ่นจบแล้ว: อ่านคู่มือต่อได้ แต่ไม่เปิดเรื่องใหม่ (พี่เลี้ยงรุ่นนั้นไม่ได้ดูหลังบ้านทุกวันแล้ว) · ตอบเรื่องเดิมยังได้
+    if (await cohortService.endedFor(userId)) throw new Error("COHORT_ENDED");
     if ((await threadRepository.countOpenByOwner(userId)) >= MAX_OPEN_PER_USER) throw new Error("TOO_MANY_OPEN_THREADS");
     const id = await threadRepository.create(
       { createdBy: userId, kind: input.kind, subject: input.subject, pageUrl: input.pageUrl ?? null, status: input.kind === "question" ? "waiting" : "new" },

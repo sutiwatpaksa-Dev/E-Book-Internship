@@ -14,6 +14,7 @@ const publicColumns = {
   lockedUntil: users.lockedUntil,
   lastLoginAt: users.lastLoginAt,
   createdAt: users.createdAt,
+  cohortId: users.cohortId,
 };
 export type PublicUser = { [K in keyof typeof publicColumns]: (typeof users.$inferSelect)[K] };
 

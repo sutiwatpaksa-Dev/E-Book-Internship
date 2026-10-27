@@ -50,6 +50,13 @@
       "when": 1793077329592,
       "tag": "0006_backoffice-content",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793087525663,
+      "tag": "0007_cohorts",
+      "breakpoints": true
     }
   ]
 }

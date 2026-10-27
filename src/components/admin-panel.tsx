@@ -1,6 +1,6 @@
 "use client";
 
-import { FilePlus2, FileText, History, Inbox, Layers, LayoutDashboard, Megaphone, MessageCircle, NotebookPen, Users, type LucideIcon } from "lucide-react";
+import { FilePlus2, FileText, GraduationCap, History, Inbox, Layers, LayoutDashboard, Megaphone, MessageCircle, NotebookPen, Users, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 import { useAdmin } from "@/hooks/use-admin";
 import { useUnread } from "@/hooks/use-unread";
@@ -9,6 +9,7 @@ import { AdminAnnouncements } from "./admin-announcements";
 import { AdminAudit } from "./admin-audit";
 import { AdminBuiltInCards, AdminMentorCards, AdminNotes } from "./admin-content";
 import { AdminFiles } from "./admin-files";
+import { AdminCohorts } from "./admin-cohorts";
 import { AdminInternDetail } from "./admin-intern-detail";
 import { AdminOverview } from "./admin-overview";
 import { AdminRequests } from "./admin-requests";
@@ -17,7 +18,7 @@ import { Button } from "./button";
 import { ChatPanel } from "./chat-panel";
 import { ErrorText } from "./error-text";
 
-type TabId = "overview" | "questions" | "requests" | "cards" | "notes" | "builtin" | "announcements" | "users" | "files" | "audit";
+type TabId = "overview" | "questions" | "requests" | "cards" | "notes" | "builtin" | "announcements" | "cohorts" | "users" | "files" | "audit";
 type Tab = { id: TabId; label: string; icon: LucideIcon };
 // เมนูแบ่ง 3 กลุ่มตามความถี่ที่ใช้: งานประจำวัน (เปิดทุกวัน) → เนื้อหา (เขียน/ปรับคู่มือ) → ระบบ (นานๆ ครั้ง)
 const GROUPS: { label: string; tabs: Tab[] }[] = [
@@ -41,6 +42,7 @@ const GROUPS: { label: string; tabs: Tab[] }[] = [
   {
     label: "ระบบ",
     tabs: [
+      { id: "cohorts", label: "รุ่นฝึกงาน", icon: GraduationCap },
       { id: "users", label: "บัญชีผู้ใช้", icon: Users },
       { id: "files", label: "ไฟล์และตั้งค่า", icon: FileText },
       { id: "audit", label: "บันทึกการกระทำ", icon: History },
@@ -57,7 +59,7 @@ function pickTab(tab: string | undefined, note: string | undefined): TabId {
 }
 
 // แท็บต่างๆ พากันไปหน้าอื่นผ่านตัวนี้ (เช่น ภาพรวม → น้องรายคน → เปิดแชทของน้อง)
-export type AdminNav = { goTab: (id: TabId) => void; openIntern: (id: number) => void; openThread: (id: number) => void; openNote: (pageUrl: string) => void };
+export type AdminNav = { goTab: (id: TabId) => void; openIntern: (id: number) => void; openThread: (id: number) => void; openNote: (pageUrl: string) => void; openCohort: (id: number | null) => void };
 
 // หลังบ้านพี่เลี้ยง: เมนูแท็บซ้าย (มือถือเป็นแถบเลื่อนด้านบน) + เนื้อหาของแท็บที่เลือก
 type Props = { titles: Record<string, string>; initialTab?: string; initialThread?: number | null; initialNote?: string };
@@ -72,6 +74,8 @@ export function AdminPanel({ titles, initialTab = "overview", initialThread = nu
   // เปิดหน้าน้องรายคนอยู่ (อยู่ใต้แท็บภาพรวม) · เรื่องที่สั่งให้แชทเปิด
   const [internId, setInternId] = useState<number | null>(null);
   const [threadId, setThreadId] = useState<number | null>(initialThread);
+  // หน้ารุ่นที่เปิดอยู่ (อยู่ใต้เมนูรุ่นฝึกงาน) · null = รายการรุ่น
+  const [cohortId, setCohortId] = useState<number | null>(null);
   const active = TABS.find((t) => t.id === tab)!;
   const waiting = useUnread();
   const intern = internId !== null ? admin.users.find((u) => u.id === internId) : undefined;
@@ -81,6 +85,7 @@ export function AdminPanel({ titles, initialTab = "overview", initialThread = nu
       setInternId(null);
       setThreadId(null);
       setNotePage(undefined);
+      setCohortId(null);
       setTab(id);
       // ข้อมูลในแท็บอาจเก่าแล้ว (เช่นเพิ่งตอบแชทไป) โหลดใหม่ทุกครั้งที่สลับ
       admin.reload();
@@ -95,6 +100,10 @@ export function AdminPanel({ titles, initialTab = "overview", initialThread = nu
       setInternId(null);
       setThreadId(id);
       setTab("questions");
+    },
+    openCohort: (id) => {
+      setCohortId(id);
+      setTab("cohorts");
     },
     openNote: (pageUrl) => {
       setInternId(null);
@@ -172,6 +181,7 @@ export function AdminPanel({ titles, initialTab = "overview", initialThread = nu
             {tab === "announcements" && <AdminAnnouncements content={content} />}
           </>
         )}
+        {tab === "cohorts" && <AdminCohorts admin={admin} nav={nav} cohortId={cohortId} />}
         {tab === "users" && <AdminUsers admin={admin} />}
         {tab === "files" && <AdminFiles admin={admin} />}
         {tab === "audit" && <AdminAudit />}

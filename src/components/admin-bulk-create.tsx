@@ -6,6 +6,7 @@ import type { AdminState } from "@/hooks/use-admin";
 import { toast } from "@/hooks/use-toast";
 import { parseUsernameList } from "@/lib/username";
 import type { BulkResult, Role } from "@/types";
+import { CohortSelect, defaultCohortId } from "./admin-cohorts";
 import { Button } from "./button";
 import { Field, inputClass } from "./field";
 
@@ -14,6 +15,8 @@ import { Field, inputClass } from "./field";
 export function AdminBulkCreate({ admin, onClose }: { admin: AdminState; onClose: () => void }) {
   const [text, setText] = useState("");
   const [role, setRole] = useState<Role>("intern");
+  const [pickedCohort, setCohortId] = useState<number | null | undefined>(undefined);
+  const cohortId = pickedCohort === undefined ? defaultCohortId(admin.cohorts) : pickedCohort;
   const [results, setResults] = useState<BulkResult[] | null>(null);
 
   // ตรวจทุกครั้งที่พิมพ์ ชี้ชื่อที่ผิดให้เห็นก่อนกดสร้าง แทนให้ server ปฏิเสธทั้งชุดโดยไม่บอกว่าชื่อไหน
@@ -22,7 +25,7 @@ export function AdminBulkCreate({ admin, onClose }: { admin: AdminState; onClose
   // ส่งเฉพาะชื่อที่ถูก ชื่อที่ผิดไปต่อท้ายตารางผลว่า "ข้าม" พร้อมเหตุผล จะได้เห็นครบทุกชื่อที่วางมา
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    const r = await admin.createMany(valid, role);
+    const r = await admin.createMany(valid, role, role === "intern" ? cohortId : null);
     if (r) {
       setResults([...r, ...invalid]);
       setText("");
@@ -101,6 +104,7 @@ export function AdminBulkCreate({ admin, onClose }: { admin: AdminState; onClose
             <option value="dev">Dev (พี่เลี้ยง)</option>
           </select>
         </Field>
+        {role === "intern" && <CohortSelect cohorts={admin.cohorts} value={cohortId} onChange={setCohortId} className={inputClass} />}
         <Button type="submit" disabled={valid.length === 0 || valid.length > 50}>
           สร้าง {valid.length} บัญชี
         </Button>

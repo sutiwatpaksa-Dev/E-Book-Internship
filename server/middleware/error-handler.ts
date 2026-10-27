@@ -22,6 +22,9 @@ const KNOWN: Record<string, [ContentfulStatusCode, string]> = {
   NOTE_NOT_FOUND: [404, "ไม่พบโน้ตนี้"],
   ANNOUNCEMENT_NOT_FOUND: [404, "ไม่พบประกาศนี้"],
   INVALID_PERIOD: [400, "เวลาจบต้องอยู่หลังเวลาเริ่ม"],
+  COHORT_NOT_FOUND: [404, "ไม่พบรุ่นนี้"],
+  NOT_A_MENTOR: [400, "เลือกได้เฉพาะบัญชีพี่เลี้ยงที่ยังเปิดใช้"],
+  COHORT_ENDED: [403, "รุ่นของคุณจบแล้ว ยังอ่านคู่มือได้ แต่เปิดเรื่องถามใหม่ไม่ได้ ติดต่อพี่เลี้ยงทางกลุ่มแทน"],
 };
 
 export function errorHandler(err: Error, c: Context) {

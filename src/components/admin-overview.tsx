@@ -1,10 +1,12 @@
 "use client";
 
 import { ChevronRight, FilePlus2, NotebookPen, PartyPopper } from "lucide-react";
+import { useEffect, useState } from "react";
 import { daysSince, isLockedNow, type AdminState } from "@/hooks/use-admin";
 import { mentorCardUrl } from "@/data/learn";
 import type { ContentAdminState } from "@/hooks/use-content-admin";
 import { useUnread } from "@/hooks/use-unread";
+import { inCohort, type CohortFilter } from "@/lib/cohort";
 import { summarize } from "@/lib/progress-summary";
 import { timeAgo } from "@/lib/thread-labels";
 import type { AdminNav } from "./admin-panel";
@@ -22,15 +24,25 @@ type Props = { admin: AdminState; content: ContentAdminState; nav: AdminNav; tit
 
 export function AdminOverview({ admin, content, nav, titles }: Props) {
   const unread = useUnread();
-  const interns = admin.users.filter((u) => u.role === "intern" && !u.disabled);
+  const [saved, setCohort] = useCohortFilter();
+  // รุ่นที่จำไว้ถูกลบไปแล้ว (หรือรายการยังโหลดไม่เสร็จ) ให้ดูทุกรุ่นแทน
+  const cohort: CohortFilter = typeof saved === "number" && !admin.cohorts.some((c) => c.id === saved) ? "all" : saved;
+  const ended = new Set(admin.cohorts.filter((c) => c.endedAt).map((c) => c.id));
+  // "ทุกรุ่น" ไม่นับน้องของรุ่นที่จบแล้ว (ไม่ต้องตามว่าใครหายไป) · เลือกรุ่นที่จบแล้วตรงๆ ยังดูได้
+  const interns = admin.users.filter(
+    (u) => u.role === "intern" && !u.disabled && inCohort(u.cohortId, cohort) && (cohort !== "all" || u.cohortId === null || !ended.has(u.cohortId)),
+  );
+  // เรื่องในแชทผูกกับชื่อเจ้าของ: กรองตามรุ่น = เอาเฉพาะเรื่องของน้องในรุ่นนั้น
+  const owners = new Set(admin.users.filter((u) => u.role === "intern" && inCohort(u.cohortId, cohort)).map((u) => u.username));
+  const threads = cohort === "all" ? admin.threads : admin.threads.filter((t) => !!t.owner && owners.has(t.owner));
   const locked = admin.users.filter(isLockedNow);
   // แยกสองกลุ่มเพราะต้องทำคนละอย่าง: ยังไม่เคยเข้า = อาจยังไม่ได้รับ PIN (ตามส่ง PIN)
   // เคยเข้าแต่หายไปเกิน 7 วัน = อาจติดอะไรอยู่ (ทักไปถามความคืบหน้า)
   const neverIn = interns.filter((u) => !u.lastLoginAt);
   const stale = interns.filter((u) => (daysSince(u.lastLoginAt) ?? 0) > STALE_DAYS);
   const toInterns = () => document.getElementById("interns")?.scrollIntoView({ behavior: "smooth" });
-  const newRequests = admin.threads.filter((t) => t.status === "new").length;
-  const waitingList = admin.threads.filter((t) => t.status === "waiting");
+  const newRequests = threads.filter((t) => t.status === "new").length;
+  const waitingList = threads.filter((t) => t.status === "waiting");
   const waiting = waitingList.length;
   // เรื่องที่รอนานสุด: lastMessageAt ของเรื่องที่ "รอตอบ" คือตอนที่น้องพิมพ์ล่าสุด
   const oldest = waitingList.map((t) => t.lastMessageAt).sort()[0];
@@ -40,7 +52,7 @@ export function AdminOverview({ admin, content, nav, titles }: Props) {
     .map((a) => a.endsAt)
     .filter((d): d is string => !!d)
     .sort()[0];
-  const hot = hotPages(admin.threads, now);
+  const hot = hotPages(threads, now);
   // การ์ดของพี่เลี้ยงไม่มีไฟล์ MDX จึงไม่อยู่ใน titles หาชื่อจากรายการการ์ดแทน
   const titleOf = (url: string) => titles[url] ?? content.cards.find((c) => mentorCardUrl(c.slug) === url)?.title ?? url;
 
@@ -81,6 +93,25 @@ export function AdminOverview({ admin, content, nav, titles }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
+      {admin.cohorts.length > 0 && (
+        <label className="flex flex-wrap items-center gap-2 self-start text-sm font-medium">
+          ดูเฉพาะรุ่น
+          <select
+            className="min-h-11 rounded-lg border border-fd-border bg-fd-background px-3"
+            value={String(cohort)}
+            onChange={(e) => setCohort(e.target.value === "all" || e.target.value === "none" ? e.target.value : Number(e.target.value))}
+          >
+            <option value="all">ทุกรุ่นที่ยังไม่จบ</option>
+            {admin.cohorts.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+                {c.endedAt ? " (จบแล้ว)" : ""}
+              </option>
+            ))}
+            <option value="none">ไม่มีรุ่น</option>
+          </select>
+        </label>
+      )}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {kpis.map((k) => (
           <button
@@ -229,6 +260,26 @@ export function AdminOverview({ admin, content, nav, titles }: Props) {
 }
 
 // นับคำถามที่น้องกดถามจากหน้าไหน (pageUrl ติดมากับเรื่องอัตโนมัติจากกล่องท้ายหน้า) ในช่วง HOT_DAYS วันล่าสุด
+// รุ่นที่เลือกดูจำไว้ในเบราว์เซอร์ของพี่เลี้ยงคนนั้น (เปิดหลังบ้านครั้งหน้าไม่ต้องเลือกใหม่)
+// อ่านหลัง mount เท่านั้น ให้ render แรกตรงกับ server · localStorage ใช้ไม่ได้ (โหมดส่วนตัว) ก็แค่ไม่จำ
+const COHORT_KEY = "admin.cohort";
+function useCohortFilter() {
+  const [f, setF] = useState<CohortFilter>("all");
+  useEffect(() => {
+    try {
+      const v = localStorage.getItem(COHORT_KEY);
+      if (v) setF(v === "all" || v === "none" ? v : Number(v));
+    } catch {}
+  }, []);
+  const set = (v: CohortFilter) => {
+    setF(v);
+    try {
+      localStorage.setItem(COHORT_KEY, String(v));
+    } catch {}
+  };
+  return [f, set] as const;
+}
+
 function hotPages(threads: AdminState["threads"], now: number) {
   const counts = new Map<string, number>();
   for (const t of threads) {

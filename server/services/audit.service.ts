@@ -20,7 +20,13 @@ export type AuditAction =
   | "note.update"
   | "note.delete"
   | "announcement.create"
-  | "announcement.end";
+  | "announcement.end"
+  | "cohort.create"
+  | "cohort.update"
+  | "cohort.end"
+  | "cohort.reopen"
+  | "cohort.mentors"
+  | "cohort.assign";
 
 const LIMIT = 200;
 
