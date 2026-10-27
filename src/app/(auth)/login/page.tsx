@@ -34,12 +34,12 @@ export default function LoginPage() {
           aria-hidden
           className="absolute inset-0 -z-10 bg-linear-to-r from-(--login-panel-bg) from-25% via-(--login-panel-bg)/60 via-50% to-transparent max-md:via-(--login-panel-bg)/75"
         />
-        <Link href="/" className="flex w-fit items-center gap-2.5 text-lg font-bold">
+        <span className="flex w-fit items-center gap-2.5 text-lg font-bold">
           <span className="rounded-lg bg-fd-background p-1">
             <BrandMark size={28} />
           </span>
           คู่มือฝึกงาน Blicktech
-        </Link>
+        </span>
         <h1 className="max-w-lg text-2xl leading-snug font-bold md:text-4xl md:leading-tight">
           ทำซอฟต์แวร์ 1 ระบบ ให้ครบ 7 ขั้น แบบที่ทีมจริงทำ
         </h1>
