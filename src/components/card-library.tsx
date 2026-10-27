@@ -6,13 +6,12 @@ import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { cardUrl, cards, steps, topics, type LearnCard, type StepSlug, type TopicSlug } from "@/data/learn";
 import { useProgress } from "@/hooks/use-progress";
-import { useSite } from "./nav-provider";
 
 const topicIcon: Record<TopicSlug, LucideIcon> = { plan: ClipboardList, ux: LayoutTemplate, db: Database, api: Plug, auth: ShieldCheck, web: Monitor, test: TestTube };
 
 // คลังการ์ด (/learn/cards): หยิบอ่านเรื่องที่ต้องใช้ ไม่ต้องเรียง
 // กรอง 3 ทางพร้อมกัน: ชื่อการ์ด, ขั้น (ใช้ตอนไหน), หมวด (เรื่องอะไร) · ผลแบ่งหัวข้อตามหมวด
-// หาในเนื้อหาทั้งเว็บ (เช่นวาง error) ใช้ช่องค้นหาของ Fumadocs · ท้ายหน้าเก็บบทเรียนฉบับเต็มแบบเดิมไว้
+// หาในเนื้อหาทั้งเว็บ (เช่นวาง error) ใช้ช่องค้นหาของ Fumadocs · บทเรียนฉบับเต็มแบบเดิมอยู่ใน footer (footer-chapters.tsx)
 export function CardLibrary() {
   const { done } = useProgress();
   const [query, setQuery] = useState("");
@@ -93,7 +92,6 @@ export function CardLibrary() {
         })
       )}
 
-      <FullChapters />
     </div>
   );
 }
@@ -152,45 +150,5 @@ function FullSearchHint() {
     <button type="button" onClick={() => setOpenSearch(true)} className="inline-flex min-h-11 items-center self-start text-sm font-medium text-fd-primary hover:underline">
       ค้นในเนื้อหาทั้งเว็บ (วาง error ที่เจอได้)
     </button>
-  );
-}
-
-// บทเรียนฉบับเต็มแบบเดิม จัดตามด่านเดิม · ไม่นับด่าน Mini Project (อยู่ที่เมนูโปรเจกต์แล้ว)
-function FullChapters() {
-  const { nav } = useSite();
-  return (
-    <section id="full" aria-labelledby="full-title" className="mt-6 flex scroll-mt-24 flex-col gap-3 border-t border-fd-border pt-6">
-      <div>
-        <h2 id="full-title" className="text-lg font-semibold">
-          บทเรียนฉบับเต็ม
-        </h2>
-        <p className="text-sm text-fd-muted-foreground">บทยาวแบบเดิม ใช้ตอนอยากรู้ลึก ไม่จำเป็นต่อโจทย์ การ์ดแต่ละใบมีลิงก์มาที่บทที่เกี่ยวข้องอยู่แล้ว</p>
-      </div>
-      <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
-        {nav.stages
-          .filter((s) => !s.items.some((i) => i.url.startsWith("/starter")))
-          .map((s) => (
-            <div key={s.id} className="flex flex-col gap-1">
-              <span className="text-xs font-semibold text-fd-muted-foreground">
-                {s.kicker} · {s.name}
-              </span>
-              {s.items.map((i) => (
-                <Link key={i.url} href={i.url} className="flex min-h-9 items-center text-sm hover:text-fd-primary hover:underline">
-                  {i.num ? `${i.num.replace(/^0(?=\d)/, "")}. ` : ""}
-                  {i.title}
-                </Link>
-              ))}
-            </div>
-          ))}
-        <div className="flex flex-col gap-1">
-          <span className="text-xs font-semibold text-fd-muted-foreground">อ้างอิง</span>
-          {nav.refs.map((r) => (
-            <Link key={r.url} href={r.url} className="flex min-h-9 items-center text-sm hover:text-fd-primary hover:underline">
-              {r.title}
-            </Link>
-          ))}
-        </div>
-      </div>
-    </section>
   );
 }

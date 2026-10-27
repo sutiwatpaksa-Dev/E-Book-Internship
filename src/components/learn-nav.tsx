@@ -98,7 +98,7 @@ export function LearnNav({ onNavigate }: { onNavigate?: () => void }) {
         <LayoutGrid className="size-4" />
         คลังการ์ด
       </Link>
-      <Link href="/learn/cards#full" onClick={onNavigate} className="flex min-h-9 items-center gap-2 rounded-md px-2 py-1 text-fd-muted-foreground hover:bg-fd-accent">
+      <Link href="#full" onClick={onNavigate} className="flex min-h-9 items-center gap-2 rounded-md px-2 py-1 text-fd-muted-foreground hover:bg-fd-accent">
         <BookOpen className="size-4" />
         บทเรียนฉบับเต็ม (แบบเดิม)
       </Link>

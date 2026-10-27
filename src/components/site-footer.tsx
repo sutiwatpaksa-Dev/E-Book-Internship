@@ -1,10 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
+import { FooterChapters } from "./footer-chapters";
 
 // ส่วนท้ายทุกหน้า: ข้อความใน [ ] คือที่ว่างรอข้อมูลจริงจากบริษัท (ยังไม่ได้รับ จึงไม่ใส่ข้อมูลเดาเอง)
 export function SiteFooter({ version }: { version: string }) {
   return (
     <footer className="bg-(--footer-bg) text-(--footer-fg)">
+      <FooterChapters />
       <div className="mx-auto grid max-w-6xl gap-8 px-6 pt-8 pb-6 text-sm sm:grid-cols-2 lg:grid-cols-3">
         <div className="flex flex-col gap-2.5">
           <div className="flex items-center gap-2.5">

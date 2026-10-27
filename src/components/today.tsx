@@ -240,7 +240,7 @@ function UpNext({ done, skip }: { done: ReadonlySet<string>; skip: LearnCard | n
         </Link>
       </div>
       {list.length === 0 ? (
-        <p className="text-sm text-fd-muted-foreground">ไม่มีการ์ดค้างแล้ว การ์ดของขั้นอื่นกำลังทยอยเพิ่ม ระหว่างนี้อ่านบทเรียนฉบับเต็มในคลังการ์ดได้</p>
+        <p className="text-sm text-fd-muted-foreground">ไม่มีการ์ดค้างแล้ว การ์ดของขั้นอื่นกำลังทยอยเพิ่ม ระหว่างนี้อ่านบทเรียนฉบับเต็มท้ายหน้าได้</p>
       ) : (
         <ul className="flex flex-col gap-1">
           {list.map((c) => (
