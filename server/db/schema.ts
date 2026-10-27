@@ -13,6 +13,10 @@ export const users = pgTable("users", {
   // ตอนนี้เป็น PIN ถ้าวันหน้าเปลี่ยนเป็นรหัสผ่านยาว แค่เพิ่มค่าใหม่ ไม่ต้องรื้อตาราง
   secretKind: text("secret_kind").$type<"pin" | "password">().notNull().default("pin"),
   role: text("role").$type<Role>().notNull(),
+  // Super admin = พี่เลี้ยงที่จัดการบัญชีพี่เลี้ยงคนอื่นได้ (สร้าง เลื่อน ปิด ออก PIN) · มีผลเฉพาะ role dev
+  // เป็นธงแยก ไม่ใช่ role ที่ 3: ที่อื่น (แชท ประกาศ หน้าเว็บ) ยังเห็นเป็น dev เหมือนเดิม ไม่ต้องรื้อ
+  // ตั้งได้จาก Terminal เท่านั้น (scripts/set-super-admin.ts) บัญชีพี่เลี้ยงที่หลุดจึงตั้งตัวเองไม่ได้
+  superAdmin: boolean("super_admin").notNull().default(false),
   disabled: boolean("disabled").notNull().default(false),
   failedCount: integer("failed_count").notNull().default(0),
   lockedUntil: timestamp("locked_until", { withTimezone: true }),

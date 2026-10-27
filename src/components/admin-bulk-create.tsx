@@ -101,7 +101,7 @@ export function AdminBulkCreate({ admin, onClose }: { admin: AdminState; onClose
         <Field label="บทบาท">
           <select className={inputClass} value={role} onChange={(e) => setRole(e.target.value as Role)}>
             <option value="intern">Internship</option>
-            <option value="dev">Dev (พี่เลี้ยง)</option>
+            {admin.me?.superAdmin && <option value="dev">Dev (พี่เลี้ยง)</option>}
           </select>
         </Field>
         {role === "intern" && <CohortSelect cohorts={admin.cohorts} value={cohortId} onChange={setCohortId} className={inputClass} />}

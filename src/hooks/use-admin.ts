@@ -16,6 +16,8 @@ export function useAdmin() {
   // รุ่นใช้หลายแท็บ (ภาพรวมกรองตามรุ่น, บัญชีผู้ใช้, หน้ารุ่น) จึงโหลดพร้อมรายชื่อ
   const [cohorts, setCohorts] = useState<Cohort[]>([]);
   const [exampleRepo, setExampleRepo] = useState<string | null>(null);
+  // ตัวเองเป็น Super admin ไหม: ใช้ซ่อนปุ่มจัดการบัญชีพี่เลี้ยง (server ตรวจซ้ำทุกคำสั่ง)
+  const [me, setMe] = useState<{ id: number; superAdmin: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   // PIN ที่เพิ่งออก แสดงครั้งเดียวให้คัดลอกส่งน้อง (ระบบเก็บแค่ hash ดูย้อนหลังไม่ได้)
@@ -43,6 +45,10 @@ export function useAdmin() {
 
   useEffect(() => {
     reload().finally(() => setLoading(false));
+    adminApi
+      .me()
+      .then(setMe)
+      .catch(() => {});
     filesApi
       .links()
       .then((r) => setExampleRepo(r.exampleRepo))
@@ -55,6 +61,7 @@ export function useAdmin() {
     progress,
     threads,
     cohorts,
+    me,
     reload,
     exampleRepo,
     loading,

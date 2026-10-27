@@ -5,7 +5,7 @@ import type { Role } from "../db/schema";
 import { readSessionToken, SESSION_COOKIE } from "../lib/session";
 import { authService } from "../services/auth.service";
 
-export type AuthVars = { Variables: { user: { id: number; username: string; role: Role } } };
+export type AuthVars = { Variables: { user: { id: number; username: string; role: Role; superAdmin: boolean } } };
 
 // บัตรผ่านอายุ 12 ชม. แต่ API ยังเช็กกับ DB ทุกครั้ง ปิดบัญชีแล้วเรียก API ไม่ได้ทันที
 // (หน้าเว็บที่ middleware.ts ล็อกเช็กแค่บัตร จะเปิดได้จนบัตรหมดอายุ)

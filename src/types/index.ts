@@ -5,6 +5,8 @@ export type User = {
   id: number;
   username: string;
   role: Role;
+  // พี่เลี้ยงที่จัดการบัญชีพี่เลี้ยงคนอื่นได้ (มีความหมายเฉพาะ role dev)
+  superAdmin: boolean;
   disabled: boolean;
   lockedUntil: string | null;
   lastLoginAt: string | null;

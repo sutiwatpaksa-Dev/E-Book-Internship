@@ -15,7 +15,7 @@ import { Field, Input, inputClass } from "./field";
 const PAGE_SIZE = 10;
 const fmt = (d: string | null) => (d ? new Date(d).toLocaleString("th-TH") : "–");
 // สีพื้นมาจากป้าย role (ROLE_BADGE) จึงไม่ใส่ bg ที่นี่ ไม่งั้นสองคลาสชนกัน
-const selectClass = "rounded-md border border-fd-border px-2 py-1 text-sm";
+const selectClass = "rounded-md border border-fd-border px-2 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-60";
 const FILTERS: { id: Role | "all"; label: string }[] = [
   { id: "all", label: "ทั้งหมด" },
   { id: "intern", label: ROLE_LABEL.intern },
@@ -54,6 +54,9 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
   const rows = admin.users.filter(
     (u) => (filter === "all" || u.role === filter) && (cohortFilter === "all" || (u.role === "intern" && inCohort(u.cohortId, cohortFilter))) && u.username.includes(query.trim().toLowerCase()),
   );
+  // บัญชีพี่เลี้ยงจัดการได้เฉพาะ Super admin · บัญชีน้องพี่เลี้ยงทุกคนจัดการได้ (เหมือนเดิม)
+  const isSuper = !!admin.me?.superAdmin;
+  const canManage = (u: User) => isSuper || u.role === "intern";
   const cohortName = (id: number | null) => admin.cohorts.find((c) => c.id === id)?.name ?? "–";
   const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const current = Math.min(page, pages);
@@ -76,7 +79,10 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-fd-muted-foreground">PIN แสดงครั้งเดียวตอนสร้างหรือออกใหม่ · ใส่ PIN ผิด 5 ครั้งล็อก 15 นาที</p>
+        <p className="text-sm text-fd-muted-foreground">
+          PIN แสดงครั้งเดียวตอนสร้างหรือออกใหม่ · ใส่ PIN ผิด 5 ครั้งล็อก 15 นาที
+          {admin.me && !isSuper && " · บัญชีพี่เลี้ยงสร้างและจัดการได้เฉพาะ Super admin"}
+        </p>
         <div className="flex gap-2">
           <Button variant="ghost" onClick={() => setShowBulk((v) => !v)} aria-expanded={showBulk}>
             <Users className="size-4" /> สร้างหลายคน
@@ -99,7 +105,7 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
           <Field label="บทบาท">
             <select className={inputClass} value={newRole} onChange={(e) => setNewRole(e.target.value as Role)}>
               <option value="intern">Internship</option>
-              <option value="dev">Dev (พี่เลี้ยง)</option>
+              {admin.me?.superAdmin && <option value="dev">Dev (พี่เลี้ยง)</option>}
             </select>
           </Field>
           {newRole === "intern" && <CohortSelect cohorts={admin.cohorts} value={newCohort} onChange={setNewCohort} className={inputClass} />}
@@ -202,10 +208,16 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
             )}
             {shown.map((u) => (
               <tr key={u.id} className="border-t border-fd-border">
-                <td className="px-3 py-2 font-medium">{u.username}</td>
+                <td className="px-3 py-2 font-medium">
+                  {u.username}
+                  {u.role === "dev" && u.superAdmin && <span className="ms-2 rounded-full bg-fd-primary/10 px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-fd-primary">Super admin</span>}
+                </td>
                 <td className="px-3 py-2">
                   <select
                     aria-label={`บทบาทของ ${u.username}`}
+                    // มีแค่ 2 บทบาท เปลี่ยนทางไหนก็แตะบัญชีพี่เลี้ยง จึงล็อกทั้งช่องเมื่อไม่ใช่ Super admin
+                    disabled={!isSuper}
+                    title={isSuper ? undefined : "เปลี่ยนบทบาทได้เฉพาะ Super admin"}
                     className={`${selectClass} ${ROLE_BADGE[u.role]}`}
                     value={u.role}
                     onChange={(e) => setPending({ kind: "role", user: u, role: e.target.value as Role })}
@@ -226,10 +238,12 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
                         ปลดล็อก
                       </Button>
                     )}
-                    <Button variant="ghost" onClick={() => setPending({ kind: "reset", user: u })}>
-                      ออก PIN ใหม่
-                    </Button>
-                    {u.disabled ? (
+                    {(canManage(u) || u.id === admin.me?.id) && (
+                      <Button variant="ghost" onClick={() => setPending({ kind: "reset", user: u })}>
+                        ออก PIN ใหม่
+                      </Button>
+                    )}
+                    {!canManage(u) ? null : u.disabled ? (
                       <Button variant="ghost" onClick={() => admin.updateUser(u, { disabled: false })}>
                         เปิดบัญชี
                       </Button>

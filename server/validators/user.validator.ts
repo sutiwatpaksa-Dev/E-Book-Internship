@@ -13,8 +13,11 @@ export const createUserSchema = z.object({ username, role: z.enum(ROLES), cohort
 // สร้างทีละหลายคน (เช่นน้องรุ่นใหม่ทั้งรุ่น) จำกัด 50 ชื่อต่อครั้ง ออก PIN ทีละคนใช้เวลา hash
 export const createManySchema = z.object({ usernames: z.array(username).min(1).max(50), role: z.enum(ROLES), cohortId });
 
-export const updateUserSchema = z.object({
-  role: z.enum(ROLES).optional(),
-  disabled: z.boolean().optional(),
-  unlock: z.literal(true).optional(),
-});
+// ช่องที่ไม่รู้จัก (เช่น superAdmin) ถูกตัดทิ้ง ถ้าเหลือว่างต้องตอบ 400 ไม่งั้น DB ได้คำสั่ง update เปล่าแล้วพังเป็น 500
+export const updateUserSchema = z
+  .object({
+    role: z.enum(ROLES).optional(),
+    disabled: z.boolean().optional(),
+    unlock: z.literal(true).optional(),
+  })
+  .refine((v) => v.role !== undefined || v.disabled !== undefined || v.unlock !== undefined);

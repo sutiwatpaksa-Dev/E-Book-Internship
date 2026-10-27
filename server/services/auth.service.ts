@@ -51,6 +51,6 @@ export const authService = {
   // บัญชียังใช้ได้อยู่ไหม (API เช็กทุกครั้ง ปิดบัญชีแล้วใช้ API ไม่ได้ทันที)
   async activeUser(id: number) {
     const u = await userRepository.findById(id);
-    return u && !u.disabled ? { id: u.id, username: u.username, role: u.role } : null;
+    return u && !u.disabled ? { id: u.id, username: u.username, role: u.role, superAdmin: u.role === "dev" && u.superAdmin } : null;
   },
 };

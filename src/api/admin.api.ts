@@ -3,6 +3,7 @@ import { jsonBody, request } from "./client";
 
 export const adminApi = {
   listUsers: () => request<User[]>("/admin/users"),
+  me: () => request<{ id: number; superAdmin: boolean }>("/admin/me"),
   createUser: (username: string, role: Role, cohortId: number | null) => request<IssuedPin>("/admin/users", jsonBody("POST", { username, role, cohortId })),
   createMany: (usernames: string[], role: Role, cohortId: number | null) => request<BulkResult[]>("/admin/users/bulk", jsonBody("POST", { usernames, role, cohortId })),
   // { userId: บทที่ผ่าน } ของทุกบัญชี

@@ -10,6 +10,7 @@ const publicColumns = {
   id: users.id,
   username: users.username,
   role: users.role,
+  superAdmin: users.superAdmin,
   disabled: users.disabled,
   lockedUntil: users.lockedUntil,
   lastLoginAt: users.lastLoginAt,

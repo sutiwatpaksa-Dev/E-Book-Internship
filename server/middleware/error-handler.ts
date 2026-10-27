@@ -9,6 +9,7 @@ const KNOWN: Record<string, [ContentfulStatusCode, string]> = {
   USERNAME_TAKEN: [409, "มี username นี้แล้ว"],
   NOT_FOUND: [404, "ไม่พบบัญชี"],
   CANNOT_CHANGE_SELF: [400, "ปิดหรือลดสิทธิ์บัญชีตัวเองไม่ได้"],
+  SUPER_ADMIN_ONLY: [403, "บัญชีพี่เลี้ยงจัดการได้เฉพาะ Super admin (สร้าง เปลี่ยนบทบาท ปิด หรือออก PIN ใหม่)"],
   FILE_SIZE: [413, "ไฟล์ต้องไม่ว่างและไม่เกิน 4 MB"],
   NOT_PDF: [415, "ไฟล์นี้ไม่ใช่ PDF"],
   TOO_MANY_OPEN_THREADS: [429, "มีเรื่องที่ยังไม่จบครบ 10 เรื่องแล้ว คุยต่อในเรื่องเดิม หรือรอพี่เลี้ยงปิดเรื่องก่อน"],
