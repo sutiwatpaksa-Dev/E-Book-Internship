@@ -167,7 +167,7 @@ export function AdminPanel({ titles, initialTab = "overview", initialThread = nu
         ) : (
           <>
             {tab === "cards" && <AdminMentorCards content={content} />}
-            {tab === "notes" && <AdminNotes key={notePage ?? "list"} content={content} initialPage={notePage} />}
+            {tab === "notes" && <AdminNotes key={notePage ?? "list"} content={content} initialPage={notePage} titles={titles} />}
             {tab === "builtin" && <AdminBuiltInCards content={content} />}
             {tab === "announcements" && <AdminAnnouncements content={content} />}
           </>

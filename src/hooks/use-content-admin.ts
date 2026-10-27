@@ -111,7 +111,7 @@ export function useContentAdmin() {
       run(async () => {
         await adminContentApi.setOverride(slug, o);
         await after();
-      }, o.hidden ? "ซ่อนการ์ดแล้ว" : "บันทึกแล้ว"),
+      }, o.hidden ? "ซ่อนการ์ดแล้ว น้องไม่เห็นในคลังและหน้าขั้น" : "บันทึกแล้ว"),
   };
 }
 

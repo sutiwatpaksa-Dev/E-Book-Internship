@@ -2,7 +2,7 @@
 
 import { EyeOff, FilePlus2, NotebookPen, Pencil } from "lucide-react";
 import { useState } from "react";
-import { cards as builtIn, cardUrl, steps, topics } from "@/data/learn";
+import { cards as builtIn, cardUrl, mentorCardUrl, steps, topics } from "@/data/learn";
 import type { ContentAdminState } from "@/hooks/use-content-admin";
 import { timeAgo } from "@/lib/thread-labels";
 import type { MentorCardInput, MentorCardSummary, PageNote } from "@/types";
@@ -351,7 +351,13 @@ function CardEditor({
 
 // ---------------- โน้ตท้ายหน้า ----------------
 
-export function AdminNotes({ content, initialPage }: { content: ContentAdminState; initialPage?: string }) {
+export function AdminNotes({ content, initialPage, titles }: { content: ContentAdminState; initialPage?: string; titles: Record<string, string> }) {
+  // หน้าทั้งหมดที่ใส่โน้ตได้: หน้า MDX (ชื่อจาก frontmatter) + การ์ดของพี่เลี้ยง
+  const pages = [
+    ...Object.entries(titles).map(([url, title]) => ({ url, title })),
+    ...content.cards.map((c) => ({ url: mentorCardUrl(c.slug), title: `${c.title} (การ์ดพี่เลี้ยง)` })),
+  ];
+  const titleOf = (url: string) => pages.find((p) => p.url === url)?.title;
   const [editing, setEditing] = useState<{ id: number | null; pageUrl: string; body: string; visible: boolean } | null>(
     initialPage ? { id: null, pageUrl: initialPage, body: "", visible: true } : null,
   );
@@ -379,15 +385,7 @@ export function AdminNotes({ content, initialPage }: { content: ContentAdminStat
       {editing && (
         <section aria-label="เขียนโน้ต" className="grid gap-3 rounded-xl border border-fd-primary/40 p-4 lg:grid-cols-2">
           <div className="flex flex-col gap-3">
-            <Field label="หน้า (path ในเว็บนี้)">
-              <Input
-                value={editing.pageUrl}
-                onChange={(e) => setEditing({ ...editing, pageUrl: e.target.value.trim() })}
-                placeholder="/learn/cards/migration"
-                autoCapitalize="none"
-                spellCheck={false}
-              />
-            </Field>
+            <PagePicker pages={pages} value={editing.pageUrl} onChange={(pageUrl) => setEditing({ ...editing, pageUrl })} />
             <Field label="ข้อความ (Markdown)">
               <textarea value={editing.body} onChange={(e) => setEditing({ ...editing, body: e.target.value })} maxLength={4000} className={`${inputClass} min-h-40 font-mono`} />
             </Field>
@@ -434,8 +432,9 @@ export function AdminNotes({ content, initialPage }: { content: ContentAdminStat
           {content.notes.map((n) => (
             <li key={n.id} className={`flex flex-col gap-2 rounded-xl border border-fd-border p-3 text-sm ${n.visible ? "" : "opacity-60"}`}>
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <a href={n.pageUrl} className="font-medium text-fd-primary hover:underline">
-                  {n.pageUrl}
+                <a href={n.pageUrl} className="flex flex-col font-medium text-fd-primary hover:underline">
+                  {titleOf(n.pageUrl) ?? n.pageUrl}
+                  <span className="font-mono text-xs font-normal text-fd-muted-foreground">{n.pageUrl}</span>
                 </a>
                 <span className="text-xs text-fd-muted-foreground">
                   {!n.visible && "ซ่อนอยู่ · "}
@@ -459,6 +458,58 @@ export function AdminNotes({ content, initialPage }: { content: ContentAdminStat
   );
 }
 
+// เลือกหน้าจากชื่อ (พิมพ์บางส่วน เช่น "migration" หรือ "ขั้น 3") ไม่ต้องจำ URL
+// พิมพ์ path ที่ขึ้นต้นด้วย / เองก็ได้ สำหรับหน้าที่ไม่อยู่ในรายการ (เช่น /today)
+function PagePicker({ pages, value, onChange }: { pages: { url: string; title: string }[]; value: string; onChange: (url: string) => void }) {
+  const [query, setQuery] = useState("");
+  const picked = pages.find((p) => p.url === value);
+  if (value) {
+    return (
+      <div className="flex flex-col gap-1 text-sm font-medium">
+        หน้า
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-fd-border bg-fd-background px-3 py-2">
+          <span className="flex min-w-0 flex-1 flex-col">
+            <span>{picked?.title ?? "หน้าที่พิมพ์เอง"}</span>
+            <span className="font-mono text-xs font-normal text-fd-muted-foreground">{value}</span>
+          </span>
+          <Button variant="ghost" onClick={() => onChange("")} className="min-h-10">
+            เปลี่ยน
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  const q = query.trim().toLowerCase();
+  const found = q ? pages.filter((p) => p.title.toLowerCase().includes(q) || p.url.includes(q)).slice(0, 8) : [];
+  return (
+    <div className="flex flex-col gap-1">
+      <Field label="หน้า">
+        <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="พิมพ์ชื่อการ์ดหรือบท เช่น migration" autoCapitalize="none" spellCheck={false} />
+      </Field>
+      {q && (
+        <ul className="flex flex-col overflow-hidden rounded-lg border border-fd-border bg-fd-background" aria-label="หน้าที่ตรงกับที่พิมพ์">
+          {found.map((p) => (
+            <li key={p.url}>
+              <button type="button" onClick={() => onChange(p.url)} className="flex min-h-11 w-full flex-col items-start justify-center px-3 py-1.5 text-start text-sm hover:bg-fd-accent">
+                <span className="font-medium">{p.title}</span>
+                <span className="font-mono text-xs text-fd-muted-foreground">{p.url}</span>
+              </button>
+            </li>
+          ))}
+          {q.startsWith("/") && /^\/[a-z0-9/-]*$/.test(q) && !found.some((p) => p.url === q) && (
+            <li>
+              <button type="button" onClick={() => onChange(q)} className="flex min-h-11 w-full items-center px-3 text-start text-sm hover:bg-fd-accent">
+                ใช้ path <code className="ms-1">{q}</code>
+              </button>
+            </li>
+          )}
+          {found.length === 0 && !q.startsWith("/") && <li className="px-3 py-2 text-sm text-fd-muted-foreground">ไม่พบหน้าที่ชื่อมีคำนี้</li>}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 // กล่องโน้ตหน้าตาเดียวกับที่น้องเห็นท้ายหน้า (page-notes.tsx)
 export function NoteBox({ author, body }: { author: string; body: string }) {
   return (
@@ -471,53 +522,120 @@ export function NoteBox({ author, body }: { author: string; body: string }) {
 
 // ---------------- การ์ดในระบบ ----------------
 
+type BuiltInFilter = "all" | "changed" | "hidden";
+
 export function AdminBuiltInCards({ content }: { content: ContentAdminState }) {
   const [editing, setEditing] = useState<string | null>(null);
+  const [filter, setFilter] = useState<BuiltInFilter>("all");
+  // กดสวิตช์ซ้ำเร็วๆ ระหว่างรอ API: ล็อกปุ่มของการ์ดใบนั้นไว้ก่อน ไม่งั้นค่าที่ส่งอาจเป็นค่าเก่า
+  const [busy, setBusy] = useState<string | null>(null);
   const bySlug = new Map(content.overrides.map((o) => [o.slug, o]));
+  const matches = (slug: string) => {
+    const o = bySlug.get(slug);
+    return filter === "all" || (filter === "hidden" ? !!o?.hidden : !!o);
+  };
+  const hiddenCount = content.overrides.filter((o) => o.hidden).length;
+  const filters: { id: BuiltInFilter; label: string }[] = [
+    { id: "all", label: `ทั้งหมด ${builtIn.length}` },
+    { id: "changed", label: `ปรับแล้ว ${content.overrides.length}` },
+    { id: "hidden", label: `ซ่อนอยู่ ${hiddenCount}` },
+  ];
+
+  // สวิตช์ซ่อน/แสดง: เปลี่ยนแค่ hidden ค่าอื่นที่ปรับไว้ (ชื่อ เวลา หมวด) ส่งค่าเดิมกลับไป
+  async function toggle(slug: string) {
+    const o = bySlug.get(slug);
+    setBusy(slug);
+    await content.setOverride(slug, { hidden: !o?.hidden, title: o?.title ?? null, minutes: o?.minutes ?? null, topic: o?.topic ?? null });
+    setBusy(null);
+  }
 
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-fd-muted-foreground">
-        การ์ดที่อยู่ในโค้ดของคู่มือ ซ่อนจากคลังและหน้าขั้นได้ (เช่น ยังไม่อยากให้รุ่นนี้เห็น) หรือเปลี่ยนชื่อ เวลาอ่าน หมวดที่แสดง · เนื้อหาในการ์ดแก้ได้ที่ไฟล์ MDX เท่านั้น
+        การ์ดที่อยู่ในโค้ดของคู่มือ ปิดสวิตช์ = ซ่อนจากคลังและหน้าขั้น (เช่น ยังไม่อยากให้รุ่นนี้เห็น) · กด &quot;ปรับ&quot; เพื่อเปลี่ยนชื่อ เวลาอ่าน หมวดที่แสดง ·
+        เนื้อหาในการ์ดแก้ได้ที่ไฟล์ MDX เท่านั้น
       </p>
-      <ul className="flex flex-col divide-y divide-fd-border rounded-xl border border-fd-border">
-        {builtIn.map((c) => {
-          const o = bySlug.get(c.slug);
-          return (
-            <li key={c.slug} className="flex flex-col gap-2 px-3 py-2 text-sm">
-              <div className="flex flex-wrap items-center gap-2">
-                <a href={cardUrl(c.slug)} className={`min-w-0 flex-1 font-medium hover:underline ${o?.hidden ? "text-fd-muted-foreground line-through" : ""}`}>
-                  {o?.title ?? c.title}
-                </a>
-                {o?.hidden && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-fd-muted px-2 py-0.5 text-[11px] font-semibold text-fd-muted-foreground">
-                    <EyeOff className="size-3" /> ซ่อนอยู่
-                  </span>
-                )}
-                {o && !o.hidden && <span className="rounded-full bg-fd-primary/10 px-2 py-0.5 text-[11px] font-semibold text-fd-primary">ปรับแล้ว</span>}
-                <span className="text-xs text-fd-muted-foreground">
-                  {stepName(c.step)} · {topicName(o?.topic ?? c.topic)} · {o?.minutes ?? c.minutes} นาที
-                </span>
-                <Button variant="ghost" onClick={() => setEditing(editing === c.slug ? null : c.slug)} className="min-h-10">
-                  <Pencil className="size-4" /> ปรับ
-                </Button>
-              </div>
-              {editing === c.slug && (
-                <OverrideForm
-                  key={c.slug}
-                  title={c.title}
-                  minutes={c.minutes}
-                  current={o}
-                  onCancel={() => setEditing(null)}
-                  onSave={async (v) => {
-                    if (await content.setOverride(c.slug, v)) setEditing(null);
-                  }}
-                />
-              )}
-            </li>
-          );
-        })}
-      </ul>
+      <div role="group" aria-label="กรองการ์ด" className="flex flex-wrap gap-2">
+        {filters.map((f) => (
+          <button
+            key={f.id}
+            type="button"
+            aria-pressed={filter === f.id}
+            onClick={() => setFilter(f.id)}
+            className={`inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-medium ${filter === f.id ? "border-fd-primary bg-fd-primary text-fd-primary-foreground" : "border-fd-border hover:bg-fd-accent"}`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+      {steps.map((step) => {
+        const list = builtIn.filter((c) => c.step === step.slug && matches(c.slug));
+        if (list.length === 0) return null;
+        return (
+          <section key={step.slug} aria-labelledby={`builtin-${step.slug}`} className="overflow-hidden rounded-xl border border-fd-border">
+            <h2 id={`builtin-${step.slug}`} className="border-b border-fd-border bg-fd-muted/60 px-3 py-2 text-sm font-semibold">
+              {step.num} · {step.name}
+            </h2>
+            <ul className="flex flex-col divide-y divide-fd-border">
+              {list.map((c) => {
+                const o = bySlug.get(c.slug);
+                const shown = !o?.hidden;
+                return (
+                  <li key={c.slug} className="flex flex-col gap-2 px-3 py-2 text-sm">
+                    {/* สวิตช์ | ชื่อ + ป้าย + รายละเอียด (ซ้อนลงบรรทัดใต้ชื่อ จอแคบชื่อจะได้ไม่ถูกบีบ) | ปุ่มปรับ */}
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={shown}
+                        aria-label={`แสดงการ์ด ${c.title}`}
+                        disabled={busy === c.slug}
+                        onClick={() => toggle(c.slug)}
+                        className={`relative h-7 w-12 shrink-0 rounded-full transition-colors disabled:opacity-60 ${shown ? "bg-fd-primary" : "bg-fd-muted-foreground/40"}`}
+                      >
+                        <span className={`absolute top-1 size-5 rounded-full bg-fd-background shadow transition-[left] ${shown ? "left-6" : "left-1"}`} />
+                      </button>
+                      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                        <a href={cardUrl(c.slug)} className={`font-medium hover:underline ${shown ? "" : "text-fd-muted-foreground line-through"}`}>
+                          {o?.title ?? c.title}
+                        </a>
+                        <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-fd-muted-foreground">
+                          {!shown && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-fd-muted px-2 py-0.5 text-[11px] font-semibold">
+                              <EyeOff className="size-3" /> ซ่อนอยู่
+                            </span>
+                          )}
+                          {o && shown && <span className="rounded-full bg-fd-primary/10 px-2 py-0.5 text-[11px] font-semibold text-fd-primary">ปรับแล้ว</span>}
+                          <span>
+                            {topicName(o?.topic ?? c.topic)} · {o?.minutes ?? c.minutes} นาที
+                          </span>
+                          {o?.title && <span>ชื่อเดิม: {c.title}</span>}
+                        </span>
+                      </span>
+                      <Button variant="ghost" onClick={() => setEditing(editing === c.slug ? null : c.slug)} aria-expanded={editing === c.slug} className="min-h-10">
+                        <Pencil className="size-4" /> ปรับ
+                      </Button>
+                    </div>
+                    {editing === c.slug && (
+                      <OverrideForm
+                        key={c.slug}
+                        title={c.title}
+                        minutes={c.minutes}
+                        current={o}
+                        onCancel={() => setEditing(null)}
+                        onSave={async (v) => {
+                          if (await content.setOverride(c.slug, v)) setEditing(null);
+                        }}
+                      />
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        );
+      })}
+      {filter !== "all" && !builtIn.some((c) => matches(c.slug)) && <p className="text-sm text-fd-muted-foreground">ยังไม่มีการ์ดที่{filter === "hidden" ? "ซ่อนอยู่" : "ปรับไว้"}</p>}
     </div>
   );
 }
@@ -535,16 +653,13 @@ function OverrideForm({
   onSave: (v: { hidden: boolean; title: string | null; minutes: number | null; topic: string | null }) => void;
   onCancel: () => void;
 }) {
-  const [hidden, setHidden] = useState(current?.hidden ?? false);
+  // ซ่อน/แสดงใช้สวิตช์ในแถว ฟอร์มนี้ส่งค่าเดิมกลับไปเฉยๆ
+  const hidden = current?.hidden ?? false;
   const [t, setT] = useState(current?.title ?? "");
   const [m, setM] = useState(current?.minutes?.toString() ?? "");
   const [topic, setTopic] = useState(current?.topic ?? "");
   return (
     <div className="grid gap-3 rounded-lg bg-fd-muted/50 p-3 sm:grid-cols-2 lg:grid-cols-4">
-      <label className="flex min-h-11 items-center gap-2 sm:col-span-2 lg:col-span-4">
-        <input type="checkbox" className="size-5" checked={hidden} onChange={(e) => setHidden(e.target.checked)} />
-        ซ่อนการ์ดนี้จากคลังการ์ดและหน้าขั้น
-      </label>
       <div className="sm:col-span-2">
         <Field label="ชื่อที่แสดง (เว้นว่าง = ใช้ชื่อเดิม)">
           <Input value={t} onChange={(e) => setT(e.target.value)} placeholder={title} maxLength={120} />
