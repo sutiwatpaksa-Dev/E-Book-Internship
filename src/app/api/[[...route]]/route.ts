@@ -12,8 +12,9 @@ function loadApp(): Promise<Fetch> {
   ready ??= import("@server/app").then(
     ({ app }) => app.fetch,
     (err: Error) => {
+      // รายละเอียด (ยาวกี่ตัว มีช่องว่างไหม) ไว้ใน log ของ server เท่านั้น · คำตอบ API เป็นสาธารณะ บอกแค่ชื่อ key
       console.error("API start failed:", err.message);
-      const missing = err.message.startsWith("ENV_INVALID: ") ? err.message.slice("ENV_INVALID: ".length).split(", ") : [];
+      const missing = err.message.startsWith("ENV_INVALID: ") ? err.message.slice("ENV_INVALID: ".length).split(", ").map((d) => d.split(" (")[0]) : [];
       return () => Response.json({ error: "ระบบยังตั้งค่าไม่ครบ", missingEnv: missing }, { status: 503 });
     },
   );

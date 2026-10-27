@@ -19,16 +19,18 @@ const schema = z.object({
 });
 
 // บอก "รูปร่าง" ของค่าที่ผิด ไม่บอกค่าจริง (อาจเป็นความลับ): พอให้รู้ว่าว่าง ติดอะไรมาหัวท้าย หรือมีอักขระแปลก
+// บอกต้นค่าเฉพาะ scheme ของ URL (เช่น "postgres") · ค่าที่ไม่มี "://" (PIN, secret) ไม่บอกสักตัว
+// เพราะ PIN 6 หลักทั้งค่าสั้นกว่า 15 ตัว ถ้าตัดหัวมาโชว์ก็คือโชว์ PIN ทั้งหมด
 function describe(value: string | undefined) {
   if (value === undefined) return "ไม่ได้ตั้ง";
   if (value === "") return "ค่าว่าง";
-  const head = value.split("://")[0].slice(0, 15);
+  const head = value.includes("://") ? `ขึ้นต้น "${value.split("://")[0].slice(0, 15)}://"` : "";
   const odd = [
     /\s/.test(value) && "มีช่องว่าง/ขึ้นบรรทัด",
     /['"]/.test(value) && "มีเครื่องหมายคำพูด",
     /[^\x20-\x7e]/.test(value) && "มีอักขระที่มองไม่เห็นหรือไม่ใช่ ASCII",
   ].filter(Boolean);
-  return `ยาว ${value.length} ตัว ขึ้นต้น "${head}"${odd.length ? ` · ${odd.join(" · ")}` : ""}`;
+  return [`ยาว ${value.length} ตัว`, head, ...odd].filter(Boolean).join(" · ");
 }
 
 const parsed = schema.safeParse(process.env);
