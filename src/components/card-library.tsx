@@ -4,7 +4,7 @@ import { useSearchContext } from "fumadocs-ui/contexts/search";
 import { Check, ClipboardList, Database, LayoutTemplate, Lock, Monitor, Plug, Search, ShieldCheck, TestTube, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
-import { cardUrl, cards, mentorCardUrl, steps, topics, type LearnCard, type StepSlug, type TopicSlug } from "@/data/learn";
+import { cardUrl, mentorCardUrl, steps, topics, type LearnCard, type StepSlug, type TopicSlug } from "@/data/learn";
 import { useCatalog } from "@/hooks/use-catalog";
 import { useProgress } from "@/hooks/use-progress";
 import { useSession } from "@/hooks/use-session";
@@ -14,11 +14,8 @@ type Item = Pick<LearnCard, "slug" | "title" | "step" | "topic" | "minutes" | "p
 
 // รวมการ์ดสองแหล่งเป็นรายการเดียว: ใบที่พี่เลี้ยงซ่อนไม่อยู่ในรายการ · การ์ดของพี่เลี้ยงต่อท้ายในหมวดเดียวกัน
 function useLibraryItems(): Item[] {
-  const { view, mentorCards } = useCatalog();
-  const builtIn = cards.flatMap((c) => {
-    const v = view(c);
-    return v ? [{ ...v, href: cardUrl(v.slug) }] : [];
-  });
+  const { cards, mentorCards } = useCatalog();
+  const builtIn = cards.map((c) => ({ ...c, href: cardUrl(c.slug) }));
   const mentor = mentorCards.map((m) => ({ slug: `m/${m.slug}`, title: m.title, step: m.step as StepSlug, topic: m.topic as TopicSlug, minutes: m.minutes, href: mentorCardUrl(m.slug), author: m.author }));
   return [...builtIn, ...mentor];
 }

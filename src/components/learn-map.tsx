@@ -3,13 +3,16 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { cardUrl, cardsOf, nextUp, steps, stepUrl, type LearnCard } from "@/data/learn";
+import { useCatalog } from "@/hooks/use-catalog";
 import { useProgress } from "@/hooks/use-progress";
 
 // แผนที่ 7 ขั้น (หน้า /learn): ปุ่ม "ทำต่อ" + ขั้นทั้ง 7 พร้อมความคืบหน้า + ทางไปคลังการ์ด
 // น้องควรรู้ภายใน 5 วินาทีว่าอยู่ตรงไหนและต้องทำอะไรต่อ จึงวางปุ่มทำต่อไว้บนสุด
 export function LearnMap() {
   const { done } = useProgress();
-  const { started, card: next } = nextUp(done);
+  // ใช้รายการเดียวกับ /today (ตัดใบที่พี่เลี้ยงซ่อน) ปุ่ม "ทำต่อ" ของสองหน้าจึงตรงกัน
+  const { cards } = useCatalog();
+  const { started, card: next } = nextUp(done, cards);
 
   return (
     <div className="not-prose my-6 flex flex-col gap-8">
@@ -17,7 +20,7 @@ export function LearnMap() {
 
       <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {steps.map((s) => {
-          const list = cardsOf(s.slug);
+          const list = cardsOf(s.slug, cards);
           const count = list.filter((c) => done.has(cardUrl(c.slug))).length;
           // ยังไม่เริ่ม = ขั้น 1 (ตรงกับปุ่ม "เริ่มที่ขั้น 1") · เริ่มแล้ว = ขั้นของการ์ดที่ต้องอ่านต่อ
           const current = started ? next?.step === s.slug : s.slug === "problem";

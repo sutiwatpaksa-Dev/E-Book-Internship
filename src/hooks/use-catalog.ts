@@ -2,7 +2,7 @@
 
 import { useEffect, useSyncExternalStore } from "react";
 import { contentApi } from "@/api/content.api";
-import type { LearnCard, TopicSlug } from "@/data/learn";
+import { cards, mentorCardUrl, type LearnCard, type StepSlug, type TopicSlug } from "@/data/learn";
 import type { CardOverride, MentorCardSummary } from "@/types";
 
 // รายการการ์ดที่ "แสดงจริง" = การ์ดในโค้ด (src/data/learn.ts) ปรับตามที่พี่เลี้ยงตั้งในหลังบ้าน + การ์ดของพี่เลี้ยง
@@ -36,18 +36,36 @@ export function reloadCatalog() {
   load();
 }
 
+function viewIn(c: Catalog, card: LearnCard): LearnCard | null {
+  const o = c.overrides.get(card.slug);
+  if (!o) return card;
+  if (o.hidden) return null;
+  return { ...card, title: o.title ?? card.title, minutes: o.minutes ?? card.minutes, topic: (o.topic as TopicSlug | null) ?? card.topic };
+}
+
+// การ์ดในโค้ดที่แสดงจริง คิดครั้งเดียวต่อค่า store (ได้ array ตัวเดิมทุก render จนกว่าหลังบ้านจะเปลี่ยน)
+const visibleCache = new WeakMap<Catalog, LearnCard[]>();
+function visibleIn(c: Catalog) {
+  let list = visibleCache.get(c);
+  if (!list) {
+    list = cards.flatMap((card) => viewIn(c, card) ?? []);
+    visibleCache.set(c, list);
+  }
+  return list;
+}
+
 export function useCatalog() {
   const c = useSyncExternalStore(subscribe, () => state, () => EMPTY);
   useEffect(load, []);
   return {
     mentorCards: c.mentor,
+    // การ์ดในโค้ดเรียงตามเดิม ตัดใบที่ซ่อนออก และใช้ชื่อ/เวลา/หมวดที่ปรับแล้ว
+    // ใช้แทน cards ของ src/data/learn.ts ทุกที่ที่น้องเห็น (นับความคืบหน้า, ทำต่อ, sidebar, ก่อน/ถัดไป)
+    cards: visibleIn(c),
     // การ์ดในโค้ดตามที่ควรแสดง: ถูกซ่อน = null · เปลี่ยนชื่อ/เวลา/หมวด = ค่าใหม่
-    view(card: LearnCard): LearnCard | null {
-      const o = c.overrides.get(card.slug);
-      if (!o) return card;
-      if (o.hidden) return null;
-      return { ...card, title: o.title ?? card.title, minutes: o.minutes ?? card.minutes, topic: (o.topic as TopicSlug | null) ?? card.topic };
-    },
+    view: (card: LearnCard) => viewIn(c, card),
+    // หน้าการ์ดของพี่เลี้ยงอยู่ขั้นไหน (ไม่มีใน src/data/learn.ts จึงหาจาก store)
+    mentorStepOf: (url: string) => (c.mentor.find((m) => mentorCardUrl(m.slug) === url)?.step as StepSlug | undefined) ?? null,
     isHidden: (slug: string) => !!c.overrides.get(slug)?.hidden,
   };
 }

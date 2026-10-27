@@ -3,7 +3,7 @@
 import { Check } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { cardUrl, cardsOf, legacyOf, mentorCardUrl, stepBySlug, type StepSlug } from "@/data/learn";
+import { cardUrl, cardsOf, legacyOf, mentorCardUrl, stepBySlug, type LearnCard, type StepSlug } from "@/data/learn";
 import { useCatalog } from "@/hooks/use-catalog";
 import { useProgress } from "@/hooks/use-progress";
 import { useSession } from "@/hooks/use-session";
@@ -14,11 +14,11 @@ import { MentorBadge } from "./card-library";
 // การ์ดที่พี่เลี้ยงซ่อนไม่แสดง · การ์ดของพี่เลี้ยงในขั้นนี้แยกเป็นกลุ่มท้ายสุด (ไม่มีช่วง เพราะเขียนเพิ่มทีหลัง)
 export function StepCards({ step }: { step: StepSlug }) {
   const { done } = useProgress();
-  const { view, mentorCards } = useCatalog();
+  const { cards, mentorCards } = useCatalog();
   const { role } = useSession();
   const mine = mentorCards.filter((m) => m.step === step);
   const parts = stepBySlug(step).parts;
-  const firstOpen = parts?.find((p) => cardsOf(step).some((c) => c.part === p && !done.has(cardUrl(c.slug)))) ?? parts?.[0];
+  const firstOpen = parts?.find((p) => cardsOf(step, cards).some((c) => c.part === p && !done.has(cardUrl(c.slug)))) ?? parts?.[0];
   const [picked, setPicked] = useState<string | null>(null);
   const part = picked ?? firstOpen;
 
@@ -27,7 +27,7 @@ export function StepCards({ step }: { step: StepSlug }) {
       {parts && (
         <div role="tablist" aria-label="ช่วงของขั้นนี้" className="flex w-fit max-w-full gap-1 overflow-x-auto rounded-xl bg-fd-muted p-1">
           {parts.map((p) => {
-            const list = cardsOf(step).filter((c) => c.part === p);
+            const list = cardsOf(step, cards).filter((c) => c.part === p);
             const count = list.filter((c) => done.has(cardUrl(c.slug))).length;
             const on = p === part;
             return (
@@ -51,7 +51,7 @@ export function StepCards({ step }: { step: StepSlug }) {
           })}
         </div>
       )}
-      <Part step={step} part={part} done={done} view={view} />
+      <Part step={step} part={part} done={done} cards={cards} />
       {mine.length > 0 && (
         <section aria-labelledby="mentor-cards" className="flex flex-col gap-2">
           <h3 id="mentor-cards" className="text-sm font-semibold">
@@ -90,13 +90,8 @@ function DoneDot({ done }: { done: boolean }) {
   );
 }
 
-type View = ReturnType<typeof useCatalog>["view"];
-
-function Part({ step, part, done, view }: { step: StepSlug; part: string | undefined; done: ReadonlySet<string>; view: View }) {
-  const list = cardsOf(step).flatMap((c) => {
-    const v = c.part === part ? view(c) : null;
-    return v ? [v] : [];
-  });
+function Part({ step, part, done, cards }: { step: StepSlug; part: string | undefined; done: ReadonlySet<string>; cards: readonly LearnCard[] }) {
+  const list = cardsOf(step, cards).filter((c) => c.part === part);
   const old = legacyOf(step).filter((l) => l.part === part);
   return (
     <div id={part ? `part-${part}` : undefined} role={part ? "tabpanel" : undefined} className="flex flex-col gap-2">

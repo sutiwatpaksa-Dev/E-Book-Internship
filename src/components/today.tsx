@@ -4,7 +4,8 @@ import { ArrowRight, Check, FileText, LifeBuoy, LogIn } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { authApi } from "@/api/auth.api";
-import { cardUrl, cards, cardsOf, nextUp, steps, stepUrl, type LearnCard, type LearnStep } from "@/data/learn";
+import { cardUrl, cardsOf, nextUp, steps, stepUrl, type LearnCard, type LearnStep } from "@/data/learn";
+import { useCatalog } from "@/hooks/use-catalog";
 import { useProgress } from "@/hooks/use-progress";
 import { useSession } from "@/hooks/use-session";
 import { AnnouncementBanner } from "./announcement-banner";
@@ -17,7 +18,9 @@ export function Today() {
   const { done } = useProgress();
   const { role } = useSession();
   const username = useUsername(role);
-  const up = nextUp(done);
+  // นับและเลือกการ์ดจากรายการที่ผ่านหลังบ้านแล้ว: ใบที่ซ่อนไม่ถูกเลือกเป็น "ทำต่อ" และไม่นับในตัวหาร
+  const { cards } = useCatalog();
+  const up = nextUp(done, cards);
   const count = cards.filter((c) => done.has(cardUrl(c.slug))).length;
 
   return (
@@ -30,13 +33,13 @@ export function Today() {
       <AnnouncementBanner />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        <ContinueBox up={up} done={done} />
+        <ContinueBox up={up} done={done} cards={cards} />
         {/* จอกว้าง: 2 กล่องนี้ซ้อนกันข้างกล่องใหญ่ (กล่องใหญ่สูง 2 แถว) */}
-        <Overview count={count} role={role} />
+        <Overview count={count} total={cards.length} role={role} />
         <Stuck role={role} />
-        <StepStrip done={done} current={up.step} />
+        <StepStrip done={done} current={up.step} cards={cards} />
         <StarterTask step={up.step} />
-        <UpNext done={done} skip={up.card} />
+        <UpNext done={done} skip={up.card} cards={cards} />
       </div>
     </div>
   );
@@ -55,13 +58,13 @@ function useUsername(role: string | null) {
   return name;
 }
 
-function ContinueBox({ up, done }: { up: ReturnType<typeof nextUp>; done: ReadonlySet<string> }) {
+function ContinueBox({ up, done, cards }: { up: ReturnType<typeof nextUp>; done: ReadonlySet<string>; cards: readonly LearnCard[] }) {
   const { started, card, step } = up;
   const finished = started && !card;
   const reading = started && card ? card : null;
   const href = reading ? cardUrl(reading.slug) : stepUrl(step.slug);
   // การ์ดในช่วงเดียวกัน (เช่น DB ทั้ง 5 ใบ) ให้เห็นว่าใบนี้อยู่ตรงไหนของช่วง
-  const inPart = reading ? cardsOf(reading.step).filter((c) => c.part === reading.part) : [];
+  const inPart = reading ? cardsOf(reading.step, cards).filter((c) => c.part === reading.part) : [];
 
   return (
     <section aria-labelledby="continue-title" className={`${box} flex flex-col gap-6 border-fd-primary/40 bg-fd-primary/5 lg:col-span-8 lg:row-span-2`}>
@@ -120,8 +123,8 @@ function ContinueBox({ up, done }: { up: ReturnType<typeof nextUp>; done: Readon
   );
 }
 
-function Overview({ count, role }: { count: number; role: string | null }) {
-  const pct = Math.round((count / cards.length) * 100);
+function Overview({ count, total, role }: { count: number; total: number; role: string | null }) {
+  const pct = total ? Math.round((count / total) * 100) : 0;
   return (
     <section aria-labelledby="overview-title" className={`${box} flex flex-col gap-3 lg:col-span-4`}>
       <h2 id="overview-title" className="text-sm font-semibold text-fd-muted-foreground">
@@ -129,7 +132,7 @@ function Overview({ count, role }: { count: number; role: string | null }) {
       </h2>
       <p className="flex items-baseline gap-2">
         <span className="text-4xl font-bold tabular-nums">{count}</span>
-        <span className="text-fd-muted-foreground">จาก {cards.length} การ์ดที่เข้าใจแล้ว</span>
+        <span className="text-fd-muted-foreground">จาก {total} การ์ดที่เข้าใจแล้ว</span>
       </p>
       <div className="h-2 overflow-hidden rounded-full bg-fd-muted" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="ความคืบหน้าการ์ด">
         <div className="h-full rounded-full bg-fd-primary" style={{ width: `${pct}%` }} />
@@ -167,7 +170,7 @@ function Stuck({ role }: { role: string | null }) {
 }
 
 // แถบ 7 ขั้น: ขั้นปัจจุบันเด่น ขั้นที่การ์ดครบมีเครื่องหมายถูก (ขั้นที่ยังไม่มีการ์ดไม่นับว่าครบ)
-function StepStrip({ done, current }: { done: ReadonlySet<string>; current: LearnStep }) {
+function StepStrip({ done, current, cards }: { done: ReadonlySet<string>; current: LearnStep; cards: readonly LearnCard[] }) {
   return (
     <section aria-labelledby="steps-title" className="flex flex-col gap-3 lg:col-span-12">
       <div className="flex items-baseline justify-between gap-3">
@@ -180,7 +183,7 @@ function StepStrip({ done, current }: { done: ReadonlySet<string>; current: Lear
       </div>
       <ol className="-mx-4 flex snap-x scroll-px-4 gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0 lg:grid-cols-7">
         {steps.map((s) => {
-          const list = cardsOf(s.slug);
+          const list = cardsOf(s.slug, cards);
           const complete = list.length > 0 && list.every((c) => done.has(cardUrl(c.slug)));
           const now = s.slug === current.slug;
           return (
@@ -230,7 +233,7 @@ function StarterTask({ step }: { step: LearnStep }) {
 }
 
 // การ์ดถัดจากใบที่ทำต่อ (ไม่ซ้ำกับกล่องใหญ่) · อ่านจบครบแล้วชวนไปคลังการ์ด
-function UpNext({ done, skip }: { done: ReadonlySet<string>; skip: LearnCard | null }) {
+function UpNext({ done, skip, cards }: { done: ReadonlySet<string>; skip: LearnCard | null; cards: readonly LearnCard[] }) {
   const list = cards.filter((c) => c !== skip && !done.has(cardUrl(c.slug))).slice(0, 3);
   return (
     <section aria-labelledby="next-title" className={`${box} flex flex-col gap-3 lg:col-span-5`}>

@@ -127,7 +127,8 @@ export const mentorCardUrl = (slug: string) => `${LEARN_BASE}/cards/m/${slug}`;
 
 export const stepBySlug = (s: StepSlug) => steps.find((x) => x.slug === s)!;
 export const cardByUrl = (url: string) => cards.find((c) => cardUrl(c.slug) === url) ?? null;
-export const cardsOf = (s: StepSlug) => cards.filter((c) => c.step === s);
+// list: ส่งรายการที่ผ่านหลังบ้านแล้ว (useCatalog().cards) มาได้ ไม่ส่ง = การ์ดในโค้ดทั้งหมด
+export const cardsOf = (s: StepSlug, list: readonly LearnCard[] = cards) => list.filter((c) => c.step === s);
 export const legacyOf = (s: StepSlug) => legacy.filter((l) => l.step === s);
 
 // ลิงก์การ์ดทั้งหมด: ปุ่ม "เข้าใจแล้ว" บันทึกเป็นลิงก์เหล่านี้ (API รับเฉพาะที่อยู่ในรายการ)
@@ -143,15 +144,18 @@ export function stepOfUrl(url: string): StepSlug | null {
 
 // สิ่งที่ควรทำต่อ: การ์ดแรกที่ยังไม่เข้าใจ (ตามลำดับขั้น) · ยังไม่เริ่มเลย = ขั้น 1 · ครบแล้ว card = null
 // แผนที่ (/learn) และหน้าวันนี้ (/today) ใช้ตัวเดียวกัน ปุ่ม "ทำต่อ" จึงพาไปที่เดียวกันเสมอ
-export function nextUp(done: ReadonlySet<string>) {
-  const started = cards.some((c) => done.has(cardUrl(c.slug)));
-  const card = cards.find((c) => !done.has(cardUrl(c.slug))) ?? null;
+export function nextUp(done: ReadonlySet<string>, list: readonly LearnCard[] = cards) {
+  const started = list.some((c) => done.has(cardUrl(c.slug)));
+  const card = list.find((c) => !done.has(cardUrl(c.slug))) ?? null;
   return { started, card, step: started && card ? stepBySlug(card.step) : steps[0] };
 }
 
 // การ์ดก่อน/ถัดไปในขั้นเดียวกัน (สุดทางแล้วพากลับหน้าขั้น)
-export function neighbors(card: LearnCard) {
-  const list = cardsOf(card.step);
-  const i = list.indexOf(card);
+// หาด้วย slug ไม่ใช่ตัว object เพราะรายการที่ผ่านหลังบ้านแล้วเป็น object ชุดใหม่ (ชื่ออาจเปลี่ยน)
+export function neighbors(card: LearnCard, all: readonly LearnCard[] = cards) {
+  const list = cardsOf(card.step, all);
+  const i = list.findIndex((c) => c.slug === card.slug);
+  // การ์ดใบนี้ถูกซ่อน (เปิดจากลิงก์ตรง) ไม่มีในรายการ: ไม่มีก่อน/ถัดไป ให้กลับหน้าขั้น
+  if (i < 0) return { prev: null, next: null };
   return { prev: i > 0 ? list[i - 1] : null, next: list[i + 1] ?? null };
 }

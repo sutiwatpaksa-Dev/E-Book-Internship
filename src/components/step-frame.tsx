@@ -4,13 +4,16 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { cardUrl, cardsOf, steps, stepUrl, type LearnStep } from "@/data/learn";
+import { useCatalog } from "@/hooks/use-catalog";
 import { useProgress } from "@/hooks/use-progress";
 import { AskLink } from "./ask-link";
 
 // หัวหน้าขั้น: อยู่ขั้นไหนจาก 7, ต้องได้อะไร, การ์ดในขั้นนี้เข้าใจไปกี่ใบ
 export function StepHeader({ step }: { step: LearnStep }) {
   const { done } = useProgress();
-  const list = cardsOf(step.slug);
+  // นับจากการ์ดที่แสดงจริง (ใบที่พี่เลี้ยงซ่อนไม่อยู่ในตัวหาร) ให้ตรงกับรายการการ์ดด้านล่าง
+  const { cards } = useCatalog();
+  const list = cardsOf(step.slug, cards);
   const count = list.filter((c) => done.has(cardUrl(c.slug))).length;
   return (
     <div className="not-prose flex flex-col gap-3">

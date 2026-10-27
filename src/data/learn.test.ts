@@ -82,3 +82,20 @@ describe("โครง 7 ขั้น", () => {
     expect(all.card).toBeNull();
   });
 });
+
+describe("รายการที่ผ่านหลังบ้านแล้ว (ซ่อน/เปลี่ยนชื่อ)", () => {
+  const [first, second] = cards;
+  const hidden = cards.filter((c) => c.slug !== first.slug);
+  test("ซ่อนการ์ดใบแรก: ทำต่อ = ใบถัดไป", () => {
+    expect(nextUp(new Set(), hidden).card?.slug).toBe(second.slug);
+  });
+  test("ก่อน/ถัดไปข้ามใบที่ซ่อน และใช้ชื่อใหม่", () => {
+    const renamed = hidden.map((c) => (c.slug === second.slug ? { ...c, title: "ชื่อใหม่" } : c));
+    expect(neighbors(second, renamed).prev).toBeNull();
+    const third = renamed.find((c) => c.step === second.step && c.slug !== second.slug)!;
+    expect(neighbors(third, renamed).prev?.title).toBe("ชื่อใหม่");
+  });
+  test("เปิดการ์ดที่ถูกซ่อนจากลิงก์ตรง: ไม่มีก่อน/ถัดไป", () => {
+    expect(neighbors(first, hidden)).toEqual({ prev: null, next: null });
+  });
+});
