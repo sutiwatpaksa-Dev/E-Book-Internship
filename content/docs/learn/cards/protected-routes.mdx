@@ -116,7 +116,7 @@ export function LoginPage() {
           className="mt-1 w-full rounded border p-2" />
       </label>
       {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
-      <button disabled={sending} className="w-full rounded bg-blue-700 py-2 text-white disabled:opacity-50">
+      <button disabled={sending} className="w-full rounded bg-brand py-2 text-white disabled:opacity-50">
         {sending ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
       </button>
     </form>

@@ -220,7 +220,7 @@ export function BookEditor({ initial, onSave, onDone }: {
           className="w-full rounded border p-2" />
         {error && <span role="alert" className="text-sm text-red-600">{error}</span>}
       </label>
-      <button disabled={sending} className="rounded bg-blue-700 px-4 py-2 text-white disabled:opacity-50">
+      <button disabled={sending} className="rounded bg-brand px-4 py-2 text-white disabled:opacity-50">
         {sending ? "กำลังบันทึก..." : "บันทึก"}
       </button>
       <button type="button" onClick={onDone} className="rounded border px-4 py-2">ยกเลิก</button>
@@ -279,7 +279,7 @@ export function AdminBooksPage() {
         <input defaultValue={q} placeholder="ค้นหาชื่อ" aria-label="ค้นหาชื่อหนังสือ"
           onKeyDown={(e) => e.key === "Enter" && setParams({ q: e.currentTarget.value, page: "1" })}
           className="rounded border p-2" />
-        <button onClick={() => setEditing("new")} className="ml-auto rounded bg-blue-700 px-4 py-2 text-white">เพิ่มหนังสือ</button>
+        <button onClick={() => setEditing("new")} className="ml-auto rounded bg-brand px-4 py-2 text-white">เพิ่มหนังสือ</button>
       </div>
 
       {editing && (

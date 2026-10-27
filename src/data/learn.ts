@@ -83,7 +83,7 @@ export const cards: LearnCard[] = [
   { slug: "validation", title: "ตรวจข้อมูลขาเข้าด้วย Zod", step: "coding", topic: "api", part: "API", minutes: 8, needs: ["hono"], starter: "วันที่ 3 · Zod ทุก endpoint" },
   { slug: "layers", title: "แบ่งชั้น routes · services · repositories", step: "coding", topic: "api", part: "API", minutes: 15, needs: ["validation", "drizzle-orm"], starter: "วันที่ 3–4 · โค้ดใน server/src ที่โตขึ้น" },
   { slug: "error-handling", title: "จัดการ error ที่จุดเดียว", step: "coding", topic: "api", part: "API", minutes: 8, needs: ["layers"], starter: "วันที่ 3 รูปแบบ error · วันที่ 9 ไม่หลุด stack trace" },
-  { slug: "api-testing", title: "ยิงทดสอบ API", step: "coding", topic: "api", part: "API", minutes: 8, alsoIn: ["testing"], needs: ["hono"], starter: "วันที่ 3 · ทดสอบทุก endpoint + ส่ง collection" },
+  { slug: "api-testing", title: "ยิงทดสอบ API", step: "coding", topic: "api", part: "API", minutes: 8, alsoIn: ["testing", "documentation"], needs: ["hono"], starter: "วันที่ 3 · ทดสอบทุก endpoint + ส่ง collection" },
   { slug: "password-hash", title: "เก็บรหัสผ่านด้วย hash", step: "coding", topic: "auth", part: "Login", minutes: 8, needs: ["migration"], starter: "วันที่ 4 · ทำไมต้อง hash password (ตาราง admins + seed ทำวันที่ 2)" },
   { slug: "jwt-cookie", title: "Login: JWT ใน httpOnly cookie", step: "coding", topic: "auth", part: "Login", minutes: 15, needs: ["password-hash", "error-handling"], starter: "วันที่ 4 · JWT, httpOnly cookie ต่างจาก localStorage, login/logout" },
   { slug: "auth-middleware", title: "Middleware กัน API หลังบ้าน", step: "coding", topic: "auth", part: "Login", minutes: 10, needs: ["jwt-cookie"], starter: "วันที่ 4 · middleware เช็ก token ทุก /api/admin/* (ไม่ login ได้ 401)" },
@@ -97,6 +97,7 @@ export const cards: LearnCard[] = [
   { slug: "crud-ui", title: "หน้าจัดการข้อมูล: ตาราง ค้นหา แบ่งหน้า เพิ่ม แก้ ลบ", step: "coding", topic: "web", part: "หลังบ้าน", minutes: 15, needs: ["protected-routes"], starter: "วันที่ 8 · CRUD UI (list/add/edit/delete) + state ของฟอร์มและตาราง" },
   { slug: "manual-testing", title: "ทดสอบด้วยมือแบบมีแผน", step: "testing", topic: "test", minutes: 10, needs: ["user-stories", "user-flow"], starter: "วันที่ 9 · ตรวจความเรียบร้อย (responsive, loading/error) + Review รอบที่ 2" },
   { slug: "unit-test", title: "เทสต์อัตโนมัติด้วย bun test", step: "testing", topic: "test", minutes: 10, needs: ["validation", "manual-testing"], starter: "Bonus หน้า 13 · test ครอบคลุม validator" },
+  { slug: "readme", title: "README ที่คนอื่นรันตามได้", step: "documentation", topic: "plan", minutes: 10, needs: ["password-hash", "jwt-cookie"], starter: "วันที่ 10 · README (ติดตั้ง, .env, migration/seed, รัน, บัญชี admin ทดสอบ)" },
 ];
 
 export const legacy: LegacyLink[] = [

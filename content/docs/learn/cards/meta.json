@@ -35,6 +35,7 @@
     "protected-routes",
     "crud-ui",
     "manual-testing",
-    "unit-test"
+    "unit-test",
+    "readme"
   ]
 }

@@ -40,7 +40,7 @@ export default defineConfig({
 @import "tailwindcss";
 
 @theme {
-  --color-brand: #0b3c91;        /* ได้คลาส bg-brand, text-brand, border-brand */
+  --color-brand: #2f6b3a;        /* เขียวใบไม้จาก brief · ได้คลาส bg-brand, text-brand, border-brand */
   --font-sans: "IBM Plex Sans Thai", sans-serif;
 }
 ```
@@ -74,7 +74,7 @@ export default defineConfig({
 ## ทริคที่แนะนำ
 
 1. **`md:` ไม่ได้แปลว่ามือถือ** แปลว่า "ตั้งแต่ 768px ขึ้นไป" อยากซ่อนบนมือถือเขียน `hidden md:block` อยากซ่อนบนจอใหญ่เขียน `md:hidden`
-2. **สีใส่ใน `@theme` ไม่ใส่ตรงๆ** `bg-[#0b3c91]` กระจายอยู่ 30 ไฟล์ วันลูกค้าเปลี่ยนสีต้องไล่แก้ 30 ที่ `bg-brand` แก้ที่เดียว และทำโหมดมืดได้ง่าย
+2. **สีใส่ใน `@theme` ไม่ใส่ตรงๆ** `bg-[#2f6b3a]` กระจายอยู่ 30 ไฟล์ วันลูกค้าเปลี่ยนสีต้องไล่แก้ 30 ที่ `bg-brand` แก้ที่เดียว และทำโหมดมืดได้ง่าย
 3. **ทดสอบที่ 375px ทุกครั้ง** DevTools → ปุ่มรูปมือถือ (Toggle device toolbar) ดูว่าไม่มีอะไรล้นจอ และปุ่มสูงพอให้นิ้วกด (อย่างน้อย 44px)
 
 ## ปรับไปใช้จริง
