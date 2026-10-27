@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { useSession } from "@/hooks/use-session";
 import { safeNext } from "@/lib/home-path";
@@ -60,6 +61,12 @@ export function LoginForm() {
       <Button type="submit" disabled={busy} className="min-h-12 text-base">
         {busy ? "กำลังตรวจ…" : "เข้าสู่ระบบ"}
       </Button>
+      <p className="text-center text-sm text-fd-muted-foreground">
+        ยังไม่มีบัญชี แต่ได้รหัสรุ่นจากพี่เลี้ยง?{" "}
+        <Link href="/register" className="font-medium text-fd-primary hover:underline">
+          สมัครด้วยรหัสรุ่น
+        </Link>
+      </p>
     </form>
   );
 }

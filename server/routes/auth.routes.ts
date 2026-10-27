@@ -4,7 +4,9 @@ import { env } from "../config/env";
 import type { Role } from "../db/schema";
 import { createSessionToken, readSessionToken, ROLE_HINT_COOKIE, SESSION_COOKIE, SESSION_SECONDS } from "../lib/session";
 import { authService } from "../services/auth.service";
+import { registerService } from "../services/register.service";
 import { loginSchema, setPasswordSchema } from "../validators/auth.validator";
+import { inviteCodeSchema, registerSchema } from "../validators/register.validator";
 
 const secure = env.APP_ORIGIN.startsWith("https://");
 const cookieBase = { path: "/", secure, sameSite: "Lax" as const, maxAge: SESSION_SECONDS };
@@ -15,11 +17,11 @@ const clientIp = (h: (n: string) => string | undefined) => h("x-real-ip") ?? h("
 export const authRoutes = new Hono();
 
 // ออกบัตรผ่านให้เครื่องนี้ (ใช้ทั้งตอน login และหลังตั้งรหัสผ่าน ซึ่งบัตรเดิมหมดรอบไปแล้ว)
-async function issue(c: Context, u: { id: number; username: string; role: Role; ver: number; tmp: boolean }) {
+async function issue(c: Context, u: { id: number; username: string; role: Role; ver: number; tmp: boolean }, status: 200 | 201 = 200) {
   const token = await createSessionToken({ userId: u.id, username: u.username, role: u.role, ver: u.ver, tmp: u.tmp }, env.SESSION_SECRET);
   setCookie(c, SESSION_COOKIE, token, { ...cookieBase, httpOnly: true });
   setCookie(c, ROLE_HINT_COOKIE, u.role, cookieBase);
-  return c.json({ username: u.username, role: u.role, mustSetPassword: u.tmp });
+  return c.json({ username: u.username, role: u.role, mustSetPassword: u.tmp }, status);
 }
 
 authRoutes.post("/login", async (c) => {
@@ -35,6 +37,20 @@ authRoutes.post("/password", async (c) => {
   const parsed = setPasswordSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ error: "กรอกรหัสผ่านใหม่" }, 400);
   return issue(c, await authService.setPassword(session.userId, parsed.data.current, parsed.data.password));
+});
+
+// สมัครด้วยรหัสรุ่น ขั้นที่ 1: รหัสใช้ได้ไหม (ผิดนับรวมกับขั้นที่ 2 ต่อ IP)
+authRoutes.post("/register/check", async (c) => {
+  const parsed = inviteCodeSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: "กรอกรหัสรุ่นที่พี่เลี้ยงส่งให้" }, 400);
+  return c.json(await registerService.check(parsed.data.code, clientIp((n) => c.req.header(n))));
+});
+
+// ขั้นที่ 2: สร้างบัญชีแล้ว login ให้เลย (ไม่ต้องกรอกซ้ำที่หน้า login)
+authRoutes.post("/register", async (c) => {
+  const parsed = registerSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: "ข้อมูลไม่ครบ: ชื่อผู้ใช้ (a-z 0-9 . _ - ยาว 3 ตัวขึ้นไป), ชื่อ-นามสกุล, ประเภทและชื่อสถานศึกษา, ระดับการศึกษา" }, 400);
+  return issue(c, await registerService.register(parsed.data, clientIp((n) => c.req.header(n))), 201);
 });
 
 authRoutes.post("/logout", (c) => {

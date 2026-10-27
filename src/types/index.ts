@@ -38,6 +38,24 @@ export type Cohort = {
   endedAt: string | null;
   internCount: number;
   mentorIds: number[];
+  // สมัครเองด้วยรหัสรุ่น (ตัวรหัสไม่ส่งมา เห็นครั้งเดียวตอนสร้าง)
+  hasInvite: boolean;
+  signupOpen: boolean;
+  signupUntil: string | null;
+  seatLimit: number | null;
+};
+export type SignupSettings = Pick<Cohort, "signupOpen" | "signupUntil" | "seatLimit">;
+// ข้อมูลที่หน้าสมัครส่ง (รหัสผ่านตรวจกติกาซ้ำที่ server)
+export type RegisterInput = {
+  code: string;
+  username: string;
+  password: string;
+  fullName: string;
+  nickname: string | null;
+  schoolType: SchoolType;
+  schoolName: string;
+  major: string | null;
+  eduLevel: EduLevel;
 };
 export type CohortInput = Pick<Cohort, "name" | "startsOn" | "endsOn">;
 

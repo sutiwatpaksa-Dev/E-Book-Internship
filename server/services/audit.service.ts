@@ -27,7 +27,10 @@ export type AuditAction =
   | "cohort.end"
   | "cohort.reopen"
   | "cohort.mentors"
-  | "cohort.assign";
+  | "cohort.assign"
+  | "cohort.invite"
+  | "cohort.signup"
+  | "user.register";
 
 const LIMIT = 200;
 

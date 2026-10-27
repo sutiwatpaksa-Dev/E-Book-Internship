@@ -1,16 +1,17 @@
 "use client";
 
-import { ArrowLeft, GraduationCap, Pencil, Plus } from "lucide-react";
+import { ArrowLeft, Copy, GraduationCap, KeyRound, Pencil, Plus } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { cardUrl, cards } from "@/data/learn";
 import { daysSince, type AdminState } from "@/hooks/use-admin";
-import { COHORT_STATUS_LABEL, cohortDay, cohortRange, cohortStatus, type CohortStatus } from "@/lib/cohort";
+import { toast } from "@/hooks/use-toast";
+import { COHORT_STATUS_LABEL, cohortDay, cohortRange, cohortStatus, todayTH, type CohortStatus } from "@/lib/cohort";
 import type { Cohort, CohortInput, User } from "@/types";
 import type { AdminNav } from "./admin-panel";
 import { Button } from "./button";
 import { ConfirmBox } from "./confirm-box";
 import { EmptyState } from "./empty-state";
-import { Field, Input } from "./field";
+import { Field, Input, inputClass } from "./field";
 
 // สีป้ายสถานะ: กำลังฝึก = สีหลัก, เลยวันจบ = ส้ม (ต้องมีคนตัดสินใจ), ที่เหลือ = เทา
 const STATUS_TONE: Record<CohortStatus, string> = {
@@ -276,9 +277,110 @@ function CohortDetail({ admin, nav, cohort: c }: { admin: AdminState; nav: Admin
         )}
       </section>
 
+      <Signup key={`${c.signupOpen}${c.signupUntil}${c.seatLimit}`} admin={admin} cohort={c} />
       <AddMembers admin={admin} cohort={c} name={name} />
       <Mentors key={c.mentorIds.join(",")} admin={admin} cohort={c} />
     </div>
+  );
+}
+
+// ตอนนี้น้องสมัครได้จริงไหม: เงื่อนไขเดียวกับ server (server/services/register.service.ts) · คืนเหตุผลที่ยังสมัครไม่ได้
+function signupBlocker(c: Cohort) {
+  if (c.endedAt) return "รุ่นจบแล้ว";
+  if (!c.hasInvite) return "ยังไม่มีรหัสรุ่น";
+  if (!c.signupOpen) return "ปิดรับสมัครอยู่";
+  if (c.signupUntil && todayTH() > c.signupUntil) return "เลยวันปิดรับแล้ว";
+  if (c.seatLimit && c.internCount >= c.seatLimit) return "รับครบจำนวนแล้ว";
+  return null;
+}
+
+// รับสมัครเองด้วยรหัสรุ่น: แทนการสร้างบัญชีทีละคนแล้วส่ง PIN · น้องตั้งรหัสผ่านและกรอกโปรไฟล์เองตอนสมัคร
+// รหัสเห็นครั้งเดียวหลังกดสร้าง (ระบบเก็บแค่ hash) ทำหายหรือหลุดไปกลุ่มอื่น กดสร้างใหม่ รหัสเดิมใช้ไม่ได้ทันที
+function Signup({ admin, cohort: c }: { admin: AdminState; cohort: Cohort }) {
+  const [open, setOpen] = useState(c.signupOpen);
+  const [until, setUntil] = useState(c.signupUntil ?? "");
+  const [seats, setSeats] = useState(c.seatLimit?.toString() ?? "");
+  const [code, setCode] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState(false);
+  const blocker = signupBlocker(c);
+  const changed = open !== c.signupOpen || until !== (c.signupUntil ?? "") || seats !== (c.seatLimit?.toString() ?? "");
+  const link = code && `${location.origin}/register?code=${code}`;
+
+  async function generate() {
+    setConfirm(false);
+    setCode(await admin.newInvite(c));
+  }
+  async function copy() {
+    if (!link || !code) return;
+    await navigator.clipboard.writeText(`สมัครคู่มือฝึกงาน Blicktech (${c.name})\n${link}\nรหัสรุ่น: ${code}`);
+    toast.success("คัดลอกข้อความแล้ว วางในกลุ่มของรุ่นได้เลย");
+  }
+
+  return (
+    <section aria-labelledby="signup-title" className="flex flex-col gap-3 rounded-xl border border-fd-border p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 id="signup-title" className="text-base font-semibold">
+          รับสมัครด้วยรหัสรุ่น
+        </h2>
+        <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${blocker ? "bg-fd-muted text-fd-muted-foreground" : "bg-fd-primary/10 text-fd-primary"}`}>
+          {blocker ?? "น้องสมัครได้อยู่"}
+        </span>
+      </div>
+      <p className="text-sm text-fd-muted-foreground">
+        ส่งลิงก์หรือรหัสให้น้องในกลุ่มของรุ่น น้องสมัคร ตั้งรหัสผ่าน และกรอกการศึกษาเอง แล้วเข้ารุ่นนี้ทันที ไม่ต้องสร้างบัญชีและส่ง PIN ทีละคน · รับแล้ว {c.internCount}
+        {c.seatLimit ? `/${c.seatLimit}` : ""} คน
+      </p>
+
+      {code && link && (
+        <div role="status" className="flex flex-col gap-2 rounded-lg border border-green-600/40 bg-green-600/10 p-3 text-sm">
+          <span className="flex flex-wrap items-center gap-2">
+            รหัสรุ่น <code className="rounded bg-fd-background px-2 py-1 text-lg font-bold tracking-[0.2em]">{code}</code>
+          </span>
+          <span className="break-all text-fd-muted-foreground">{link}</span>
+          <span className="text-fd-muted-foreground">ระบบเก็บรหัสนี้แบบอ่านย้อนไม่ได้ ออกจากหน้านี้แล้วจะดูอีกไม่ได้ (ทำหายก็สร้างใหม่ได้)</span>
+          <Button onClick={copy} className="min-h-11 self-start">
+            <Copy className="size-4" /> คัดลอกข้อความส่งน้อง
+          </Button>
+        </div>
+      )}
+
+      {confirm && (
+        <ConfirmBox title="สร้างรหัสใหม่?" confirmLabel="สร้างรหัสใหม่" onCancel={() => setConfirm(false)} onConfirm={generate}>
+          รหัสเดิมใช้สมัครไม่ได้ทันที (คนที่สมัครไปแล้วไม่กระทบ) ใช้ตอนรหัสหลุดไปที่อื่น หรือทำรหัสหาย
+        </ConfirmBox>
+      )}
+      {!c.endedAt && (
+        <Button variant={c.hasInvite ? "ghost" : "primary"} onClick={() => (c.hasInvite ? setConfirm(true) : generate())} className="min-h-11 self-start">
+          <KeyRound className="size-4" /> {c.hasInvite ? "สร้างรหัสใหม่ (รหัสเดิมใช้ไม่ได้)" : "สร้างรหัสรุ่น"}
+        </Button>
+      )}
+
+      {c.hasInvite && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            admin.setSignup(c, { signupOpen: open, signupUntil: until || null, seatLimit: seats ? Number(seats) : null });
+          }}
+          className="flex flex-wrap items-end gap-3 border-t border-fd-border pt-3"
+        >
+          <label className="flex min-h-11 cursor-pointer items-center gap-2.5 text-sm font-medium">
+            <input type="checkbox" className="size-5" checked={open} onChange={(e) => setOpen(e.target.checked)} />
+            เปิดรับสมัคร
+          </label>
+          <Field label="รับถึงวันที่ (ว่าง = ไม่กำหนด)">
+            <Input type="date" value={until} onChange={(e) => setUntil(e.target.value)} className={`${inputClass} min-h-11`} />
+          </Field>
+          <div className="w-44">
+            <Field label="รับกี่คน (ว่าง = ไม่จำกัด)">
+              <Input type="number" min={1} max={500} inputMode="numeric" value={seats} onChange={(e) => setSeats(e.target.value)} className={`${inputClass} min-h-11`} />
+            </Field>
+          </div>
+          <Button type="submit" variant={changed ? "primary" : "ghost"} disabled={!changed} className="min-h-11">
+            บันทึก
+          </Button>
+        </form>
+      )}
+    </section>
   );
 }
 

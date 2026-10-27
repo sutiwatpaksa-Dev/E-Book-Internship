@@ -4,6 +4,7 @@ import { cohortMentors, cohorts, users } from "../db/schema";
 
 type NewCohort = typeof cohorts.$inferInsert;
 export type CohortFields = Pick<NewCohort, "name" | "startsOn" | "endsOn">;
+export type SignupFields = Pick<NewCohort, "signupOpen" | "signupUntil" | "seatLimit">;
 
 export const cohortRepository = {
   // รุ่นใหม่สุดขึ้นก่อน + จำนวนน้องในรุ่น + id พี่เลี้ยงประจำรุ่น (3 query เล็ก แทน join ที่ซ้ำแถว)
@@ -18,7 +19,13 @@ export const cohortRepository = {
       db.select().from(cohortMentors).orderBy(asc(cohortMentors.userId)),
     ]);
     const n = new Map(counts.map((c) => [c.cohortId, c.n]));
-    return rows.map((r) => ({ ...r, internCount: n.get(r.id) ?? 0, mentorIds: mentors.filter((m) => m.cohortId === r.id).map((m) => m.userId) }));
+    // ไม่ส่ง hash ของรหัสรุ่นออกไป บอกแค่ว่ามีรหัสแล้วหรือยัง
+    return rows.map(({ inviteHash, ...r }) => ({
+      ...r,
+      hasInvite: !!inviteHash,
+      internCount: n.get(r.id) ?? 0,
+      mentorIds: mentors.filter((m) => m.cohortId === r.id).map((m) => m.userId),
+    }));
   },
   async findById(id: number) {
     const [c] = await db.select().from(cohorts).where(eq(cohorts.id, id));
@@ -28,7 +35,18 @@ export const cohortRepository = {
     const [c] = await db.insert(cohorts).values(values).returning({ id: cohorts.id });
     return c;
   },
-  update: (id: number, changes: Partial<CohortFields> & { endedAt?: Date | null }) => db.update(cohorts).set(changes).where(eq(cohorts.id, id)),
+  async findByInviteHash(hash: string) {
+    const [c] = await db.select().from(cohorts).where(eq(cohorts.inviteHash, hash));
+    return c;
+  },
+  async internCount(cohortId: number) {
+    const [r] = await db
+      .select({ n: count() })
+      .from(users)
+      .where(and(eq(users.cohortId, cohortId), eq(users.role, "intern")));
+    return r?.n ?? 0;
+  },
+  update: (id: number, changes: Partial<CohortFields & SignupFields> & { endedAt?: Date | null; inviteHash?: string | null }) => db.update(cohorts).set(changes).where(eq(cohorts.id, id)),
   // แทนที่รายชื่อพี่เลี้ยงทั้งชุดใน transaction เดียว (ลบครึ่งทางแล้วล้ม = รุ่นไม่มีพี่เลี้ยง)
   setMentors: (cohortId: number, userIds: number[]) =>
     db.transaction(async (tx) => {

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "@/api/admin.api";
 import { filesApi } from "@/api/files.api";
-import type { Cohort, CohortInput, FileInfo, ProgressEntry, Role, ThreadSummary, User } from "@/types";
+import type { Cohort, CohortInput, FileInfo, ProgressEntry, Role, SignupSettings, ThreadSummary, User } from "@/types";
 import { toast } from "./use-toast";
 
 // ข้อมูลและคำสั่งทั้งหมดของหลังบ้าน แยกจากหน้าตา: component แค่เรียกใช้ ไม่เรียก API เอง
@@ -124,6 +124,26 @@ export function useAdmin() {
         await reload();
         toast.success("บันทึกพี่เลี้ยงประจำรุ่นแล้ว");
       }),
+    // คืนรหัสจริงให้หน้าจอแสดงครั้งเดียว (null = พลาด ข้อความ error อยู่ที่ error แล้ว)
+    newInvite: async (c: Cohort) => {
+      let code: string | null = null;
+      await run(async () => {
+        code = (await adminApi.newInvite(c.id)).code;
+        await reload();
+        toast.success(`สร้างรหัสของ ${c.name} แล้ว และเปิดรับสมัคร`);
+      });
+      return code as string | null;
+    },
+    setSignup: async (c: Cohort, s: SignupSettings) => {
+      let ok = false;
+      await run(async () => {
+        await adminApi.setSignup(c.id, s);
+        await reload();
+        toast.success(s.signupOpen ? `เปิดรับสมัคร ${c.name} แล้ว` : `ปิดรับสมัคร ${c.name} แล้ว`);
+        ok = true;
+      });
+      return ok;
+    },
     assignCohort: async (userIds: number[], cohortId: number | null) => {
       let ok = false;
       await run(async () => {

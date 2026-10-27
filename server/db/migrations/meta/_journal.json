@@ -71,6 +71,13 @@
       "when": 1793097729918,
       "tag": "0009_profile_password",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793098432641,
+      "tag": "0010_cohort_signup",
+      "breakpoints": true
     }
   ]
 }

@@ -50,6 +50,13 @@ export const cohorts = pgTable("cohorts", {
   endsOn: date("ends_on").notNull(),
   // พี่เลี้ยงกด "จบรุ่น" แล้ว: น้องยังอ่านคู่มือได้ แต่เปิดเรื่องถามใหม่ไม่ได้ · กดเปิดรุ่นกลับได้ (ล้างค่า)
   endedAt: timestamp("ended_at", { withTimezone: true }),
+  // สมัครเองด้วยรหัสรุ่น: เก็บแค่ hash ของรหัส (พี่เลี้ยงเห็นรหัสครั้งเดียวตอนสร้าง) · unique = หารุ่นจากรหัสได้ทันที
+  inviteHash: text("invite_hash").unique(),
+  signupOpen: boolean("signup_open").notNull().default(false),
+  // วันสุดท้ายที่รับสมัคร (รวมวันนั้น) · null = ไม่กำหนด
+  signupUntil: date("signup_until"),
+  // รับได้กี่คน (นับน้องที่อยู่ในรุ่นทั้งหมด) · null = ไม่จำกัด
+  seatLimit: integer("seat_limit"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

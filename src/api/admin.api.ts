@@ -1,4 +1,4 @@
-import type { AuditEntry, BulkResult, Cohort, CohortInput, FileInfo, IssuedPin, ProgressEntry, Role, ThreadDetail, ThreadStatus, ThreadSummary, User } from "@/types";
+import type { AuditEntry, BulkResult, Cohort, CohortInput, SignupSettings, FileInfo, IssuedPin, ProgressEntry, Role, ThreadDetail, ThreadStatus, ThreadSummary, User } from "@/types";
 import { jsonBody, request } from "./client";
 
 export const adminApi = {
@@ -24,6 +24,8 @@ export const adminApi = {
   updateCohort: (id: number, input: CohortInput) => request<null>(`/admin/cohorts/${id}`, jsonBody("PUT", input)),
   setCohortEnded: (id: number, ended: boolean) => request<null>(`/admin/cohorts/${id}/${ended ? "end" : "reopen"}`, { method: "POST" }),
   setCohortMentors: (id: number, userIds: number[]) => request<null>(`/admin/cohorts/${id}/mentors`, jsonBody("PUT", { userIds })),
+  newInvite: (id: number) => request<{ code: string }>(`/admin/cohorts/${id}/invite`, { method: "POST" }),
+  setSignup: (id: number, s: SignupSettings) => request<null>(`/admin/cohorts/${id}/signup`, jsonBody("PUT", s)),
   assignCohort: (userIds: number[], cohortId: number | null) => request<{ moved: number }>("/admin/cohorts/assign", jsonBody("POST", { userIds, cohortId })),
   setThreadStatus: (id: number, status: ThreadStatus, note?: string) => request<null>(`/admin/threads/${id}`, jsonBody("PATCH", { status, note })),
 };

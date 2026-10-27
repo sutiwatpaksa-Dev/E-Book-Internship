@@ -11,13 +11,26 @@ import { Field, Input, inputClass } from "./field";
 const bigInput = `${inputClass} min-h-12 text-base`;
 
 // กติกาเดียวกับ server (server/validators/auth.validator.ts passwordProblem) แสดงให้เห็นก่อนกด
-// server ตรวจซ้ำเสมอ ตรงนี้มีไว้บอกว่าขาดอะไร ไม่ใช่ตัวกัน
-function rules(password: string, username: string) {
+// server ตรวจซ้ำเสมอ ตรงนี้มีไว้บอกว่าขาดอะไร ไม่ใช่ตัวกัน · หน้าสมัคร (register-form) ใช้ร่วมกัน
+export function passwordRules(password: string, username: string) {
   return [
     { ok: password.length >= 10, text: "ยาว 10 ตัวอักษรขึ้นไป (ภาษาไทยก็ได้ เป็นวลีที่จำง่ายยิ่งดี)" },
     { ok: password.length > 0 && !/^(.)\1+$/.test(password), text: "ไม่ใช่ตัวเดียวซ้ำทั้งหมด" },
     { ok: password.length > 0 && !password.toLowerCase().includes(username.toLowerCase()), text: "ไม่มีชื่อผู้ใช้อยู่ในรหัสผ่าน" },
   ];
+}
+
+export function PasswordChecklist({ checks }: { checks: { ok: boolean; text: string }[] }) {
+  return (
+    <ul aria-label="กติการหัสผ่าน" className="flex flex-col gap-1 text-sm">
+      {checks.map((c) => (
+        <li key={c.text} className={`flex items-center gap-2 ${c.ok ? "text-green-700 dark:text-green-400" : "text-fd-muted-foreground"}`}>
+          {c.ok ? <Check className="size-4 shrink-0" aria-label="ผ่าน" /> : <Circle className="size-4 shrink-0" aria-label="ยังไม่ผ่าน" />}
+          {c.text}
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 // ตั้งรหัสผ่าน: ครั้งแรก (ต่อจาก PIN ชั่วคราว ไม่ต้องใส่รหัสเดิม) หรือเปลี่ยนรหัสในหน้าโปรไฟล์ (ต้องใส่รหัสเดิม)
@@ -28,7 +41,7 @@ export function PasswordForm({ username, needCurrent, onDone }: { username: stri
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const checks = rules(password, username);
+  const checks = passwordRules(password, username);
   const mismatch = confirm.length > 0 && confirm !== password;
   const ready = checks.every((c) => c.ok) && confirm === password && (!needCurrent || current.length > 0);
 
@@ -57,14 +70,7 @@ export function PasswordForm({ username, needCurrent, onDone }: { username: stri
       <Field label="รหัสผ่านใหม่">
         <Input className={bigInput} type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" maxLength={128} required />
       </Field>
-      <ul aria-label="กติการหัสผ่าน" className="flex flex-col gap-1 text-sm">
-        {checks.map((c) => (
-          <li key={c.text} className={`flex items-center gap-2 ${c.ok ? "text-green-700 dark:text-green-400" : "text-fd-muted-foreground"}`}>
-            {c.ok ? <Check className="size-4 shrink-0" aria-label="ผ่าน" /> : <Circle className="size-4 shrink-0" aria-label="ยังไม่ผ่าน" />}
-            {c.text}
-          </li>
-        ))}
-      </ul>
+      <PasswordChecklist checks={checks} />
       <Field label="พิมพ์รหัสผ่านใหม่อีกครั้ง">
         <Input className={bigInput} type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" maxLength={128} required aria-invalid={mismatch} />
       </Field>

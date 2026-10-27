@@ -1,4 +1,5 @@
-import { cohortRepository, type CohortFields } from "../repositories/cohort.repository";
+import { hashInvite, newInviteCode } from "../lib/invite";
+import { cohortRepository, type CohortFields, type SignupFields } from "../repositories/cohort.repository";
 import { userRepository } from "../repositories/user.repository";
 import { auditService } from "./audit.service";
 
@@ -48,4 +49,21 @@ export const cohortService = {
     return { moved: moved.length };
   },
   endedFor: (userId: number) => cohortRepository.endedFor(userId),
+
+  // สร้างรหัสรุ่นใหม่ (รหัสเดิมใช้ไม่ได้ทันที) และเปิดรับสมัครไปด้วย เพราะสร้างรหัสก็คือจะส่งให้น้องสมัคร
+  // คืนรหัสจริงครั้งเดียว DB เก็บแค่ hash ทำหายก็สร้างใหม่ ไม่มีทางดูย้อนหลัง
+  async newInvite(devId: number, id: number) {
+    const c = await found(id);
+    if (c.endedAt) throw new Error("SIGNUP_CLOSED");
+    const code = newInviteCode();
+    await cohortRepository.update(id, { inviteHash: hashInvite(code), signupOpen: true });
+    await auditService.log(devId, "cohort.invite", c.name);
+    return { code };
+  },
+  async setSignup(devId: number, id: number, f: SignupFields) {
+    const c = await found(id);
+    await cohortRepository.update(id, f);
+    const detail = f.signupOpen ? `เปิด${f.signupUntil ? ` ถึง ${f.signupUntil}` : ""}${f.seatLimit ? ` · ${f.seatLimit} ที่` : ""}` : "ปิด";
+    await auditService.log(devId, "cohort.signup", c.name, detail);
+  },
 };

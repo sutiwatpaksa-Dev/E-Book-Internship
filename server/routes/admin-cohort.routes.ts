@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { AuthVars } from "../middleware/require-role";
 import { cohortService } from "../services/cohort.service";
-import { cohortAssignSchema, cohortMentorsSchema, cohortSchema } from "../validators/cohort.validator";
+import { cohortAssignSchema, cohortMentorsSchema, cohortSchema, cohortSignupSchema } from "../validators/cohort.validator";
 
 // หลังบ้าน: รุ่นฝึกงาน · ต่ออยู่ใต้ admin.routes.ts จึงผ่านด่าน requireRole("dev") ของที่นั่นแล้ว
 export const adminCohortRoutes = new Hono<AuthVars>();
@@ -44,6 +44,16 @@ adminCohortRoutes.post("/:id/end", async (c) => {
 
 adminCohortRoutes.post("/:id/reopen", async (c) => {
   await cohortService.setEnded(c.get("user").id, id(c), false);
+  return c.body(null, 204);
+});
+
+// รหัสรุ่นใหม่ แสดงครั้งเดียว (ตอบรหัสจริงกลับไปแค่คำขอนี้)
+adminCohortRoutes.post("/:id/invite", async (c) => c.json(await cohortService.newInvite(c.get("user").id, id(c))));
+
+adminCohortRoutes.put("/:id/signup", async (c) => {
+  const parsed = cohortSignupSchema.safeParse(await json(c));
+  if (!parsed.success) return c.json({ error: "วันปิดรับต้องเป็น YYYY-MM-DD และจำนวนที่ 1–500 (ว่าง = ไม่จำกัด)" }, 400);
+  await cohortService.setSignup(c.get("user").id, id(c), parsed.data);
   return c.body(null, 204);
 });
 
