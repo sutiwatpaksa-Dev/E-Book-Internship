@@ -21,6 +21,8 @@ Handoff.archive-*.md
 .env
 .env.*
 !.env.example
+# แม่แบบของแต่ละ environment (ไม่มีค่าลับ) ขึ้น git ได้
+!.env.*.example
 
 # ค่าที่ Vercel CLI ผูกโปรเจกต์ในเครื่อง
 .vercel/
