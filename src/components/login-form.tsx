@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useSession } from "@/hooks/use-session";
+import { safeNext } from "@/lib/home-path";
 import type { Role } from "@/types";
 import { Button } from "./button";
 import { ErrorText } from "./error-text";
@@ -10,14 +11,8 @@ import { Field, Input, inputClass } from "./field";
 // หน้า login ใช้บนมือถือบ่อย ช่องกรอกและปุ่มสูง 48px (เกินขั้นต่ำ 44px) และตัวอักษร 16px กัน iOS ซูมเข้าเองตอนแตะช่อง
 const bigInput = `${inputClass} min-h-12 text-base`;
 
-// ไม่มี ?next= (กด "เข้าสู่ระบบ" จากเมนูเอง) → ไปหน้าที่ใช้บ่อยที่สุดของบทบาทนั้น: พี่เลี้ยงไปหลังบ้าน น้องไปหน้าวันนี้ (ทำต่อจากที่ค้าง)
-const HOME: Record<Role, string> = { dev: "/dev/admin", intern: "/today" };
-
-// รับเฉพาะ path ภายในเว็บเรา กันคนส่งลิงก์ login?next=https://เว็บปลอม มาหลอก
-function nextPath(role: Role) {
-  const next = new URLSearchParams(location.search).get("next");
-  return next?.startsWith("/") && !next.startsWith("//") ? next : HOME[role];
-}
+// ไม่มี ?next= (กด "เข้าสู่ระบบ" จากเมนูเอง) → ไปหน้าแรกของบทบาทนั้น
+const nextPath = (role: Role) => safeNext(new URLSearchParams(location.search).get("next"), role);
 
 export function LoginForm() {
   const { login } = useSession();

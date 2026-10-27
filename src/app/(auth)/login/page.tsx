@@ -10,6 +10,7 @@ export const metadata: Metadata = { title: "เข้าสู่ระบบ" }
 // หน้า login อยู่ในกลุ่ม (auth) แยกจาก (docs): ไม่มี headbar และ sidebar สารบัญ
 // เพราะคนที่ยังไม่ login ต้องการแค่ 2 อย่าง คือรู้ว่าเว็บนี้คืออะไร กับช่องกรอก
 // จอกว้าง: ซ้ายบอกเรื่องคู่มือ ขวาเป็นฟอร์ม · มือถือ: ส่วนบอกเรื่องย่อเหลือหัวข้อ แล้วฟอร์มต่อด้านล่าง
+// คนที่ login อยู่แล้วไม่เห็นหน้านี้: src/proxy.ts ส่งไปหน้าแรกของบทบาทก่อน
 export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
