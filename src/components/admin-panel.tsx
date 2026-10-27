@@ -1,10 +1,13 @@
 "use client";
 
-import { FileText, History, Inbox, LayoutDashboard, MessageCircle, Users, type LucideIcon } from "lucide-react";
+import { FileText, History, Inbox, LayoutDashboard, Megaphone, MessageCircle, NotebookPen, Users, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 import { useAdmin } from "@/hooks/use-admin";
 import { useUnread } from "@/hooks/use-unread";
+import { useContentAdmin } from "@/hooks/use-content-admin";
+import { AdminAnnouncements } from "./admin-announcements";
 import { AdminAudit } from "./admin-audit";
+import { AdminContent } from "./admin-content";
 import { AdminFiles } from "./admin-files";
 import { AdminInternDetail } from "./admin-intern-detail";
 import { AdminOverview } from "./admin-overview";
@@ -14,11 +17,13 @@ import { Button } from "./button";
 import { ChatPanel } from "./chat-panel";
 import { ErrorText } from "./error-text";
 
-type TabId = "overview" | "questions" | "requests" | "users" | "files" | "audit";
+type TabId = "overview" | "questions" | "requests" | "content" | "announcements" | "users" | "files" | "audit";
 const TABS: { id: TabId; label: string; icon: LucideIcon }[] = [
   { id: "overview", label: "ภาพรวม", icon: LayoutDashboard },
   { id: "questions", label: "ข้อความจากน้อง", icon: MessageCircle },
   { id: "requests", label: "คำขอเนื้อหา", icon: Inbox },
+  { id: "content", label: "เนื้อหา", icon: NotebookPen },
+  { id: "announcements", label: "ประกาศ", icon: Megaphone },
   { id: "users", label: "บัญชีผู้ใช้", icon: Users },
   { id: "files", label: "ไฟล์และตั้งค่า", icon: FileText },
   { id: "audit", label: "บันทึกการกระทำ", icon: History },
@@ -28,13 +33,16 @@ const TABS: { id: TabId; label: string; icon: LucideIcon }[] = [
 export type AdminNav = { goTab: (id: TabId) => void; openIntern: (id: number) => void; openThread: (id: number) => void };
 
 // หลังบ้านพี่เลี้ยง: เมนูแท็บซ้าย (มือถือเป็นแถบเลื่อนด้านบน) + เนื้อหาของแท็บที่เลือก
-export function AdminPanel({ titles, initialTab = "overview" }: { titles: Record<string, string>; initialTab?: string }) {
+type Props = { titles: Record<string, string>; initialTab?: string; initialThread?: number | null; initialNote?: string };
+
+export function AdminPanel({ titles, initialTab = "overview", initialThread = null, initialNote }: Props) {
   const admin = useAdmin();
+  const content = useContentAdmin();
   // เปิดแท็บจากลิงก์ได้ เช่น /dev/admin?tab=questions จากเมนูบัญชี
   const [tab, setTab] = useState<TabId>(TABS.some((t) => t.id === initialTab) ? (initialTab as TabId) : "overview");
   // เปิดหน้าน้องรายคนอยู่ (อยู่ใต้แท็บภาพรวม) · เรื่องที่สั่งให้แชทเปิด
   const [internId, setInternId] = useState<number | null>(null);
-  const [threadId, setThreadId] = useState<number | null>(null);
+  const [threadId, setThreadId] = useState<number | null>(initialThread);
   const active = TABS.find((t) => t.id === tab)!;
   const waiting = useUnread();
   const intern = internId !== null ? admin.users.find((u) => u.id === internId) : undefined;
@@ -46,6 +54,7 @@ export function AdminPanel({ titles, initialTab = "overview" }: { titles: Record
       setTab(id);
       // ข้อมูลในแท็บอาจเก่าแล้ว (เช่นเพิ่งตอบแชทไป) โหลดใหม่ทุกครั้งที่สลับ
       admin.reload();
+      if (id === "content" || id === "announcements") content.reload();
     },
     openIntern: (id) => {
       setTab("overview");
@@ -104,6 +113,8 @@ export function AdminPanel({ titles, initialTab = "overview" }: { titles: Record
         {/* key: สั่งเปิดเรื่องใหม่จากหน้าอื่น ให้แชทเริ่มใหม่ที่เรื่องนั้น */}
         {tab === "questions" && <ChatPanel key={threadId ?? "list"} side="dev" titles={titles} initialId={threadId} />}
         {tab === "requests" && <AdminRequests admin={admin} nav={nav} />}
+        {tab === "content" && <AdminContent content={content} initialNote={initialNote} />}
+        {tab === "announcements" && <AdminAnnouncements content={content} />}
         {tab === "users" && <AdminUsers admin={admin} />}
         {tab === "files" && <AdminFiles admin={admin} />}
         {tab === "audit" && <AdminAudit />}

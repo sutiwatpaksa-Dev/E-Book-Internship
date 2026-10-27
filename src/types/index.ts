@@ -54,3 +54,34 @@ export type ProgressEntry = { link: string; doneAt: string };
 // หลังบ้าน: บันทึกการกระทำ และผลการสร้างบัญชีทีละหลายคน
 export type AuditEntry = { id: number; actor: string; action: string; target: string; detail: string | null; createdAt: string };
 export type BulkResult = { username: string; pin: string } | { username: string; error: string };
+
+// ---- เนื้อหาที่พี่เลี้ยงเพิ่มจากหลังบ้าน (รูปร่างตรงกับ server/routes/content.routes.ts และ admin-content.routes.ts) ----
+export type CardStatus = "draft" | "published";
+
+export type MentorCardSummary = {
+  id: number;
+  slug: string;
+  title: string;
+  step: string;
+  topic: string;
+  minutes: number;
+  needs: string[];
+  status: CardStatus;
+  author: string;
+  publishedAt: string | null;
+  updatedAt: string;
+};
+export type MentorCard = MentorCardSummary & { body: string };
+// ข้อมูลที่ส่งตอนสร้าง/แก้การ์ด (slug ส่งเฉพาะตอนสร้าง)
+export type MentorCardInput = Pick<MentorCard, "slug" | "title" | "step" | "topic" | "minutes" | "needs" | "body">;
+
+export type PageNote = { id: number; pageUrl: string; body: string; visible: boolean; author: string; updatedAt: string };
+export type PageNoteInput = Pick<PageNote, "pageUrl" | "body" | "visible">;
+
+export type Audience = "intern" | "dev" | "all";
+export type Announcement = { id: number; body: string; audience: Audience; startsAt: string; endsAt: string | null; author: string; createdAt: string };
+export type AnnouncementInput = { body: string; audience: Audience; startsAt?: string; endsAt?: string | null };
+
+export type CardOverride = { slug: string; hidden: boolean; title: string | null; minutes: number | null; topic: string | null };
+
+export type Notification = { id: number; kind: string; title: string; link: string | null; readAt: string | null; createdAt: string };

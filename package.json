@@ -1,6 +1,6 @@
 {
   "name": "blicktech-intern-handbook",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "private": true,
   "type": "module",
   "scripts": {
@@ -21,6 +21,8 @@
     "fumadocs-ui": "npm:@fumadocs/base-ui@^16.17.7",
     "hono": "^4.13.13",
     "lucide-react": "^1.61.0",
+    "micromark": "^4.0.3",
+    "micromark-extension-gfm": "^3.0.0",
     "next": "^16.4.2",
     "pg": "^8.23.1",
     "react": "^19.3.1",

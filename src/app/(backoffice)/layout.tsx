@@ -2,6 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { AccountMenu } from "@/components/account-menu";
 import { BrandMark } from "@/components/brand-mark";
+import { NotificationBell } from "@/components/notification-bell";
 import { TODAY_URL } from "@/lib/nav-tree";
 
 // หลังบ้านพี่เลี้ยง (/dev/...) แยก layout จากหน้าคู่มือ: ไม่มีสารบัญบทเรียน มีแค่แถบบนกับพื้นที่ทำงาน
@@ -21,6 +22,7 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
             <ArrowLeft className="size-4" />
             <span className="max-sm:hidden">กลับไปหน้าคู่มือ</span>
           </Link>
+          <NotificationBell />
           <AccountMenu />
         </div>
       </header>

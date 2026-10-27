@@ -16,6 +16,12 @@ const KNOWN: Record<string, [ContentfulStatusCode, string]> = {
   INVALID_STATUS: [400, "สถานะนี้ใช้กับเรื่องประเภทนี้ไม่ได้"],
   NOTE_REQUIRED: [400, "ถ้าไม่ทำ ให้เขียนเหตุผลบอกน้องด้วย"],
   UNKNOWN_CHAPTER: [400, "ไม่มีบทนี้ในแผนการเรียน"],
+  CARD_NOT_FOUND: [404, "ไม่พบการ์ดนี้"],
+  SLUG_TAKEN: [409, "มีการ์ดที่ใช้ชื่อใน URL นี้แล้ว ลองชื่ออื่น"],
+  UNKNOWN_NEED: [400, "การ์ด \"อ่านก่อน\" บางใบไม่มีในระบบ หรือชี้กลับมาที่การ์ดนี้เอง"],
+  NOTE_NOT_FOUND: [404, "ไม่พบโน้ตนี้"],
+  ANNOUNCEMENT_NOT_FOUND: [404, "ไม่พบประกาศนี้"],
+  INVALID_PERIOD: [400, "เวลาจบต้องอยู่หลังเวลาเริ่ม"],
 };
 
 export function errorHandler(err: Error, c: Context) {

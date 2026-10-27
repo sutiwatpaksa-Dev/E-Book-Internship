@@ -9,7 +9,18 @@ export type AuditAction =
   | "user.unlock"
   | "user.role"
   | "file.requirement"
-  | "thread.status";
+  | "thread.status"
+  | "card.create"
+  | "card.update"
+  | "card.publish"
+  | "card.unpublish"
+  | "card.delete"
+  | "card.override"
+  | "note.create"
+  | "note.update"
+  | "note.delete"
+  | "announcement.create"
+  | "announcement.end";
 
 const LIMIT = 200;
 

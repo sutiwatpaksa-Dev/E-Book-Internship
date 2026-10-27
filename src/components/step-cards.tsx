@@ -3,13 +3,20 @@
 import { Check } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { cardUrl, cardsOf, legacyOf, stepBySlug, type StepSlug } from "@/data/learn";
+import { cardUrl, cardsOf, legacyOf, mentorCardUrl, stepBySlug, type StepSlug } from "@/data/learn";
+import { useCatalog } from "@/hooks/use-catalog";
 import { useProgress } from "@/hooks/use-progress";
+import { useSession } from "@/hooks/use-session";
+import { MentorBadge } from "./card-library";
 
 // การ์ดในหน้าขั้น · ขั้นที่มีหลายช่วง (Coding: DB → Backend → API → Frontend) แยกเป็นแท็บ เห็นทีละช่วง ไม่ยาวจนหลง
 // เปิดมาที่ช่วงที่ยังมีการ์ดค้าง · บทเดิมที่ยังไม่ได้แปลงเป็นการ์ดต่อท้ายพร้อมป้าย "บทเดิม"
+// การ์ดที่พี่เลี้ยงซ่อนไม่แสดง · การ์ดของพี่เลี้ยงในขั้นนี้แยกเป็นกลุ่มท้ายสุด (ไม่มีช่วง เพราะเขียนเพิ่มทีหลัง)
 export function StepCards({ step }: { step: StepSlug }) {
   const { done } = useProgress();
+  const { view, mentorCards } = useCatalog();
+  const { role } = useSession();
+  const mine = mentorCards.filter((m) => m.step === step);
   const parts = stepBySlug(step).parts;
   const firstOpen = parts?.find((p) => cardsOf(step).some((c) => c.part === p && !done.has(cardUrl(c.slug)))) ?? parts?.[0];
   const [picked, setPicked] = useState<string | null>(null);
@@ -44,13 +51,52 @@ export function StepCards({ step }: { step: StepSlug }) {
           })}
         </div>
       )}
-      <Part step={step} part={part} done={done} />
+      <Part step={step} part={part} done={done} view={view} />
+      {mine.length > 0 && (
+        <section aria-labelledby="mentor-cards" className="flex flex-col gap-2">
+          <h3 id="mentor-cards" className="text-sm font-semibold">
+            การ์ดจากพี่เลี้ยง
+          </h3>
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {mine.map((m) => {
+              const isDone = done.has(mentorCardUrl(m.slug));
+              return (
+                <li key={m.slug}>
+                  <Link href={mentorCardUrl(m.slug)} className="flex h-full min-h-16 items-center gap-3 rounded-xl border border-fd-border bg-fd-card px-4 py-3 hover:border-fd-primary/50 hover:bg-fd-accent">
+                    <DoneDot done={isDone} />
+                    <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                      <span className="font-semibold">{m.title}</span>
+                      <span className="flex flex-wrap items-center gap-1.5 text-xs text-fd-muted-foreground tabular-nums">
+                        <MentorBadge />
+                        {role ? `${m.minutes} นาที` : `ต้อง login · ${m.minutes} นาที`}
+                      </span>
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }
 
-function Part({ step, part, done }: { step: StepSlug; part: string | undefined; done: ReadonlySet<string> }) {
-  const list = cardsOf(step).filter((c) => c.part === part);
+function DoneDot({ done }: { done: boolean }) {
+  return (
+    <span className={`flex size-6 shrink-0 items-center justify-center rounded-full border-2 ${done ? "border-fd-primary bg-fd-primary text-fd-primary-foreground" : "border-fd-border"}`}>
+      {done && <Check aria-label="เข้าใจแล้ว" className="size-3.5" strokeWidth={3} />}
+    </span>
+  );
+}
+
+type View = ReturnType<typeof useCatalog>["view"];
+
+function Part({ step, part, done, view }: { step: StepSlug; part: string | undefined; done: ReadonlySet<string>; view: View }) {
+  const list = cardsOf(step).flatMap((c) => {
+    const v = c.part === part ? view(c) : null;
+    return v ? [v] : [];
+  });
   const old = legacyOf(step).filter((l) => l.part === part);
   return (
     <div id={part ? `part-${part}` : undefined} role={part ? "tabpanel" : undefined} className="flex flex-col gap-2">
@@ -61,11 +107,7 @@ function Part({ step, part, done }: { step: StepSlug; part: string | undefined; 
           return (
             <li key={c.slug}>
               <Link href={cardUrl(c.slug)} className="flex h-full min-h-16 items-center gap-3 rounded-xl border border-fd-border bg-fd-card px-4 py-3 hover:border-fd-primary/50 hover:bg-fd-accent">
-                <span
-                  className={`flex size-6 shrink-0 items-center justify-center rounded-full border-2 ${isDone ? "border-fd-primary bg-fd-primary text-fd-primary-foreground" : "border-fd-border"}`}
-                >
-                  {isDone && <Check aria-label="เข้าใจแล้ว" className="size-3.5" strokeWidth={3} />}
-                </span>
+                <DoneDot done={isDone} />
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="font-semibold">{c.title}</span>
                   <span className="text-xs text-fd-muted-foreground tabular-nums">

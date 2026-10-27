@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { requireRole, type AuthVars } from "../middleware/require-role";
+import { adminContentRoutes } from "./admin-content.routes";
 import { auditService } from "../services/audit.service";
 import { fileService } from "../services/file.service";
 import { progressService } from "../services/progress.service";
@@ -10,6 +11,7 @@ import { createManySchema, createUserSchema, updateUserSchema } from "../validat
 
 export const adminRoutes = new Hono<AuthVars>();
 adminRoutes.use("*", requireRole("dev"));
+adminRoutes.route("/content", adminContentRoutes);
 
 adminRoutes.get("/users", async (c) => c.json(await userService.list()));
 

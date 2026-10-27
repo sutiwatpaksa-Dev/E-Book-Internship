@@ -119,3 +119,102 @@ export const auditLogs = pgTable(
   },
   (t) => [index("audit_logs_created_idx").on(t.createdAt)],
 );
+
+// ---- เนื้อหาที่พี่เลี้ยงเพิ่มเองจากหลังบ้าน (v2.2) ----
+// การ์ดในโค้ด (src/data/learn.ts + MDX) เป็นของถาวรที่ผ่านการตรวจแล้ว ส่วนนี้เป็นของที่พี่เลี้ยงเติมได้ทันทีโดยไม่ต้อง deploy
+// เก็บเป็น Markdown ไม่รับ HTML (หน้าเว็บแปลงด้วย micromark ซึ่งไม่ยอมให้ HTML ดิบผ่าน)
+
+export const CARD_STATUSES = ["draft", "published"] as const;
+export type CardStatus = (typeof CARD_STATUSES)[number];
+
+export const mentorCards = pgTable(
+  "mentor_cards",
+  {
+    id: serial("id").primaryKey(),
+    // ส่วนท้าย URL: /learn/cards/m/<slug> · แยก path จากการ์ดในโค้ด ชื่อจึงชนกันไม่ได้
+    slug: text("slug").notNull().unique(),
+    title: text("title").notNull(),
+    // ขั้นและหมวดเก็บเป็นข้อความ ตรวจกับรายการใน src/data/learn.ts ตอนรับข้อมูล (Zod) เพิ่มขั้นใหม่จะไม่ต้องแก้ตาราง
+    step: text("step").notNull(),
+    topic: text("topic").notNull(),
+    minutes: integer("minutes").notNull().default(10),
+    // การ์ดที่ควรอ่านก่อน: slug การ์ดในโค้ด หรือ "m/<slug>" ของการ์ดพี่เลี้ยง
+    needs: text("needs").array().notNull().default([]),
+    body: text("body").notNull().default(""),
+    status: text("status").$type<CardStatus>().notNull().default("draft"),
+    authorId: integer("author_id")
+      .notNull()
+      .references(() => users.id),
+    updatedBy: integer("updated_by").references(() => users.id),
+    // เผยแพร่ครั้งแรกเมื่อไร (ใช้แจ้งเตือนน้องครั้งเดียว ไม่เด้งซ้ำทุกครั้งที่แก้)
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("mentor_cards_status_idx").on(t.status)],
+);
+
+// โน้ตของพี่เลี้ยงท้ายหน้าที่มีอยู่แล้ว (การ์ดหรือบทเดิม) โดยไม่แก้ไฟล์ MDX
+export const pageNotes = pgTable(
+  "page_notes",
+  {
+    id: serial("id").primaryKey(),
+    pageUrl: text("page_url").notNull(),
+    body: text("body").notNull(),
+    visible: boolean("visible").notNull().default(true),
+    authorId: integer("author_id")
+      .notNull()
+      .references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("page_notes_page_idx").on(t.pageUrl)],
+);
+
+export const AUDIENCES = ["intern", "dev", "all"] as const;
+export type Audience = (typeof AUDIENCES)[number];
+
+// ประกาศบนหน้าวันนี้ เช่น "Review รอบ 2 วันศุกร์ 14:00" · หมดเวลาแล้วหายเอง ไม่ต้องตามลบ
+export const announcements = pgTable("announcements", {
+  id: serial("id").primaryKey(),
+  body: text("body").notNull(),
+  audience: text("audience").$type<Audience>().notNull().default("intern"),
+  startsAt: timestamp("starts_at", { withTimezone: true }).notNull().defaultNow(),
+  // ว่าง = แสดงจนกว่าพี่เลี้ยงจะกดปิด (ปิด = ตั้งเวลาจบเป็นตอนนี้ ประวัติยังอยู่)
+  endsAt: timestamp("ends_at", { withTimezone: true }),
+  authorId: integer("author_id")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ปรับการ์ดในโค้ดโดยไม่แก้ไฟล์: ซ่อนจากรายการ หรือเปลี่ยนชื่อ/เวลาอ่าน/หมวดที่แสดง · ไม่มีแถว = ใช้ค่าในโค้ด
+export const cardOverrides = pgTable("card_overrides", {
+  slug: text("slug").primaryKey(),
+  hidden: boolean("hidden").notNull().default(false),
+  title: text("title"),
+  minutes: integer("minutes"),
+  topic: text("topic"),
+  updatedBy: integer("updated_by")
+    .notNull()
+    .references(() => users.id),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// แจ้งเตือนรายคน: สร้างตอนเกิดเรื่อง (พี่เลี้ยงตอบ, มีคำถามใหม่ ...) คนละแถวต่อผู้รับ อ่านแล้วจดเวลา
+// เก็บข้อความสำเร็จรูปไว้เลย (ไม่ join กลับไปหาต้นเรื่อง) ต้นเรื่องถูกลบภายหลังก็ยังอ่านรู้เรื่อง
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(),
+    title: text("title").notNull(),
+    link: text("link"),
+    readAt: timestamp("read_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("notifications_user_idx").on(t.userId, t.readAt)],
+);

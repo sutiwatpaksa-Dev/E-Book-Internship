@@ -1,6 +1,8 @@
 import { QUESTION_STATUSES, REQUEST_STATUSES, type Role, type ThreadKind, type ThreadStatus } from "../db/schema";
 import { threadRepository } from "../repositories/thread.repository";
+import { userRepository } from "../repositories/user.repository";
 import { auditService } from "./audit.service";
+import { notificationService } from "./notification.service";
 
 // กันเปิดเรื่องรัวๆ: ค้างได้ไม่เกินเท่านี้ (เรื่องที่ปิด/ทำเสร็จ/ไม่ทำ ไม่นับ)
 const MAX_OPEN_PER_USER = 10;
@@ -17,6 +19,11 @@ const STATUS_LABEL: Record<ThreadStatus, string> = {
 };
 
 const allowedStatuses = (kind: ThreadKind): readonly ThreadStatus[] => (kind === "question" ? QUESTION_STATUSES : REQUEST_STATUSES);
+
+// กดแจ้งเตือนแล้วเปิดเรื่องนั้นเลย: พี่เลี้ยงเปิดในหลังบ้าน น้องเปิดในหน้าคุยกับพี่เลี้ยง
+const devLink = (id: number) => `/dev/admin?tab=questions&t=${id}`;
+const internLink = (id: number) => `/questions?t=${id}`;
+const nameOf = async (userId: number) => (await userRepository.findById(userId))?.username ?? "น้อง";
 
 // หาเรื่อง + ตรวจว่าเป็นของคนนี้ ไม่ใช่ของเขาตอบ "ไม่พบ" (ไม่บอกว่ามีเรื่องเลขนี้อยู่)
 async function ownedThread(ownerId: number, id: number) {
@@ -49,6 +56,8 @@ export const threadService = {
       { createdBy: userId, kind: input.kind, subject: input.subject, pageUrl: input.pageUrl ?? null, status: input.kind === "question" ? "waiting" : "new" },
       input.body,
     );
+    const what = input.kind === "question" ? "ถามใหม่" : "ขอเนื้อหา";
+    await notificationService.toRoles(["dev"], { kind: `new_${input.kind}`, title: `${await nameOf(userId)} ${what}: ${input.subject}`, link: devLink(id) });
     return { id };
   },
 
@@ -61,6 +70,7 @@ export const threadService = {
   async replyMine(userId: number, id: number, body: string) {
     const t = await ownedThread(userId, id);
     await threadRepository.addMessages(id, userId, "intern", [{ body }], t.kind === "question" ? "waiting" : undefined);
+    await notificationService.toRoles(["dev"], { kind: "intern_reply", title: `${await nameOf(userId)} ตอบกลับ: ${t.subject}`, link: devLink(id) });
   },
 
   // ---- ฝั่งพี่เลี้ยง ----
@@ -75,6 +85,7 @@ export const threadService = {
   async replyAsDev(devId: number, id: number, body: string) {
     const t = await anyThread(id);
     await threadRepository.addMessages(id, devId, "dev", [{ body }], t.kind === "question" ? "answered" : undefined);
+    await notificationService.toUser(t.createdBy, { kind: "dev_reply", title: `พี่เลี้ยงตอบแล้ว: ${t.subject}`, link: internLink(id) });
   },
 
   // เปลี่ยนสถานะ = บันทึกเป็นบรรทัดของระบบในแชทด้วย น้องจึงเห็นว่าเปลี่ยนเมื่อไรและได้ป้าย "ใหม่"
@@ -86,5 +97,6 @@ export const threadService = {
     const items = [{ body: `เปลี่ยนสถานะเป็น "${STATUS_LABEL[status]}"`, isSystem: true }, ...(note ? [{ body: note }] : [])];
     await threadRepository.addMessages(id, devId, "dev", items, status);
     await auditService.log(devId, "thread.status", `#${id} ${t.subject}`, STATUS_LABEL[status]);
+    await notificationService.toUser(t.createdBy, { kind: "status", title: `"${t.subject}" เปลี่ยนเป็น ${STATUS_LABEL[status]}`, link: internLink(id) });
   },
 };

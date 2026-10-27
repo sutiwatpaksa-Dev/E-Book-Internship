@@ -122,6 +122,8 @@ export const legacy: LegacyLink[] = [
 
 export const stepUrl = (s: StepSlug) => `${LEARN_BASE}/${s}`;
 export const cardUrl = (slug: string) => `${LEARN_BASE}/cards/${slug}`;
+// การ์ดที่พี่เลี้ยงเขียนจากหลังบ้าน (เก็บใน DB ไม่มีไฟล์ MDX) · ตรงกับ MENTOR_CARD_BASE ใน server/services/mentor-card.service.ts
+export const mentorCardUrl = (slug: string) => `${LEARN_BASE}/cards/m/${slug}`;
 
 export const stepBySlug = (s: StepSlug) => steps.find((x) => x.slug === s)!;
 export const cardByUrl = (url: string) => cards.find((c) => cardUrl(c.slug) === url) ?? null;

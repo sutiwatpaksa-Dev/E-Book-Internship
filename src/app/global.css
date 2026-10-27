@@ -21,6 +21,9 @@
      (ถ้าใช้ fd-primary ตรงๆ โหมดมืดจะเป็นฟ้าอ่อน + ตัวหนังสือดำ ซึ่งทับรูปมืดแล้วอ่านไม่ออก) */
   --login-panel-bg: #0b3c91;
   --login-panel-fg: #ffffff;
+  /* ป้าย "จากพี่เลี้ยง" บนการ์ดที่เขียนจากหลังบ้าน (contrast 7:1 ทั้งสองโหมด) */
+  --mentor-badge-bg: #fef3c7;
+  --mentor-badge-fg: #92400e;
 
   /* ความสูง headbar (site-header.tsx) มือถือรวมแถบ "อยู่ด่านไหน" ด้วย
      ส่งต่อให้ Fumadocs ผ่าน --fd-banner-height: sidebar และสารบัญขวาจะติดอยู่ใต้ headbar พอดี */
@@ -46,6 +49,8 @@
   --rm-line: #4c8dff;
   --rm-done: #3fb950;
   --login-panel-bg: #0f1b33;
+  --mentor-badge-bg: #3b2a0a;
+  --mentor-badge-fg: #fcd34d;
 }
 
 /* ภาษาไทยอ่านสบายขึ้นเมื่อบรรทัดห่างกว่าค่าเริ่มต้น */

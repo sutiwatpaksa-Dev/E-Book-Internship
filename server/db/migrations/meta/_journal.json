@@ -43,6 +43,13 @@
       "when": 1792729562665,
       "tag": "0005_audit-logs",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793077329592,
+      "tag": "0006_backoffice-content",
+      "breakpoints": true
     }
   ]
 }

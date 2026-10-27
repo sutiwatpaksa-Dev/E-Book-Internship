@@ -7,6 +7,7 @@ import { authApi } from "@/api/auth.api";
 import { cardUrl, cards, cardsOf, nextUp, steps, stepUrl, type LearnCard, type LearnStep } from "@/data/learn";
 import { useProgress } from "@/hooks/use-progress";
 import { useSession } from "@/hooks/use-session";
+import { AnnouncementBanner } from "./announcement-banner";
 
 // หน้าแรกหลัง login (/today): น้องต้องรู้ภายใน 5 วินาทีว่าวันนี้ทำอะไรต่อ
 // จัดเป็น bento: กล่องใหญ่ = สิ่งเดียวที่ควรทำต่อ · กล่องเล็กรอบๆ = ภาพรวม, โจทย์ของขั้น, ทางออกตอนติด
@@ -25,6 +26,8 @@ export function Today() {
         <h1 className="text-2xl font-bold sm:text-3xl">{username ? `สวัสดี ${username}` : "สวัสดี"} วันนี้ทำต่อจากตรงนี้</h1>
         <p className="text-fd-muted-foreground">ทำซอฟต์แวร์ 1 ระบบให้ครบ 7 ขั้น ความรู้ที่ต้องใช้อยู่ในการ์ดใบละไม่เกิน 10 นาที</p>
       </header>
+
+      <AnnouncementBanner />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         <ContinueBox up={up} done={done} />

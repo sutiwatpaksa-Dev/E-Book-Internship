@@ -9,6 +9,7 @@ import { stepBySlug, stepOfUrl } from "@/data/learn";
 import { useNavDrawer } from "@/hooks/use-nav-drawer";
 import { sectionOf, stageOf, TODAY_URL } from "@/lib/nav-tree";
 import { AccountMenu } from "./account-menu";
+import { NotificationBell } from "./notification-bell";
 import { BrandMark } from "./brand-mark";
 import { useSite } from "./nav-provider";
 import { SectionLinks } from "./section-links";
@@ -49,6 +50,7 @@ export function SiteHeader({ menu = true }: { menu?: boolean }) {
         <div className="ms-auto flex items-center gap-1.5 sm:gap-2">
           <SearchButton />
           <ThemeSwitch className="max-md:hidden" />
+          <NotificationBell />
           <AccountMenu />
         </div>
       </div>

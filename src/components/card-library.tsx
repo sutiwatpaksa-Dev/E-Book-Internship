@@ -1,11 +1,27 @@
 "use client";
 
 import { useSearchContext } from "fumadocs-ui/contexts/search";
-import { Check, ClipboardList, Database, LayoutTemplate, Monitor, Plug, Search, ShieldCheck, TestTube, type LucideIcon } from "lucide-react";
+import { Check, ClipboardList, Database, LayoutTemplate, Lock, Monitor, Plug, Search, ShieldCheck, TestTube, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
-import { cardUrl, cards, steps, topics, type LearnCard, type StepSlug, type TopicSlug } from "@/data/learn";
+import { cardUrl, cards, mentorCardUrl, steps, topics, type LearnCard, type StepSlug, type TopicSlug } from "@/data/learn";
+import { useCatalog } from "@/hooks/use-catalog";
 import { useProgress } from "@/hooks/use-progress";
+import { useSession } from "@/hooks/use-session";
+
+// การ์ด 1 ใบในคลัง: การ์ดในโค้ด (ปรับตามหลังบ้านแล้ว) หรือการ์ดของพี่เลี้ยง (มี author)
+type Item = Pick<LearnCard, "slug" | "title" | "step" | "topic" | "minutes" | "part" | "alsoIn"> & { href: string; author?: string };
+
+// รวมการ์ดสองแหล่งเป็นรายการเดียว: ใบที่พี่เลี้ยงซ่อนไม่อยู่ในรายการ · การ์ดของพี่เลี้ยงต่อท้ายในหมวดเดียวกัน
+function useLibraryItems(): Item[] {
+  const { view, mentorCards } = useCatalog();
+  const builtIn = cards.flatMap((c) => {
+    const v = view(c);
+    return v ? [{ ...v, href: cardUrl(v.slug) }] : [];
+  });
+  const mentor = mentorCards.map((m) => ({ slug: `m/${m.slug}`, title: m.title, step: m.step as StepSlug, topic: m.topic as TopicSlug, minutes: m.minutes, href: mentorCardUrl(m.slug), author: m.author }));
+  return [...builtIn, ...mentor];
+}
 
 const topicIcon: Record<TopicSlug, LucideIcon> = { plan: ClipboardList, ux: LayoutTemplate, db: Database, api: Plug, auth: ShieldCheck, web: Monitor, test: TestTube };
 
@@ -14,12 +30,14 @@ const topicIcon: Record<TopicSlug, LucideIcon> = { plan: ClipboardList, ux: Layo
 // หาในเนื้อหาทั้งเว็บ (เช่นวาง error) ใช้ช่องค้นหาของ Fumadocs · บทเรียนฉบับเต็มแบบเดิมอยู่ใน footer (footer-chapters.tsx)
 export function CardLibrary() {
   const { done } = useProgress();
+  const { role } = useSession();
+  const all = useLibraryItems();
   const [query, setQuery] = useState("");
   const [step, setStep] = useState<StepSlug | "all">("all");
   const [topic, setTopic] = useState<TopicSlug | "all">("all");
   const q = query.trim().toLowerCase();
   // ตัวเลขบนปุ่มหมวด นับจากชื่อและขั้นที่เลือกอยู่ กดแล้วจะได้จำนวนนั้นพอดี
-  const inStep = cards.filter((c) => (step === "all" || c.step === step || c.alsoIn?.includes(step)) && (!q || c.title.toLowerCase().includes(q)));
+  const inStep = all.filter((c) => (step === "all" || c.step === step || c.alsoIn?.includes(step)) && (!q || c.title.toLowerCase().includes(q)));
   const list = inStep.filter((c) => topic === "all" || c.topic === topic);
   const groups = topics.map((t) => ({ ...t, cards: list.filter((c) => c.topic === t.slug) })).filter((g) => g.cards.length > 0);
 
@@ -84,7 +102,7 @@ export function CardLibrary() {
               </h2>
               <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {g.cards.map((c) => (
-                  <CardTile key={c.slug} card={c} done={done.has(cardUrl(c.slug))} />
+                  <CardTile key={c.slug} card={c} done={done.has(c.href)} locked={!!c.author && !role} />
                 ))}
               </ul>
             </section>
@@ -119,15 +137,18 @@ function Chip({ on, dim = false, onClick, children }: { on: boolean; dim?: boole
   );
 }
 
-function CardTile({ card: c, done }: { card: LearnCard; done: boolean }) {
+function CardTile({ card: c, done, locked }: { card: Item; done: boolean; locked: boolean }) {
   const s = steps.find((x) => x.slug === c.step)!;
   return (
     <li>
-      <Link href={cardUrl(c.slug)} className="flex h-full min-h-32 flex-col gap-1.5 rounded-xl border border-fd-border bg-fd-card p-4 hover:border-fd-primary/50 hover:bg-fd-accent">
-        <span className="flex items-center justify-between gap-2 text-xs">
-          <span className="rounded-full bg-fd-primary/10 px-2.5 py-0.5 font-semibold text-fd-primary">
-            {s.name}
-            {c.part ? ` › ${c.part}` : ""}
+      <Link href={c.href} className="flex h-full min-h-32 flex-col gap-1.5 rounded-xl border border-fd-border bg-fd-card p-4 hover:border-fd-primary/50 hover:bg-fd-accent">
+        <span className="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <span className="flex flex-wrap gap-1.5">
+            <span className="rounded-full bg-fd-primary/10 px-2.5 py-0.5 font-semibold text-fd-primary">
+              {s.name}
+              {c.part ? ` › ${c.part}` : ""}
+            </span>
+            {c.author && <MentorBadge />}
           </span>
           {done && (
             <span className="inline-flex items-center gap-1 font-semibold text-fd-primary">
@@ -137,10 +158,19 @@ function CardTile({ card: c, done }: { card: LearnCard; done: boolean }) {
           )}
         </span>
         <span className="text-lg leading-snug font-bold">{c.title}</span>
-        <span className="mt-auto text-xs text-fd-muted-foreground tabular-nums">{c.minutes} นาที</span>
+        <span className="mt-auto inline-flex items-center gap-1 text-xs text-fd-muted-foreground tabular-nums">
+          {/* การ์ดของพี่เลี้ยงอาจพูดถึงงานภายใน อ่านได้เมื่อ login (ชื่อการ์ดยังเห็น จะได้รู้ว่ามีเรื่องนี้) */}
+          {locked && <Lock className="size-3.5" aria-hidden />}
+          {locked ? `ต้อง login · ${c.minutes} นาที` : `${c.minutes} นาที`}
+        </span>
       </Link>
     </li>
   );
+}
+
+// ป้ายบอกว่าการ์ดนี้พี่เลี้ยงเขียนจากหลังบ้าน (ไม่ใช่เนื้อหาหลักของคู่มือ) ใช้ทั้งในคลัง หน้าขั้น และหัวการ์ด
+export function MentorBadge({ author }: { author?: string }) {
+  return <span className="rounded-full bg-(--mentor-badge-bg) px-2.5 py-0.5 font-semibold text-(--mentor-badge-fg)">จากพี่เลี้ยง{author ? ` · ${author}` : ""}</span>;
 }
 
 function FullSearchHint() {

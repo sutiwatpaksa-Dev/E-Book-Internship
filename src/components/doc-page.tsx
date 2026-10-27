@@ -8,6 +8,7 @@ import { CardDone } from "./card-done";
 import { CardHeader, CardPager } from "./card-header";
 import { MarkDoneButton } from "./mark-done-button";
 import { getMDXComponents } from "./mdx";
+import { PageNotes } from "./page-notes";
 import { StepHeader, StepPager } from "./step-frame";
 
 // วางหน้าเนื้อหาหนึ่งหน้าจากไฟล์ .mdx (ใช้ทั้งหน้าทั่วไปและหน้าที่ล็อก)
@@ -30,6 +31,7 @@ export function DocPage({ slugs }: { slugs: string[] | undefined }) {
       {step && <StepHeader step={step} />}
       <DocsBody>
         <MDX components={getMDXComponents()} />
+        {page.url !== "/" && <PageNotes pageUrl={page.url} />}
         {card && <CardDone link={page.url} />}
         {card && <CardPager card={card} />}
         {step && <StepPager step={step} />}

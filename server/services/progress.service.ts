@@ -1,22 +1,27 @@
 import { learnLinks } from "../../src/data/learn";
 import { extraLinks, requiredLinks } from "../../src/data/roadmap";
 import { progressRepository } from "../repositories/progress.repository";
+import { mentorCardService } from "./mentor-card.service";
 
 // รับเฉพาะบทที่มีจริงในแผนที่ (และการ์ดของโครงใหม่ 7 ขั้น) กันคนยิง API ใส่ข้อความอะไรก็ได้ลงตาราง
 const KNOWN = new Set([...requiredLinks, ...extraLinks, ...learnLinks]);
+// การ์ดของพี่เลี้ยงอยู่ใน DB ไม่ได้อยู่ในรายการตายตัวข้างบน จึงถาม DB ว่าเผยแพร่อยู่จริงไหม
+const isKnown = async (link: string) => KNOWN.has(link) || (await mentorCardService.isPublishedLink(link));
 
 export const progressService = {
   listMine: (userId: number) => progressRepository.listByUser(userId),
 
   async set(userId: number, link: string, done: boolean) {
-    if (!KNOWN.has(link)) throw new Error("UNKNOWN_CHAPTER");
+    if (!(await isKnown(link))) throw new Error("UNKNOWN_CHAPTER");
     if (done) await progressRepository.add(userId, [link]);
     else await progressRepository.remove(userId, link);
   },
 
   // ย้ายติ๊กเก่าในเบราว์เซอร์ขึ้นบัญชีตอน login ครั้งแรก · บทที่ไม่รู้จัก (เช่นบทที่เลิกใช้แล้ว) ทิ้งเงียบๆ
   async importLocal(userId: number, links: string[]) {
-    await progressRepository.add(userId, [...new Set(links)].filter((l) => KNOWN.has(l)));
+    const unique = [...new Set(links)];
+    const ok = await Promise.all(unique.map(isKnown));
+    await progressRepository.add(userId, unique.filter((_, i) => ok[i]));
     return progressRepository.listByUser(userId);
   },
 
