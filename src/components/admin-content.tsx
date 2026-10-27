@@ -9,57 +9,14 @@ import type { MentorCardInput, MentorCardSummary, PageNote } from "@/types";
 import { Button } from "./button";
 import { ConfirmBox } from "./confirm-box";
 import { EmptyState } from "./empty-state";
-import { ErrorText } from "./error-text";
 import { Field, Input, inputClass } from "./field";
 import { MarkdownBody } from "./markdown-body";
 
-// แท็บ "เนื้อหา" ของหลังบ้าน: พี่เลี้ยงเพิ่มการ์ดเอง, เขียนโน้ตท้ายหน้าเดิม, และซ่อน/แก้ชื่อการ์ดในระบบ
+// เมนูกลุ่ม "เนื้อหา" ของหลังบ้าน: พี่เลี้ยงเพิ่มการ์ดเอง, เขียนโน้ตท้ายหน้าเดิม, และซ่อน/แก้ชื่อการ์ดในระบบ
+// แต่ละเรื่องเป็นเมนูของตัวเองใน admin-panel.tsx (เดิมเป็นแท็บย่อยในแท็บเดียว ต้องกดสองชั้น)
 // ทั้งหมดเก็บใน DB ขึ้นเว็บทันทีโดยไม่ต้อง deploy · ไฟล์ MDX ในโค้ดไม่ถูกแตะ
-type Section = "cards" | "notes" | "builtin";
-const SECTIONS: { id: Section; label: string }[] = [
-  { id: "cards", label: "การ์ดของพี่เลี้ยง" },
-  { id: "notes", label: "โน้ตท้ายหน้า" },
-  { id: "builtin", label: "การ์ดในระบบ" },
-];
-
 const stepName = (slug: string) => steps.find((s) => s.slug === slug)?.name ?? slug;
 const topicName = (slug: string) => topics.find((t) => t.slug === slug)?.name ?? slug;
-
-export function AdminContent({ content, initialNote }: { content: ContentAdminState; initialNote?: string }) {
-  // เปิดจากปุ่ม "เพิ่มโน้ตหน้านี้" ท้ายบทเรียน (?note=/learn/cards/x) ให้เข้าโน้ตพร้อมกรอกหน้าให้แล้ว
-  const [section, setSection] = useState<Section>(initialNote ? "notes" : "cards");
-  return (
-    <div className="flex flex-col gap-4">
-      <div role="tablist" aria-label="ประเภทเนื้อหา" className="flex w-fit max-w-full gap-1 overflow-x-auto rounded-xl bg-fd-muted p-1">
-        {SECTIONS.map((s) => (
-          <button
-            key={s.id}
-            type="button"
-            role="tab"
-            aria-selected={s.id === section}
-            onClick={() => {
-              content.clearError();
-              setSection(s.id);
-            }}
-            className={`flex min-h-10 shrink-0 items-center rounded-lg px-4 text-sm font-semibold ${s.id === section ? "bg-fd-background text-fd-primary shadow-sm" : "text-fd-muted-foreground hover:text-fd-foreground"}`}
-          >
-            {s.label}
-          </button>
-        ))}
-      </div>
-      {content.error && <ErrorText>{content.error}</ErrorText>}
-      {content.loading ? (
-        <p className="text-sm text-fd-muted-foreground">กำลังโหลด…</p>
-      ) : section === "cards" ? (
-        <MentorCards content={content} />
-      ) : section === "notes" ? (
-        <Notes content={content} initialPage={initialNote} />
-      ) : (
-        <BuiltInCards content={content} />
-      )}
-    </div>
-  );
-}
 
 // ---------------- การ์ดของพี่เลี้ยง ----------------
 
@@ -99,13 +56,18 @@ const TEMPLATE = `## ความหมาย
 
 const EMPTY_CARD: MentorCardInput = { slug: "", title: "", step: "coding", topic: "plan", minutes: 10, needs: [], body: TEMPLATE };
 
-function MentorCards({ content }: { content: ContentAdminState }) {
+export function AdminMentorCards({ content }: { content: ContentAdminState }) {
   // null = ดูรายการ · { id: null } = การ์ดใหม่ · { id } = แก้การ์ดเดิม
   const [editing, setEditing] = useState<{ id: number | null; card: MentorCardInput; status?: MentorCardSummary } | null>(null);
 
   async function open(c: MentorCardSummary) {
     const full = await content.loadCard(c.slug);
-    if (full) setEditing({ id: c.id, card: { slug: full.slug, title: full.title, step: full.step, topic: full.topic, minutes: full.minutes, needs: full.needs, body: full.body }, status: c });
+    if (full)
+      setEditing({
+        id: c.id,
+        card: { slug: full.slug, title: full.title, step: full.step, topic: full.topic, minutes: full.minutes, needs: full.needs, body: full.body },
+        status: c,
+      });
   }
 
   if (editing) return <CardEditor key={editing.id ?? "new"} content={content} {...editing} onClose={() => setEditing(null)} />;
@@ -175,7 +137,19 @@ function CardStatusBadge({ status }: { status: MentorCardSummary["status"] }) {
 
 type View = "both" | "edit" | "preview";
 
-function CardEditor({ content, id, card, status, onClose }: { content: ContentAdminState; id: number | null; card: MentorCardInput; status?: MentorCardSummary; onClose: () => void }) {
+function CardEditor({
+  content,
+  id,
+  card,
+  status,
+  onClose,
+}: {
+  content: ContentAdminState;
+  id: number | null;
+  card: MentorCardInput;
+  status?: MentorCardSummary;
+  onClose: () => void;
+}) {
   const [form, setForm] = useState(card);
   const [view, setView] = useState<View>("both");
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -296,7 +270,12 @@ function CardEditor({ content, id, card, status, onClose }: { content: ContentAd
                 <button
                   type="button"
                   aria-label={`เอา ${labelOf(n)} ออก`}
-                  onClick={() => set("needs", form.needs.filter((x) => x !== n))}
+                  onClick={() =>
+                    set(
+                      "needs",
+                      form.needs.filter((x) => x !== n),
+                    )
+                  }
                   className="flex size-7 items-center justify-center rounded-full hover:bg-fd-primary/15"
                 >
                   ×
@@ -372,7 +351,7 @@ function CardEditor({ content, id, card, status, onClose }: { content: ContentAd
 
 // ---------------- โน้ตท้ายหน้า ----------------
 
-function Notes({ content, initialPage }: { content: ContentAdminState; initialPage?: string }) {
+export function AdminNotes({ content, initialPage }: { content: ContentAdminState; initialPage?: string }) {
   const [editing, setEditing] = useState<{ id: number | null; pageUrl: string; body: string; visible: boolean } | null>(
     initialPage ? { id: null, pageUrl: initialPage, body: "", visible: true } : null,
   );
@@ -387,7 +366,8 @@ function Notes({ content, initialPage }: { content: ContentAdminState; initialPa
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-fd-muted-foreground">
-          คำแนะนำของพี่เลี้ยงท้ายการ์ดหรือบทที่มีอยู่แล้ว เช่น &quot;รุ่นนี้ใช้ port 5433&quot; · น้องที่ login เห็นในกล่อง &quot;จากพี่เลี้ยง&quot; · เปิดหน้านั้นแล้วกด &quot;เพิ่มโน้ตหน้านี้&quot; ก็ได้
+          คำแนะนำของพี่เลี้ยงท้ายการ์ดหรือบทที่มีอยู่แล้ว เช่น &quot;รุ่นนี้ใช้ port 5433&quot; · น้องที่ login เห็นในกล่อง &quot;จากพี่เลี้ยง&quot; · เปิดหน้านั้นแล้วกด
+          &quot;เพิ่มโน้ตหน้านี้&quot; ก็ได้
         </p>
         {!editing && (
           <Button onClick={() => setEditing({ id: null, pageUrl: "", body: "", visible: true })} className="min-h-11">
@@ -409,12 +389,7 @@ function Notes({ content, initialPage }: { content: ContentAdminState; initialPa
               />
             </Field>
             <Field label="ข้อความ (Markdown)">
-              <textarea
-                value={editing.body}
-                onChange={(e) => setEditing({ ...editing, body: e.target.value })}
-                maxLength={4000}
-                className={`${inputClass} min-h-40 font-mono`}
-              />
+              <textarea value={editing.body} onChange={(e) => setEditing({ ...editing, body: e.target.value })} maxLength={4000} className={`${inputClass} min-h-40 font-mono`} />
             </Field>
             <label className="flex min-h-11 items-center gap-2 text-sm">
               <input type="checkbox" className="size-5" checked={editing.visible} onChange={(e) => setEditing({ ...editing, visible: e.target.checked })} />
@@ -496,7 +471,7 @@ export function NoteBox({ author, body }: { author: string; body: string }) {
 
 // ---------------- การ์ดในระบบ ----------------
 
-function BuiltInCards({ content }: { content: ContentAdminState }) {
+export function AdminBuiltInCards({ content }: { content: ContentAdminState }) {
   const [editing, setEditing] = useState<string | null>(null);
   const bySlug = new Map(content.overrides.map((o) => [o.slug, o]));
 

@@ -92,7 +92,7 @@ function MentorCardHeader({ card }: { card: MentorCard }) {
         )}
       </nav>
       <h1 className="text-3xl font-bold text-fd-foreground">{card.title}</h1>
-      {card.status === "draft" && <p className="rounded-lg bg-fd-muted px-3 py-2 text-fd-foreground">ร่าง: น้องยังไม่เห็นการ์ดนี้ เผยแพร่ได้ที่หลังบ้าน แท็บเนื้อหา</p>}
+      {card.status === "draft" && <p className="rounded-lg bg-fd-muted px-3 py-2 text-fd-foreground">ร่าง: น้องยังไม่เห็นการ์ดนี้ เผยแพร่ได้ที่หลังบ้าน เมนูการ์ดของพี่เลี้ยง</p>}
       <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
         <MentorBadge author={card.author} />
         <span className="inline-flex items-center gap-1 text-sm">

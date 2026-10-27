@@ -8,7 +8,7 @@ import { useSession } from "@/hooks/use-session";
 import type { PageNote } from "@/types";
 import { NoteBox } from "./admin-content";
 
-// โน้ตจากพี่เลี้ยงท้ายหน้า (เพิ่มจากหลังบ้าน แท็บเนื้อหา) · ต้อง login ถึงเห็น เพราะอาจพูดถึงงานภายใน
+// โน้ตจากพี่เลี้ยงท้ายหน้า (เพิ่มจากหลังบ้าน เมนูโน้ตท้ายหน้า) · ต้อง login ถึงเห็น เพราะอาจพูดถึงงานภายใน
 // พี่เลี้ยงเห็นปุ่ม "เพิ่มโน้ตหน้านี้" ที่พาไปหลังบ้านพร้อมกรอกหน้าให้แล้ว
 export function PageNotes({ pageUrl }: { pageUrl: string }) {
   const { role } = useSession();
@@ -30,7 +30,7 @@ export function PageNotes({ pageUrl }: { pageUrl: string }) {
       ))}
       {role === "dev" && (
         <Link
-          href={`/dev/admin?tab=content&note=${encodeURIComponent(pageUrl)}`}
+          href={`/dev/admin?tab=notes&note=${encodeURIComponent(pageUrl)}`}
           className="inline-flex min-h-10 items-center gap-1.5 self-start text-sm font-medium text-fd-primary hover:underline"
         >
           <NotebookPen className="size-4" /> เพิ่มโน้ตหน้านี้

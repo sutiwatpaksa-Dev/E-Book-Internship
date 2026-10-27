@@ -1,18 +1,26 @@
 "use client";
 
-import { ChevronRight, PartyPopper } from "lucide-react";
+import { ChevronRight, FilePlus2, NotebookPen, PartyPopper } from "lucide-react";
 import { daysSince, isLockedNow, type AdminState } from "@/hooks/use-admin";
+import { mentorCardUrl } from "@/data/learn";
+import type { ContentAdminState } from "@/hooks/use-content-admin";
 import { useUnread } from "@/hooks/use-unread";
 import { summarize } from "@/lib/progress-summary";
 import { timeAgo } from "@/lib/thread-labels";
 import type { AdminNav } from "./admin-panel";
 
 const fmt = (d: string | null) => (d ? new Date(d).toLocaleString("th-TH") : "ยังไม่เคยเข้า");
-const STALE_DAYS = 7;
+// ฝึกงานสั้น หายไป 3 วันก็ตามงานไม่ทันแล้ว (เดิม 7 วัน รู้ตัวช้าไป)
+const STALE_DAYS = 3;
+const HOT_DAYS = 7;
+const DAY = 24 * 60 * 60 * 1000;
 
-// แท็บภาพรวม: บนสุดคือ "งานวันนี้" (สิ่งที่ต้องลงมือ กดแล้วไปที่นั่นเลย) ล่างคือความคืบหน้าของน้องทุกคน
-// ตัวเลขทั้งหมดคำนวณจากข้อมูลจริง (ไม่มีข้อมูลตัวอย่าง)
-export function AdminOverview({ admin, nav }: { admin: AdminState; nav: AdminNav }) {
+// แท็บภาพรวม: ตัวเลข 4 กล่อง (กดแล้วไปที่นั่น) → "ต้องทำวันนี้" → ความคืบหน้าของน้องทุกคน
+// ข้างขวา: หน้าที่ถูกถามบ่อย ถามซ้ำแปลว่าเนื้อหาตรงนั้นยังไม่พอ ปุ่มเพิ่มโน้ต/การ์ดอยู่ตรงนั้นเลย
+// ตัวเลขทั้งหมดคำนวณจากข้อมูลที่โหลดมาแล้ว (ไม่มีข้อมูลตัวอย่าง และไม่ต้องมีตารางใหม่)
+type Props = { admin: AdminState; content: ContentAdminState; nav: AdminNav; titles: Record<string, string> };
+
+export function AdminOverview({ admin, content, nav, titles }: Props) {
   const unread = useUnread();
   const interns = admin.users.filter((u) => u.role === "intern" && !u.disabled);
   const locked = admin.users.filter(isLockedNow);
@@ -22,7 +30,19 @@ export function AdminOverview({ admin, nav }: { admin: AdminState; nav: AdminNav
   const stale = interns.filter((u) => (daysSince(u.lastLoginAt) ?? 0) > STALE_DAYS);
   const toInterns = () => document.getElementById("interns")?.scrollIntoView({ behavior: "smooth" });
   const newRequests = admin.threads.filter((t) => t.status === "new").length;
-  const waiting = admin.threads.filter((t) => t.status === "waiting").length;
+  const waitingList = admin.threads.filter((t) => t.status === "waiting");
+  const waiting = waitingList.length;
+  // เรื่องที่รอนานสุด: lastMessageAt ของเรื่องที่ "รอตอบ" คือตอนที่น้องพิมพ์ล่าสุด
+  const oldest = waitingList.map((t) => t.lastMessageAt).sort()[0];
+  const now = Date.now();
+  const activeAnn = content.announcements.filter((a) => new Date(a.startsAt).getTime() <= now && (!a.endsAt || new Date(a.endsAt).getTime() > now));
+  const soonestEnd = activeAnn
+    .map((a) => a.endsAt)
+    .filter((d): d is string => !!d)
+    .sort()[0];
+  const hot = hotPages(admin.threads, now);
+  // การ์ดของพี่เลี้ยงไม่มีไฟล์ MDX จึงไม่อยู่ใน titles หาชื่อจากรายการการ์ดแทน
+  const titleOf = (url: string) => titles[url] ?? content.cards.find((c) => mentorCardUrl(c.slug) === url)?.title ?? url;
 
   // เรียงตามความเร่ง: คนรอคำตอบอยู่ก่อน แล้วค่อยเรื่องบัญชีและไฟล์
   const todo = [
@@ -35,92 +55,188 @@ export function AdminOverview({ admin, nav }: { admin: AdminState; nav: AdminNav
     { show: !admin.pdf && !admin.loading, text: "ยังไม่มีไฟล์ Requirement PDF ให้น้องเปิด", go: () => nav.goTab("files") },
   ].filter((t) => t.show);
 
+  const kpis = [
+    { n: waiting, label: "คำถามรอตอบ", hint: oldest ? `เก่าสุด ${timeAgo(oldest)}` : "ไม่มีค้าง", urgent: waiting > 0, go: () => nav.goTab("questions") },
+    { n: newRequests, label: "คำขอเนื้อหาใหม่", hint: newRequests ? "ยังไม่รับเรื่อง" : "ไม่มีค้าง", urgent: newRequests > 0, go: () => nav.goTab("requests") },
+    {
+      n: stale.length,
+      label: `น้องไม่ได้เข้า ${STALE_DAYS} วันขึ้นไป`,
+      hint: stale.length
+        ? stale
+            .slice(0, 2)
+            .map((u) => u.username)
+            .join(", ") + (stale.length > 2 ? " …" : "")
+        : "ทุกคนเข้ามาสม่ำเสมอ",
+      urgent: false,
+      go: toInterns,
+    },
+    {
+      n: activeAnn.length,
+      label: "ประกาศที่แสดงอยู่",
+      hint: soonestEnd ? `หายเอง ${new Date(soonestEnd).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" })}` : activeAnn.length ? "แสดงจนกว่าจะปิด" : "ไม่มี",
+      urgent: false,
+      go: () => nav.goTab("announcements"),
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-6">
-      <section aria-labelledby="todo-title" className="flex flex-col gap-2">
-        <h2 id="todo-title" className="text-base font-semibold">
-          งานวันนี้
-        </h2>
-        {admin.loading ? (
-          <p className="text-sm text-fd-muted-foreground">กำลังโหลด…</p>
-        ) : todo.length === 0 ? (
-          <p className="flex items-center gap-2 rounded-xl border border-fd-border bg-fd-card px-4 py-3 text-sm">
-            <PartyPopper className="size-4 text-green-600" /> ไม่มีงานค้าง ทุกเรื่องได้รับการดูแลแล้ว
-          </p>
-        ) : (
-          <ul className="flex flex-col divide-y divide-fd-border overflow-hidden rounded-xl border border-fd-border bg-fd-card">
-            {todo.map((t) => (
-              <li key={t.text}>
-                <button type="button" onClick={t.go} className="flex w-full items-center gap-3 px-4 py-3 text-start text-sm hover:bg-fd-accent">
-                  <span className="size-2 shrink-0 rounded-full bg-orange-500" />
-                  <span className="flex-1">{t.text}</span>
-                  <ChevronRight className="size-4 text-fd-muted-foreground" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {kpis.map((k) => (
+          <button
+            key={k.label}
+            type="button"
+            onClick={k.go}
+            className="flex min-h-24 flex-col items-start gap-0.5 rounded-xl border border-fd-border bg-fd-card px-4 py-3 text-start hover:border-fd-primary/50 hover:bg-fd-accent"
+          >
+            <span className={`text-3xl leading-tight font-bold tabular-nums ${k.urgent ? "text-orange-700 dark:text-orange-400" : ""}`}>{admin.loading ? "–" : k.n}</span>
+            <span className="text-sm font-semibold">{k.label}</span>
+            <span className="line-clamp-1 text-xs text-fd-muted-foreground">{k.hint}</span>
+          </button>
+        ))}
+      </div>
 
-      <section id="interns" aria-labelledby="interns-title" className="flex flex-col gap-2">
-        <h2 id="interns-title" className="text-base font-semibold">
-          น้องแต่ละคน ({interns.length})
-        </h2>
-        <div className="overflow-x-auto rounded-xl border border-fd-border">
-          <table className="w-full min-w-[720px] text-sm">
-            <thead className="bg-fd-muted text-left">
-              <tr>
-                <th className="px-3 py-2">ชื่อผู้ใช้</th>
-                <th className="px-3 py-2">อยู่ที่</th>
-                <th className="px-3 py-2">ผ่านแล้ว</th>
-                <th className="px-3 py-2">ผ่านล่าสุด</th>
-                <th className="px-3 py-2">เข้าล่าสุด</th>
-              </tr>
-            </thead>
-            <tbody>
-              {interns.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-3 py-6 text-center text-fd-muted-foreground">
-                    {admin.loading ? "กำลังโหลด…" : "ยังไม่มีบัญชีน้อง สร้างได้ในแท็บบัญชีผู้ใช้"}
-                  </td>
-                </tr>
-              )}
-              {interns.map((u) => {
-                const s = summarize(admin.progress[u.id]);
-                const isStale = !u.lastLoginAt || (daysSince(u.lastLoginAt) ?? 0) > STALE_DAYS;
-                return (
-                  <tr key={u.id} className="border-t border-fd-border">
-                    <td className="px-3 py-2">
-                      <button type="button" onClick={() => nav.openIntern(u.id)} className="font-medium text-fd-primary underline-offset-2 hover:underline">
-                        {u.username}
-                      </button>
-                      {isLockedNow(u) && <span className="ms-2 text-xs text-orange-700 dark:text-orange-400">ล็อกอยู่</span>}
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap">{s.level}</td>
-                    <td className="px-3 py-2">
-                      {/* shrink-0: แถบมี overflow-hidden ทำให้ flex บีบมันได้ถึง 0 จอแคบจึงเหลือแค่จุด */}
-                      <div className="flex items-center gap-2">
-                        <span className="h-1.5 w-20 shrink-0 overflow-hidden rounded-full bg-fd-muted">
-                          <span className="block h-full bg-fd-primary" style={{ width: `${(s.doneCount / s.total) * 100}%` }} />
-                        </span>
-                        <span className="whitespace-nowrap tabular-nums">
-                          {s.doneCount}/{s.total}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-3 py-2">{s.last ? `${s.last.title} · ${timeAgo(s.last.at)}` : <span className="text-fd-muted-foreground">ยังไม่ติ๊ก</span>}</td>
-                    <td className={`px-3 py-2 whitespace-nowrap ${isStale ? "text-orange-700 dark:text-orange-400" : ""}`}>{fmt(u.lastLoginAt)}</td>
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+        <div className="flex min-w-0 flex-1 flex-col gap-6">
+          <section aria-labelledby="todo-title" className="flex flex-col gap-2">
+            <h2 id="todo-title" className="text-base font-semibold">
+              งานวันนี้
+            </h2>
+            {admin.loading ? (
+              <p className="text-sm text-fd-muted-foreground">กำลังโหลด…</p>
+            ) : todo.length === 0 ? (
+              <p className="flex items-center gap-2 rounded-xl border border-fd-border bg-fd-card px-4 py-3 text-sm">
+                <PartyPopper className="size-4 text-green-600" /> ไม่มีงานค้าง ทุกเรื่องได้รับการดูแลแล้ว
+              </p>
+            ) : (
+              <ul className="flex flex-col divide-y divide-fd-border overflow-hidden rounded-xl border border-fd-border bg-fd-card">
+                {todo.map((t) => (
+                  <li key={t.text}>
+                    <button type="button" onClick={t.go} className="flex w-full items-center gap-3 px-4 py-3 text-start text-sm hover:bg-fd-accent">
+                      <span className="size-2 shrink-0 rounded-full bg-orange-500" />
+                      <span className="flex-1">{t.text}</span>
+                      <ChevronRight className="size-4 text-fd-muted-foreground" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section id="interns" aria-labelledby="interns-title" className="flex flex-col gap-2">
+            <h2 id="interns-title" className="text-base font-semibold">
+              น้องแต่ละคน ({interns.length})
+            </h2>
+            <div className="overflow-x-auto rounded-xl border border-fd-border">
+              <table className="w-full min-w-[720px] text-sm">
+                <thead className="bg-fd-muted text-left">
+                  <tr>
+                    <th className="px-3 py-2">ชื่อผู้ใช้</th>
+                    <th className="px-3 py-2">อยู่ที่</th>
+                    <th className="px-3 py-2">ผ่านแล้ว</th>
+                    <th className="px-3 py-2">ผ่านล่าสุด</th>
+                    <th className="px-3 py-2">เข้าล่าสุด</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                </thead>
+                <tbody>
+                  {interns.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-3 py-6 text-center text-fd-muted-foreground">
+                        {admin.loading ? "กำลังโหลด…" : "ยังไม่มีบัญชีน้อง สร้างได้ในแท็บบัญชีผู้ใช้"}
+                      </td>
+                    </tr>
+                  )}
+                  {interns.map((u) => {
+                    const s = summarize(admin.progress[u.id]);
+                    const isStale = !u.lastLoginAt || (daysSince(u.lastLoginAt) ?? 0) > STALE_DAYS;
+                    return (
+                      <tr key={u.id} className="border-t border-fd-border">
+                        <td className="px-3 py-2">
+                          <button type="button" onClick={() => nav.openIntern(u.id)} className="font-medium text-fd-primary underline-offset-2 hover:underline">
+                            {u.username}
+                          </button>
+                          {isLockedNow(u) && <span className="ms-2 text-xs text-orange-700 dark:text-orange-400">ล็อกอยู่</span>}
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap">{s.level}</td>
+                        <td className="px-3 py-2">
+                          {/* shrink-0: แถบมี overflow-hidden ทำให้ flex บีบมันได้ถึง 0 จอแคบจึงเหลือแค่จุด */}
+                          <div className="flex items-center gap-2">
+                            <span className="h-1.5 w-20 shrink-0 overflow-hidden rounded-full bg-fd-muted">
+                              <span className="block h-full bg-fd-primary" style={{ width: `${(s.doneCount / s.total) * 100}%` }} />
+                            </span>
+                            <span className="whitespace-nowrap tabular-nums">
+                              {s.doneCount}/{s.total}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2">{s.last ? `${s.last.title} · ${timeAgo(s.last.at)}` : <span className="text-fd-muted-foreground">ยังไม่ติ๊ก</span>}</td>
+                        <td className={`px-3 py-2 whitespace-nowrap ${isStale ? "text-orange-700 dark:text-orange-400" : ""}`}>{fmt(u.lastLoginAt)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-xs text-fd-muted-foreground">
+              ความคืบหน้ามาจากปุ่ม &quot;ผ่านบทนี้แล้ว&quot; ที่น้องติ๊กเองตอน login อยู่ (ติ๊กก่อน login จะย้ายขึ้นบัญชีเมื่อ login ครั้งถัดไป) ใช้ดูว่าใครติดตรงไหน ไม่ใช่คะแนน
+            </p>
+          </section>
         </div>
-        <p className="text-xs text-fd-muted-foreground">
-          ความคืบหน้ามาจากปุ่ม &quot;ผ่านบทนี้แล้ว&quot; ที่น้องติ๊กเองตอน login อยู่ (ติ๊กก่อน login จะย้ายขึ้นบัญชีเมื่อ login ครั้งถัดไป) ใช้ดูว่าใครติดตรงไหน
-          ไม่ใช่คะแนน
-        </p>
-      </section>
+
+        <aside aria-labelledby="hot-title" className="flex flex-col gap-3 rounded-xl border border-fd-border bg-fd-card p-4 lg:w-80 lg:shrink-0">
+          <div>
+            <h2 id="hot-title" className="text-base font-semibold">
+              หน้าที่ถูกถามบ่อย {HOT_DAYS} วัน
+            </h2>
+            <p className="text-xs text-fd-muted-foreground">ถามซ้ำ = ตรงนั้นควรมีโน้ตหรือการ์ดเพิ่ม</p>
+          </div>
+          {hot.length === 0 ? (
+            <p className="text-sm text-fd-muted-foreground">ยังไม่มีคำถามที่ถามจากหน้าใดในช่วงนี้</p>
+          ) : (
+            <ol className="flex flex-col divide-y divide-fd-border">
+              {hot.map((h) => (
+                <li key={h.url} className="flex flex-col gap-2 py-3 first:pt-0">
+                  <span className="flex items-start justify-between gap-2 text-sm">
+                    <a href={h.url} className="font-medium text-fd-primary hover:underline">
+                      {titleOf(h.url)}
+                    </a>
+                    <span className="shrink-0 text-fd-muted-foreground tabular-nums">{h.count} คำถาม</span>
+                  </span>
+                  <span className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => nav.openNote(h.url)}
+                      className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-fd-border px-3 text-xs font-semibold hover:bg-fd-accent"
+                    >
+                      <NotebookPen className="size-3.5" /> โน้ตท้ายหน้า
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => nav.goTab("cards")}
+                      className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-fd-border px-3 text-xs font-semibold hover:bg-fd-accent"
+                    >
+                      <FilePlus2 className="size-3.5" /> การ์ดใหม่
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </aside>
+      </div>
     </div>
   );
+}
+
+// นับคำถามที่น้องกดถามจากหน้าไหน (pageUrl ติดมากับเรื่องอัตโนมัติจากกล่องท้ายหน้า) ในช่วง HOT_DAYS วันล่าสุด
+function hotPages(threads: AdminState["threads"], now: number) {
+  const counts = new Map<string, number>();
+  for (const t of threads) {
+    if (t.kind !== "question" || !t.pageUrl || now - new Date(t.createdAt).getTime() > HOT_DAYS * DAY) continue;
+    counts.set(t.pageUrl, (counts.get(t.pageUrl) ?? 0) + 1);
+  }
+  return [...counts]
+    .map(([url, count]) => ({ url, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
 }
