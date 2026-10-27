@@ -1,13 +1,14 @@
 "use client";
 
-import { ChevronDown, FileText, LogIn, LogOut, MessageCircle, Package, Settings } from "lucide-react";
+import { ChevronDown, FileText, LogIn, LogOut, MessageCircle, Package, Settings, Volume2, VolumeX } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { authApi } from "@/api/auth.api";
 import { filesApi, REQUIREMENT_PDF_URL } from "@/api/files.api";
 import { useSession } from "@/hooks/use-session";
 import { useUnread } from "@/hooks/use-unread";
+import { playChime, setSoundOn, soundOn, subscribeSound } from "@/lib/chime";
 
 export const ROLE_LABEL = { intern: "Internship", dev: "พี่เลี้ยง" } as const;
 export const ROLE_BADGE = {
@@ -109,6 +110,7 @@ export function AccountMenu() {
               <Package className="size-4" /> ระบบตัวอย่าง
             </a>
           )}
+          <SoundToggle />
           <div className="mx-1.5 my-1 h-px bg-fd-border" />
           <button
             type="button"
@@ -124,5 +126,26 @@ export function AccountMenu() {
         </div>
       )}
     </div>
+  );
+}
+
+// เปิด/ปิดเสียงแจ้งเตือน (ข้อความใหม่ ประกาศ การ์ดใหม่) · จำไว้ในเบราว์เซอร์เครื่องนี้ · เปิดแล้วเล่นให้ฟังหนึ่งครั้ง
+// server render ถือว่าเปิด แล้วค่อยอ่านค่าจริงในเบราว์เซอร์ (เมนูนี้เปิดหลังกดเท่านั้น จึงไม่กระพริบ)
+function SoundToggle() {
+  const on = useSyncExternalStore(subscribeSound, soundOn, () => true);
+  return (
+    <button
+      type="button"
+      role="menuitemcheckbox"
+      aria-checked={on}
+      className={itemClass}
+      onClick={() => {
+        setSoundOn(!on);
+        if (!on) playChime(true);
+      }}
+    >
+      {on ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />} เสียงแจ้งเตือน
+      <span className={`ms-auto text-xs font-semibold ${on ? "text-fd-primary" : "text-fd-muted-foreground"}`}>{on ? "เปิด" : "ปิด"}</span>
+    </button>
   );
 }
