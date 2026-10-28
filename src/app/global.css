@@ -24,6 +24,15 @@
   /* ป้าย "จากพี่เลี้ยง" บนการ์ดที่เขียนจากหลังบ้าน (contrast 7:1 ทั้งสองโหมด) */
   --mentor-badge-bg: #fef3c7;
   --mentor-badge-fg: #92400e;
+  /* กราฟหลังบ้าน (admin-charts.tsx): แท่งเดี่ยวใช้สีหลัก · ramp 4 ขั้นสีเดียวไล่เข้ม→อ่อน ใช้กับกลุ่มที่มีลำดับ
+     (เข้าวันนี้ → ยังไม่เคยเข้า) ตรวจด้วยตัวตรวจสีแล้ว: ขั้นห่างกันพอ และขั้นอ่อนสุดยังเห็นบนพื้น (2:1 ขึ้นไป) */
+  --chart-bar: var(--color-fd-primary);
+  --chart-track: #e1e7f2;
+  --chart-grid: #e3e5e8;
+  --chart-r1: #0b3c91;
+  --chart-r2: #2f5fb5;
+  --chart-r3: #5f88d0;
+  --chart-r4: #8fabdc;
 
   /* ความสูง headbar (site-header.tsx) มือถือรวมแถบ "อยู่ด่านไหน" ด้วย
      ส่งต่อให้ Fumadocs ผ่าน --fd-banner-height: sidebar และสารบัญขวาจะติดอยู่ใต้ headbar พอดี */
@@ -51,6 +60,13 @@
   --login-panel-bg: #0f1b33;
   --mentor-badge-bg: #3b2a0a;
   --mentor-badge-fg: #fcd34d;
+  /* โหมดมืด: ขั้นที่เด่นสุด (เข้าวันนี้) เป็นสีสว่างสุด ไม่ใช่กลับสีอัตโนมัติ */
+  --chart-track: #1f2a40;
+  --chart-grid: #2b2e33;
+  --chart-r1: #a9c4ff;
+  --chart-r2: #7aa7ff;
+  --chart-r3: #4a73c4;
+  --chart-r4: #2f4a80;
 }
 
 /* ภาษาไทยอ่านสบายขึ้นเมื่อบรรทัดห่างกว่าค่าเริ่มต้น */

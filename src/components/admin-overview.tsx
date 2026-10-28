@@ -6,9 +6,10 @@ import { daysSince, isLockedNow, type AdminState } from "@/hooks/use-admin";
 import { mentorCardUrl } from "@/data/learn";
 import type { ContentAdminState } from "@/hooks/use-content-admin";
 import { useUnread } from "@/hooks/use-unread";
+import { cardEntries, cardSummary, dailyCounts, loginBuckets, shortDay, stepProgress } from "@/lib/admin-stats";
 import { inCohort, type CohortFilter } from "@/lib/cohort";
-import { summarize } from "@/lib/progress-summary";
 import { timeAgo } from "@/lib/thread-labels";
+import { ChartCard, ColumnChart, Figure, ProgressRows, SegmentBar } from "./admin-charts";
 import type { AdminNav } from "./admin-panel";
 
 const fmt = (d: string | null) => (d ? new Date(d).toLocaleString("th-TH") : "ยังไม่เคยเข้า");
@@ -25,6 +26,8 @@ type Props = { admin: AdminState; content: ContentAdminState; nav: AdminNav; tit
 export function AdminOverview({ admin, content, nav, titles }: Props) {
   const unread = useUnread();
   const [saved, setCohort] = useCohortFilter();
+  // ช่วงเวลาของกราฟรายวัน (ฝึกงานสั้น 14 วันเห็นภาพพอ · 30 วันไว้ดูทั้งรุ่น)
+  const [days, setDays] = useState<14 | 30>(14);
   // รุ่นที่จำไว้ถูกลบไปแล้ว (หรือรายการยังโหลดไม่เสร็จ) ให้ดูทุกรุ่นแทน
   const cohort: CohortFilter = typeof saved === "number" && !admin.cohorts.some((c) => c.id === saved) ? "all" : saved;
   const ended = new Set(admin.cohorts.filter((c) => c.endedAt).map((c) => c.id));
@@ -93,25 +96,41 @@ export function AdminOverview({ admin, content, nav, titles }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
-      {admin.cohorts.length > 0 && (
-        <label className="flex flex-wrap items-center gap-2 self-start text-sm font-medium">
-          ดูเฉพาะรุ่น
-          <select
-            className="min-h-11 rounded-lg border border-fd-border bg-fd-background px-3"
-            value={String(cohort)}
-            onChange={(e) => setCohort(e.target.value === "all" || e.target.value === "none" ? e.target.value : Number(e.target.value))}
-          >
-            <option value="all">ทุกรุ่นที่ยังไม่จบ</option>
-            {admin.cohorts.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-                {c.endedAt ? " (จบแล้ว)" : ""}
-              </option>
-            ))}
-            <option value="none">ไม่มีรุ่น</option>
-          </select>
-        </label>
-      )}
+      {/* ตัวกรองแถวเดียวด้านบน มีผลกับทุกอย่างข้างล่าง (ตัวเลข กราฟ ตาราง) ตัวเลขจึงตรงกันเสมอ */}
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+        {admin.cohorts.length > 0 && (
+          <label className="flex flex-wrap items-center gap-2 text-sm font-medium">
+            ดูเฉพาะรุ่น
+            <select
+              className="min-h-11 rounded-lg border border-fd-border bg-fd-background px-3"
+              value={String(cohort)}
+              onChange={(e) => setCohort(e.target.value === "all" || e.target.value === "none" ? e.target.value : Number(e.target.value))}
+            >
+              <option value="all">ทุกรุ่นที่ยังไม่จบ</option>
+              {admin.cohorts.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                  {c.endedAt ? " (จบแล้ว)" : ""}
+                </option>
+              ))}
+              <option value="none">ไม่มีรุ่น</option>
+            </select>
+          </label>
+        )}
+        <div role="group" aria-label="ช่วงเวลาของกราฟ" className="flex items-center gap-1 text-sm">
+          {([14, 30] as const).map((d) => (
+            <button
+              key={d}
+              type="button"
+              aria-pressed={days === d}
+              onClick={() => setDays(d)}
+              className={`min-h-11 rounded-lg px-3 font-medium ${days === d ? "bg-fd-primary text-fd-primary-foreground" : "border border-fd-border hover:bg-fd-accent"}`}
+            >
+              {d} วัน
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {kpis.map((k) => (
           <button
@@ -126,6 +145,8 @@ export function AdminOverview({ admin, content, nav, titles }: Props) {
           </button>
         ))}
       </div>
+
+      <OverviewCharts admin={admin} interns={interns} threads={threads} days={days} />
 
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
         <div className="flex min-w-0 flex-1 flex-col gap-6">
@@ -163,8 +184,8 @@ export function AdminOverview({ admin, content, nav, titles }: Props) {
                 <thead className="bg-fd-muted text-left">
                   <tr>
                     <th className="px-3 py-2">ชื่อผู้ใช้</th>
-                    <th className="px-3 py-2">อยู่ที่</th>
-                    <th className="px-3 py-2">ผ่านแล้ว</th>
+                    <th className="px-3 py-2">อยู่ขั้น</th>
+                    <th className="px-3 py-2">การ์ดที่ผ่าน</th>
                     <th className="px-3 py-2">ผ่านล่าสุด</th>
                     <th className="px-3 py-2">เข้าล่าสุด</th>
                   </tr>
@@ -178,7 +199,7 @@ export function AdminOverview({ admin, content, nav, titles }: Props) {
                     </tr>
                   )}
                   {interns.map((u) => {
-                    const s = summarize(admin.progress[u.id]);
+                    const s = cardSummary(admin.progress[u.id]);
                     const isStale = !u.lastLoginAt || (daysSince(u.lastLoginAt) ?? 0) > STALE_DAYS;
                     return (
                       <tr key={u.id} className="border-t border-fd-border">
@@ -188,11 +209,11 @@ export function AdminOverview({ admin, content, nav, titles }: Props) {
                           </button>
                           {isLockedNow(u) && <span className="ms-2 text-xs text-orange-700 dark:text-orange-400">ล็อกอยู่</span>}
                         </td>
-                        <td className="px-3 py-2 whitespace-nowrap">{s.level}</td>
+                        <td className="px-3 py-2 whitespace-nowrap">{s.where}</td>
                         <td className="px-3 py-2">
                           {/* shrink-0: แถบมี overflow-hidden ทำให้ flex บีบมันได้ถึง 0 จอแคบจึงเหลือแค่จุด */}
                           <div className="flex items-center gap-2">
-                            <span className="h-1.5 w-20 shrink-0 overflow-hidden rounded-full bg-fd-muted">
+                            <span className="h-1.5 w-20 shrink-0 overflow-hidden rounded-full bg-(--chart-track)">
                               <span className="block h-full bg-fd-primary" style={{ width: `${(s.doneCount / s.total) * 100}%` }} />
                             </span>
                             <span className="whitespace-nowrap tabular-nums">
@@ -209,7 +230,7 @@ export function AdminOverview({ admin, content, nav, titles }: Props) {
               </table>
             </div>
             <p className="text-xs text-fd-muted-foreground">
-              ความคืบหน้ามาจากปุ่ม &quot;ผ่านบทนี้แล้ว&quot; ที่น้องติ๊กเองตอน login อยู่ (ติ๊กก่อน login จะย้ายขึ้นบัญชีเมื่อ login ครั้งถัดไป) ใช้ดูว่าใครติดตรงไหน ไม่ใช่คะแนน
+              นับเฉพาะการ์ดใน 7 ขั้น (ตัวเดียวกับกราฟด้านบน) · ความคืบหน้ามาจากปุ่ม &quot;เข้าใจแล้ว&quot; ที่น้องติ๊กเองตอน login อยู่ (ติ๊กก่อน login จะย้ายขึ้นบัญชีเมื่อ login ครั้งถัดไป) ใช้ดูว่าใครติดตรงไหน ไม่ใช่คะแนน
             </p>
           </section>
         </div>
@@ -256,6 +277,57 @@ export function AdminOverview({ admin, content, nav, titles }: Props) {
         </aside>
       </div>
     </div>
+  );
+}
+
+// กราฟ 4 ใบ: ทำงานแค่ไหน (การ์ดที่ผ่านรายวัน) · ติดแค่ไหน (คำถามรายวัน) · ไปถึงไหน (แต่ละขั้น) · ยังเข้ามาไหม (การเข้าใช้งาน)
+// ใช้น้องชุดเดียวกับตารางด้านล่าง (ตามรุ่นที่เลือก) ตัวเลขในกราฟกับตารางจึงตรงกัน
+function OverviewCharts({ admin, interns, threads, days }: { admin: AdminState; interns: AdminState["users"]; threads: AdminState["threads"]; days: number }) {
+  const ticks = interns.flatMap((u) => cardEntries(admin.progress[u.id]).map((e) => e.doneAt));
+  const done = dailyCounts(ticks, days).map((d) => ({ key: d.day, label: shortDay(d.day), value: d.value }));
+  const asked = dailyCounts(
+    threads.map((t) => t.createdAt),
+    days,
+  ).map((d) => ({ key: d.day, label: shortDay(d.day), value: d.value }));
+  const steps = stepProgress(interns.map((u) => admin.progress[u.id] ?? []));
+  const logins = loginBuckets(interns.map((u) => u.lastLoginAt));
+  const sum = (xs: { value: number }[]) => xs.reduce((s, x) => s + x.value, 0);
+
+  if (admin.loading) return null;
+  return (
+    <section aria-label="กราฟภาพรวม" className="grid gap-3 lg:grid-cols-2 lg:items-start">
+      <ChartCard
+        title="การ์ดที่น้องติ๊กผ่าน"
+        sub={`ต่อวัน ${days} วันล่าสุด · วันที่แท่งหายไปหลายวันติดกัน = ลองทักไปถาม`}
+        figure={<Figure value={sum(done)} label={`ใบ ใน ${days} วัน`} />}
+        table={{ head: ["วัน", "การ์ดที่ผ่าน"], rows: done.map((d) => [d.label, d.value]) }}
+      >
+        <ColumnChart data={done} unit="ใบ" />
+      </ChartCard>
+      <ChartCard
+        title="คำถามและคำขอเนื้อหาใหม่"
+        sub={`ต่อวัน ${days} วันล่าสุด · พุ่งขึ้นวันไหน ดูว่าวันนั้นน้องอยู่การ์ดไหน`}
+        figure={<Figure value={sum(asked)} label={`เรื่อง ใน ${days} วัน`} />}
+        table={{ head: ["วัน", "เรื่องใหม่"], rows: asked.map((d) => [d.label, d.value]) }}
+      >
+        <ColumnChart data={asked} unit="เรื่อง" />
+      </ChartCard>
+      <ChartCard
+        title="ความคืบหน้าแต่ละขั้น"
+        sub={`ผ่านการ์ดในขั้นนั้นเฉลี่ยกี่ % (${interns.length} คน) · "อยู่ขั้นนี้" = ขั้นแรกที่ยังมีการ์ดไม่ผ่าน`}
+        figure={<Figure value={steps.finished} label="คน ผ่านครบทุกการ์ด" />}
+        table={{ head: ["ขั้น", "การ์ด", "ผ่านเฉลี่ย", "อยู่ขั้นนี้"], rows: steps.rows.map((r) => [`${r.num}. ${r.name}`, r.cards, `${r.pct}%`, r.here]) }}
+      >
+        <ProgressRows rows={steps.rows.map((r) => ({ key: r.slug, label: `${r.num}. ${r.name} · ${r.th}`, pct: r.pct, note: `อยู่ขั้นนี้ ${r.here} คน` }))} />
+      </ChartCard>
+      <ChartCard
+        title="การเข้าใช้งาน"
+        sub={`น้อง ${interns.length} คน แบ่งตามครั้งล่าสุดที่ login`}
+        table={{ head: ["กลุ่ม", "คน"], rows: logins.map((b) => [b.label, b.value]) }}
+      >
+        <SegmentBar parts={logins} unit="คน" />
+      </ChartCard>
+    </section>
   );
 }
 
