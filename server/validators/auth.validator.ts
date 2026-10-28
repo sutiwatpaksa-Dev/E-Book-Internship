@@ -15,6 +15,8 @@ export const PASSWORD_MIN = 10;
 
 // กติการหัสผ่าน: ยาว 10–128 · ห้ามมีชื่อผู้ใช้อยู่ในนั้น · ห้ามเป็นตัวเดียวซ้ำทั้งหมด (เช่น aaaaaaaaaa)
 // ไม่บังคับตัวพิมพ์ใหญ่/สัญลักษณ์: ยาวช่วยได้มากกว่า และคนจำวลียาวๆ ได้ง่ายกว่ารหัสสั้นที่ซับซ้อน
+export const forgotSchema = z.object({ username: z.string().trim().toLowerCase().min(1).max(64) });
+
 export function passwordProblem(password: string, username: string) {
   if (password.length < PASSWORD_MIN) return `ยาวอย่างน้อย ${PASSWORD_MIN} ตัวอักษร`;
   if (password.length > 128) return "ยาวไม่เกิน 128 ตัวอักษร";

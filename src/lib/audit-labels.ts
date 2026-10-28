@@ -29,6 +29,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "cohort.invite": "สร้างรหัสรุ่นใหม่",
   "cohort.signup": "ตั้งค่ารับสมัคร",
   "user.register": "สมัครด้วยรหัสรุ่น",
+  "user.reset_request": "ขอรีเซ็ตรหัสผ่าน",
 };
 
 // กลุ่มของรหัส ใช้กรองในหน้าบันทึก: ดูจากคำหน้าจุด (user.create → user → บัญชี)

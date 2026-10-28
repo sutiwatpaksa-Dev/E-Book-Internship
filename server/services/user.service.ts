@@ -13,6 +13,8 @@ const needSuper = (actor: Actor) => {
 };
 
 // PIN คืนออกไปครั้งเดียวตอนสร้าง/ออกใหม่ ระบบเก็บแค่ hash จึงดูย้อนหลังไม่ได้
+export const RESET_PIN_MS = 30 * 60 * 1000;
+
 export const userService = {
   list: () => userRepository.listPublic(),
 
@@ -80,11 +82,21 @@ export const userService = {
   // pin ส่งมาเองได้เฉพาะสคริปต์ใน Terminal (หน้า admin สุ่มให้เสมอ) · actor มีเฉพาะตอนสั่งจากหน้า admin
   // ออก PIN ใหม่ให้พี่เลี้ยงคนอื่น = ยึดบัญชีเขาได้ จึงต้องเป็น Super admin (ออกให้ตัวเองได้)
   // ออก PIN ใหม่ = รหัสเดิมใช้ไม่ได้ และทุกเครื่องที่ login ค้างไว้หลุด (+1 เลขรอบ) · login ด้วย PIN แล้วต้องตั้งรหัสผ่านใหม่
-  async resetPin(id: number, pin = newPin(), actor?: Actor) {
+  // PIN ที่ออกใหม่ใช้ได้ 30 นาที: พี่เลี้ยงส่งให้ตอนน้องรออยู่ ถ้าหลุดไปในแชทกลุ่มทีหลังก็ใช้ไม่ได้แล้ว
+  // (PIN แรกตอนสร้างบัญชีไม่หมดอายุ เพราะน้องอาจได้รับก่อนวันเริ่มฝึก)
+  async resetPin(id: number, pin = newPin(), actor?: Actor, now = new Date()) {
     const target = await userRepository.findById(id);
     if (actor && actor.id !== id && target?.role === "dev") needSuper(actor);
     if (!target) throw new Error("NOT_FOUND");
-    const user = await userRepository.update(id, { secretHash: await hashPin(pin), secretKind: "pin", sessionVersion: target.sessionVersion + 1, failedCount: 0, lockedUntil: null });
+    const user = await userRepository.update(id, {
+      secretHash: await hashPin(pin),
+      secretKind: "pin",
+      sessionVersion: target.sessionVersion + 1,
+      failedCount: 0,
+      lockedUntil: null,
+      resetRequestedAt: null,
+      pinExpiresAt: new Date(now.getTime() + RESET_PIN_MS),
+    });
     if (!user) throw new Error("NOT_FOUND");
     if (actor) await auditService.log(actor.id, "user.reset_pin", user.username);
     return { user, pin };

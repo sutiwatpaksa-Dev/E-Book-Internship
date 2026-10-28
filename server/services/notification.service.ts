@@ -15,6 +15,7 @@ async function safely(fn: () => Promise<void>) {
 
 export const notificationService = {
   toUser: (userId: number, n: NewNotification) => safely(() => notificationRepository.addMany([userId], n)),
+  toUsers: (ids: number[], n: NewNotification) => safely(async () => (ids.length ? notificationRepository.addMany(ids, n) : undefined)),
 
   // ถึงทุกคนในบทบาทนั้น ยกเว้นคนที่ทำเรื่องนี้เอง (พี่เลี้ยงที่ประกาศไม่ต้องได้แจ้งเตือนของตัวเอง)
   toRoles: (roles: Role[], n: NewNotification, exceptUserId?: number) =>

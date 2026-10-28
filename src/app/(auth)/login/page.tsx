@@ -68,7 +68,7 @@ export default function LoginPage() {
           </div>
           <LoginForm />
           <p className="text-sm text-fd-muted-foreground">
-            ลืมรหัสผ่าน บอกพี่เลี้ยงให้ออก PIN ใหม่ · ใส่ผิดหลายครั้งระบบจะล็อกไว้ชั่วคราว
+            ใส่ผิด 5 ครั้งระบบจะล็อกไว้ 15 นาที · ลืมรหัสผ่าน กด "ลืมรหัสผ่าน?" แล้วพี่เลี้ยงจะออก PIN ใหม่ให้
           </p>
           <hr className="border-fd-border" />
           <Link href="/learn/cards" className="inline-flex min-h-11 items-center font-medium text-fd-primary hover:underline">

@@ -30,7 +30,8 @@ export type AuditAction =
   | "cohort.assign"
   | "cohort.invite"
   | "cohort.signup"
-  | "user.register";
+  | "user.register"
+  | "user.reset_request";
 
 const LIMIT = 200;
 

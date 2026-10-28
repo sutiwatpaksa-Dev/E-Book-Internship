@@ -18,6 +18,7 @@ const publicColumns = {
   cohortId: users.cohortId,
   // pin = ยังไม่ได้ตั้งรหัสผ่านเอง (หลังบ้านแสดงว่า "รอตั้งรหัสผ่าน") · ไม่ใช่ค่าลับ บอกแค่ชนิด
   secretKind: users.secretKind,
+  resetRequestedAt: users.resetRequestedAt,
   fullName: users.fullName,
   nickname: users.nickname,
   schoolType: users.schoolType,
@@ -36,6 +37,9 @@ export const userRepository = {
     const [u] = await db.select().from(users).where(eq(users.username, username));
     return u;
   },
+  // Super admin ที่ยังเปิดใช้ (ผู้รับคำขอรีเซ็ตของบัญชีพี่เลี้ยง)
+  activeSuperAdminIds: async () =>
+    (await db.select({ id: users.id }).from(users).where(and(eq(users.disabled, false), eq(users.role, "dev"), eq(users.superAdmin, true)))).map((u) => u.id),
   listPublic: () => db.select(publicColumns).from(users).orderBy(asc(users.username)),
   // ผู้รับแจ้งเตือน: บัญชีที่ยังเปิดใช้ ของบทบาทที่ระบุ
   activeIdsByRole: async (roles: Role[]) =>

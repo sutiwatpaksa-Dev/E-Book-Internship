@@ -59,6 +59,14 @@ export const cohortRepository = {
       .innerJoin(users, eq(users.id, cohortMentors.userId))
       .where(and(eq(cohortMentors.cohortId, cohortId), eq(users.disabled, false)))
       .orderBy(asc(users.username)),
+  mentorIdsOf: async (cohortId: number) =>
+    (
+      await db
+        .select({ id: users.id })
+        .from(cohortMentors)
+        .innerJoin(users, eq(users.id, cohortMentors.userId))
+        .where(and(eq(cohortMentors.cohortId, cohortId), eq(users.disabled, false)))
+    ).map((r) => r.id),
   async internCount(cohortId: number) {
     const [r] = await db
       .select({ n: count() })

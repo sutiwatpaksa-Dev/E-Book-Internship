@@ -8,6 +8,7 @@ import { cardUrl, cards, nextUp } from "@/data/learn";
 import { useProgress } from "@/hooks/use-progress";
 import { toast } from "@/hooks/use-toast";
 import { cohortDay, cohortRange } from "@/lib/cohort";
+import { CONTACT_RULES } from "@/lib/contact";
 import type { MentorContact, Profile, ProfileFields } from "@/types";
 import { ROLE_BADGE, ROLE_LABEL } from "./account-menu";
 import { Button } from "./button";
@@ -246,6 +247,14 @@ type Setter = <K extends keyof ProfileFields>(k: K, value: ProfileFields[K]) => 
 // ช่องของพี่เลี้ยง: น้องในรุ่นที่พี่ดูแลเห็นทั้งหมด (คนนอกรุ่นและคนที่ไม่ได้ login ไม่เห็น)
 function MentorFieldsForm({ v, set }: { v: ProfileFields; set: Setter }) {
   const txt = (k: keyof ProfileFields) => (v[k] as string | null | undefined) ?? "";
+  // บอกผิดใต้ช่องทันทีที่พิมพ์ (server ตรวจซ้ำด้วยกฎเดียวกัน)
+  const problem = (k: keyof typeof CONTACT_RULES) => CONTACT_RULES[k](txt(k).trim());
+  const Err = ({ k }: { k: keyof typeof CONTACT_RULES }) =>
+    problem(k) ? (
+      <span role="alert" className="text-xs text-red-700 dark:text-red-400">
+        {problem(k)}
+      </span>
+    ) : null;
   return (
     <>
       <p className="rounded-lg bg-fd-primary/10 px-3 py-2 text-sm sm:col-span-2">
@@ -255,7 +264,8 @@ function MentorFieldsForm({ v, set }: { v: ProfileFields; set: Setter }) {
         <Input className={field} value={txt("jobTitle")} onChange={(e) => set("jobTitle", e.target.value)} maxLength={100} autoComplete="organization-title" placeholder="เช่น Senior Full-stack Developer" />
       </Field>
       <Field label="เบอร์โทร">
-        <Input className={field} type="tel" inputMode="tel" value={txt("phone")} onChange={(e) => set("phone", e.target.value)} maxLength={20} autoComplete="tel" placeholder="เช่น 081-234-5678" />
+        <Input className={field} type="tel" inputMode="tel" value={txt("phone")} onChange={(e) => set("phone", e.target.value)} maxLength={25} autoComplete="tel" placeholder="เช่น 081-234-5678" aria-invalid={!!problem("phone")} />
+        <Err k="phone" />
       </Field>
       <Field label="จบจาก (สถานศึกษา)">
         <Input className={field} value={txt("schoolName")} onChange={(e) => set("schoolName", e.target.value)} maxLength={150} placeholder="เช่น มหาวิทยาลัยบูรพา" />
@@ -273,13 +283,16 @@ function MentorFieldsForm({ v, set }: { v: ProfileFields; set: Setter }) {
           ช่องทางติดต่อเสริม <span className="font-normal text-fd-muted-foreground">(ไม่บังคับ)</span>
         </legend>
         <Field label="LINE ID">
-          <Input className={field} value={txt("lineId")} onChange={(e) => set("lineId", e.target.value)} maxLength={50} />
+          <Input className={field} value={txt("lineId")} onChange={(e) => set("lineId", e.target.value)} maxLength={20} autoCapitalize="none" spellCheck={false} aria-invalid={!!problem("lineId")} />
+          <Err k="lineId" />
         </Field>
         <Field label="Instagram">
-          <Input className={field} value={txt("instagram")} onChange={(e) => set("instagram", e.target.value)} maxLength={50} />
+          <Input className={field} value={txt("instagram")} onChange={(e) => set("instagram", e.target.value)} maxLength={31} autoCapitalize="none" spellCheck={false} placeholder="@ชื่อผู้ใช้" aria-invalid={!!problem("instagram")} />
+          <Err k="instagram" />
         </Field>
         <Field label="Facebook">
-          <Input className={field} value={txt("facebook")} onChange={(e) => set("facebook", e.target.value)} maxLength={100} placeholder="ชื่อหรือลิงก์" />
+          <Input className={field} value={txt("facebook")} onChange={(e) => set("facebook", e.target.value)} maxLength={100} autoCapitalize="none" spellCheck={false} placeholder="ลิงก์ facebook.com/..." aria-invalid={!!problem("facebook")} />
+          <Err k="facebook" />
         </Field>
       </fieldset>
     </>

@@ -28,7 +28,7 @@ type Pending = { kind: "disable" | "reset"; user: User } | { kind: "role"; user:
 
 const CONFIRM_TEXT = {
   disable: "น้องเรียก API (เช่นเปิด PDF) ไม่ได้ทันที แต่หน้า STARTER จะเปิดได้จนบัตรผ่านหมดอายุ (ไม่เกิน 12 ชั่วโมง) เปิดบัญชีคืนได้ภายหลัง",
-  reset: "รหัสผ่านหรือ PIN เดิมใช้ไม่ได้ทันที และทุกเครื่องที่ login ค้างไว้จะหลุด · PIN ใหม่แสดงครั้งเดียว ส่งให้เจ้าของบัญชีเอง แล้วเขาจะตั้งรหัสผ่านใหม่ตอน login",
+  reset: "รหัสผ่านหรือ PIN เดิมใช้ไม่ได้ทันที และทุกเครื่องที่ login ค้างไว้จะหลุด · PIN ใหม่แสดงครั้งเดียว ใช้ได้ 30 นาที ส่งให้เจ้าของบัญชีเอง (ทักส่วนตัว ไม่ส่งในกลุ่ม) แล้วเขาจะตั้งรหัสผ่านใหม่ตอน login",
   // API อ่านบทบาทจากฐานข้อมูลทุกครั้ง (มีผลทันที) แต่ด่านหน้าเว็บอ่านจากบัตรผ่าน (มีผลเมื่อ login ใหม่)
   dev: "login ครั้งถัดไปจะเข้าหลังบ้านได้ เห็นแชทของน้องทุกคน สร้าง/ปิดบัญชีและออก PIN ให้คนอื่นได้",
   intern: "ใช้คำสั่งหลังบ้านไม่ได้ทันที ไม่เห็นแชทของน้องคนอื่นอีก เปลี่ยนกลับได้ภายหลัง",
@@ -58,6 +58,8 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
   const isSuper = !!admin.me?.superAdmin;
   const canManage = (u: User) => isSuper || u.role === "intern";
   const cohortName = (id: number | null) => admin.cohorts.find((c) => c.id === id)?.name ?? "–";
+  // คนที่ขอรีเซ็ตรหัสผ่านขึ้นก่อน (รออยู่) ที่เหลือเรียงตามชื่อเหมือนเดิม
+  rows.sort((a, b) => Number(!!b.resetRequestedAt) - Number(!!a.resetRequestedAt));
   const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const current = Math.min(page, pages);
   const shown = rows.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
@@ -228,8 +230,9 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
                   </select>
                 </td>
                 <td className="px-3 py-2 whitespace-nowrap text-fd-muted-foreground">{u.role === "intern" ? cohortName(u.cohortId) : "–"}</td>
-                <td className={`px-3 py-2 ${u.disabled || isLockedNow(u) ? "text-orange-700 dark:text-orange-400" : ""}`}>
-                  {u.disabled ? "ปิดอยู่" : isLockedNow(u) ? "ล็อกชั่วคราว" : u.secretKind === "pin" ? "รอตั้งรหัสผ่าน" : "ใช้งาน"}
+                <td className={`px-3 py-2 ${u.disabled || isLockedNow(u) || u.resetRequestedAt ? "text-orange-700 dark:text-orange-400" : ""}`}>
+                  {u.disabled ? "ปิดอยู่" : u.resetRequestedAt ? "ขอรีเซ็ตรหัสผ่าน" : isLockedNow(u) ? "ล็อกชั่วคราว" : u.secretKind === "pin" ? "รอตั้งรหัสผ่าน" : "ใช้งาน"}
+                  {u.resetRequestedAt && !u.disabled && <span className="block text-xs text-fd-muted-foreground">{fmt(u.resetRequestedAt)}</span>}
                 </td>
                 <td className="px-3 py-2 whitespace-nowrap">{fmt(u.lastLoginAt)}</td>
                 <td className="px-3 py-2">
@@ -240,7 +243,8 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
                       </Button>
                     )}
                     {(canManage(u) || u.id === admin.me?.id) && (
-                      <Button variant="ghost" onClick={() => setPending({ kind: "reset", user: u })}>
+                      // มีคำขอรีเซ็ต: ปุ่มเด่นขึ้น เป็นงานที่น้องรออยู่
+                      <Button variant={u.resetRequestedAt ? "primary" : "ghost"} onClick={() => setPending({ kind: "reset", user: u })}>
                         ออก PIN ใหม่
                       </Button>
                     )}

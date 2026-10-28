@@ -39,6 +39,8 @@ export function AdminOverview({ admin, content, nav, titles }: Props) {
   const owners = new Set(admin.users.filter((u) => u.role === "intern" && inCohort(u.cohortId, cohort)).map((u) => u.username));
   const threads = cohort === "all" ? admin.threads : admin.threads.filter((t) => !!t.owner && owners.has(t.owner));
   const locked = admin.users.filter(isLockedNow);
+  // ทุกบัญชี (รวมพี่เลี้ยง) ไม่กรองตามรุ่น: คนที่ขอรีเซ็ตเข้าระบบไม่ได้จนกว่าจะมีคนออก PIN ให้
+  const resets = admin.users.filter((u) => u.resetRequestedAt && !u.disabled);
   // แยกสองกลุ่มเพราะต้องทำคนละอย่าง: ยังไม่เคยเข้า = อาจยังไม่ได้รับ PIN (ตามส่ง PIN)
   // เคยเข้าแต่หายไปเกิน 7 วัน = อาจติดอะไรอยู่ (ทักไปถามความคืบหน้า)
   const neverIn = interns.filter((u) => !u.lastLoginAt);
@@ -64,6 +66,7 @@ export function AdminOverview({ admin, content, nav, titles }: Props) {
     { show: unread > 0, text: `ข้อความใหม่ที่ยังไม่มีใครเปิดอ่าน ${unread} เรื่อง`, go: () => nav.goTab("questions") },
     { show: waiting > 0, text: `คำถามที่รอพี่เลี้ยงตอบ ${waiting} เรื่อง`, go: () => nav.goTab("questions") },
     { show: newRequests > 0, text: `คำขอเนื้อหาที่ยังไม่รับเรื่อง ${newRequests} เรื่อง`, go: () => nav.goTab("requests") },
+    { show: resets.length > 0, text: `ขอรีเซ็ตรหัสผ่าน ${resets.length} คน (${resets.map((u) => u.username).join(", ")}) ออก PIN ใหม่ให้ที่แท็บบัญชี`, go: () => nav.goTab("users") },
     { show: locked.length > 0, text: `บัญชีถูกล็อก ${locked.length} บัญชี (ใส่รหัสผิด 5 ครั้ง ล็อก 15 นาที)`, go: () => nav.goTab("users") },
     { show: neverIn.length > 0, text: `น้องยังไม่เคย login ${neverIn.length} คน ส่ง PIN ให้แล้วหรือยัง`, go: toInterns },
     { show: stale.length > 0, text: `น้องไม่ได้เข้ามาเกิน ${STALE_DAYS} วัน ${stale.length} คน ลองทักไปถาม`, go: toInterns },

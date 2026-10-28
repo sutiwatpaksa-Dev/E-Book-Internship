@@ -57,6 +57,9 @@ export function LoginForm() {
       <Field label="รหัสผ่าน หรือ PIN จากพี่เลี้ยง" hint="ครั้งแรกใช้ PIN 6 หลักที่พี่เลี้ยงส่งให้ แล้วระบบจะให้ตั้งรหัสผ่านของตัวเอง">
         <Input className={bigInput} value={secret} onChange={(e) => setSecret(e.target.value)} type="password" autoComplete="current-password" maxLength={128} required />
       </Field>
+      <Link href="/forgot-password" className="-mt-2 inline-flex min-h-11 items-center self-start text-sm font-medium text-fd-primary hover:underline">
+        ลืมรหัสผ่าน?
+      </Link>
       {error && <ErrorText>{error}</ErrorText>}
       <Button type="submit" disabled={busy} className="min-h-12 text-base">
         {busy ? "กำลังตรวจ…" : "เข้าสู่ระบบ"}

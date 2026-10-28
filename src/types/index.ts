@@ -14,6 +14,8 @@ export type User = {
   cohortId: number | null;
   // pin = ยังไม่ได้ตั้งรหัสผ่านเอง
   secretKind: "pin" | "password";
+  // เจ้าของบัญชีกด "ลืมรหัสผ่าน" แล้วยังไม่มีใครออก PIN ให้
+  resetRequestedAt: string | null;
 } & ProfileFields;
 
 export type SchoolType = "university" | "vocational" | "other";

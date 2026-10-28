@@ -85,6 +85,13 @@
       "when": 1793181939380,
       "tag": "0011_mentor_contact",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1793182357188,
+      "tag": "0012_password_reset",
+      "breakpoints": true
     }
   ]
 }

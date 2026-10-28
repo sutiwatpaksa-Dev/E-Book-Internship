@@ -26,6 +26,10 @@ export const users = pgTable("users", {
   disabled: boolean("disabled").notNull().default(false),
   // เลขรอบของบัตรผ่าน: เปลี่ยนรหัสผ่านหรือออก PIN ใหม่ = +1 บัตรที่ออกก่อนหน้า (ทุกเครื่อง) ใช้ไม่ได้ทันที
   sessionVersion: integer("session_version").notNull().default(0),
+  // ลืมรหัสผ่าน: เวลาที่เจ้าของบัญชีกดขอ (หลังบ้านขึ้นเป็นงานให้พี่เลี้ยง) · ออก PIN ให้แล้วล้างเป็น null
+  resetRequestedAt: timestamp("reset_requested_at", { withTimezone: true }),
+  // PIN ที่ออกใหม่ (ลืมรหัสผ่าน) ใช้ได้ถึงเวลานี้ · null = ไม่หมดอายุ (PIN แรกตอนสร้างบัญชี)
+  pinExpiresAt: timestamp("pin_expires_at", { withTimezone: true }),
   // โปรไฟล์ที่เจ้าของบัญชีกรอกเอง · ว่างได้ทั้งหมด (บัญชีเก่ายังไม่ได้กรอก)
   // น้อง: การศึกษา (ไม่เก็บเบอร์โทร) · พี่เลี้ยง: schoolName/major = จบจากที่ไหน
   fullName: text("full_name"),

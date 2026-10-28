@@ -159,7 +159,7 @@ export function AdminPanel({ titles, initialTab = "overview", initialThread = nu
               PIN ของ <strong>{admin.issued.username}</strong>:
             </span>
             <code className="rounded bg-fd-background px-2 py-1 text-lg font-bold tracking-[0.3em]">{admin.issued.pin}</code>
-            <span className="text-fd-muted-foreground">คัดลอกส่งให้น้องตอนนี้ ปิดกล่องนี้แล้วจะดูอีกไม่ได้</span>
+            <span className="text-fd-muted-foreground">คัดลอกส่งให้น้องตอนนี้ ปิดกล่องนี้แล้วจะดูอีกไม่ได้ · PIN ที่ออกใหม่ใช้ได้ 30 นาที</span>
             <Button variant="ghost" onClick={admin.dismissPin}>
               ปิด
             </Button>

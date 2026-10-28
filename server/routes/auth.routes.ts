@@ -5,7 +5,7 @@ import type { Role } from "../db/schema";
 import { createSessionToken, readSessionToken, ROLE_HINT_COOKIE, SESSION_COOKIE, SESSION_SECONDS } from "../lib/session";
 import { authService } from "../services/auth.service";
 import { registerService } from "../services/register.service";
-import { loginSchema, setPasswordSchema } from "../validators/auth.validator";
+import { forgotSchema, loginSchema, setPasswordSchema } from "../validators/auth.validator";
 import { inviteCodeSchema, registerSchema } from "../validators/register.validator";
 
 const secure = env.APP_ORIGIN.startsWith("https://");
@@ -28,6 +28,14 @@ authRoutes.post("/login", async (c) => {
   const parsed = loginSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ error: "กรอกชื่อผู้ใช้ และ PIN 6 หลัก หรือรหัสผ่าน (10 ตัวขึ้นไป)" }, 400);
   return issue(c, await authService.login(parsed.data.username, parsed.data.secret, clientIp((n) => c.req.header(n))));
+});
+
+// ลืมรหัสผ่าน: ตอบ 200 ข้อความเดียวกันเสมอ (ดู authService.requestReset)
+authRoutes.post("/forgot", async (c) => {
+  const parsed = forgotSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: "กรอกชื่อผู้ใช้" }, 400);
+  await authService.requestReset(parsed.data.username, clientIp((n) => c.req.header(n)));
+  return c.json({ ok: true });
 });
 
 // ตั้ง/เปลี่ยนรหัสผ่าน · ไม่ผ่าน requireRole เพราะคนที่ยังถือ PIN ชั่วคราวต้องเรียกได้ (ด่านนั้นกันเขาไว้)
