@@ -26,14 +26,24 @@ export type ProfileFields = {
   schoolName: string | null;
   major: string | null;
   eduLevel: EduLevel | null;
+} & Partial<MentorFields>;
+// ช่องของพี่เลี้ยง (น้องในรุ่นที่พี่ดูแลเห็น ใช้กรอกเอกสารฝึกงาน) · schoolName/major ของพี่เลี้ยง = จบจากที่ไหน
+export type MentorFields = {
+  jobTitle: string | null;
+  phone: string | null;
+  expertise: string | null;
+  lineId: string | null;
+  instagram: string | null;
+  facebook: string | null;
 };
+export type MentorContact = MentorFields & { username: string; fullName: string | null; nickname: string | null; schoolName: string | null; major: string | null };
 export type Profile = ProfileFields & {
   username: string;
   role: Role;
   passwordSet: boolean;
   lastLoginAt: string | null;
   // รุ่นของน้อง (พี่เลี้ยงหรือน้องที่ยังไม่มีรุ่น = null)
-  cohort: { name: string; startsOn: string; endsOn: string; endedAt: string | null; mentors: { username: string; fullName: string | null; nickname: string | null }[] } | null;
+  cohort: { name: string; startsOn: string; endsOn: string; endedAt: string | null; mentors: MentorContact[] } | null;
 };
 
 // รุ่นฝึกงาน (รูปร่างตรงกับ server/repositories/cohort.repository.ts) · วันที่เป็น YYYY-MM-DD

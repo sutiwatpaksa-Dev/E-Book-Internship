@@ -82,7 +82,8 @@ export function AdminOverview({ admin, content, nav, titles }: Props) {
             .map((u) => u.username)
             .join(", ") + (stale.length > 2 ? " …" : "")
         : "ทุกคนเข้ามาสม่ำเสมอ",
-      urgent: false,
+      // หายไปหลายวัน = ควรทักไปถาม เป็นงานที่ต้องทำเหมือนคำถามค้าง จึงขึ้นสีเตือนด้วย
+      urgent: stale.length > 0,
       go: toInterns,
     },
     {
@@ -314,7 +315,7 @@ function OverviewCharts({ admin, interns, threads, days }: { admin: AdminState; 
       </ChartCard>
       <ChartCard
         title="ความคืบหน้าแต่ละขั้น"
-        sub={`ผ่านการ์ดในขั้นนั้นเฉลี่ยกี่ % (${interns.length} คน) · "อยู่ขั้นนี้" = ขั้นแรกที่ยังมีการ์ดไม่ผ่าน`}
+        sub={`ผ่านการ์ดในขั้นนั้นเฉลี่ยกี่ % (${interns.length} คน) · "อยู่ขั้นนี้" = ขั้นแรกที่ยังมีการ์ดไม่ผ่าน · ขั้นที่ยังไม่มีการ์ด (Deploy, Maintenance) ไม่แสดง`}
         figure={<Figure value={steps.finished} label="คน ผ่านครบทุกการ์ด" />}
         table={{ head: ["ขั้น", "การ์ด", "ผ่านเฉลี่ย", "อยู่ขั้นนี้"], rows: steps.rows.map((r) => [`${r.num}. ${r.name}`, r.cards, `${r.pct}%`, r.here]) }}
       >

@@ -8,7 +8,7 @@ import { cardUrl, cards, nextUp } from "@/data/learn";
 import { useProgress } from "@/hooks/use-progress";
 import { toast } from "@/hooks/use-toast";
 import { cohortDay, cohortRange } from "@/lib/cohort";
-import type { Profile, ProfileFields } from "@/types";
+import type { MentorContact, Profile, ProfileFields } from "@/types";
 import { ROLE_BADGE, ROLE_LABEL } from "./account-menu";
 import { Button } from "./button";
 import { EducationFields } from "./education-fields";
@@ -85,7 +85,82 @@ export function ProfilePanel({ initialTab }: { initialTab: Tab }) {
         </div>
         {profile.role === "intern" && <InternSummary profile={profile} />}
       </div>
+      {profile.role === "intern" && profile.cohort && profile.cohort.mentors.length > 0 && <MentorContacts mentors={profile.cohort.mentors} />}
     </div>
+  );
+}
+
+// ข้อมูลพี่เลี้ยงประจำรุ่น ไว้กรอกเอกสารฝึกงาน (ชื่อผู้ดูแล ตำแหน่ง เบอร์โทร) · server ส่งมาเฉพาะพี่เลี้ยงของรุ่นตัวเอง
+const nameOf = (m: MentorContact) => m.fullName || m.nickname || m.username;
+const gradOf = (m: MentorContact) => [m.schoolName, m.major].filter(Boolean).join(" · ");
+const socialOf = (m: MentorContact) =>
+  [m.lineId && `LINE: ${m.lineId}`, m.instagram && `IG: ${m.instagram}`, m.facebook && `Facebook: ${m.facebook}`].filter(Boolean).join(" · ");
+
+function MentorContacts({ mentors }: { mentors: MentorContact[] }) {
+  return (
+    <section id="mentors" aria-labelledby="mentors-title" className="flex scroll-mt-24 flex-col gap-3">
+      <div>
+        <h2 id="mentors-title" className="text-lg font-semibold">
+          ข้อมูลพี่เลี้ยง
+        </h2>
+        <p className="text-sm text-fd-muted-foreground">ใช้กรอกเอกสารฝึกงานของสถานศึกษา (ชื่อผู้ดูแล ตำแหน่ง เบอร์ติดต่อ) · เป็นข้อมูลที่พี่เลี้ยงกรอกเอง ช่องไหนว่างให้ถามพี่โดยตรง</p>
+      </div>
+      <ul className="grid gap-3 lg:grid-cols-2">
+        {mentors.map((m) => (
+          <MentorCard key={m.username} m={m} />
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function MentorCard({ m }: { m: MentorContact }) {
+  const rows: [string, string | null][] = [
+    ["ชื่อ-นามสกุล", m.fullName],
+    ["ชื่อเล่น", m.nickname],
+    ["ตำแหน่ง", m.jobTitle],
+    ["เบอร์โทร", m.phone],
+    ["จบจาก", gradOf(m) || null],
+    ["ถนัดด้าน", m.expertise],
+    ["ช่องทางอื่น", socialOf(m) || null],
+  ];
+  // คัดลอกเป็นข้อความหลายบรรทัด วางลงเอกสารหรือแชทได้ทันที (ข้ามช่องที่ว่าง)
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(rows.filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join("\n"));
+      toast.success(`คัดลอกข้อมูลของ${m.nickname || nameOf(m)}แล้ว`);
+    } catch {
+      toast.error("คัดลอกไม่ได้ ลองเลือกข้อความแล้วคัดลอกเอง");
+    }
+  }
+  return (
+    <li className="flex flex-col gap-3 rounded-xl border border-fd-border bg-fd-card p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <strong className="block truncate">{nameOf(m)}</strong>
+          {m.jobTitle && <span className="text-sm text-fd-muted-foreground">{m.jobTitle}</span>}
+        </div>
+        <Button type="button" variant="ghost" onClick={copy} className="min-h-11 shrink-0 border border-fd-border">
+          คัดลอก
+        </Button>
+      </div>
+      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
+        {rows.map(([k, v]) => (
+          <div key={k} className="contents">
+            <dt className="text-fd-muted-foreground">{k}</dt>
+            <dd className="min-w-0 break-words">
+              {k === "เบอร์โทร" && v ? (
+                <a href={`tel:${v.replace(/[^\d+]/g, "")}`} className="font-medium text-fd-primary hover:underline">
+                  {v}
+                </a>
+              ) : (
+                (v ?? <span className="text-fd-muted-foreground">ยังไม่ได้กรอก</span>)
+              )}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </li>
   );
 }
 
@@ -122,15 +197,20 @@ function InternSummary({ profile: { cohort, lastLoginAt } }: { profile: Profile 
           <h2 className="text-xs font-semibold text-fd-muted-foreground">พี่เลี้ยงประจำรุ่น</h2>
           <ul className="flex flex-col gap-1">
             {cohort.mentors.map((m) => (
-              <li key={m.username}>
-                {m.nickname || m.fullName || m.username}
-                {(m.nickname || m.fullName) && <span className="text-fd-muted-foreground"> · {m.username}</span>}
+              <li key={m.username} className="flex flex-col">
+                <span>{m.nickname || m.fullName || m.username}</span>
+                {m.jobTitle && <span className="text-xs text-fd-muted-foreground">{m.jobTitle}</span>}
               </li>
             ))}
           </ul>
-          <Link href="/questions" className="inline-flex min-h-10 items-center font-medium text-fd-primary hover:underline">
-            ถามพี่เลี้ยง →
-          </Link>
+          <span className="flex flex-wrap gap-x-4">
+            <Link href="/questions" className="inline-flex min-h-10 items-center font-medium text-fd-primary hover:underline">
+              ถามพี่เลี้ยง →
+            </Link>
+            <a href="#mentors" className="inline-flex min-h-10 items-center font-medium text-fd-primary hover:underline">
+              ข้อมูลติดต่อ ↓
+            </a>
+          </span>
         </section>
       )}
 
@@ -161,11 +241,56 @@ function InternSummary({ profile: { cohort, lastLoginAt } }: { profile: Profile 
   );
 }
 
+type Setter = <K extends keyof ProfileFields>(k: K, value: ProfileFields[K]) => void;
+
+// ช่องของพี่เลี้ยง: น้องในรุ่นที่พี่ดูแลเห็นทั้งหมด (คนนอกรุ่นและคนที่ไม่ได้ login ไม่เห็น)
+function MentorFieldsForm({ v, set }: { v: ProfileFields; set: Setter }) {
+  const txt = (k: keyof ProfileFields) => (v[k] as string | null | undefined) ?? "";
+  return (
+    <>
+      <p className="rounded-lg bg-fd-primary/10 px-3 py-2 text-sm sm:col-span-2">
+        น้องในรุ่นที่พี่ดูแลเห็นข้อมูลด้านล่าง ใช้กรอกเอกสารฝึกงานของสถานศึกษา · ใส่เบอร์และช่องทางที่ใช้ทำงาน
+      </p>
+      <Field label="ตำแหน่ง">
+        <Input className={field} value={txt("jobTitle")} onChange={(e) => set("jobTitle", e.target.value)} maxLength={100} autoComplete="organization-title" placeholder="เช่น Senior Full-stack Developer" />
+      </Field>
+      <Field label="เบอร์โทร">
+        <Input className={field} type="tel" inputMode="tel" value={txt("phone")} onChange={(e) => set("phone", e.target.value)} maxLength={20} autoComplete="tel" placeholder="เช่น 081-234-5678" />
+      </Field>
+      <Field label="จบจาก (สถานศึกษา)">
+        <Input className={field} value={txt("schoolName")} onChange={(e) => set("schoolName", e.target.value)} maxLength={150} placeholder="เช่น มหาวิทยาลัยบูรพา" />
+      </Field>
+      <Field label="คณะ / สาขา">
+        <Input className={field} value={txt("major")} onChange={(e) => set("major", e.target.value)} maxLength={150} placeholder="เช่น วิทยาการคอมพิวเตอร์" />
+      </Field>
+      <div className="sm:col-span-2">
+        <Field label="ถนัดด้าน" hint="น้องจะได้รู้ว่าเรื่องไหนควรถามพี่คนนี้">
+          <textarea value={txt("expertise")} onChange={(e) => set("expertise", e.target.value)} maxLength={300} className={`${inputClass} min-h-20`} placeholder="เช่น React, ออกแบบฐานข้อมูล, Deploy บน Vercel" />
+        </Field>
+      </div>
+      <fieldset className="grid gap-4 sm:col-span-2 sm:grid-cols-3">
+        <legend className="mb-2 text-sm font-semibold">
+          ช่องทางติดต่อเสริม <span className="font-normal text-fd-muted-foreground">(ไม่บังคับ)</span>
+        </legend>
+        <Field label="LINE ID">
+          <Input className={field} value={txt("lineId")} onChange={(e) => set("lineId", e.target.value)} maxLength={50} />
+        </Field>
+        <Field label="Instagram">
+          <Input className={field} value={txt("instagram")} onChange={(e) => set("instagram", e.target.value)} maxLength={50} />
+        </Field>
+        <Field label="Facebook">
+          <Input className={field} value={txt("facebook")} onChange={(e) => set("facebook", e.target.value)} maxLength={100} placeholder="ชื่อหรือลิงก์" />
+        </Field>
+      </fieldset>
+    </>
+  );
+}
+
 function InfoForm({ profile, onSaved }: { profile: Profile; onSaved: (p: ProfileFields) => void }) {
   const [v, setV] = useState<ProfileFields>(profile);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const set = <K extends keyof ProfileFields>(k: K, value: ProfileFields[K]) => setV({ ...v, [k]: value });
+  const set: Setter = (k, value) => setV({ ...v, [k]: value });
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -190,8 +315,8 @@ function InfoForm({ profile, onSaved }: { profile: Profile; onSaved: (p: Profile
         <Input className={field} value={v.nickname ?? ""} onChange={(e) => set("nickname", e.target.value)} maxLength={30} autoComplete="nickname" />
       </Field>
 
-      {/* การศึกษามีไว้ให้พี่เลี้ยงรู้จักน้อง บัญชีพี่เลี้ยงจึงไม่ต้องกรอก */}
-      {profile.role === "intern" && <EducationFields value={v} onChange={(e) => setV({ ...v, ...e })} />}
+      {/* น้อง: การศึกษา (ให้พี่เลี้ยงรู้จัก) · พี่เลี้ยง: ข้อมูลที่น้องใช้กรอกเอกสารฝึกงาน */}
+      {profile.role === "intern" ? <EducationFields value={v} onChange={(e) => setV({ ...v, ...e })} /> : <MentorFieldsForm v={v} set={set} />}
 
       {error && (
         <div className="sm:col-span-2">

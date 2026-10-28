@@ -1,17 +1,13 @@
 import { cohortRepository } from "../repositories/cohort.repository";
 import { userRepository } from "../repositories/user.repository";
-import type { ProfileInput } from "../validators/profile.validator";
+import type { Role } from "../db/schema";
+import { INTERN_FIELDS, MENTOR_FIELDS, type ProfileInput } from "../validators/profile.validator";
 
 // โปรไฟล์ของตัวเองเท่านั้น (id มาจากบัตรผ่าน ไม่รับจากคำขอ) จึงแก้ของคนอื่นไม่ได้
-// ส่งออกเฉพาะช่องโปรไฟล์ ไม่ส่งข้อมูลบัญชีอื่น (เช่นจำนวนครั้งที่ใส่ผิด)
-const pick = (u: { fullName: string | null; nickname: string | null; schoolType: string | null; schoolName: string | null; major: string | null; eduLevel: string | null }) => ({
-  fullName: u.fullName,
-  nickname: u.nickname,
-  schoolType: u.schoolType,
-  schoolName: u.schoolName,
-  major: u.major,
-  eduLevel: u.eduLevel,
-});
+// ส่งออกเฉพาะช่องโปรไฟล์ของ role นั้น ไม่ส่งข้อมูลบัญชีอื่น (เช่นจำนวนครั้งที่ใส่ผิด)
+type Row = Record<(typeof INTERN_FIELDS | typeof MENTOR_FIELDS)[number], string | null> & { role: Role };
+const fieldsOf = (role: Role) => (role === "dev" ? MENTOR_FIELDS : INTERN_FIELDS);
+const pick = (u: Row) => Object.fromEntries(fieldsOf(u.role).map((k) => [k, u[k]]));
 
 export const profileService = {
   async get(id: number) {
@@ -22,9 +18,11 @@ export const profileService = {
     const cohort = c ? { name: c.name, startsOn: c.startsOn, endsOn: c.endsOn, endedAt: c.endedAt, mentors: await cohortRepository.mentorsOf(c.id) } : null;
     return { username: u.username, role: u.role, passwordSet: u.secretKind === "password", lastLoginAt: u.lastLoginAt, cohort, ...pick(u) };
   },
-  async update(id: number, input: ProfileInput) {
-    const u = await userRepository.update(id, input);
-    if (!u) throw new Error("NOT_FOUND");
-    return pick(u);
+  // เก็บเฉพาะช่องของ role ตัวเอง: น้องส่งช่องเบอร์โทรมาก็ไม่ถูกเก็บ
+  async update(id: number, role: Role, input: ProfileInput) {
+    const allowed = Object.fromEntries(fieldsOf(role).filter((k) => k in input).map((k) => [k, input[k]]));
+    if (!(await userRepository.update(id, allowed))) throw new Error("NOT_FOUND");
+    // update คืนแค่คอลัมน์ที่หลังบ้านใช้ อ่านแถวเต็มใหม่เพื่อส่งช่องของพี่เลี้ยงกลับไปด้วย
+    return pick((await userRepository.findById(id))!);
   },
 };

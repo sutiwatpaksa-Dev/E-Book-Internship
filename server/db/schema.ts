@@ -26,13 +26,21 @@ export const users = pgTable("users", {
   disabled: boolean("disabled").notNull().default(false),
   // เลขรอบของบัตรผ่าน: เปลี่ยนรหัสผ่านหรือออก PIN ใหม่ = +1 บัตรที่ออกก่อนหน้า (ทุกเครื่อง) ใช้ไม่ได้ทันที
   sessionVersion: integer("session_version").notNull().default(0),
-  // โปรไฟล์ที่น้องกรอกเอง · ว่างได้ทั้งหมด (บัญชีเก่ายังไม่ได้กรอก) · ไม่เก็บเบอร์โทร/อีเมล เพราะยังไม่มีที่ใช้
+  // โปรไฟล์ที่เจ้าของบัญชีกรอกเอง · ว่างได้ทั้งหมด (บัญชีเก่ายังไม่ได้กรอก)
+  // น้อง: การศึกษา (ไม่เก็บเบอร์โทร) · พี่เลี้ยง: schoolName/major = จบจากที่ไหน
   fullName: text("full_name"),
   nickname: text("nickname"),
   schoolType: text("school_type").$type<SchoolType>(),
   schoolName: text("school_name"),
   major: text("major"),
   eduLevel: text("edu_level").$type<EduLevel>(),
+  // ของพี่เลี้ยงเท่านั้น: น้องในรุ่นที่พี่ดูแลเห็น ใช้กรอกเอกสารฝึกงาน (ชื่อ ตำแหน่ง เบอร์ของผู้ดูแล)
+  jobTitle: text("job_title"),
+  phone: text("phone"),
+  expertise: text("expertise"),
+  lineId: text("line_id"),
+  instagram: text("instagram"),
+  facebook: text("facebook"),
   failedCount: integer("failed_count").notNull().default(0),
   lockedUntil: timestamp("locked_until", { withTimezone: true }),
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
