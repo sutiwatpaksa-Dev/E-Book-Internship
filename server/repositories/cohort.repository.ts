@@ -39,6 +39,14 @@ export const cohortRepository = {
     const [c] = await db.select().from(cohorts).where(eq(cohorts.inviteHash, hash));
     return c;
   },
+  // พี่เลี้ยงประจำรุ่นที่ยังเปิดบัญชีอยู่ (ชื่อที่น้องเห็นในหน้าโปรไฟล์ว่าถามใครได้)
+  mentorsOf: (cohortId: number) =>
+    db
+      .select({ username: users.username, fullName: users.fullName, nickname: users.nickname })
+      .from(cohortMentors)
+      .innerJoin(users, eq(users.id, cohortMentors.userId))
+      .where(and(eq(cohortMentors.cohortId, cohortId), eq(users.disabled, false)))
+      .orderBy(asc(users.username)),
   async internCount(cohortId: number) {
     const [r] = await db
       .select({ n: count() })

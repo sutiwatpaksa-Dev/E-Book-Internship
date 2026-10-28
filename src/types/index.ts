@@ -27,7 +27,14 @@ export type ProfileFields = {
   major: string | null;
   eduLevel: EduLevel | null;
 };
-export type Profile = ProfileFields & { username: string; role: Role; passwordSet: boolean };
+export type Profile = ProfileFields & {
+  username: string;
+  role: Role;
+  passwordSet: boolean;
+  lastLoginAt: string | null;
+  // รุ่นของน้อง (พี่เลี้ยงหรือน้องที่ยังไม่มีรุ่น = null)
+  cohort: { name: string; startsOn: string; endsOn: string; endedAt: string | null; mentors: { username: string; fullName: string | null; nickname: string | null }[] } | null;
+};
 
 // รุ่นฝึกงาน (รูปร่างตรงกับ server/repositories/cohort.repository.ts) · วันที่เป็น YYYY-MM-DD
 export type Cohort = {

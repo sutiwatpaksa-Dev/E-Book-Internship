@@ -21,7 +21,26 @@ Error  Please provide required params for Postgres driver:
 
 ## การใช้งาน
 
-**1. ลองเป็นคนใหม่ก่อนเขียน** clone repo ของตัวเองลงโฟลเดอร์ใหม่ (Mac และ Windows Git Bash พิมพ์เหมือนกัน)
+**0. เอาโปรเจกต์ขึ้น GitHub ก่อน (ถ้ายังไม่เคย)** การ์ดช่วง Coding ทำงานในโฟลเดอร์บนเครื่องอย่างเดียว คนอื่นจะ clone ได้ต้องมี repo บน GitHub ก่อน สร้าง repo เปล่าบนเว็บตามบทเดิม [Git ข้อ 14.2](/01-git#142-สร้าง-repo-ใหม่) (ไม่ต้องติ๊กให้สร้าง README) แล้วพิมพ์ในโฟลเดอร์ที่มี `client/` และ `server/` (Mac และ Windows Git Bash พิมพ์เหมือนกัน)
+
+```bash
+git init
+git status
+```
+
+**ควรเห็น:** รายชื่อไฟล์สีแดง ต้อง**ไม่มี** `server/.env` และ `node_modules/` (ไฟล์ `.gitignore` ที่ `bun init` สร้างกันไว้แล้ว) ถ้าเห็นตัวไหนโผล่มา หยุดก่อน เพิ่มชื่อนั้นลง `.gitignore` แล้วดู `git status` ใหม่ เพราะ `.env` มีรหัสผ่านจริง ขึ้น GitHub ไปแล้วลบออกไม่หมด (ยังอยู่ในประวัติ)
+
+```bash
+git add .
+git commit -m "ห้องสมุดบิต: งานจากการ์ดช่วง Coding"
+git branch -M main
+git remote add origin https://github.com/<ชื่อบัญชี>/<ชื่อ-repo>.git
+git push -u origin main
+```
+
+**ควรเห็น:** เปิดหน้า repo บน GitHub แล้วเห็นโฟลเดอร์ `client/` กับ `server/` (ติดขั้นไหน ดู [Git ข้อ 14.3](/01-git#143-push-ครั้งแรก)) · ทำแล้วครั้งเดียวพอ ครั้งต่อไปแค่ `git add`, `git commit`, `git push`
+
+**1. ลองเป็นคนใหม่ก่อนเขียน** clone repo ของตัวเองลงโฟลเดอร์ใหม่ชื่อ `test-readme` (Mac และ Windows Git Bash พิมพ์เหมือนกัน)
 
 ```bash
 cd ~/Desktop
@@ -29,9 +48,18 @@ git clone https://github.com/<ชื่อบัญชี>/<ชื่อ-repo>.g
 cd test-readme
 ```
 
-แล้วพยายามรันให้ขึ้น จดทุกคำสั่งที่ต้องพิมพ์และทุกครั้งที่ติด รายการนี้คือโครงของ README ส่วนโฟลเดอร์เดิมที่ทำงานอยู่ไม่ต้องแตะ
+แล้วพยายามรันให้ขึ้น จดทุกคำสั่งที่ต้องพิมพ์และทุกครั้งที่ติด รายการนี้คือโครงของ README ส่วนโฟลเดอร์เดิมที่ทำงานอยู่ไม่ต้องแตะ ก่อนรันให้ทำ 2 อย่างนี้ ไม่งั้นจะชนกับของเดิม
 
-**2. เขียน `README.md` ที่ root ของ repo** (ข้าง `client/` และ `server/`) ตามลำดับที่คนใหม่ต้องทำ ตัวอย่างของห้องสมุดบิต ใช้คำสั่งจากการ์ดช่วง Coding ทั้งหมด
+- **หยุด server และ client ของโฟลเดอร์เดิม** (กด `Ctrl+C` ในหน้าต่าง Terminal ที่รันอยู่) เพราะใช้ port 3000 และ 5173 เดียวกัน
+- **ใช้ฐานข้อมูลแยก** เครื่องเรามีกล่อง `pg` อยู่แล้ว ถ้า `test-readme` ใช้ฐานเดิม `bun run seed` จะใส่สมาชิกและหนังสือซ้ำลงฐานที่ทำงานอยู่ ให้สร้างฐานใหม่ในกล่องเดิม แล้วใน `test-readme/server/.env` ใช้ `DATABASE_URL` ที่ลงท้าย `/readme_test` แทน `/postgres`
+
+```bash
+docker exec pg createdb -U postgres readme_test
+```
+
+ถ้าขึ้นว่า `database "readme_test" already exists` (เคยลองไปแล้ว) ลบก่อนด้วย `docker exec pg dropdb -U postgres readme_test` แล้วสร้างใหม่ · ส่วน `docker run` ในขั้นติดตั้งจะขึ้นว่าชื่อ `pg` ซ้ำ **อย่าลบกล่องเดิม** (ข้อมูลที่ทำมาจะหาย) ข้ามขั้นนั้นไปได้เลย
+
+**2. เขียน `README.md` ที่ root ของ repo ในโฟลเดอร์เดิมที่ทำงานอยู่** (ข้าง `client/` และ `server/` · `test-readme` มีไว้ลองอย่างเดียว) ตามลำดับที่คนใหม่ต้องทำ ตัวอย่างของห้องสมุดบิต ใช้คำสั่งจากการ์ดช่วง Coding ทั้งหมด
 
 ````markdown
 # ห้องสมุดบิต
@@ -45,6 +73,13 @@ cd test-readme
 - Git · **Windows ใช้ Git Bash** พิมพ์ทุกคำสั่งในไฟล์นี้ (ไม่ใช่ PowerShell)
 
 ## ติดตั้งครั้งแรก
+
+**0. ดึงโค้ดลงเครื่อง**
+
+```bash
+git clone https://github.com/<ชื่อบัญชี>/<ชื่อ-repo>.git
+cd <ชื่อ-repo>
+```
 
 **1. เปิดฐานข้อมูล** (ทำครั้งเดียว ครั้งต่อไปใช้ `docker start pg`)
 
@@ -101,6 +136,7 @@ bun install
 | migrate ค้างที่ `applying migrations...` ไม่จบ | ฐานข้อมูลยังไม่เปิด `docker ps` ต้องเห็น `pg` ถ้าไม่เห็น `docker start pg` |
 | `JWT_SECRET ใน .env ต้องยาวอย่างน้อย 32 ตัวอักษร` | ยังไม่ได้สุ่ม `JWT_SECRET` (ข้อ 2) แก้แล้วหยุด server แล้วรันใหม่ |
 | `port is already allocated` | มี Postgres ตัวอื่นใช้ port 5432 อยู่ ปิดตัวนั้น หรือเปลี่ยนเลขหน้าใน `-p` และใน `DATABASE_URL` ให้ตรงกัน |
+| `Failed to start server. Is port 3000 in use?` | มี server อีกตัวรันอยู่ (มักเป็นหน้าต่าง Terminal ที่เปิดค้างไว้) ไปกด `Ctrl+C` ที่หน้าต่างนั้นก่อน |
 
 ## เอกสารอื่น
 
@@ -110,26 +146,29 @@ bun install
 
 ตาราง "ติดปัญหา" มาจากการลองจริงตอน clone ในข้อ 1 ของการ์ดนี้ทุกบรรทัด ไม่ได้เดา บรรทัดที่ 2 เจอตอนลืมเปิด Docker: migrate ค้างโดยไม่มี error สักบรรทัด ถ้าไม่เขียนไว้ คนใหม่จะรอไปเรื่อยๆ
 
-**3. ตรวจ `server/.env.example` ว่าครบทุกตัว** ไฟล์นี้ทำมาตั้งแต่การ์ด Drizzle แล้วเติมทีละตัวในการ์ด Login README บอกว่า "ใส่อะไร" ไฟล์นี้บอกว่า "มีตัวไหนบ้าง" มีแค่ชื่อ **ไม่มีค่าจริง** เพราะไฟล์นี้ถูก commit ขึ้น GitHub
+**3. ตรวจ `server/.env.example` ว่าครบทุกตัว** ไฟล์นี้ทำมาตั้งแต่การ์ด Drizzle แล้วเติมทีละตัวในการ์ด Login README บอกว่า "ใส่อะไร" ไฟล์นี้บอกว่า "มีตัวไหนบ้าง" มีชื่อกับคำอธิบายสั้นๆ **ไม่มีค่าจริง** เพราะไฟล์นี้ถูก commit ขึ้น GitHub
 
 ```bash
+# ฐานข้อมูล เช่น postgres://postgres:secret@localhost:5432/postgres
 DATABASE_URL=
+# สุ่มยาว 32 ตัวขึ้นไป: openssl rand -base64 48
 JWT_SECRET=
+# บัญชีบรรณารักษ์ที่ seed สร้างให้ (ใช้ login หลังบ้าน)
 LIBRARIAN_EMAIL=
 LIBRARIAN_PASSWORD=
 ```
 
-**4. รวมของส่งไว้ใน `docs/`** สร้างโฟลเดอร์ `docs/` ที่ root แล้วย้ายไฟล์ที่ทำไว้เข้าไป ตั้งชื่อให้ตรงกับที่ README อ้าง: ไฟล์ `.json` ที่ Export จาก Postman ในการ์ด [ยิงทดสอบ API](/learn/cards/api-testing) เป็น `docs/library.postman_collection.json` และรูป `.png` จากการ์ด [ER diagram](/learn/cards/er-diagram) เป็น `docs/er-diagram.png` แล้ว commit
+**4. รวมของส่งไว้ใน `docs/`** สร้างโฟลเดอร์ `docs/` ที่ root แล้วย้ายไฟล์ที่ทำไว้เข้าไป ตั้งชื่อให้ตรงกับที่ README อ้าง: ไฟล์ `.json` ที่ Export จาก Postman ในการ์ด [ยิงทดสอบ API](/learn/cards/api-testing) เป็น `docs/library.postman_collection.json` และรูป `.png` จากการ์ด [ER diagram](/learn/cards/er-diagram) เป็น `docs/er-diagram.png`
 
-**5. ทดสอบ README ด้วยการลบแล้วทำใหม่** ลบโฟลเดอร์ `test-readme` แล้วทำตาม README ของตัวเองทีละบรรทัดตั้งแต่ clone ห้ามใช้ความจำ ถ้าต้องพิมพ์อะไรที่ README ไม่ได้เขียน แปลว่า README ขาดบรรทัดนั้น
+ก่อน Export collection อีกรอบ ให้ยิงทุกคำขอใน Postman ใหม่ให้ตรงกับโค้ดตอนนี้ เพราะบางทางเปลี่ยนไปหลังการ์ดนั้น เช่น เพิ่มหนังสือย้ายจาก `POST /api/books` ไปเป็น `POST /api/admin/books` ที่ต้อง login ก่อน (การ์ด [หน้าจอเพิ่ม แก้ ลบ](/learn/cards/crud-ui)) คำขอที่ได้ 404 คือคำขอที่ล้าสมัย แล้ว commit และ **push** (ข้อ 5 clone จาก GitHub ถ้าไม่ push จะไม่ได้ README ที่เพิ่งเขียน)
 
-> เครื่องเรามีกล่อง `pg` อยู่แล้ว `docker run` ใน README ข้อ 1 จะขึ้นว่าชื่อซ้ำ **อย่าลบกล่องเดิม** (ข้อมูลที่ทำมาจะหาย) และอย่าให้ `test-readme` ใช้ฐานเดิม เพราะ `bun run seed` จะใส่สมาชิกและหนังสือซ้ำลงฐานที่ทำงานอยู่ ให้สร้างฐานใหม่ในกล่องเดิมแทน
->
-> ```bash
-> docker exec pg createdb -U postgres readme_test
-> ```
->
-> แล้วใน `test-readme/server/.env` ใช้ `DATABASE_URL` ที่ลงท้าย `/readme_test` แทน `/postgres` ทำต่อตั้งแต่ README ข้อ 2 ได้เลย (ลองแล้ว migrate และ seed ผ่าน) ส่วนการทดสอบเต็มรูปแบบจากเครื่องเปล่าคือให้เพื่อนทำในโจทย์ลองเอง
+```bash
+git add README.md docs server/.env.example
+git commit -m "README และเอกสารส่งงาน"
+git push
+```
+
+**5. ทดสอบ README ด้วยการลบแล้วทำใหม่** push แล้ว ลบโฟลเดอร์ `test-readme` แล้วทำตาม README ของตัวเองทีละบรรทัดตั้งแต่ clone ห้ามใช้ความจำ ถ้าต้องพิมพ์อะไรที่ README ไม่ได้เขียน แปลว่า README ขาดบรรทัดนั้น ใช้ 2 อย่างจากข้อ 1 ด้วย (หยุด server เดิม และใช้ฐาน `readme_test`) ส่วนการทดสอบเต็มรูปแบบจากเครื่องเปล่าคือให้เพื่อนทำในโจทย์ลองเอง
 
 **ควรได้:** `README.md` ที่ root และ `server/.env.example` ครบทุกตัวแปร ทำตามจากโฟลเดอร์ว่างแล้วเปิด http://localhost:5173 ได้ และ login หลังบ้านได้
 
@@ -143,7 +182,7 @@ LIBRARIAN_PASSWORD=
 
 **ในงาน STARTER:** [Requirement หน้า 12](/api/files/requirement.pdf#page=12) (ต้อง login) กำหนดว่า README ต้องมี **วิธีติดตั้ง, ตั้งค่า .env, รัน migration/seed, รันโปรเจกต์ และบัญชี admin ทดสอบ** ครบทั้ง 5 อย่างแบบตัวอย่างข้างบน และ **"โปรเจกต์รันตาม README ไม่ขึ้น" คือ 1 ใน 3 ข้อที่ไม่ผ่านทันที** แม้คะแนนส่วนอื่นจะเต็ม วันที่ 10 คือวันเขียน README และเตรียม demo (หน้า 11) แต่ให้เริ่มไฟล์ตั้งแต่วันที่ 2 ที่ทำ migration เสร็จ แล้วเติมทุกวัน วันที่ 10 จะเหลือแค่ให้เพื่อนทดสอบ ส่วนของส่งอื่นในหน้า 12 (ER Diagram, Postman collection, brief, wireframe) เก็บในโฟลเดอร์ `docs/` แล้วลิงก์จาก README
 
-**เว็บคู่มือนี้:** [README.md บน GitHub](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/README.md) สั้นมาก แค่บอกว่าเว็บนี้คืออะไร อ่านที่ไหน แล้วชี้ต่อไปที่ [MAINTAINING.md](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/MAINTAINING.md) ซึ่งมีคำสั่งติดตั้ง, `cp .env.example .env`, การเปิด Postgres ในเครื่อง และเรื่องออกเวอร์ชันกับ deploy เพราะคนอ่านเว็บนี้ส่วนใหญ่มาอ่านเนื้อหา ไม่ได้มารันเอง ข้อเสียคือคนที่อยากรันต้องเปิด 2 ไฟล์ และคำสั่งติดตั้งอยู่ใต้หัวข้อ "แก้เนื้อหา" ซึ่งหาไม่ง่าย งาน STARTER มีคนต้องรันจริง (พี่เลี้ยงที่ตรวจงาน) จึงควรใส่ขั้นติดตั้งครบใน README ไฟล์เดียว
+**เว็บคู่มือนี้:** [README.md บน GitHub](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/README.md) สั้นมาก แค่บอกว่าเว็บนี้คืออะไร อ่านที่ไหน แล้วชี้ต่อไปที่ [MAINTAINING.md](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/MAINTAINING.md) ซึ่งมีคำสั่งติดตั้ง (เว็บนี้ใช้ `npm` เพราะทำก่อนตกลงใช้ Bun ในการ์ด งานของเราใช้ `bun` ตามการ์ด), `cp .env.example .env`, การเปิด Postgres ในเครื่อง และเรื่องออกเวอร์ชันกับ deploy เพราะคนอ่านเว็บนี้ส่วนใหญ่มาอ่านเนื้อหา ไม่ได้มารันเอง ข้อเสียคือคนที่อยากรันต้องเปิด 2 ไฟล์ และคำสั่งติดตั้งอยู่ใต้หัวข้อ "แก้เนื้อหา" ซึ่งหาไม่ง่าย งาน STARTER มีคนต้องรันจริง (พี่เลี้ยงที่ตรวจงาน) จึงควรใส่ขั้นติดตั้งครบใน README ไฟล์เดียว
 
 ลองคิด: ถ้าพี่เลี้ยงใช้ Windows ส่วนเราใช้ Mac คำสั่งไหนใน README ของเราที่เสี่ยงพังบนเครื่องพี่เลี้ยงมากที่สุด
 

@@ -95,9 +95,9 @@ export const cards: LearnCard[] = [
   { slug: "router-seo", title: "หลายหน้า (React Router) และ SEO", step: "coding", topic: "web", part: "Frontend", minutes: 15, needs: ["fetch-data"], starter: "วันที่ 6 หลายหน้า + 404 · วันที่ 9 SEO" },
   { slug: "protected-routes", title: "หน้าหลังบ้านที่ต้อง login", step: "coding", topic: "auth", part: "หลังบ้าน", minutes: 12, needs: ["router-seo", "react-forms", "auth-middleware"], starter: "วันที่ 8 · /admin/login, เด้งกลับเมื่อไม่ login, logout" },
   { slug: "crud-ui", title: "หน้าจัดการข้อมูล: ตาราง ค้นหา แบ่งหน้า เพิ่ม แก้ ลบ", step: "coding", topic: "web", part: "หลังบ้าน", minutes: 15, needs: ["protected-routes"], starter: "วันที่ 8 · CRUD UI (list/add/edit/delete) + state ของฟอร์มและตาราง" },
-  { slug: "manual-testing", title: "ทดสอบด้วยมือแบบมีแผน", step: "testing", topic: "test", minutes: 10, needs: ["user-stories", "user-flow"], starter: "วันที่ 9 · ตรวจความเรียบร้อย (responsive, loading/error) + Review รอบที่ 2" },
-  { slug: "unit-test", title: "เทสต์อัตโนมัติด้วย bun test", step: "testing", topic: "test", minutes: 10, needs: ["validation", "manual-testing"], starter: "Bonus หน้า 13 · test ครอบคลุม validator" },
-  { slug: "readme", title: "README ที่คนอื่นรันตามได้", step: "documentation", topic: "plan", minutes: 10, needs: ["password-hash", "jwt-cookie"], starter: "วันที่ 10 · README (ติดตั้ง, .env, migration/seed, รัน, บัญชี admin ทดสอบ)" },
+  { slug: "manual-testing", title: "ทดสอบด้วยมือแบบมีแผน", step: "testing", topic: "test", minutes: 10, needs: ["user-stories", "user-flow", "crud-ui"], starter: "วันที่ 9 · ตรวจความเรียบร้อย (responsive, loading/error) + Review รอบที่ 2" },
+  { slug: "unit-test", title: "เทสต์อัตโนมัติด้วย bun test", step: "testing", topic: "test", minutes: 10, needs: ["validation", "layers", "manual-testing"], starter: "Bonus หน้า 13 · test ครอบคลุม validator" },
+  { slug: "readme", title: "README ที่คนอื่นรันตามได้", step: "documentation", topic: "plan", minutes: 10, needs: ["password-hash", "jwt-cookie", "api-testing", "crud-ui"], starter: "วันที่ 10 · README (ติดตั้ง, .env, migration/seed, รัน, บัญชี admin ทดสอบ)" },
 ];
 
 export const legacy: LegacyLink[] = [

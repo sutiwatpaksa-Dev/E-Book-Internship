@@ -43,10 +43,12 @@ export function SiteSidebar() {
   );
 }
 
-// หน้าในโครงใหม่ 7 ขั้น (/learn) ใช้ sidebar ของตัวเอง ที่เหลือใช้สารบัญบทเรียนเดิม
+// หน้าในโครงใหม่ 7 ขั้น (/learn) และหน้าของแอปที่ไม่ใช่บทเรียน (โปรไฟล์ ถามพี่เลี้ยง โปรเจกต์ STARTER) ใช้ sidebar 7 ขั้น
+// ที่เหลือ (บทเดิม 00–23) ใช้สารบัญบทเรียนเดิม · เดิมหน้าแอปได้สารบัญเดิม น้องเห็น "0 / 28 บท" แล้วนึกว่าการ์ดที่ผ่านไม่ถูกบันทึก
+const NEW_NAV = [LEARN_BASE, "/profile", "/questions", "/starter"];
 function useInLearn() {
   const pathname = usePathname();
-  return pathname === LEARN_BASE || pathname.startsWith(`${LEARN_BASE}/`);
+  return NEW_NAV.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
 // ลิ้นชักเมนูบนมือถือ เปิดจากปุ่ม ☰ ใน headbar เลือกบทแล้วปิดเอง

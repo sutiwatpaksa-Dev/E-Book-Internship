@@ -6,6 +6,7 @@ import { gate } from "./page-access";
 
 // ด่านตรวจสิทธิ์ก่อนส่งหน้าที่ล็อก ทำงานฝั่ง server ทุกครั้ง (พิมพ์ URL ตรงๆ ก็ต้องผ่านด่านนี้)
 // หน้าทั่วไปไม่แตะ cookie เลย Next จึงยังสร้างเป็นไฟล์ static ได้ เร็วและไม่เปลืองเครื่อง
+// หน้าที่ล็อกได้บัตรผ่านกลับไป (เช่นหน้าโปรไฟล์เลือกข้อความตาม role) · หน้าทั่วไปได้ undefined
 export async function requirePageAccess(pathname: string) {
   if (gate(pathname, null) === "allow") return;
 
@@ -15,7 +16,7 @@ export async function requirePageAccess(pathname: string) {
   // ยังถือ PIN ชั่วคราว: หน้าที่ล็อกเปิดไม่ได้จนกว่าจะตั้งรหัสผ่าน (API ก็กันไว้เหมือนกัน)
   if (session?.tmp) redirect(`/set-password?next=${encodeURIComponent(pathname)}`);
   const result = gate(pathname, session?.role ?? null);
-  if (result === "allow") return;
+  if (result === "allow") return session ?? undefined;
 
   const next = encodeURIComponent(pathname);
   redirect(result === "login" ? `/login?next=${next}` : `/no-access?next=${next}`);

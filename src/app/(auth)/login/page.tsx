@@ -64,11 +64,11 @@ export default function LoginPage() {
         <div className="flex w-full max-w-sm flex-col gap-5">
           <div>
             <h2 className="text-2xl font-bold">เข้าสู่ระบบ</h2>
-            <p className="mt-1 text-fd-muted-foreground">ใช้ชื่อผู้ใช้และ PIN ที่พี่เลี้ยงให้</p>
+            <p className="mt-1 text-fd-muted-foreground">ใช้ชื่อผู้ใช้กับรหัสผ่าน · ครั้งแรกใช้ PIN ที่พี่เลี้ยงให้ แล้วตั้งรหัสผ่านของตัวเอง</p>
           </div>
           <LoginForm />
           <p className="text-sm text-fd-muted-foreground">
-            ลืม PIN หรือยังไม่มีบัญชี บอกพี่เลี้ยงให้ตั้งให้ · ใส่ผิดหลายครั้งระบบจะล็อกไว้ชั่วคราว
+            ลืมรหัสผ่าน บอกพี่เลี้ยงให้ออก PIN ใหม่ · ใส่ผิดหลายครั้งระบบจะล็อกไว้ชั่วคราว
           </p>
           <hr className="border-fd-border" />
           <Link href="/learn/cards" className="inline-flex min-h-11 items-center font-medium text-fd-primary hover:underline">

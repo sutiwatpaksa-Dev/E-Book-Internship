@@ -8,12 +8,14 @@ export const metadata: Metadata = { title: "โปรไฟล์ของฉั
 type Props = { searchParams: Promise<{ tab?: string }> };
 
 export default async function ProfilePage({ searchParams }: Props) {
-  await requirePageAccess("/profile");
+  const session = await requirePageAccess("/profile");
   const tab = (await searchParams).tab === "password" ? "password" : "info";
   return (
     <DocsPage>
       <DocsTitle>โปรไฟล์ของฉัน</DocsTitle>
-      <DocsDescription>ข้อมูลนี้พี่เลี้ยงเห็น ใช้รู้ว่าเรามาจากไหน เรียนสายอะไร · ไม่ต้องกรอกเบอร์โทรหรืออีเมล</DocsDescription>
+      <DocsDescription>
+        {session?.role === "dev" ? "ชื่อที่น้องเห็นเวลาพี่ตอบคำถาม และเปลี่ยนรหัสผ่าน" : "ข้อมูลนี้พี่เลี้ยงเห็น ใช้รู้ว่าเรามาจากไหน เรียนสายอะไร · ไม่ต้องกรอกเบอร์โทรหรืออีเมล"}
+      </DocsDescription>
       <DocsBody>
         <ProfilePanel initialTab={tab} />
       </DocsBody>

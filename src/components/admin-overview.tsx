@@ -64,7 +64,7 @@ export function AdminOverview({ admin, content, nav, titles }: Props) {
     { show: unread > 0, text: `ข้อความใหม่ที่ยังไม่มีใครเปิดอ่าน ${unread} เรื่อง`, go: () => nav.goTab("questions") },
     { show: waiting > 0, text: `คำถามที่รอพี่เลี้ยงตอบ ${waiting} เรื่อง`, go: () => nav.goTab("questions") },
     { show: newRequests > 0, text: `คำขอเนื้อหาที่ยังไม่รับเรื่อง ${newRequests} เรื่อง`, go: () => nav.goTab("requests") },
-    { show: locked.length > 0, text: `บัญชีถูกล็อก ${locked.length} บัญชี (ใส่ PIN ผิด 5 ครั้ง)`, go: () => nav.goTab("users") },
+    { show: locked.length > 0, text: `บัญชีถูกล็อก ${locked.length} บัญชี (ใส่รหัสผิด 5 ครั้ง ล็อก 15 นาที)`, go: () => nav.goTab("users") },
     { show: neverIn.length > 0, text: `น้องยังไม่เคย login ${neverIn.length} คน ส่ง PIN ให้แล้วหรือยัง`, go: toInterns },
     { show: stale.length > 0, text: `น้องไม่ได้เข้ามาเกิน ${STALE_DAYS} วัน ${stale.length} คน ลองทักไปถาม`, go: toInterns },
     { show: !admin.pdf && !admin.loading, text: "ยังไม่มีไฟล์ Requirement PDF ให้น้องเปิด", go: () => nav.goTab("files") },
