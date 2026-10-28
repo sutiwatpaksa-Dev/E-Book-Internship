@@ -33,9 +33,9 @@ export const newBookSchema = z.object({
 export type NewBook = z.infer<typeof newBookSchema>;   // { title: string } ได้ type ไม่ต้องเขียนซ้ำ
 ```
 
-### 2. ใช้ใน route (ต่อจากการ์ด [Hono](/learn/cards/hono))
+### 2. ใช้ใน route (ต่อจากการ์ด Hono)
 
-เพิ่มใน `server/src/routes/books.routes.ts`: import 2 บรรทัดแรกไว้บนสุดของไฟล์ (ใต้ import เดิม) ส่วน `bookRoutes.post` ไว้ท้ายไฟล์
+ต่อจากไฟล์ route ในการ์ด [Hono](/learn/cards/hono) เพิ่มใน `server/src/routes/books.routes.ts`: import 2 บรรทัดแรกไว้บนสุดของไฟล์ (ใต้ import เดิม) ส่วน `bookRoutes.post` ไว้ท้ายไฟล์
 
 ```ts
 import { z } from "zod";
