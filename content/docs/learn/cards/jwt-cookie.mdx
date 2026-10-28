@@ -173,6 +173,8 @@ HTTP/1.1 401 Unauthorized
 
 รหัสถูกได้บรรทัด `set-cookie` ที่มี `HttpOnly` และ `SameSite=Lax`
 
+> **`cookies.txt` คือบัตร login จริง** ใครได้ไฟล์นี้ไปก็เข้าหลังบ้านได้จนบัตรหมดอายุ เพิ่มบรรทัด `cookies.txt` ใน `server/.gitignore` ตอนนี้เลย ก่อน `git add` ครั้งถัดไป
+
 ```
 HTTP/1.1 200 OK
 set-cookie: session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzkzMDAwMTkzfQ.KmqsziJ6...; Max-Age=86400; Path=/; HttpOnly; SameSite=Lax

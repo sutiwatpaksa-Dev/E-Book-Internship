@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchContext } from "fumadocs-ui/contexts/search";
-import { Check, ClipboardList, Database, LayoutTemplate, Lock, Monitor, Plug, Search, ShieldCheck, TestTube, type LucideIcon } from "lucide-react";
+import { Check, ClipboardList, Database, LayoutTemplate, Lock, Monitor, Plug, Rocket, Search, ShieldCheck, TestTube, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { cardUrl, mentorCardUrl, steps, topics, type LearnCard, type StepSlug, type TopicSlug } from "@/data/learn";
@@ -20,7 +20,7 @@ function useLibraryItems(): Item[] {
   return [...builtIn, ...mentor];
 }
 
-const topicIcon: Record<TopicSlug, LucideIcon> = { plan: ClipboardList, ux: LayoutTemplate, db: Database, api: Plug, auth: ShieldCheck, web: Monitor, test: TestTube };
+const topicIcon: Record<TopicSlug, LucideIcon> = { plan: ClipboardList, ux: LayoutTemplate, db: Database, api: Plug, auth: ShieldCheck, web: Monitor, test: TestTube, ops: Rocket };
 
 // คลังการ์ด (/learn/cards): หยิบอ่านเรื่องที่ต้องใช้ ไม่ต้องเรียง
 // กรอง 3 ทางพร้อมกัน: ชื่อการ์ด, ขั้น (ใช้ตอนไหน), หมวด (เรื่องอะไร) · ผลแบ่งหัวข้อตามหมวด

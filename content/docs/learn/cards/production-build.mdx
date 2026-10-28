@@ -1,0 +1,148 @@
+---
+title: "Build สำหรับขึ้นระบบ: server เดียวเสิร์ฟทั้งเว็บ"
+---
+
+## ความหมาย
+
+ตอนพัฒนา เรารัน 2 โปรแกรม: Vite (หน้าเว็บ port 5173) กับ Hono (API port 3000) ตอนขึ้นระบบจริง เรา [build](/glossary#build) หน้าเว็บให้กลายเป็นไฟล์ธรรมดา (HTML, JS, CSS) ในโฟลเดอร์ `client/dist` แล้วให้ Hono ตัวเดียวส่งทั้งไฟล์หน้าเว็บและตอบ API
+
+นึกภาพ: ตอนซ้อม ร้านมีพนักงาน 2 คน คนหนึ่งยื่นเมนู อีกคนทำอาหาร พอเปิดร้านจริง เมนูพิมพ์เสร็จแล้ว (build) วางไว้ที่เคาน์เตอร์ พนักงานคนเดียวยื่นเมนูและรับออร์เดอร์ได้ ลูกค้าเข้าประตูเดียว
+
+## ที่มา
+
+Vite ตอนพัฒนาแปลงโค้ด TypeScript ทีละไฟล์ทุกครั้งที่เปิดหน้า ช้าและกินเครื่อง ใช้กับคนจริงหลายคนไม่ได้ ต้อง build ก่อน แต่พอ build แล้ว **proxy `/api` ของ Vite ก็หายไปด้วย** (การ์ด [ดึงข้อมูลจาก API](/learn/cards/fetch-data) ตั้งไว้ใน `vite.config.ts` ซึ่งใช้แค่ตอน `bun run dev`) หน้าเว็บเรียก `fetch("/api/books")` แล้วจะไม่มีใครตอบ
+
+ทางแก้ที่ง่ายที่สุดคือให้ Hono ส่งไฟล์หน้าเว็บเอง หน้าเว็บกับ API จึงอยู่ "บ้านเดียวกัน" (origin เดียวกัน) เหมือนตอนพัฒนาผ่าน proxy ได้ 3 อย่างฟรี:
+
+- `fetch("/api/...")` ในหน้าเว็บใช้ได้เหมือนเดิม ไม่ต้องแก้โค้ดหน้าเว็บสักบรรทัด
+- ไม่ต้องตั้ง [CORS](/glossary#cors)
+- cookie login ที่ตั้ง `sameSite: "Lax"` ในการ์ด [JWT ใน cookie](/learn/cards/jwt-cookie) ยังทำงาน (ถ้าแยกหน้าเว็บกับ API ไว้คนละโดเมน cookie จะติดกติกาข้ามเว็บ)
+
+## การใช้งาน
+
+### ตั้งค่าครั้งแรก
+
+ติดตั้งตัวส่งไฟล์ของ Hono สำหรับ Bun (พิมพ์ในโฟลเดอร์ `server/` ได้ทั้ง Mac และ Windows Git Bash)
+
+```bash
+cd server
+bun add @hono/bun
+```
+
+> ในเน็ตอาจเจอตัวอย่าง `import { serveStatic } from "hono/bun"` แบบเก่า ทางนี้ Hono ประกาศว่าจะเอาออกใน v5 [เอกสาร Hono](https://hono.dev/docs/getting-started/bun) ให้ใช้ `@hono/bun` แทน
+
+### 1. ให้ Hono ส่งหน้าเว็บ (`server/src/index.ts`)
+
+เพิ่ม import บรรทัดแรกของไฟล์ แล้ว**แทน** `export default app;` บรรทัดสุดท้ายด้วยก้อนข้างล่าง ส่วน route เดิมทั้งหมดไม่ต้องแตะ
+
+```ts
+import { serveStatic } from "@hono/bun";   // เพิ่มบนสุด
+
+// ...route เดิมทั้งหมดเหมือนเดิม...
+
+// ขึ้นระบบจริง: server ตัวเดียวเสิร์ฟทั้ง API และหน้าเว็บที่ build แล้ว (ตอนพัฒนายังใช้ Vite เหมือนเดิม)
+const site = new Hono();
+site.route("/", app);                                                  // /api/... ไปที่ app เดิม
+site.all("/api/*", (c) => fail(c, 404, "NOT_FOUND", "ไม่พบ"));          // API ที่ไม่มีจริง ต้องได้ JSON ไม่ใช่หน้าเว็บ
+if (process.env.NODE_ENV === "production") {
+  site.use("*", serveStatic({ root: "../client/dist" }));              // ไฟล์ที่มีจริง เช่น /assets/index-xxxx.js
+  site.get("*", serveStatic({ path: "../client/dist/index.html" }));   // ที่เหลือ (เช่น /books/3) ให้ React Router จัดการ
+}
+
+export default site;
+```
+
+อ่านทีละบรรทัด:
+
+- **ทำไมไม่เพิ่มใน `app` ตรงๆ:** `app` ตั้ง `basePath("/api")` ไว้ ทุก route ที่เพิ่มจะขึ้นต้นด้วย `/api` เสมอ หน้าเว็บอยู่ที่ `/` จึงต้องมีตัวนอกอีกชั้น (`site`) แล้วเอา `app` เดิมไปเสียบไว้ข้างใน
+- **บรรทัด `/api/*`:** ถ้าไม่มี คำขอ API ที่พิมพ์ผิด (เช่น `/api/bookz`) จะหลุดไปบรรทัดสุดท้ายแล้วได้ `index.html` กลับไป พร้อม status 200 หน้าเว็บพยายามอ่านเป็น JSON แล้วพังแบบงง
+- **บรรทัดสุดท้าย (fallback):** browser ขอ `/books/3` ตรงๆ (เช่นกดรีเฟรช หรือแชร์ลิงก์) ไม่มีไฟล์ชื่อนี้ใน `dist` ถ้าไม่ส่ง `index.html` กลับ จะได้ 404 ทั้งที่ตอนกดจากในเว็บเปิดได้ ส่ง `index.html` แล้ว React Router อ่าน URL เองแล้วเปิดหน้าหนังสือเล่ม 3 ให้ ([SPA](/glossary#spa))
+- **ทำไมมี `if`:** ตอน `bun run dev` เรายังเปิดหน้าเว็บผ่าน Vite (มี hot reload) Hono ไม่ต้องส่งหน้าเว็บ และตอนนั้นอาจยังไม่เคย build
+- **path `../client/dist`:** นับจากโฟลเดอร์ที่พิมพ์คำสั่งรัน server ซึ่งคือ `server/` ถ้ารันจาก root ของ repo จะหาไฟล์ไม่เจอ
+
+`onError` และด่าน login ของ `app` เดิมยังทำงานเหมือนเดิม (ลองแล้ว: ลบหนังสือที่ยังถูกยืมอยู่ ได้ `500` แบบ JSON จาก `errorHandler` และ `/api/admin/books` ไม่มี cookie ได้ `401`) การ์ด [เทสต์อัตโนมัติ](/learn/cards/unit-test) ที่ `import app from "./index"` ก็ยังผ่าน เพราะ `site` ตอบ `/api/...` ได้เหมือนเดิม
+
+### 2. คำสั่งรันแบบขึ้นระบบ (`server/package.json`)
+
+เพิ่ม `"start"` ใน `"scripts"` (คั่นกับบรรทัดก่อนหน้าด้วย `,`)
+
+```json
+"scripts": {
+  "seed": "bun run src/db/seed.ts",
+  "dev": "bun run --hot src/index.ts",
+  "start": "NODE_ENV=production bun run src/index.ts"
+}
+```
+
+`NODE_ENV=production` ทำ 2 อย่าง: เปิดการส่งหน้าเว็บในข้อ 1 และเปิด `secure` ของ cookie (`sessionCookie` ในการ์ด JWT) ไม่มี `--hot` เพราะเครื่องจริงไม่ควรโหลดโค้ดใหม่เองระหว่างมีคนใช้ · Bun รันคำสั่งใน `"scripts"` ด้วย shell ของมันเอง การเขียน `NODE_ENV=production` นำหน้าจึงใช้ได้บน Windows ด้วย
+
+### 3. ลองแบบขึ้นระบบในเครื่อง
+
+หยุด `bun run dev` ทั้งสองหน้าต่างก่อน (`Ctrl+C`) แล้วเปิด Terminal ที่ root ของ repo
+
+```bash
+cd client
+bun run build
+cd ../server
+bun run start
+```
+
+**ควรเห็น:** ฝั่ง client ขึ้น `✓ built in ...` และมีโฟลเดอร์ `client/dist` (มี `index.html` กับ `assets/`) ฝั่ง server ขึ้น `Started server: http://localhost:3000`
+
+เปิด http://localhost:3000 (ไม่ใช่ 5173 แล้ว) แล้วไล่ดู
+
+| ลอง | ควรได้ |
+|---|---|
+| หน้าแรก กดเข้าหนังสือเล่มไหนก็ได้ | เปิดได้ เหมือนตอนพัฒนา |
+| อยู่ที่ `/books/3` แล้วกดรีเฟรช | ยังเห็นหนังสือเล่ม 3 (ไม่ใช่ 404) |
+| `http://localhost:3000/api/books` | JSON `{"success":true,"data":[...]}` |
+| `http://localhost:3000/api/bookz` | JSON `404` `NOT_FOUND` (ไม่ใช่หน้าเว็บ) |
+| login หลังบ้านที่ `/admin/login` | เข้าได้ เห็นตารางหนังสือ |
+
+login ได้ทั้งที่ cookie เป็น `Secure` เพราะ Chrome และ Firefox ถือว่า `http://localhost` ปลอดภัยพอ (ลองแล้วทั้งด้วย curl และ Chrome) ตอนซ้อมแบบ http ให้ใช้ Chrome หรือ Firefox เพราะ Safari อาจไม่เก็บ cookie `Secure` บน http บนเว็บจริงต้องเป็น https การ์ด [ขึ้นเว็บจริง](/learn/cards/deploy-online) จะทำให้
+
+**ถ้า `bun run build` ขึ้น error TypeScript เต็มจอ** (เช่น `'x' is declared but its value is never read`) ทั้งที่ `bun run dev` ใช้ได้: คำสั่ง build ของ Vite template คือ `tsc -b && vite build` ตรวจ type ทั้งโปรเจกต์ก่อน ส่วนตอน dev Vite ไม่ตรวจ ให้อ่านชื่อไฟล์กับเลขบรรทัดแล้วแก้ทีละจุด ห้ามลบ `tsc -b` ทิ้ง (ใน Docker การ์ดถัดไปก็จะพังที่จุดเดียวกัน)
+
+**ถ้าเห็นหน้าขาวและ Console ขึ้น 404 ของไฟล์ `/assets/...`:** รัน `bun run start` จาก root แทน `server/` (path `../client/dist` ชี้ผิดที่) หรือยังไม่ได้ build
+
+### 4. ตรวจของที่ห้ามขึ้น GitHub ก่อน deploy ทุกครั้ง
+
+```bash
+git status
+```
+
+**ควรเห็น:** ไม่มี `.env`, `cookies.txt` (จากการ์ด JWT มีบัตร login จริงอยู่ข้างใน) และ `client/dist` ในรายการ ถ้า `cookies.txt` โผล่ (ใน `server/` หรือที่ root ถ้าเคยยิง curl จากตรงนั้น) ให้เพิ่มบรรทัด `cookies.txt` ใน `.gitignore` ของโฟลเดอร์นั้น · `dist` ไม่ต้อง commit เพราะ build ใหม่ได้ทุกครั้งจากโค้ด
+
+## ทริคที่แนะนำ
+
+1. **ลอง `bun run start` ในเครื่องก่อนขึ้นจริงทุกครั้ง:** ปัญหาส่วนใหญ่ของการ deploy (path ไฟล์ผิด, ลืม build, route รีเฟรชแล้ว 404) เจอได้ในเครื่องใน 1 นาที ถ้าไปเจอบนเครื่องจริง ต้องไล่ log ผ่าน SSH ซึ่งช้ากว่ามาก
+2. **ค่าที่ต่างกันระหว่างเครื่องเรากับเครื่องจริงต้องมาจาก env เท่านั้น:** `NODE_ENV`, `DATABASE_URL`, `JWT_SECRET` ห้ามเขียน `if (url.includes("localhost"))` ในโค้ด เพราะวันหนึ่งจะมีเครื่องที่สาม (เช่นเครื่องทดสอบ) แล้วเงื่อนไขพวกนี้จะผิดทั้งหมด
+3. **API 404 ต้องเป็น JSON เสมอ:** หน้าเว็บของเราอ่าน `body.success` ทุกคำตอบ ถ้า URL API ผิดแล้วได้ HTML กลับมา จะขึ้น error แปลกๆ (`Unexpected token '<'`) ที่ดูไม่ออกว่าต้นเหตุคือ URL ผิด
+
+## ปรับไปใช้จริง
+
+**ในงาน STARTER:** [Requirement หน้า 13](/api/files/requirement.pdf#page=13) (ต้อง login) มี Bonus "Deploy ขึ้น server จริงพร้อมโดเมนย่อย" และ "Docker Compose รัน Postgres + server + client ได้ในคำสั่งเดียว" ทั้งสองข้อเริ่มจากการ์ดนี้ จำไว้ว่า bonus นับเมื่องานหลักครบแล้ว (วันที่ 10 ส่ง README และ demo ก่อน) แต่ข้อ 4 ของการ์ดนี้ (`git status` ไม่มีค่าลับ) ใช้ได้ทันทีตั้งแต่วันแรก เพราะ Requirement หน้า 3 ห้าม commit `.env`
+
+**เว็บคู่มือนี้:** ใช้ Next.js ซึ่งมีหน้าเว็บกับ API อยู่ในโปรเจกต์เดียวกันอยู่แล้ว (API อยู่ใน [src/app/api/[[...route]]/route.ts บน GitHub](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/src/app/api/%5B%5B...route%5D%5D/route.ts) ส่งต่อให้ Hono) จึงได้ "บ้านเดียวกัน" แบบการ์ดนี้โดยไม่ต้องเขียน `serveStatic` เอง และ `next build` คือขั้น build แบบเดียวกับ `vite build`
+
+ลองคิด: ถ้าวันหนึ่งต้องย้ายหน้าเว็บไปไว้ที่ Vercel แต่ API อยู่เครื่องเดิม ต้องแก้อะไรบ้าง (นึกถึง `fetch("/api/...")`, CORS และ cookie)
+
+## ตัวเลือกอื่นที่คล้ายกัน
+
+| วิธี | ทำยังไง | ใช้เมื่อ |
+|---|---|---|
+| **Hono ส่งหน้าเว็บเอง (การ์ดนี้)** | server ตัวเดียว origin เดียว | โปรเจกต์เล็กถึงกลาง ทีมเดียวดูแลทั้งสองฝั่ง |
+| ให้ Caddy / Nginx ส่งไฟล์ `dist` แล้วส่งต่อ `/api` ให้ Hono | ประตูหน้าแยกงานกัน ยัง origin เดียว | ไฟล์หน้าเว็บเยอะ อยากให้ server ไม่ต้องส่งไฟล์ (บทเดิม [Deploy บน VPS](/20-deploy-vps) ใช้แบบนี้) |
+| หน้าเว็บที่ Vercel / Netlify, API ที่อื่น | 2 บริการ 2 โดเมน | ต้องตั้ง CORS, cookie `SameSite=None; Secure` หรือ rewrite `/api` ของบริการหน้าเว็บ (บทเดิม [บริการสำเร็จรูป](/22-deploy-managed)) |
+
+## ลองเอง
+
+**โจทย์:** เพิ่ม route `GET /api/health` ที่ตอบ `{ success: true, data: { ok: true } }` (ใช้ `ok(c, ...)` จาก `server/src/lib/response.ts`) ไว้ให้การ์ดถัดไปใช้ตรวจว่า server ยังมีชีวิต แล้วพิสูจน์ด้วย `bun run start` ว่า `/api/health` ได้ JSON แต่ `/health` (ไม่มี `/api`) ได้หน้าเว็บ
+
+<Hint level={1}>route ใหม่ใส่ใน `app` (ตัวที่มี `basePath("/api")`) ไม่ใช่ `site` แล้ว path ที่ได้จะขึ้นต้นด้วย `/api` เอง</Hint>
+<Hint level={2}>วางบรรทัดใหม่ไว้**เหนือ**ก้อน `const site = new Hono()` เพราะ `site.route("/", app)` คัดลอก route ของ `app` ณ ตอนที่บรรทัดนั้นทำงาน route ที่เพิ่มให้ `app` ทีหลังจะไม่ติดไปด้วย (ลองแล้ว: วางไว้ล่างสุดของไฟล์ ได้ `404 NOT_FOUND`)</Hint>
+<Hint level={3}>ตรวจผล: `curl -i http://localhost:3000/api/health` ได้ `200` และ `content-type: application/json` ส่วน `curl -i http://localhost:3000/health` ได้ `200` และ `content-type: text/html` (เป็น `index.html` แล้ว React Router ขึ้นหน้า "ไม่พบหน้านี้")</Hint>
+
+## อ่านเพิ่ม
+
+build คืออะไรและ Vite ทำอะไรตอน build อยู่ในบทเดิม [สร้างหน้าเว็บด้วย React](/11-react) ส่วนการแยกหน้าเว็บกับ API ไว้คนละบริการ อยู่ใน [บริการสำเร็จรูป](/22-deploy-managed)

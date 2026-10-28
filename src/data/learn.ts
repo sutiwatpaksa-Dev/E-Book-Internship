@@ -22,7 +22,7 @@ export type LearnStep = {
 
 // หมวดของการ์ด ตัดข้ามขั้น: ER diagram (Design) กับ Drizzle (Coding) อยู่หมวดฐานข้อมูลเดียวกัน
 // คลังการ์ดกรองและแบ่งหัวข้อตามหมวดนี้ เรียงตามลำดับที่ใช้ในงานจริง
-export type TopicSlug = "plan" | "ux" | "db" | "api" | "auth" | "web" | "test";
+export type TopicSlug = "plan" | "ux" | "db" | "api" | "auth" | "web" | "test" | "ops";
 
 export const topics: { slug: TopicSlug; name: string }[] = [
   { slug: "plan", name: "วางแผนงาน" },
@@ -32,6 +32,7 @@ export const topics: { slug: TopicSlug; name: string }[] = [
   { slug: "auth", name: "Login และความปลอดภัย" },
   { slug: "web", name: "หน้าเว็บ" },
   { slug: "test", name: "ทดสอบ" },
+  { slug: "ops", name: "ขึ้นระบบและดูแล" },
 ];
 
 export type LearnCard = {
@@ -58,7 +59,7 @@ export const steps: LearnStep[] = [
   { slug: "coding", num: 3, name: "Coding", th: "เขียนโค้ด", output: "ระบบที่รันได้ในเครื่อง", parts: ["เตรียมเครื่อง", "DB", "API", "Login", "Frontend", "หลังบ้าน"], task: "เปลี่ยนแบบตารางเป็น schema แล้วสร้างด้วย migration จากนั้นทำ Backend ทีละ story ที่ต้องมี" },
   { slug: "testing", num: 4, name: "Testing", th: "ทดสอบ", output: "เทสต์ที่รันซ้ำได้ และเช็กลิสต์ทดสอบด้วยมือ", task: "เขียนเช็กลิสต์ทดสอบจาก story ที่ต้องมี แล้วให้เพื่อนทำตามเช็กลิสต์ของเรา" },
   { slug: "documentation", num: 5, name: "Documentation", th: "เขียนเอกสาร", output: "README, .env.example และเอกสาร API", task: "เขียน README แล้วให้เพื่อน clone ไปรันโดยดูแค่ README จดทุกจุดที่เพื่อนติด" },
-  { slug: "deploy", num: 6, name: "Deploy", th: "ขึ้นระบบจริง", output: "เว็บที่เปิดได้จาก URL จริง", task: "ขึ้น STARTER ด้วยบริการสำเร็จรูป แล้วไล่เช็กลิสต์จากขั้น 4 บนเว็บจริงทุกข้อ" },
+  { slug: "deploy", num: 6, name: "Deploy", th: "ขึ้นระบบจริง", output: "เว็บที่เปิดได้จาก URL จริง", task: "ขึ้น STARTER ด้วย Docker Compose บน VPS (หรือบริการสำเร็จรูป) แล้วไล่เช็กลิสต์จากขั้น 4 บนเว็บจริงทุกข้อ" },
   { slug: "maintenance", num: 7, name: "Maintenance", th: "ดูแลระบบ", output: "แผนดูแล: log, backup, อัปเดต และ feedback", task: "ตั้ง backup ฐานข้อมูล แล้วลองกู้คืนลงฐานใหม่จริง 1 ครั้ง" },
 ];
 
@@ -98,6 +99,9 @@ export const cards: LearnCard[] = [
   { slug: "manual-testing", title: "ทดสอบด้วยมือแบบมีแผน", step: "testing", topic: "test", minutes: 10, needs: ["user-stories", "user-flow", "crud-ui"], starter: "วันที่ 9 · ตรวจความเรียบร้อย (responsive, loading/error) + Review รอบที่ 2" },
   { slug: "unit-test", title: "เทสต์อัตโนมัติด้วย bun test", step: "testing", topic: "test", minutes: 10, needs: ["validation", "layers", "manual-testing"], starter: "Bonus หน้า 13 · test ครอบคลุม validator" },
   { slug: "readme", title: "README ที่คนอื่นรันตามได้", step: "documentation", topic: "plan", minutes: 10, needs: ["password-hash", "jwt-cookie", "api-testing", "crud-ui"], starter: "วันที่ 10 · README (ติดตั้ง, .env, migration/seed, รัน, บัญชี admin ทดสอบ)" },
+  { slug: "production-build", title: "Build สำหรับขึ้นระบบ: server เดียวเสิร์ฟทั้งเว็บ", step: "deploy", topic: "ops", minutes: 12, needs: ["crud-ui", "jwt-cookie"], starter: "Bonus · Deploy / Docker Compose (เริ่มจากการ์ดนี้)" },
+  { slug: "docker-compose", title: "Docker Compose: ทั้งระบบในคำสั่งเดียว", step: "deploy", topic: "ops", minutes: 15, needs: ["production-build", "migration"], starter: "Bonus · Docker Compose รัน Postgres + server + client ในคำสั่งเดียว" },
+  { slug: "deploy-online", title: "ขึ้นเว็บจริง: VPS, โดเมนย่อย และ https", step: "deploy", topic: "ops", minutes: 20, needs: ["docker-compose"], starter: "Bonus · Deploy ขึ้น server จริงพร้อมโดเมนย่อย" },
 ];
 
 export const legacy: LegacyLink[] = [

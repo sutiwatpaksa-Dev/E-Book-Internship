@@ -1,0 +1,200 @@
+---
+title: "Docker Compose: ทั้งระบบในคำสั่งเดียว"
+---
+
+## ความหมาย
+
+[Docker Compose](/glossary#docker-compose) คือไฟล์ `compose.yaml` ไฟล์เดียวที่บอกว่าระบบของเรามีกล่อง ([container](/glossary#docker)) อะไรบ้าง ต่อกันยังไง แล้วสั่ง `docker compose up` คำสั่งเดียวได้ทั้งฐานข้อมูลและ server พร้อมหน้าเว็บ ส่วน [Dockerfile](/glossary#dockerfile) คือสูตรว่ากล่องของเราสร้างจากอะไร
+
+นึกภาพ: Dockerfile คือสูตรทำอาหาร 1 จาน ส่วน `compose.yaml` คือใบสั่งจัดโต๊ะ บอกว่าโต๊ะนี้มีกี่จาน จานไหนต้องเสิร์ฟก่อน ใครยกไปให้ใคร
+
+## ที่มา
+
+ตอนนี้ถ้าเพื่อนจะรันห้องสมุดบิต ต้องทำตาม README ทั้งหมด: ลง Bun, เปิด Postgres, `bun install` สองฝั่ง, migrate, build, start ข้ามขั้นเดียวก็ไม่ขึ้น และพอขึ้นเครื่องจริง ต้องทำทั้งหมดซ้ำบนเครื่องนั้นอีกรอบ ถ้าเครื่องจริงมี Bun คนละรุ่น ผลก็ต่างกัน
+
+Compose แก้ทั้งสองเรื่อง: ทุกขั้นอยู่ในไฟล์ (ไม่ต้องจำ) และกล่องมี Bun รุ่นเดียวกันทุกเครื่อง เครื่องที่จะรันต้องมีแค่ Docker
+
+## การใช้งาน
+
+### ตั้งค่าครั้งแรก
+
+ต้องทำการ์ด [Build สำหรับขึ้นระบบ](/learn/cards/production-build) เสร็จก่อน (มี `bun run start` และ Hono ส่งหน้าเว็บเองได้) และเปิด Docker Desktop ไว้ ไฟล์ทั้งหมดในการ์ดนี้อยู่ที่ **root ของ repo** (ข้าง `client/` และ `server/`) ไม่ใช่ในโฟลเดอร์ใดโฟลเดอร์หนึ่ง เพราะกล่องต้องใช้ทั้งสองฝั่ง
+
+### 1. สูตรสร้างกล่อง (`Dockerfile`)
+
+```dockerfile
+# ขั้นที่ 1: build หน้าเว็บ (ได้ client/dist) · ของในขั้นนี้ไม่ติดไปกับกล่องจริง
+FROM oven/bun:1 AS client
+WORKDIR /app/client
+COPY client/package.json client/bun.lock ./
+RUN bun install --frozen-lockfile
+COPY client/ ./
+RUN bun run build
+
+# ขั้นที่ 2: กล่องที่รันจริง = server + หน้าเว็บที่ build แล้ว
+FROM oven/bun:1
+WORKDIR /app/server
+COPY server/package.json server/bun.lock ./
+RUN bun install --frozen-lockfile
+COPY server/ ./
+COPY --from=client /app/client/dist /app/client/dist
+ENV NODE_ENV=production
+USER bun
+EXPOSE 3000
+# สร้าง/อัปเดตตารางก่อน แล้วค่อยเปิด server (ฐานใหม่เอี่ยมก็ได้ตารางครบ)
+CMD ["sh", "-c", "bunx drizzle-kit migrate && bun run src/index.ts"]
+```
+
+อ่านทีละส่วน:
+
+- **`oven/bun:1`:** กล่องทางการของ Bun ([เอกสาร Bun](https://bun.com/guides/ecosystem/docker)) ได้ Bun รุ่น 1.x ล่าสุดทุกครั้งที่ build
+- **2 ขั้น (`AS client` แล้ว `COPY --from=client`):** ขั้นแรกมี Vite, TypeScript และของ build เต็มไปหมด ขั้นที่สองหยิบมาแค่ผลลัพธ์ (`dist`) กล่องที่รันจริงจึงไม่มีของที่ไม่ได้ใช้
+- **copy `package.json` ก่อน แล้วค่อย copy โค้ด:** Docker จำผลของแต่ละบรรทัดไว้ ([layer](/glossary#layer)) แก้โค้ดแต่ไม่ได้เพิ่ม package บรรทัด `bun install` ไม่ต้องรันใหม่ build รอบสองเร็วขึ้นมาก
+- **`--frozen-lockfile`:** ติดตั้งตาม `bun.lock` เป๊ะ ถ้า lock ไม่ตรงกับ `package.json` ให้ล้มเลย (ดีกว่าได้ package คนละรุ่นกับในเครื่องเราแบบเงียบๆ)
+- **path ในกล่อง:** `/app/server` กับ `/app/client/dist` ห่างกันแบบเดียวกับใน repo `serveStatic({ root: "../client/dist" })` จากการ์ดก่อนจึงหาไฟล์เจอโดยไม่ต้องแก้
+- **`USER bun`:** ไม่รันเป็น root ถ้ามีคนเจาะ server ได้ จะทำอะไรในกล่องได้น้อยลง
+- **`drizzle-kit migrate` ตอนเปิด:** คำสั่งเดียวกับการ์ด [Migration](/learn/cards/migration) รันกับฐานในกล่องข้างๆ ทุกครั้งที่กล่องเปิด migration ที่รันไปแล้วจะถูกข้าม
+
+### 2. ของที่ไม่ต้องส่งเข้ากล่อง (`.dockerignore`)
+
+```text
+**/node_modules
+**/dist
+**/.env
+**/cookies.txt
+.git
+```
+
+`node_modules` ในเครื่อง (โดยเฉพาะ Windows) อาจใช้ในกล่อง Linux ไม่ได้ ให้กล่องติดตั้งเอง ส่วน `.env` กับ `cookies.txt` มีค่าลับ ห้ามติดไปในกล่อง (กล่องอาจถูกส่งต่อให้คนอื่น)
+
+### 3. ใบสั่งจัดโต๊ะ (`compose.yaml`)
+
+```yaml
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 10
+      start_period: 10s
+
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@db:5432/postgres
+      JWT_SECRET: ${JWT_SECRET}
+      LIBRARIAN_EMAIL: ${LIBRARIAN_EMAIL}
+      LIBRARIAN_PASSWORD: ${LIBRARIAN_PASSWORD}
+    ports:
+      - "8080:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+```
+
+- **`@db:5432` ใน `DATABASE_URL`:** ในโลกของ Compose กล่องเรียกหากันด้วยชื่อ service (`db`) ไม่ใช่ `localhost` เพราะ `localhost` ในกล่อง `app` คือตัวกล่อง `app` เอง
+- **`healthcheck` + `condition: service_healthy`:** Postgres เปิดกล่องแล้วยังต้องใช้เวลาเตรียมตัวอีกหลายวินาที ถ้า `app` รีบ migrate ตอนนั้นจะล้ม `pg_isready` ตรวจว่าพร้อมรับคำสั่งจริงแล้ว `app` จึงค่อยเริ่ม (รูปแบบนี้มาจาก [เอกสาร Docker](https://docs.docker.com/compose/how-tos/startup-order/))
+- **`volumes: pgdata`:** ข้อมูลอยู่ใน volume ไม่ได้อยู่ในกล่อง ลบกล่องสร้างใหม่ ข้อมูลยังอยู่ (ฐาน Postgres 17 ต้องผูกที่ `/var/lib/postgresql/data` ตาม [หน้า image ทางการ](https://hub.docker.com/_/postgres))
+- **`"8080:3000"`:** เปิดที่ http://localhost:8080 ในเครื่องเรา (ข้างในกล่องยัง 3000) ไม่ใช้ 3000 ตรงๆ จะได้ไม่ชนกับ `bun run dev` ที่อาจเปิดค้างไว้ ถ้า 8080 มีโปรแกรมอื่นใช้อยู่ เปลี่ยนเลข**หน้า** `:` เป็นเลขอื่น
+- **`restart: unless-stopped`:** กล่องล้มหรือเครื่องรีสตาร์ต Docker เปิดให้ใหม่เอง (ยกเว้นเราสั่งหยุดเอง)
+
+### 4. ค่าลับของ Compose (`.env` ที่ root)
+
+`${POSTGRES_PASSWORD}` ใน `compose.yaml` อ่านจากไฟล์ `.env` ข้าง `compose.yaml` (คนละไฟล์กับ `server/.env`) **ก่อนสร้างไฟล์นี้** ต้องกันไม่ให้ขึ้น GitHub เพราะ root ของ repo ยังไม่มี `.gitignore` ของตัวเอง (มีแค่ใน `client/` และ `server/`)
+
+```bash
+echo ".env" >> .gitignore
+echo "cookies.txt" >> .gitignore
+git status
+```
+
+**ควรเห็น:** `.gitignore` ขึ้นเป็นไฟล์ใหม่ และหลังสร้าง `.env` ในขั้นต่อไปแล้ว `git status` ต้อง**ไม่มี** `.env` ในรายการ
+
+แล้วสร้าง `.env` ที่ root ใส่ค่าแบบนี้ (สุ่มรหัสด้วย `openssl rand -hex 16` และ `JWT_SECRET` ด้วย `openssl rand -base64 48` พิมพ์ได้ทั้ง Mac และ Git Bash)
+
+```bash
+POSTGRES_PASSWORD=ค่าที่สุ่มได้
+JWT_SECRET=ค่าที่สุ่มได้ยาว-64-ตัว
+LIBRARIAN_EMAIL=librarian@library.local
+LIBRARIAN_PASSWORD=รหัสบรรณารักษ์ที่ตั้งเอง
+```
+
+> ใช้ตัวอังกฤษกับตัวเลขในรหัสผ่าน Postgres (`-hex` ให้แบบนั้นอยู่แล้ว) ถ้ามี `@` `/` `:` จะไปปนกับ `DATABASE_URL` แล้วต่อฐานไม่ติด
+
+แล้วสร้าง `.env.compose.example` ที่ root มีแค่ชื่อ 4 ตัวนี้ ไม่มีค่า (`POSTGRES_PASSWORD=` เป็นต้น) แล้ว commit ไฟล์นี้ คนอื่นจะได้รู้ว่าต้องตั้งอะไร (เหมือน `server/.env.example`)
+
+### 5. เปิดทั้งระบบ
+
+```bash
+docker compose up -d --build
+```
+
+**ควรเห็น:** build ครั้งแรกใช้เวลาหลายนาที (โหลด image และติดตั้ง package) แล้วจบด้วย `Container ...-db-1 Healthy` ตามด้วย `Container ...-app-1 Started`
+
+```bash
+docker compose logs app
+```
+
+**ควรเห็น:** `[✓] migrations applied successfully!` แล้ว `Started server: http://localhost:3000` (เลข 3000 คือข้างในกล่อง จากข้างนอกใช้ 8080)
+
+ฐานใหม่ยังไม่มีหนังสือ ใส่ข้อมูลตัวอย่างครั้งเดียวด้วย seed ในกล่อง (`-T` บอกว่าไม่ต้องมีหน้าจอโต้ตอบ กัน error `the input device is not a TTY` ใน Git Bash · รัน seed ซ้ำ หนังสือตัวอย่างจะเบิ้ล)
+
+```bash
+docker compose exec -T app bun run seed
+```
+
+**ควรเห็น:** `seed เสร็จ` แล้วเปิด http://localhost:8080 เห็นรายการหนังสือ, `/books/3` รีเฟรชแล้วยังอยู่ และ login หลังบ้านด้วย `LIBRARIAN_EMAIL` / `LIBRARIAN_PASSWORD` ใน `.env` ที่ root ได้
+
+### 6. หยุด เปิดใหม่ และสิ่งที่ห้ามพิมพ์
+
+| คำสั่ง | ผล |
+|---|---|
+| `docker compose down` | ลบกล่อง แต่ **volume ยังอยู่** `up -d` ใหม่ ข้อมูลยังครบ (ลองแล้ว) |
+| `docker compose up -d --build` | แก้โค้ดแล้วสร้างกล่องใหม่ |
+| `docker compose logs -f app` | ดู log สด (`Ctrl+C` เพื่อออก กล่องไม่หยุด) |
+| `docker compose down -v` | **ลบ volume ด้วย ข้อมูลหายหมด** ใช้เมื่อตั้งใจล้างเท่านั้น |
+
+## ทริคที่แนะนำ
+
+1. **`.env` ที่ root ต้องอยู่ใน `.gitignore` ก่อนสร้างไฟล์:** ลำดับสำคัญ ถ้าสร้าง `.env` ก่อนแล้วเผลอ `git add .` ไปหนึ่งครั้ง รหัสจะอยู่ในประวัติ git ตลอดไปแม้ลบทีหลัง ต้องเปลี่ยนรหัสทุกตัวใหม่
+2. **ตรวจ `docker compose logs app` ทุกครั้งหลัง `up`:** `up -d` บอกแค่ว่ากล่อง "เริ่ม" ถ้า migrate ล้มหรือ `JWT_SECRET` สั้นไป กล่องจะดับเองเงียบๆ บรรทัดสุดท้ายของ log บอกเหตุผลเสมอ
+3. **เรียกกล่องอื่นด้วยชื่อ service:** `db`, `app` ไม่ใช่ `localhost` และไม่ใช่ IP (IP ในกล่องเปลี่ยนทุกครั้งที่สร้างใหม่) ข้อนี้คือสาเหตุอันดับหนึ่งของ "ในเครื่องต่อได้ ใน Compose ต่อไม่ได้"
+
+## ปรับไปใช้จริง
+
+**ในงาน STARTER:** [Requirement หน้า 13](/api/files/requirement.pdf#page=13) (ต้อง login) Bonus ข้อ "Docker Compose รัน Postgres + server + client ได้ในคำสั่งเดียว" ทำได้ด้วยการ์ดนี้ครบ (client ถูก build ใส่กล่องเดียวกับ server) ถ้าทำ ให้เพิ่มทาง "รันด้วย Docker" ใน README (การ์ด [README](/learn/cards/readme)) เป็นอีกทางนอกจากทางปกติ ไม่ใช่แทน เพราะพี่เลี้ยงบางคนอาจอยากรันแบบไม่มี Docker เกณฑ์ "โปรเจกต์รันตาม README ไม่ขึ้น" (หน้า 12) ใช้กับทั้งสองทาง
+
+**เว็บคู่มือนี้:** ไม่ใช้ Compose ตอนขึ้นระบบ (ขึ้น Vercel ซึ่ง build ให้เอง ดู [vercel.json บน GitHub](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/vercel.json)) แต่ใช้ Postgres ในกล่อง Docker ตอนพัฒนาแบบเดียวกับ service `db` ข้างบน (`MAINTAINING.md` ขั้นเปิดฐานในเครื่อง)
+
+ลองคิด: ถ้าลบ `condition: service_healthy` ออก แล้วเครื่องที่รันช้ามาก จะเห็นอะไรใน `docker compose logs app` และกล่อง `app` จะเปิดได้เองไหม (ดู `restart`)
+
+## ตัวเลือกอื่นที่คล้ายกัน
+
+| วิธี | ต่างจาก Compose ยังไง | ใช้เมื่อ |
+|---|---|---|
+| **Docker Compose (การ์ดนี้)** | หลายกล่องบนเครื่องเดียว ไฟล์เดียว | โปรเจกต์ที่มีเครื่องเดียว (VPS 1 ตัว) |
+| `docker run` ทีละกล่อง | ต้องพิมพ์เองทุกตัว ต่อ network เอง | ลองกล่องเดียวเร็วๆ (การ์ด [Postgres](/learn/cards/postgres) ใช้แบบนี้) |
+| บริการที่ build Dockerfile ให้ เช่น Render, Railway, Fly.io | ใช้ `Dockerfile` เดียวกันนี้ได้ แต่ฐานข้อมูลมักใช้บริการแยก (เช่น Neon) | ไม่อยากดูแลเครื่องเอง |
+| Kubernetes | หลายเครื่อง ย้ายกล่องอัตโนมัติ | ระบบใหญ่ ทีม ops โดยเฉพาะ ไม่จำเป็นสำหรับงานฝึกงาน |
+
+## ลองเอง
+
+**โจทย์:** แก้ `compose.yaml` ให้กล่อง `app` มี `healthcheck` ของตัวเอง โดยเรียก `/api/health` จากโจทย์ลองเองของการ์ดก่อน (ถ้ายังไม่ได้ทำ ใช้ `/api/books` แทน) แล้วทำให้ `docker compose ps` ขึ้นคำว่า `healthy` ข้าง `app`
+
+<Hint level={1}>กล่อง `oven/bun` ไม่มี `curl` แต่มี `bun` ใช้ `bun -e` เขียน JavaScript บรรทัดเดียวที่ `fetch` แล้วจบด้วย exit code 0 เมื่อสำเร็จ และไม่ใช่ 0 เมื่อพัง</Hint>
+<Hint level={2}>รูปแบบ `test: ["CMD", "bun", "-e", "..."]` ข้างในใช้ `fetch("http://localhost:3000/api/health")` (ในกล่องตัวเอง `localhost` ถูกแล้ว) แล้ว `process.exit(res.ok ? 0 : 1)` อย่าลืม `.catch` ให้ exit 1 ด้วย ตอน server ยังไม่เปิด fetch จะ error</Hint>
+<Hint level={3}>ตรวจผล: `docker compose up -d` แล้วรอสัก 15 วินาที `docker compose ps` คอลัมน์ STATUS ของ app ต้องมี `(healthy)` จากนั้นลอง `docker compose stop db` แล้วเปิด `/api/books` ที่ใช้ฐาน จะพัง (ลองแล้วเจอ 2 แบบ: ได้ `500` หรือกล่อง app ดับแล้ว Docker เปิดให้ใหม่ ขึ้นกับว่าตอนนั้นมีการเชื่อมต่อค้างอยู่ไหม) แต่ถ้า health ของเราไม่แตะฐาน มันจะยังบอก `healthy` นี่คือเหตุผลที่ health check ที่ดีควรถามฐานข้อมูลด้วย 1 คำสั่งสั้นๆ · เสร็จแล้ว `docker compose start db`</Hint>
+
+## อ่านเพิ่ม
+
+Docker, image, volume และ port ละเอียดกว่านี้อยู่ในบทเดิม [Docker](/02-docker) ส่วนการแยกไฟล์ compose สำหรับเครื่องจริง อยู่ใน [Deploy บน VPS](/20-deploy-vps)

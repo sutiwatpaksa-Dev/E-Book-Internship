@@ -36,6 +36,9 @@
     "crud-ui",
     "manual-testing",
     "unit-test",
-    "readme"
+    "readme",
+    "production-build",
+    "docker-compose",
+    "deploy-online"
   ]
 }

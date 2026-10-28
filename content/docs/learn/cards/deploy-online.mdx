@@ -1,0 +1,274 @@
+---
+title: "ขึ้นเว็บจริง: VPS, โดเมนย่อย และ https"
+---
+
+## ความหมาย
+
+ขึ้นเว็บจริง ([deploy](/glossary#deploy)) คือเอา `compose.yaml` จากการ์ดก่อนไปรันบนเครื่องที่เปิดตลอด 24 ชั่วโมงและคนทั้งโลกเข้าถึงได้ ([VPS](/glossary#vps)) แล้วให้ชื่อเว็บ เช่น `library.example.com` ชี้มาที่เครื่องนั้น ([DNS](/glossary#dns)) โดยมี [Caddy](https://caddyserver.com/docs/) เป็นประตูหน้า ([reverse proxy](/glossary#reverse-proxy)) ที่ทำ [https](/glossary#https) ให้เอง
+
+นึกภาพ: VPS คือห้องเช่าที่เปิดไฟตลอด, DNS คือป้ายบอกทางว่า "ห้องสมุดบิต ไปห้องเลขนี้", Caddy คือ รปภ. หน้าตึกที่ตรวจบัตรและส่งคนเข้าห้องที่ถูก
+
+## ที่มา
+
+ตอนนี้ระบบรันได้แค่ในเครื่องเรา ปิดเครื่องเว็บก็ดับ และคนอื่นเปิด `localhost` ของเราไม่ได้ ส่วน https ไม่ใช่ของแถม: cookie login ที่ตั้ง `secure` ไว้ในการ์ด [JWT ใน cookie](/learn/cards/jwt-cookie) **ไม่ถูกส่งผ่าน http ธรรมดาบนเว็บจริง** (เว้นแต่ `localhost`) ถ้าไม่มี https จะ login หลังบ้านไม่ได้เลย และรหัสผ่านจะวิ่งผ่านเน็ตแบบอ่านออก
+
+เมื่อก่อนการทำ https ต้องซื้อใบรับรองและต่ออายุเองทุกปี Caddy ขอใบรับรองฟรีจาก Let's Encrypt และต่ออายุให้เอง ([เอกสาร Caddy](https://caddyserver.com/docs/automatic-https)) เราเขียนแค่ชื่อเว็บ 1 บรรทัด
+
+## การใช้งาน
+
+### ตั้งค่าครั้งแรก
+
+ต้องทำการ์ด [Docker Compose](/learn/cards/docker-compose) ให้ `docker compose up -d --build` ในเครื่องผ่านก่อน และต้องมี 2 อย่างที่ต้องขอพี่เลี้ยง (มีค่าใช้จ่าย ห้ามสมัครเองด้วยบัตรของตัวเองโดยไม่ได้คุย)
+
+| ต้องมี | ใช้ทำอะไร | ตัวอย่างในการ์ดนี้ |
+|---|---|---|
+| VPS Ubuntu 1 เครื่อง (RAM 1 GB ขึ้นไป) ที่ login ด้วย [SSH](/glossary#ssh) ได้ | ที่รันกล่องทั้งหมด | IP `203.0.113.10` |
+| สิทธิ์แก้ DNS ของโดเมนบริษัท หรือให้พี่เลี้ยงเพิ่ม record ให้ | ตั้งโดเมนย่อย | `library.example.com` |
+
+แทน `203.0.113.10` และ `library.example.com` ด้วยของจริงทุกที่ในการ์ดนี้
+
+### 1. เพิ่ม Caddy ใน compose (ในเครื่องเรา)
+
+สร้าง `deploy/Caddyfile` ที่ root ของ repo
+
+```text
+# ชื่อเว็บมาจาก SITE_ADDRESS ใน .env เช่น library.example.com (ซ้อมในเครื่องใช้ localhost)
+{$SITE_ADDRESS} {
+	reverse_proxy app:3000
+}
+```
+
+แก้ `compose.yaml` 3 จุด (**ไม่ใช่แทนทั้งไฟล์** service `db` คงไว้เหมือนเดิม): ลบ `ports` ของ `app` ออก, เพิ่ม service `caddy` ต่อท้าย `app` และแทนก้อน `volumes:` ล่างสุด ข้างล่างคือหน้าตาส่วนที่เปลี่ยน
+
+```yaml
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      # ...เหมือนเดิม...
+    depends_on:
+      db:
+        condition: service_healthy
+
+  caddy:
+    image: caddy:2.11.7
+    restart: unless-stopped
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy:/etc/caddy
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
+```
+
+- **ทำไมลบ `ports` ของ app:** ทางเข้ามีทางเดียวคือ Caddy (80, 443) ถ้ายังเปิด 8080 ไว้ คนนอกเข้าเว็บแบบ http ข้าม Caddy ได้ และ Docker เปิด port ที่ประกาศใน `ports` **ทะลุ firewall ของเครื่อง** (`ufw`) ด้วย ฐานข้อมูลก็ไม่มี `ports` ด้วยเหตุผลเดียวกัน
+- **`app:3000`:** Caddy คุยกับ app ผ่านชื่อ service เหมือน app คุยกับ `db` ในการ์ดก่อน
+- **`caddy:2.11.7` ไม่ใช่ `latest`:** รู้แน่ว่าได้รุ่นไหน วันหนึ่ง `latest` อาจเปลี่ยนรุ่นใหญ่ตอน build ใหม่แล้วพังโดยเราไม่ได้แก้อะไร
+- **`caddy_data`:** เก็บใบรับรอง https ถ้าไม่มี volume นี้ ทุกครั้งที่สร้างกล่องใหม่ Caddy จะขอใบรับรองใหม่ ขอบ่อยเกินจะโดน Let's Encrypt จำกัด ([หน้า image ทางการ](https://hub.docker.com/_/caddy) บอกให้ต้องมี)
+- **ผูกโฟลเดอร์ `./deploy` ไม่ใช่ไฟล์ `Caddyfile`:** ตามหน้า image ทางการ ถ้าผูกไฟล์ตรงๆ แก้ไฟล์แล้วกล่องอาจไม่เห็นของใหม่
+
+เพิ่มบรรทัดใน `.env` ที่ root (และชื่อ `SITE_ADDRESS=` ใน `.env.compose.example`)
+
+```bash
+SITE_ADDRESS=localhost
+```
+
+### 2. ซ้อมในเครื่องก่อน
+
+```bash
+docker compose up -d --build
+docker compose ps
+```
+
+**ควรเห็น:** 3 บรรทัด `db` (healthy), `app`, `caddy` สถานะ Up เปิด https://localhost แล้ว browser เตือนว่าไม่ปลอดภัย กด "ขั้นสูง" แล้วเข้าต่อได้ (Caddy ใช้ใบรับรองของตัวเองสำหรับ localhost ซึ่งเครื่องเราไม่รู้จัก ของจริงไม่เตือน) เปิด http://localhost ต้องถูกพาไป https เอง
+
+**ถ้าขึ้น `port is already allocated`:** มีโปรแกรมอื่นใช้ 80 หรือ 443 ในเครื่องอยู่ ข้ามการซ้อมนี้ได้ (บน VPS ใหม่ 2 port นี้ว่าง) แต่ต้องผ่านการ์ดก่อนมาแล้ว
+
+commit ทุกอย่าง (ตรวจ `git status` ว่าไม่มี `.env`) แล้ว push ขึ้น GitHub ติดป้ายรุ่นไว้ด้วย จะได้ย้อนกลับได้ในข้อ 7
+
+```bash
+git add .
+git commit -m "Caddy สำหรับขึ้นเว็บจริง"
+git tag -a v1.0.0 -m "รุ่นแรกบนเว็บจริง"
+git push --follow-tags
+```
+
+**ควรเห็น:** หน้า repo บน GitHub กด Tags มี `v1.0.0` (ต้องใช้ `-a` ถ้าเป็น `git tag v1.0.0` เฉยๆ `--follow-tags` จะไม่ส่งป้ายขึ้น แล้ววันที่ต้องย้อนบน VPS จะหาป้ายไม่เจอ) · ถ้า README มีทาง "รันด้วย Docker ที่ :8080" จากการ์ดก่อน แก้เป็น `https://localhost` ด้วย เพราะ app ไม่เปิด 8080 แล้ว
+
+### 3. ตั้งโดเมนย่อย (DNS)
+
+ในหน้าจัดการ DNS ของโดเมน เพิ่ม [record](/glossary#dns-record)
+
+| Type | Name | Value |
+|---|---|---|
+| `A` | `library` | `203.0.113.10` |
+
+ถ้าใช้ Cloudflare ให้ตั้งเป็น **DNS only** (เมฆสีเทา) ให้ Caddy ขอใบรับรองเองได้ตรงๆ แล้วตรวจจากเครื่องเรา (คำสั่งนี้มีทั้ง Mac และ Windows Git Bash)
+
+```bash
+nslookup library.example.com
+```
+
+**ควรเห็น:** ดู `Address` ที่อยู่**ใต้บรรทัด `Name:`** (ชุดแรกบนสุดคือ DNS server ที่เราถาม เช่น router บ้าน ไม่ใช่เว็บเรา)
+
+```text
+Server:   192.168.1.1
+Address:  192.168.1.1#53
+
+Non-authoritative answer:
+Name:     library.example.com
+Address:  203.0.113.10
+```
+
+ ถ้ายังไม่ขึ้นหรือได้ IP อื่น รอ 5–30 นาทีแล้วลองใหม่ (DNS ต้องใช้เวลากระจาย) **อย่าไปข้อ 5 จนกว่าจะขึ้น IP ถูก** เพราะ Caddy จะขอใบรับรองไม่ผ่าน
+
+### 4. เตรียม VPS (ทำครั้งเดียว)
+
+เข้าเครื่องจาก Terminal ในเครื่องเรา
+
+```bash
+ssh root@203.0.113.10
+```
+
+**ควรเห็น:** ครั้งแรกจะถาม `Are you sure you want to continue connecting (yes/no)?` พิมพ์ `yes` แล้วใส่รหัส (พิมพ์แล้วจอไม่ขึ้นอะไรเลย เป็นเรื่องปกติ) ถ้าพี่เลี้ยงให้ชื่อผู้ใช้อื่นมา เช่น `ubuntu@203.0.113.10` ให้ใส่ `sudo` หน้าคำสั่งข้อ 4 (`curl ... | sudo sh`, `sudo ufw ...`) และหน้า `docker` ทุกคำสั่ง
+
+จากนี้คำสั่งทั้งหมดในข้อ 4–7 พิมพ์**บน VPS** (หน้าจอขึ้น `root@...:~#`) ติดตั้ง Docker ด้วยสคริปต์ทางการ ([เอกสาร Docker สำหรับ Ubuntu](https://docs.docker.com/engine/install/ubuntu/) ซึ่งบอกว่าสคริปต์นี้เหมาะกับเครื่องทดลอง ถ้าเป็นเครื่องจริงของบริษัทให้ใช้วิธี apt repository ในหน้าเดียวกัน)
+
+```bash
+curl -fsSL https://get.docker.com | sh
+docker compose version
+```
+
+**ควรเห็น:** `Docker Compose version v2...`
+
+ตั้ง [firewall](/glossary#firewall) ให้เปิดแค่ SSH และเว็บ
+
+```bash
+ufw allow OpenSSH
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw allow 443/udp
+ufw enable
+ufw status
+```
+
+**ควรเห็น:** `ufw enable` ถาม `Command may disrupt existing ssh connections. Proceed (y|n)?` ตอบ `y` (ปลอดภัยเพราะ allow OpenSSH ไว้แล้ว) แล้ว `ufw status` ขึ้น `Status: active` และกฎข้างบน แต่ละกฎมีบรรทัด `(v6)` ซ้ำอีกชุด (ของ IPv6) ผู้ให้บริการ VPS หลายเจ้ามี firewall บนหน้าเว็บของเขาอีกชั้น ถามพี่เลี้ยงว่าเปิด 80 และ 443 ที่นั่นแล้วหรือยัง **ต้องมี `OpenSSH` ก่อน `enable` เสมอ** ไม่งั้นตัดตัวเองออกจากเครื่องทันที (`443/udp` ให้ browser ใช้ HTTP/3 ได้ ไม่มีก็ยังเข้าเว็บได้)
+
+### 5. เอาโค้ดขึ้นเครื่องแล้วเปิด
+
+```bash
+git clone https://github.com/<ชื่อ>/<repo>.git library
+cd library
+openssl rand -hex 16
+openssl rand -base64 48
+openssl rand -hex 8
+nano .env
+```
+
+ถ้า repo เป็น private, GitHub ไม่รับรหัสผ่านตอน clone แล้ว ต้องใช้ token หรือ [deploy key](/glossary#deploy-key) (วิธีอยู่ในบทเดิม [Deploy บน VPS](/20-deploy-vps)) · `openssl` 3 บรรทัดสุ่มค่าใหม่ให้ (ใช้เป็นรหัส Postgres, `JWT_SECRET`, รหัสบรรณารักษ์ตามลำดับ) ลากคลุมแล้วคัดลอก ใน `nano` ใส่ 5 บรรทัดเหมือน `.env` ในเครื่องเรา **แต่ใช้ค่าใหม่ทั้งหมด** และ `SITE_ADDRESS` เป็นโดเมนจริง (วางข้อความใน Git Bash ด้วย `Shift+Insert` หรือคลิกขวา ไม่ใช่ `Ctrl+V` · Terminal ของ Mac ใช้ `Cmd+V`)
+
+```bash
+POSTGRES_PASSWORD=ค่าใหม่
+JWT_SECRET=ค่าใหม่ยาว-64-ตัว
+LIBRARIAN_EMAIL=librarian@library.local
+LIBRARIAN_PASSWORD=รหัสใหม่ที่ยาวและไม่ซ้ำกับในเครื่อง
+SITE_ADDRESS=library.example.com
+```
+
+บันทึกด้วย `Ctrl+O` `Enter` ออกด้วย `Ctrl+X` แล้วเปิดระบบ
+
+```bash
+docker compose up -d --build
+docker compose exec -T app bun run seed
+docker compose logs caddy
+```
+
+**ควรเห็น:** ใน log ของ caddy มีบรรทัด `certificate obtained successfully` และชื่อโดเมนของเรา แล้วเปิด `https://library.example.com` จากมือถือ (ใช้เน็ตมือถือ ไม่ใช่ wifi เดียวกับเครื่อง) ต้องเห็นห้องสมุดบิตพร้อมรูปแม่กุญแจ ไม่มีคำเตือน
+
+> **ทำไมค่าลับบนเครื่องจริงต้องไม่ซ้ำกับในเครื่อง:** `.env` ในเครื่องเราเคยถูกเปิด แชร์จอ หรือส่งให้คนอื่นดูมาแล้ว ถ้าใช้ค่าเดียวกัน ใครเห็นก็เข้าหลังบ้านของจริงได้
+
+### 6. ไล่เช็กลิสต์บนเว็บจริง
+
+ทำทุกข้อ**บน `https://library.example.com`** ไม่ใช่ในเครื่อง (ขั้น [ขึ้นระบบ](/learn/deploy) บอกให้ไล่เช็กลิสต์จากขั้น 4 ทั้งหมดซ้ำ)
+
+| ลอง | ควรได้ |
+|---|---|
+| `http://library.example.com` | ถูกพาไป `https://` เอง |
+| รีเฟรชที่ `/books/3` | ยังเห็นหนังสือเล่ม 3 |
+| login หลังบ้าน แล้ว F12 → Application → Cookies | มี `session` ที่ติ๊ก `HttpOnly` และ `Secure` |
+| `https://library.example.com/api/bookz` | JSON 404 |
+| `docker compose restart` แล้วเปิดใหม่ | ข้อมูลยังอยู่ ยัง login ได้ (cookie เดิมยังใช้ได้ เพราะ `JWT_SECRET` ไม่เปลี่ยน) |
+
+### 7. อัปเดต, สำรองข้อมูล และย้อนกลับ
+
+ทุกครั้งที่จะอัปเดต: **สำรองฐานก่อน** แล้วค่อยดึงโค้ดใหม่ ([rollback](/glossary#rollback) โค้ดทำได้ แต่ migration ที่รันไปแล้วไม่ย้อนเอง ข้อมูลที่หายย้อนไม่ได้ถ้าไม่มี backup)
+
+```bash
+docker compose exec -T db pg_dump -U postgres postgres > backup-$(date +%F).sql
+git pull
+docker compose up -d --build
+docker compose logs app
+```
+
+**ควรเห็น:** ไฟล์ `backup-2026-10-28.sql` (วันที่ของวันนั้น) ขนาดไม่เป็น 0 และ log ของ app จบด้วย `Started server` (`-T` ทำให้ส่งผลลงไฟล์ได้ ถ้าไม่ใส่ ไฟล์จะมีตัวอักษรแปลกปนและใช้กู้ไม่ได้)
+
+เวอร์ชันใหม่พัง ย้อนไปป้ายที่ใช้ได้ล่าสุด
+
+```bash
+git checkout v1.0.0
+docker compose up -d --build
+```
+
+git จะขึ้นข้อความยาวเรื่อง `detached HEAD` เป็นเรื่องปกติ (แปลว่ากำลังยืนอยู่ที่ป้าย ไม่ใช่ branch) **ควรเห็น:** เว็บกลับเป็นแบบเดิมใน 1–2 นาที (ลองแล้ว: ขึ้นรุ่นที่แก้หน้าแรก แล้วย้อน ป้ายเดิมกลับมา ข้อมูลไม่หาย) แก้เสร็จแล้วกลับมาที่ branch หลักด้วย `git checkout main` ถ้าต้องกู้ข้อมูลจาก backup (เช่น migration ใหม่ลบคอลัมน์ไป)
+
+```bash
+docker compose exec -T db psql -U postgres -c "CREATE DATABASE restore_check"
+docker compose exec -T db psql -q -U postgres restore_check < backup-2026-10-28.sql
+```
+
+กู้ลงฐานใหม่ชื่ออื่นก่อน ตรวจว่าข้อมูลครบด้วย `docker compose exec -T db psql -U postgres restore_check -c "SELECT count(*) FROM books"` แล้วค่อยตัดสินใจกับพี่เลี้ยงว่าจะสลับยังไง ห้ามกู้ทับฐานจริงตรงๆ
+
+## ทริคที่แนะนำ
+
+1. **ทางเข้ามีทางเดียว:** มีแค่ Caddy ที่ประกาศ `ports` ส่วน `app` และ `db` ไม่มี เพราะ Docker เปิด port ข้าม `ufw` ถ้าเผลอเปิด 5432 ของ Postgres ไว้ คนทั้งเน็ตลองเดารหัสฐานข้อมูลเราได้ ตรวจด้วย `docker compose ps` คอลัมน์ PORTS ต้องมีแค่บรรทัดของ caddy
+2. **ติดป้าย (`git tag`) ทุกครั้งก่อนขึ้นจริง:** ตอนเว็บพังตีสอง ไม่มีใครอยากไล่ `git log` หา commit ที่เคยใช้ได้ ป้าย `v1.0.0`, `v1.0.1` บอกทันทีว่าย้อนไปไหน
+3. **ดู log ก่อนเดา:** `docker compose logs app` (ฝั่งโค้ดเรา) และ `docker compose logs caddy` (https, โดเมน) อาการ "เข้าเว็บไม่ได้" มีต้นเหตุได้ 4 ชั้น: DNS (`nslookup`), firewall, Caddy, app ไล่จากนอกเข้าใน (firewall มี 2 ที่: `ufw` บนเครื่อง และหน้าเว็บของผู้ให้บริการ)
+
+## ปรับไปใช้จริง
+
+**ในงาน STARTER:** [Requirement หน้า 13](/api/files/requirement.pdf#page=13) (ต้อง login) Bonus "Deploy ขึ้น server จริงพร้อมโดเมนย่อย" คือการ์ดนี้ทั้งใบ ทำหลังงานหลักครบ และ**ต้องคุยกับพี่เลี้ยงก่อน** เรื่อง VPS และ DNS ของบริษัท ใส่ URL จริงไว้บนสุดของ README และเขียนใน README ว่าบัญชีทดสอบบนเว็บจริงขอได้จากใคร (ห้ามเขียนรหัสจริงลง README เพราะ repo อาจเป็น public) ระวังเกณฑ์ "ไม่ผ่าน" หน้า 12 ทุกข้อใช้กับเว็บจริงด้วย
+
+**เว็บคู่มือนี้:** ไม่ได้ใช้ VPS แต่ใช้ Vercel (บริการสำเร็จรูป) ซึ่งทำงาน 3 อย่างของการ์ดนี้ให้เอง: เครื่อง, https และ rollback (ปุ่ม "Promote" deployment เก่า) โดยตั้ง region ให้ใกล้ฐานข้อมูลใน [vercel.json บน GitHub](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/vercel.json) และรัน migration ก่อน build ทุกครั้ง แบบเดียวกับ `CMD` ใน Dockerfile ของเรา
+
+ลองคิด: ถ้า `JWT_SECRET` บนเครื่องจริงหลุด ต้องทำอะไรบ้าง และหลังเปลี่ยนค่าแล้ว บรรณารักษ์ที่ login ค้างไว้จะเจออะไร
+
+## ตัวเลือกอื่นที่คล้ายกัน
+
+| วิธี | ดูแลเองแค่ไหน | ใช้เมื่อ |
+|---|---|---|
+| **VPS + Compose + Caddy (การ์ดนี้)** | ทุกอย่าง: อัปเดตเครื่อง, firewall, backup | อยากเข้าใจครบทุกชั้น มีเครื่องของบริษัทให้ |
+| VPS + Nginx + certbot | เหมือนกัน แต่ต้องตั้งต่ออายุใบรับรองเอง | เครื่องที่ใช้ Nginx อยู่แล้ว |
+| Render / Railway / Fly.io (+ Neon สำหรับฐาน) | ไม่ต้องดูแลเครื่อง ใช้ `Dockerfile` เดียวกันได้ | งานเล็ก อยากขึ้นเร็ว (บทเดิม [บริการสำเร็จรูป](/22-deploy-managed)) |
+| Cloudflare Tunnel | ไม่ต้องเปิด port 80/443 บนเครื่อง | เครื่องอยู่หลัง router ที่เปิด port ไม่ได้ |
+
+## ลองเอง
+
+**โจทย์:** เขียนสคริปต์ `deploy/update.sh` ที่ทำข้อ 7 ครบในคำสั่งเดียว: สำรองฐาน, `git pull`, build ใหม่ แล้วตรวจว่าเว็บยังตอบ ถ้าไม่ตอบให้พิมพ์บอกว่าย้อนไปป้ายไหนได้
+
+<Hint level={1}>อย่าใส่ seed ในสคริปต์ (รันซ้ำแล้วข้อมูลเบิ้ล) บรรทัดแรก `#!/bin/sh` บรรทัดที่สอง `set -e` (คำสั่งไหนล้ม สคริปต์หยุดทันที ไม่ไป `git pull` ทั้งที่ backup ไม่สำเร็จ) รันด้วย `sh deploy/update.sh` บน VPS</Hint>
+<Hint level={2}>ตรวจว่าเว็บยังตอบ: รอสัก 10 วินาที (`sleep 10`) แล้ว `curl -fsS https://library.example.com/api/books > /dev/null` (`-f` ทำให้ curl ล้มเมื่อได้ 4xx/5xx) ป้ายล่าสุดดูด้วย `git describe --tags --abbrev=0`</Hint>
+<Hint level={3}>ตรวจผล: รันสคริปต์ตอนโค้ดปกติ ต้องจบเงียบๆ และมีไฟล์ backup ใหม่ แล้วลองทำให้พัง (เช่นตั้ง `JWT_SECRET=สั้น` ใน `.env` ชั่วคราว) รันใหม่ ต้องเห็นข้อความบอกป้ายที่ย้อนได้ แก้ `.env` กลับแล้วรันอีกรอบให้เว็บกลับมา</Hint>
+
+## อ่านเพิ่ม
+
+DNS, record และ IP ละเอียดอยู่ในบทเดิม [Network](/17-network) และ [โดเมนและ DNS](/18-domain-dns) การดูแลเครื่อง (SSH key แทนรหัสผ่าน, อัปเดต Ubuntu) อยู่ใน [Server](/19-server) และ [Deploy บน VPS](/20-deploy-vps) ส่วนการดูแลหลังขึ้นจริงอยู่ในขั้น [ดูแลระบบ](/learn/maintenance)
