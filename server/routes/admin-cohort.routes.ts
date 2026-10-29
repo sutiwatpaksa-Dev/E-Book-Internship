@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { AuthVars } from "../middleware/require-role";
 import { cohortService } from "../services/cohort.service";
-import { cohortAssignSchema, cohortMentorsSchema, cohortSchema, cohortSignupSchema } from "../validators/cohort.validator";
+import { cohortEndedSchema, cohortMentorsSchema, cohortSchema, cohortSignupSchema } from "../validators/cohort.validator";
 
 // หลังบ้าน: รุ่นฝึกงาน · ต่ออยู่ใต้ admin.routes.ts จึงผ่านด่าน requireRole("dev") ของที่นั่นแล้ว
 export const adminCohortRoutes = new Hono<AuthVars>();
@@ -23,13 +23,6 @@ adminCohortRoutes.post("/", async (c) => {
   return c.json(await cohortService.create(c.get("user").id, parsed.data), 201);
 });
 
-// ย้ายน้องเข้า/ออกรุ่น (วางก่อน /:id เพื่อไม่ให้ "assign" ถูกอ่านเป็น id)
-adminCohortRoutes.post("/assign", async (c) => {
-  const parsed = cohortAssignSchema.safeParse(await json(c));
-  if (!parsed.success) return c.json({ error: "เลือกบัญชีอย่างน้อย 1 บัญชี" }, 400);
-  return c.json(await cohortService.assign(c.get("user").id, parsed.data.userIds, parsed.data.cohortId));
-});
-
 adminCohortRoutes.put("/:id", async (c) => {
   const parsed = cohortSchema.safeParse(await json(c));
   if (!parsed.success) return c.json({ error: BAD_COHORT }, 400);
@@ -37,13 +30,11 @@ adminCohortRoutes.put("/:id", async (c) => {
   return c.body(null, 204);
 });
 
-adminCohortRoutes.post("/:id/end", async (c) => {
-  await cohortService.setEnded(c.get("user").id, id(c), true);
-  return c.body(null, 204);
-});
-
-adminCohortRoutes.post("/:id/reopen", async (c) => {
-  await cohortService.setEnded(c.get("user").id, id(c), false);
+// จบรุ่น / เปิดรุ่นคืน = เปลี่ยนสถานะของรุ่น จึงเป็น PATCH ช่อง ended (ไม่ใช่ path คำกริยา /end /reopen)
+adminCohortRoutes.patch("/:id", async (c) => {
+  const parsed = cohortEndedSchema.safeParse(await json(c));
+  if (!parsed.success) return c.json({ error: "ส่ง { ended: true } เพื่อจบรุ่น หรือ { ended: false } เพื่อเปิดคืน" }, 400);
+  await cohortService.setEnded(c.get("user").id, id(c), parsed.data.ended);
   return c.body(null, 204);
 });
 

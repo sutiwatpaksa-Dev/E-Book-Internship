@@ -6,7 +6,9 @@ import { auditService } from "../services/audit.service";
 import { fileService } from "../services/file.service";
 import { progressService } from "../services/progress.service";
 import { threadService } from "../services/thread.service";
+import { cohortService } from "../services/cohort.service";
 import { userService } from "../services/user.service";
+import { cohortAssignSchema } from "../validators/cohort.validator";
 import { messageSchema, statusSchema } from "../validators/thread.validator";
 import { createManySchema, createUserSchema, updateUserSchema } from "../validators/user.validator";
 
@@ -22,19 +24,29 @@ adminRoutes.get("/me", (c) => {
   return c.json({ id, superAdmin });
 });
 
+// สร้างบัญชี = POST ที่ collection เดียว (REST: URL เป็นคำนาม method เป็นคำกริยา ไม่มี /users/bulk)
+// body มี usernames = สร้างหลายคน ตอบผลรายคน (ชื่อซ้ำไม่ทำให้ทั้งชุดล้ม) · มี username = คนเดียว ตอบ PIN
 adminRoutes.post("/users", async (c) => {
-  const parsed = createUserSchema.safeParse(await c.req.json().catch(() => null));
+  const body = await c.req.json().catch(() => null);
+  if (body && typeof body === "object" && "usernames" in body) {
+    const parsed = createManySchema.safeParse(body);
+    if (!parsed.success) return c.json({ error: "ใส่ 1–50 ชื่อ บรรทัดละชื่อ ใช้ได้เฉพาะ a-z 0-9 . _ - ยาว 3–64 ตัว" }, 400);
+    return c.json(await userService.createMany(c.get("user"), parsed.data.usernames, parsed.data.role, parsed.data.cohortId), 201);
+  }
+  const parsed = createUserSchema.safeParse(body);
   if (!parsed.success) return c.json({ error: "username ใช้ได้เฉพาะ a-z 0-9 . _ - ยาว 3–64 ตัว และต้องเลือก role" }, 400);
   return c.json(await userService.create(c.get("user"), parsed.data.username, parsed.data.role, parsed.data.cohortId), 201);
 });
 
-adminRoutes.post("/users/bulk", async (c) => {
-  const parsed = createManySchema.safeParse(await c.req.json().catch(() => null));
-  if (!parsed.success) return c.json({ error: "ใส่ 1–50 ชื่อ บรรทัดละชื่อ ใช้ได้เฉพาะ a-z 0-9 . _ - ยาว 3–64 ตัว" }, 400);
-  return c.json(await userService.createMany(c.get("user"), parsed.data.usernames, parsed.data.role, parsed.data.cohortId), 201);
+// ย้ายน้องหลายคนเข้า/ออกรุ่น = แก้ช่อง cohortId ของหลายบัญชีพร้อมกัน จึงเป็น PATCH ที่ collection
+adminRoutes.patch("/users", async (c) => {
+  const parsed = cohortAssignSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: "เลือกบัญชีอย่างน้อย 1 บัญชี" }, 400);
+  return c.json(await cohortService.assign(c.get("user").id, parsed.data.userIds, parsed.data.cohortId));
 });
 
-adminRoutes.post("/users/:id/reset-pin", async (c) => c.json(await userService.resetPin(Number(c.req.param("id")), undefined, c.get("user"))));
+// ออก PIN ใหม่ = สร้าง PIN ชิ้นใหม่ใต้บัญชีนั้น (PIN เดิมใช้ไม่ได้ทันที)
+adminRoutes.post("/users/:id/pins", async (c) => c.json(await userService.resetPin(Number(c.req.param("id")), undefined, c.get("user")), 201));
 
 adminRoutes.patch("/users/:id", async (c) => {
   const parsed = updateUserSchema.safeParse(await c.req.json().catch(() => null));
@@ -53,7 +65,7 @@ adminRoutes.put("/requirement", async (c) => {
 });
 
 adminRoutes.get("/threads", async (c) => c.json(await threadService.listAll()));
-adminRoutes.get("/threads/unread", async (c) => c.json({ count: await threadService.unreadForDevs() }));
+adminRoutes.get("/threads/unread-count", async (c) => c.json({ count: await threadService.unreadForDevs() }));
 adminRoutes.get("/threads/:id", async (c) => c.json(await threadService.getAny(Number(c.req.param("id")))));
 
 adminRoutes.post("/threads/:id/messages", async (c) => {

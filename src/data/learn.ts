@@ -66,9 +66,9 @@ export const steps: LearnStep[] = [
 ];
 
 export const cards: LearnCard[] = [
-  { slug: "read-requirement", title: "อ่าน Requirement ให้เป็น", step: "problem", topic: "plan", minutes: 10, starter: "วันที่ 1 · อ่าน Requirement ทั้งฉบับ + จดคำถาม" },
-  { slug: "business-brief", title: "Brief: สรุปร้านที่เป็นกติกาของทั้งงาน", step: "problem", topic: "plan", minutes: 8, needs: ["read-requirement"], starter: "วันที่ 1 · brief ผ่านพี่เลี้ยง" },
-  { slug: "user-stories", title: "User story และเกณฑ์ว่าเสร็จ", step: "problem", topic: "plan", minutes: 10, alsoIn: ["testing"], needs: ["read-requirement"], starter: "วันที่ 1 · แปลง Requirement เป็นงานที่ตรวจได้" },
+  { slug: "reading-requirements", title: "อ่าน Requirement ให้เป็น", step: "problem", topic: "plan", minutes: 10, starter: "วันที่ 1 · อ่าน Requirement ทั้งฉบับ + จดคำถาม" },
+  { slug: "business-brief", title: "Brief: สรุปร้านที่เป็นกติกาของทั้งงาน", step: "problem", topic: "plan", minutes: 8, needs: ["reading-requirements"], starter: "วันที่ 1 · brief ผ่านพี่เลี้ยง" },
+  { slug: "user-stories", title: "User story และเกณฑ์ว่าเสร็จ", step: "problem", topic: "plan", minutes: 10, alsoIn: ["testing"], needs: ["reading-requirements"], starter: "วันที่ 1 · แปลง Requirement เป็นงานที่ตรวจได้" },
   { slug: "scope-questions", title: "ขอบเขตงาน และถามให้ได้คำตอบ", step: "problem", topic: "plan", minutes: 8, needs: ["business-brief", "user-stories"], starter: "วันที่ 1 รายการไม่ทำ + คำถาม · วันที่ 5 Review · ทุกวัน: หลุดแผนแจ้งภายในวันนั้น" },
   { slug: "wireframe", title: "Wireframe: วาดกล่องก่อนเลือกสี", step: "design", topic: "ux", minutes: 8, needs: ["user-stories"], starter: "วันที่ 1 · wireframe 3 หน้า (กระดาษก็ได้)" },
   { slug: "user-flow", title: "User flow และสถานะที่ทุกหน้าต้องมี", step: "design", topic: "ux", minutes: 8, alsoIn: ["testing"], needs: ["wireframe"], starter: "วันที่ 1 ออกแบบ · วันที่ 9 ตรวจ Loading / Error / 404 ทุกหน้า" },
@@ -93,17 +93,17 @@ export const cards: LearnCard[] = [
   { slug: "react-components", title: "React: Component และ Props", step: "coding", topic: "web", part: "Frontend", minutes: 12, starter: "วันที่ 6 · React component พื้นฐาน" },
   { slug: "tailwind", title: "Tailwind และออกแบบมือถือก่อน", step: "coding", topic: "web", part: "Frontend", minutes: 10, alsoIn: ["design"], needs: ["react-components"], starter: "วันที่ 6 · Tailwind theme + responsive 375/768/1280" },
   { slug: "react-state", title: "React: State และ useEffect", step: "coding", topic: "web", part: "Frontend", minutes: 10, needs: ["react-components"], starter: "วันที่ 6–8 · ข้อมูลที่เปลี่ยนบนหน้าจอ" },
-  { slug: "fetch-data", title: "หน้าเว็บดึงข้อมูลจาก API", step: "coding", topic: "web", part: "Frontend", minutes: 10, needs: ["react-state", "hono"], starter: "วันที่ 6 · ดึงจาก API + loading/error ทุกหน้า" },
-  { slug: "react-forms", title: "ฟอร์ม: กรอก ตรวจ ส่ง", step: "coding", topic: "web", part: "Frontend", minutes: 10, needs: ["fetch-data", "validation"], starter: "วันที่ 7 · Contact form" },
-  { slug: "router-seo", title: "หลายหน้า (React Router) และ SEO", step: "coding", topic: "web", part: "Frontend", minutes: 15, needs: ["fetch-data"], starter: "วันที่ 6 หลายหน้า + 404 · วันที่ 9 SEO" },
+  { slug: "data-fetching", title: "หน้าเว็บดึงข้อมูลจาก API", step: "coding", topic: "web", part: "Frontend", minutes: 10, needs: ["react-state", "hono"], starter: "วันที่ 6 · ดึงจาก API + loading/error ทุกหน้า" },
+  { slug: "react-forms", title: "ฟอร์ม: กรอก ตรวจ ส่ง", step: "coding", topic: "web", part: "Frontend", minutes: 10, needs: ["data-fetching", "validation"], starter: "วันที่ 7 · Contact form" },
+  { slug: "router-seo", title: "หลายหน้า (React Router) และ SEO", step: "coding", topic: "web", part: "Frontend", minutes: 15, needs: ["data-fetching"], starter: "วันที่ 6 หลายหน้า + 404 · วันที่ 9 SEO" },
   { slug: "protected-routes", title: "หน้าหลังบ้านที่ต้อง login", step: "coding", topic: "auth", part: "หลังบ้าน", minutes: 12, needs: ["router-seo", "react-forms", "auth-middleware"], starter: "วันที่ 8 · /admin/login, เด้งกลับเมื่อไม่ login, logout" },
   { slug: "crud-ui", title: "หน้าจัดการข้อมูล: ตาราง ค้นหา แบ่งหน้า เพิ่ม แก้ ลบ", step: "coding", topic: "web", part: "หลังบ้าน", minutes: 15, needs: ["protected-routes"], starter: "วันที่ 8 · CRUD UI (list/add/edit/delete) + state ของฟอร์มและตาราง" },
   { slug: "manual-testing", title: "ทดสอบด้วยมือแบบมีแผน", step: "testing", topic: "test", minutes: 10, needs: ["user-stories", "user-flow", "crud-ui"], starter: "วันที่ 9 · ตรวจความเรียบร้อย (responsive, loading/error) + Review รอบที่ 2" },
-  { slug: "unit-test", title: "เทสต์อัตโนมัติด้วย bun test", step: "testing", topic: "test", minutes: 10, needs: ["validation", "layers", "manual-testing"], starter: "Bonus หน้า 13 · test ครอบคลุม validator" },
+  { slug: "unit-testing", title: "เทสต์อัตโนมัติด้วย bun test", step: "testing", topic: "test", minutes: 10, needs: ["validation", "layers", "manual-testing"], starter: "Bonus หน้า 13 · test ครอบคลุม validator" },
   { slug: "readme", title: "README ที่คนอื่นรันตามได้", step: "documentation", topic: "plan", minutes: 10, needs: ["password-hash", "jwt-cookie", "api-testing", "crud-ui"], starter: "วันที่ 10 · README (ติดตั้ง, .env, migration/seed, รัน, บัญชี admin ทดสอบ)" },
   { slug: "production-build", title: "Build สำหรับขึ้นระบบ: server เดียวเสิร์ฟทั้งเว็บ", step: "deploy", topic: "ops", minutes: 12, needs: ["crud-ui", "jwt-cookie", "readme"], starter: "Bonus · Deploy / Docker Compose (เริ่มจากการ์ดนี้)" },
   { slug: "docker-compose", title: "Docker Compose: ทั้งระบบในคำสั่งเดียว", step: "deploy", topic: "ops", minutes: 15, needs: ["production-build", "migration"], starter: "Bonus · Docker Compose รัน Postgres + server + client ในคำสั่งเดียว" },
-  { slug: "deploy-online", title: "ขึ้นเว็บจริง: VPS, โดเมนย่อย และ https", step: "deploy", topic: "ops", minutes: 20, needs: ["docker-compose"], starter: "Bonus · Deploy ขึ้น server จริงพร้อมโดเมนย่อย" },
+  { slug: "vps-deployment", title: "ขึ้นเว็บจริง: VPS, โดเมนย่อย และ https", step: "deploy", topic: "ops", minutes: 20, needs: ["docker-compose"], starter: "Bonus · Deploy ขึ้น server จริงพร้อมโดเมนย่อย" },
 ];
 
 export const legacy: LegacyLink[] = [

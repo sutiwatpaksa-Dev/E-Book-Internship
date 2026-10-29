@@ -8,7 +8,7 @@ export const threadRoutes = new Hono<AuthVars>();
 threadRoutes.use("*", requireRole("intern", "dev"));
 
 threadRoutes.get("/", async (c) => c.json(await threadService.listMine(c.get("user").id)));
-threadRoutes.get("/unread", async (c) => c.json({ count: await threadService.unreadMine(c.get("user").id) }));
+threadRoutes.get("/unread-count", async (c) => c.json({ count: await threadService.unreadMine(c.get("user").id) }));
 
 threadRoutes.post("/", async (c) => {
   const parsed = createThreadSchema.safeParse(await c.req.json().catch(() => null));

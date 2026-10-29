@@ -8,7 +8,7 @@ export const adminContentApi = {
   listCards: () => request<MentorCardSummary[]>(`${base}/cards`),
   createCard: (input: MentorCardInput) => request<{ id: number }>(`${base}/cards`, jsonBody("POST", input)),
   updateCard: (id: number, { slug: _, ...input }: MentorCardInput) => request<null>(`${base}/cards/${id}`, jsonBody("PUT", input)),
-  setCardStatus: (id: number, status: CardStatus) => request<null>(`${base}/cards/${id}/status`, jsonBody("PATCH", { status })),
+  setCardStatus: (id: number, status: CardStatus) => request<null>(`${base}/cards/${id}`, jsonBody("PATCH", { status })),
   deleteCard: (id: number) => request<null>(`${base}/cards/${id}`, { method: "DELETE" }),
 
   listNotes: () => request<PageNote[]>(`${base}/notes`),
@@ -18,7 +18,7 @@ export const adminContentApi = {
 
   listAnnouncements: () => request<Announcement[]>(`${base}/announcements`),
   createAnnouncement: (input: AnnouncementInput) => request<{ id: number }>(`${base}/announcements`, jsonBody("POST", input)),
-  endAnnouncement: (id: number) => request<null>(`${base}/announcements/${id}/end`, { method: "POST" }),
+  endAnnouncement: (id: number) => request<null>(`${base}/announcements/${id}`, jsonBody("PATCH", { ended: true })),
 
   setOverride: (slug: string, o: Omit<CardOverride, "slug">) => request<null>(`${base}/overrides/${slug}`, jsonBody("PUT", o)),
 };

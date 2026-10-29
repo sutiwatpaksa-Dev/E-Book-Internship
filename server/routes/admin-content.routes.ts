@@ -4,7 +4,7 @@ import { announcementService } from "../services/announcement.service";
 import { cardOverrideService } from "../services/card-override.service";
 import { mentorCardService } from "../services/mentor-card.service";
 import { pageNoteService } from "../services/page-note.service";
-import { announcementSchema, cardOverrideSchema, cardSlug, cardStatusSchema, mentorCardSchema, pageNoteSchema } from "../validators/content.validator";
+import { announcementEndSchema, announcementSchema, cardOverrideSchema, cardSlug, cardStatusSchema, mentorCardSchema, pageNoteSchema } from "../validators/content.validator";
 
 // หลังบ้าน: พี่เลี้ยงเขียนเนื้อหาเอง · ต่ออยู่ใต้ admin.routes.ts จึงผ่านด่าน requireRole("dev") ของที่นั่นแล้ว
 export const adminContentRoutes = new Hono<AuthVars>();
@@ -33,7 +33,8 @@ adminContentRoutes.put("/cards/:id", async (c) => {
   return c.body(null, 204);
 });
 
-adminContentRoutes.patch("/cards/:id/status", async (c) => {
+// PATCH = แก้บางช่อง ตอนนี้แก้ได้ช่องเดียวคือสถานะ (ร่าง/เผยแพร่) · แก้ทั้งใบใช้ PUT ข้างบน
+adminContentRoutes.patch("/cards/:id", async (c) => {
   const parsed = cardStatusSchema.safeParse(await json(c));
   if (!parsed.success) return c.json({ error: "สถานะไม่ถูกต้อง" }, 400);
   await mentorCardService.setStatus(c.get("user").id, id(c, "CARD_NOT_FOUND"), parsed.data.status);
@@ -75,7 +76,9 @@ adminContentRoutes.post("/announcements", async (c) => {
   return c.json(await announcementService.create(c.get("user").id, parsed.data), 201);
 });
 
-adminContentRoutes.post("/announcements/:id/end", async (c) => {
+// จบประกาศ = ตั้ง ended เป็น true (ยังไม่มีเปิดคืน ประกาศใหม่แทน)
+adminContentRoutes.patch("/announcements/:id", async (c) => {
+  if (!announcementEndSchema.safeParse(await json(c)).success) return c.json({ error: "ส่ง { ended: true } เพื่อจบประกาศ" }, 400);
   await announcementService.end(c.get("user").id, id(c, "ANNOUNCEMENT_NOT_FOUND"));
   return c.body(null, 204);
 });

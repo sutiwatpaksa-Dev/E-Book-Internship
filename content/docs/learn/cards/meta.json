@@ -2,7 +2,7 @@
   "title": "คลังการ์ด",
   "pages": [
     "index",
-    "read-requirement",
+    "reading-requirements",
     "business-brief",
     "user-stories",
     "scope-questions",
@@ -29,16 +29,16 @@
     "react-components",
     "tailwind",
     "react-state",
-    "fetch-data",
+    "data-fetching",
     "react-forms",
     "router-seo",
     "protected-routes",
     "crud-ui",
     "manual-testing",
-    "unit-test",
+    "unit-testing",
     "readme",
     "production-build",
     "docker-compose",
-    "deploy-online"
+    "vps-deployment"
   ]
 }

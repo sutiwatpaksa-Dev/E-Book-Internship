@@ -71,14 +71,14 @@ describe("โครง 7 ขั้น", () => {
     expect(fresh.started).toBe(false);
     expect(fresh.step.slug).toBe("problem");
 
-    const some = nextUp(new Set([cardUrl("read-requirement")]));
+    const some = nextUp(new Set([cardUrl("reading-requirements")]));
     expect(some.started).toBe(true);
     expect(some.card?.slug).toBe("business-brief");
     expect(some.step.slug).toBe("problem");
 
     // ข้ามมาเริ่มที่ขั้น Coding ก่อน: ทำต่อพากลับไปการ์ดแรกที่ยังไม่เข้าใจ ซึ่งอยู่ขั้น 1
     const skipped = nextUp(new Set([cardUrl("postgres")]));
-    expect(skipped.card?.slug).toBe("read-requirement");
+    expect(skipped.card?.slug).toBe("reading-requirements");
     expect(skipped.step.slug).toBe("problem");
 
     const all = nextUp(new Set(learnLinks));

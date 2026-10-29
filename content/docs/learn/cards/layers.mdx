@@ -211,7 +211,7 @@ loanRoutes.post("/", async (c) => {
 <Hint level={2}>`bookRepository.get` ตอบ `available` มาให้แล้ว service เรียกตัวเดียวได้ทั้ง "มีเล่มนี้ไหม" และ "ว่างไหม" ถ้าไม่ว่างก็โยนรหัสใหม่</Hint>
 <Hint level={3}>ตอนนี้รหัสใหม่จะได้ `500` เหมือน `LOAN_LIMIT` เก็บไว้ก่อน แล้วไปทำให้เป็น `409` ในการ์ดถัดไป</Hint>
 
-**โจทย์ 2:** ทำ `GET /api/books/available` (เฉพาะเล่มที่ยืมได้) และ `DELETE /api/books/:id` (ตอบ `{ id }` หรือ `404`) จากโจทย์การ์ด Hono ใหม่ ให้ใช้ฐานข้อมูล การ์ด [หน้าเว็บดึงข้อมูล](/learn/cards/fetch-data) จะใช้ `DELETE` นี้
+**โจทย์ 2:** ทำ `GET /api/books/available` (เฉพาะเล่มที่ยืมได้) และ `DELETE /api/books/:id` (ตอบ `{ id }` หรือ `404`) จากโจทย์การ์ด Hono ใหม่ ให้ใช้ฐานข้อมูล การ์ด [หน้าเว็บดึงข้อมูล](/learn/cards/data-fetching) จะใช้ `DELETE` นี้
 
 <Hint level={1}>เพิ่มฟังก์ชัน `remove` ใน `bookRepository` ดูแบบจาก `create`: Drizzle มี `db.delete(ตาราง).where(...).returning()` และอย่าลืมว่า route เฉพาะต้องมาก่อน `/:id`</Hint>
 <Hint level={2}>`/available` เขียน query ใหม่ก็ได้ หรือกรองผลจาก `list("")` ด้วย `.filter()` ก็ได้ ลองคิดว่าถ้ามีหนังสือหมื่นเล่ม แบบไหนดีกว่า</Hint>

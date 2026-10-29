@@ -10,7 +10,7 @@ title: "Build สำหรับขึ้นระบบ: server เดียว
 
 ## ที่มา
 
-Vite ตอนพัฒนาแปลงโค้ด TypeScript ทีละไฟล์ทุกครั้งที่เปิดหน้า ช้าและกินเครื่อง ใช้กับคนจริงหลายคนไม่ได้ ต้อง build ก่อน แต่พอ build แล้ว **proxy `/api` ของ Vite ก็หายไปด้วย** (การ์ด [ดึงข้อมูลจาก API](/learn/cards/fetch-data) ตั้งไว้ใน `vite.config.ts` ซึ่งใช้แค่ตอน `bun run dev`) หน้าเว็บเรียก `fetch("/api/books")` แล้วจะไม่มีใครตอบ
+Vite ตอนพัฒนาแปลงโค้ด TypeScript ทีละไฟล์ทุกครั้งที่เปิดหน้า ช้าและกินเครื่อง ใช้กับคนจริงหลายคนไม่ได้ ต้อง build ก่อน แต่พอ build แล้ว **proxy `/api` ของ Vite ก็หายไปด้วย** (การ์ด [ดึงข้อมูลจาก API](/learn/cards/data-fetching) ตั้งไว้ใน `vite.config.ts` ซึ่งใช้แค่ตอน `bun run dev`) หน้าเว็บเรียก `fetch("/api/books")` แล้วจะไม่มีใครตอบ
 
 ทางแก้ที่ง่ายที่สุดคือให้ Hono ส่งไฟล์หน้าเว็บเอง หน้าเว็บกับ API จึงอยู่ "บ้านเดียวกัน" (origin เดียวกัน) เหมือนตอนพัฒนาผ่าน proxy ได้ 3 อย่างฟรี:
 
@@ -60,7 +60,7 @@ export default site;
 - **ทำไมมี `if`:** ตอน `bun run dev` เรายังเปิดหน้าเว็บผ่าน Vite (มี hot reload) Hono ไม่ต้องส่งหน้าเว็บ และตอนนั้นอาจยังไม่เคย build
 - **path `../client/dist`:** นับจากโฟลเดอร์ที่พิมพ์คำสั่งรัน server ซึ่งคือ `server/` ถ้ารันจาก root ของ repo จะหาไฟล์ไม่เจอ
 
-`onError` และด่าน login ของ `app` เดิมยังทำงานเหมือนเดิม (ลองแล้ว: ลบหนังสือที่ยังถูกยืมอยู่ ได้ `500` แบบ JSON จาก `errorHandler` และ `/api/admin/books` ไม่มี cookie ได้ `401`) การ์ด [เทสต์อัตโนมัติ](/learn/cards/unit-test) ที่ `import app from "./index"` ก็ยังผ่าน เพราะ `site` ตอบ `/api/...` ได้เหมือนเดิม
+`onError` และด่าน login ของ `app` เดิมยังทำงานเหมือนเดิม (ลองแล้ว: ลบหนังสือที่ยังถูกยืมอยู่ ได้ `500` แบบ JSON จาก `errorHandler` และ `/api/admin/books` ไม่มี cookie ได้ `401`) การ์ด [เทสต์อัตโนมัติ](/learn/cards/unit-testing) ที่ `import app from "./index"` ก็ยังผ่าน เพราะ `site` ตอบ `/api/...` ได้เหมือนเดิม
 
 ### 2. คำสั่งรันแบบขึ้นระบบ (`server/package.json`)
 
@@ -99,7 +99,7 @@ bun run start
 | `http://localhost:3000/api/bookz` | JSON `404` `NOT_FOUND` (ไม่ใช่หน้าเว็บ) |
 | login หลังบ้านที่ `/admin/login` แล้วกดเมนู "หนังสือ" | เข้าได้ เห็นตารางหนังสือที่ `/admin/books` |
 
-login ได้ทั้งที่ cookie เป็น `Secure` เพราะ Chrome และ Firefox ถือว่า `http://localhost` ปลอดภัยพอ (ลองแล้วทั้งด้วย curl และ Chrome) ตอนซ้อมแบบ http ให้ใช้ Chrome หรือ Firefox เพราะ Safari อาจไม่เก็บ cookie `Secure` บน http บนเว็บจริงต้องเป็น https การ์ด [ขึ้นเว็บจริง](/learn/cards/deploy-online) จะทำให้
+login ได้ทั้งที่ cookie เป็น `Secure` เพราะ Chrome และ Firefox ถือว่า `http://localhost` ปลอดภัยพอ (ลองแล้วทั้งด้วย curl และ Chrome) ตอนซ้อมแบบ http ให้ใช้ Chrome หรือ Firefox เพราะ Safari อาจไม่เก็บ cookie `Secure` บน http บนเว็บจริงต้องเป็น https การ์ด [ขึ้นเว็บจริง](/learn/cards/vps-deployment) จะทำให้
 
 **ถ้า `bun run build` ขึ้น error TypeScript เต็มจอ** (เช่น `'x' is declared but its value is never read`) ทั้งที่ `bun run dev` ใช้ได้: คำสั่ง build ของ Vite template คือ `tsc -b && vite build` ตรวจ type ทั้งโปรเจกต์ก่อน ส่วนตอน dev Vite ไม่ตรวจ ให้อ่านชื่อไฟล์กับเลขบรรทัดแล้วแก้ทีละจุด ห้ามลบ `tsc -b` ทิ้ง (ใน Docker การ์ดถัดไปก็จะพังที่จุดเดียวกัน)
 

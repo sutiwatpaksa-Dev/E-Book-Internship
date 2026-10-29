@@ -16,7 +16,8 @@ progressRoutes.put("/", async (c) => {
   return c.body(null, 204);
 });
 
-progressRoutes.post("/import", async (c) => {
+// เพิ่มหลายลิงก์ทีเดียว (ย้ายของที่ติ๊กไว้ในเครื่องขึ้น server) = สร้างแถวใหม่ จึงเป็น POST ที่ collection ไม่ใช่ /import
+progressRoutes.post("/", async (c) => {
   const parsed = importProgressSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ error: "ข้อมูลไม่ถูกต้อง" }, 400);
   return c.json(await progressService.importLocal(c.get("user").id, parsed.data.links));

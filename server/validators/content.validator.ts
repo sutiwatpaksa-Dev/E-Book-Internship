@@ -49,4 +49,6 @@ export const cardOverrideSchema = z.object({
   topic: topic.nullable(),
 });
 
-export const readNotificationsSchema = z.object({ ids: z.array(z.number().int().positive()).max(100).optional() });
+export const announcementEndSchema = z.object({ ended: z.literal(true) });
+// read: true = ทำเป็นอ่านแล้ว · ไม่ส่ง ids = ทุกอัน
+export const readNotificationsSchema = z.object({ read: z.literal(true), ids: z.array(z.number().int().positive()).max(100).optional() });

@@ -18,6 +18,8 @@ export const cohortSignupSchema = z.object({
 });
 
 // null = เอาออกจากรุ่น (กลับไปอยู่ "ไม่มีรุ่น")
+export const cohortEndedSchema = z.object({ ended: z.boolean() });
+
 export const cohortAssignSchema = z.object({
   userIds: z.array(z.number().int().positive()).min(1).max(200),
   cohortId: z.number().int().positive().nullable(),

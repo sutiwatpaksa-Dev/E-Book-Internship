@@ -5,6 +5,12 @@ title: "📝 มีอะไรใหม่"
 
 บันทึกการเปลี่ยนแปลงของคู่มือในแต่ละเวอร์ชัน เวอร์ชันล่าสุดอยู่บนสุด
 
+## v2.1.18 · 29 ต.ค. 2569
+
+- **การ์ด [HTTP และ REST](/learn/cards/http-rest) มีทริคเพิ่ม 2 ข้อ:** ปุ่มที่เป็นคำกริยา (เช่น "จบรุ่น") ไม่ต้องกลายเป็น URL คำกริยา ให้ถามว่า "เปลี่ยนช่องไหนของอะไร" และข้อยกเว้นอย่าง `/auth/login` มีได้ถ้าบอกเหตุผลได้
+- API ของเว็บคู่มือนี้ทำตามการ์ดแล้ว: เปิด DevTools ดูได้เลย เช่น จบรุ่น = `PATCH /api/admin/cohorts/:id`, อ่านแจ้งเตือน = `PATCH /api/notifications` (เดิมมี path คำกริยาอย่าง `/end`, `/read`)
+- ที่อยู่การ์ด 4 ใบเปลี่ยนให้เป็นคำนามเหมือนใบอื่น ลิงก์เดิมยังพาไปถูกที่ และที่ติ๊ก "เข้าใจแล้ว" ไว้อยู่ครบ: [อ่าน Requirement](/learn/cards/reading-requirements), [ดึงข้อมูลจาก API](/learn/cards/data-fetching), [เทสต์อัตโนมัติ](/learn/cards/unit-testing), [ขึ้นเว็บจริง](/learn/cards/vps-deployment)
+
 ## v2.1.17 · 29 ต.ค. 2569
 
 - **[โปรไฟล์](/profile) ของน้องใส่ช่องติดต่อได้แล้ว:** เบอร์โทร, LINE, Instagram, Facebook และด้านที่สนใจ/ถนัด (ไม่บังคับทุกช่อง) พี่เลี้ยงเห็นในหลังบ้าน น้องคนอื่นไม่เห็น ช่องเบอร์และ ID ตรวจรูปแบบแบบเดียวกับของพี่เลี้ยง
@@ -14,8 +20,8 @@ title: "📝 มีอะไรใหม่"
 ## v2.1.16 · 29 ต.ค. 2569
 
 - แก้การ์ดตามผลตรวจ 29 ต.ค. (ลองรันจริงทุกข้อ)
-  - [เทสต์อัตโนมัติ](/learn/cards/unit-test): ตัวอย่างบัตรปลอมเดิมใส่ภาษาไทยใน cookie ทำให้เทสต์พังก่อนถึง server เปลี่ยนเป็นตัวอังกฤษแล้ว
-  - [ดึงข้อมูลจาก API](/learn/cards/fetch-data): `ApiError` มี `status` แล้ว [ทดสอบด้วยมือ](/learn/cards/manual-testing) จึงมีโค้ดแก้บั๊ก "server ล่มแล้วเด้งไปหน้า login" ให้ทำตามได้จริง
+  - [เทสต์อัตโนมัติ](/learn/cards/unit-testing): ตัวอย่างบัตรปลอมเดิมใส่ภาษาไทยใน cookie ทำให้เทสต์พังก่อนถึง server เปลี่ยนเป็นตัวอังกฤษแล้ว
+  - [ดึงข้อมูลจาก API](/learn/cards/data-fetching): `ApiError` มี `status` แล้ว [ทดสอบด้วยมือ](/learn/cards/manual-testing) จึงมีโค้ดแก้บั๊ก "server ล่มแล้วเด้งไปหน้า login" ให้ทำตามได้จริง
   - [README](/learn/cards/readme): ตรวจว่า `.env` ไม่หลุดขึ้น GitHub ด้วย `git check-ignore` (เดิม `git status` มองไม่เห็นไฟล์ในโฟลเดอร์ใหม่)
   - [JWT ใน cookie](/learn/cards/jwt-cookie) บอกให้ยิง curl จาก `server/` · [Tailwind](/learn/cards/tailwind), [Zod](/learn/cards/validation), [Password hash](/learn/cards/password-hash), [Build สำหรับขึ้นระบบ](/learn/cards/production-build) อธิบายจุดที่ชวนงงเพิ่ม
 
@@ -24,7 +30,7 @@ title: "📝 มีอะไรใหม่"
 - **การ์ดขั้น [Deploy](/learn/deploy) 3 ใบ** ต่อจากโปรเจกต์ห้องสมุดที่ทำมาตลอดขั้น Coding และลองรันจริงครบทุกคำสั่ง
   - [Build สำหรับขึ้นระบบ](/learn/cards/production-build): ให้ Hono ตัวเดียวเสิร์ฟทั้ง API และหน้าเว็บที่ build แล้ว รีเฟรชหน้าไหนก็ไม่ 404 และ API ที่ไม่มีจริงยังได้ JSON
   - [Docker Compose](/learn/cards/docker-compose): Postgres + server + หน้าเว็บในคำสั่งเดียว migration รันเองตอนเปิด ข้อมูลไม่หายเมื่อสร้างกล่องใหม่
-  - [ขึ้นเว็บจริง](/learn/cards/deploy-online): VPS, โดเมนย่อย, https อัตโนมัติด้วย Caddy, firewall, สำรองฐานข้อมูล และย้อนเวอร์ชัน
+  - [ขึ้นเว็บจริง](/learn/cards/vps-deployment): VPS, โดเมนย่อย, https อัตโนมัติด้วย Caddy, firewall, สำรองฐานข้อมูล และย้อนเวอร์ชัน
 - คลังการ์ดมีหมวดใหม่ **ขึ้นระบบและดูแล**
 - การ์ด [JWT ใน cookie](/learn/cards/jwt-cookie) เตือนให้ใส่ `cookies.txt` ใน `.gitignore` (ไฟล์นี้คือบัตร login จริง)
 
@@ -44,7 +50,7 @@ title: "📝 มีอะไรใหม่"
 - **[โปรไฟล์ของฉัน](/profile)** จอกว้างมีการ์ดสรุปข้างฟอร์ม: อยู่รุ่นไหน วันที่เท่าไรของการฝึก พี่เลี้ยงประจำรุ่นคือใคร (กดถามได้เลย) ผ่านการ์ดไปกี่ใบ และการ์ดใบถัดไปที่ควรทำ · บนมือถือการ์ดนี้อยู่ใต้ฟอร์ม
 - **แถบซ้ายของหน้าโปรไฟล์ ถามพี่เลี้ยง และโปรเจกต์ STARTER** ใช้เมนู 7 ขั้นเหมือนหน้าการ์ดแล้ว เดิมขึ้น "0 / 28 บท" ของบทเดิม ทำให้ดูเหมือนการ์ดที่ผ่านไม่ถูกบันทึก
 - **การ์ด [README ที่คนอื่นรันตามได้](/learn/cards/readme)** เพิ่มขั้นเอาโปรเจกต์ขึ้น GitHub ครั้งแรก (`git init` → `git push`) และ push ก่อน clone ไปทดสอบ บอกให้หยุด server เดิมและใช้ฐาน `readme_test` ตั้งแต่ข้อ 1 · ตัวอย่าง README มีขั้น clone และตาราง "ติดปัญหา" มีแถว port 3000 ชน
-- **การ์ด [เทสต์อัตโนมัติ](/learn/cards/unit-test)** มีตัวอย่างเทสต์ด่าน login (ไม่มีบัตร / บัตรปลอม ได้ 401) ด้วย `app.request()` · **การ์ด [ทดสอบด้วยมือ](/learn/cards/manual-testing)** บอกวิธีสร้างข้อความยาว 300 ตัว และบั๊กที่จะเจอตอนปิด server
+- **การ์ด [เทสต์อัตโนมัติ](/learn/cards/unit-testing)** มีตัวอย่างเทสต์ด่าน login (ไม่มีบัตร / บัตรปลอม ได้ 401) ด้วย `app.request()` · **การ์ด [ทดสอบด้วยมือ](/learn/cards/manual-testing)** บอกวิธีสร้างข้อความยาว 300 ตัว และบั๊กที่จะเจอตอนปิด server
 - หน้า login และการ์ด [เก็บรหัสผ่าน](/learn/cards/password-hash) เลิกพูดถึง PIN ว่าเป็นรหัสหลักแล้ว (PIN ใช้แค่ครั้งแรก)
 
 ## v2.1.11 · 27 ต.ค. 2569
@@ -125,7 +131,7 @@ title: "📝 มีอะไรใหม่"
 
 - **ขั้น [Testing](/learn/testing) มีการ์ดของตัวเองแล้ว 2 ใบ**
   - [ทดสอบด้วยมือแบบมีแผน](/learn/cards/manual-testing): แปลงเกณฑ์ของ user story เป็น test case "ทำอะไร ต้องเห็นอะไร", ทางพัง 6 อย่างที่ต้องลองทุกฟอร์ม, 3 ขนาดจอ และรายงานบั๊กที่คนอื่นทำซ้ำได้ ถ้าทำการ์ด Coding มาครบ จะเจอบั๊กจริง 2 ข้อระหว่างทดสอบ
-  - [เทสต์อัตโนมัติด้วย bun test](/learn/cards/unit-test): เทสต์ schema ของ Zod, อ่านผลตอนเทสต์พัง และพิสูจน์ว่าเทสต์จับได้จริง
+  - [เทสต์อัตโนมัติด้วย bun test](/learn/cards/unit-testing): เทสต์ schema ของ Zod, อ่านผลตอนเทสต์พัง และพิสูจน์ว่าเทสต์จับได้จริง
 - คลังการ์ดมีหมวดใหม่ **ทดสอบ** · ศัพท์ test case, regression, unit test เพิ่มใน[อภิธานศัพท์](/glossary#test-case)
 
 ## v2.0.26 · 26 ต.ค. 2569
@@ -152,7 +158,7 @@ title: "📝 มีอะไรใหม่"
 ## v2.0.23 · 26 ต.ค. 2569
 
 - **ขั้น [1 · Problem](/learn/problem) มีการ์ดของตัวเองแล้ว 4 ใบ** ใช้ทำของส่งวันที่ 1 ของงาน STARTER ได้ครบ:
-  - [อ่าน Requirement ให้เป็น](/learn/cards/read-requirement): ติดป้าย ต้อง / ห้าม / ควร / ตัวอย่าง แล้วจดคำถามพร้อมข้อเสนอ
+  - [อ่าน Requirement ให้เป็น](/learn/cards/reading-requirements): ติดป้าย ต้อง / ห้าม / ควร / ตัวอย่าง แล้วจดคำถามพร้อมข้อเสนอ
   - [Brief](/learn/cards/business-brief): ทุกช่องบอกว่าจะไปใช้ตรงไหนในเว็บ และเช็กสีให้อ่านออกด้วย Contrast Checker
   - [User story และเกณฑ์ว่าเสร็จ](/learn/cards/user-stories): ตัวอย่าง 9 story ของห้องสมุดที่ต่อกับการ์ดช่วง Coding
   - [ขอบเขตงาน และถามให้ได้คำตอบ](/learn/cards/scope-questions): ไฟล์ `NOTES.md` (ไม่ทำ / ข้อสมมติ / คำถาม) และวิธีแจ้งเมื่องานหลุดแผน
@@ -187,7 +193,7 @@ title: "📝 มีอะไรใหม่"
 
 - **การ์ด [Login: JWT](/learn/cards/jwt-cookie) ไม่ทำ server ล้มแล้ว:** บอกให้ import `authRoutes` ด้วย และบอกว่าแก้ `.env` แล้วต้องรีสตาร์ท server (`--hot` ไม่อ่าน `.env` ใหม่)
 - **ทุก snippet บอกแล้วว่าวางไฟล์ไหน ตรงไหน:** [Zod](/learn/cards/validation) (พร้อมคำสั่ง curl ยิง POST ได้ทันที), [State](/learn/cards/react-state), [Tailwind](/learn/cards/tailwind), [ฟอร์ม](/learn/cards/react-forms) (มี `App.tsx` ให้), [จัดการ error](/learn/cards/error-handling), [หน้าหลังบ้าน](/learn/cards/protected-routes)
-- [ดึงข้อมูลจาก API](/learn/cards/fetch-data) อธิบาย `<T>`, `class ... extends Error`, `super()` และ `as` ทีละส่วน
+- [ดึงข้อมูลจาก API](/learn/cards/data-fetching) อธิบาย `<T>`, `class ... extends Error`, `super()` และ `as` ทีละส่วน
 - [หน้าจัดการข้อมูล](/learn/cards/crud-ui): บอกชัดว่าเพิ่มฟังก์ชันใน `bookRepository` เดิม, ปิด `POST /api/books` ที่ไม่ต้อง login (ด่าน login จึงมีความหมาย) และผลที่ควรเห็นตรงกับข้อมูลจริง
 - [แบ่งชั้น](/learn/cards/layers): แก้ขั้นยืมหนังสือให้ทำตามได้กับหนังสือ 2 เล่มที่ seed ไว้
 

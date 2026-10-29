@@ -92,6 +92,13 @@
       "when": 1793182357188,
       "tag": "0012_password_reset",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1793259693902,
+      "tag": "0013_card_slugs",
+      "breakpoints": true
     }
   ]
 }
