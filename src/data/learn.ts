@@ -61,7 +61,7 @@ export const steps: LearnStep[] = [
   { slug: "coding", num: 3, name: "Coding", th: "เขียนโค้ด", output: "ระบบที่รันได้ในเครื่อง", parts: ["เตรียมเครื่อง", "DB", "API", "Login", "Frontend", "หลังบ้าน"], task: "เปลี่ยนแบบตารางเป็น schema แล้วสร้างด้วย migration จากนั้นทำ Backend ทีละ story ที่ต้องมี" },
   { slug: "testing", num: 4, name: "Testing", th: "ทดสอบ", output: "เทสต์ที่รันซ้ำได้ และเช็กลิสต์ทดสอบด้วยมือ", task: "เขียนเช็กลิสต์ทดสอบจาก story ที่ต้องมี แล้วให้เพื่อนทำตามเช็กลิสต์ของเรา" },
   { slug: "documentation", num: 5, name: "Documentation", th: "เขียนเอกสาร", output: "README, .env.example และเอกสาร API", task: "เขียน README แล้วให้เพื่อน clone ไปรันโดยดูแค่ README จดทุกจุดที่เพื่อนติด" },
-  { slug: "deploy", num: 6, name: "Deploy", th: "ขึ้นระบบจริง", output: "เว็บที่เปิดได้จาก URL จริง", task: "ขึ้น STARTER ด้วย Docker Compose บน VPS (หรือบริการสำเร็จรูป) แล้วไล่เช็กลิสต์จากขั้น 4 บนเว็บจริงทุกข้อ" },
+  { slug: "deploy", num: 6, name: "Deploy", th: "ขึ้นระบบจริง", output: "เว็บที่เปิดได้จาก URL จริง", task: "ขึ้น STARTER ด้วย Docker Compose บน VPS หรือ Vercel + Neon (เลือกทางเดียว) แล้วไล่เช็กลิสต์จากขั้น 4 บนเว็บจริงทุกข้อ" },
   { slug: "maintenance", num: 7, name: "Maintenance", th: "ดูแลระบบ", output: "แผนดูแล: log, backup, อัปเดต และ feedback", task: "ตั้ง backup ฐานข้อมูล แล้วลองกู้คืนลงฐานใหม่จริง 1 ครั้ง" },
 ];
 
@@ -104,6 +104,7 @@ export const cards: LearnCard[] = [
   { slug: "production-build", title: "Build สำหรับขึ้นระบบ: server เดียวเสิร์ฟทั้งเว็บ", step: "deploy", topic: "ops", minutes: 12, needs: ["crud-ui", "jwt-cookie", "readme"], starter: "Bonus · Deploy / Docker Compose (เริ่มจากการ์ดนี้)" },
   { slug: "docker-compose", title: "Docker Compose: ทั้งระบบในคำสั่งเดียว", step: "deploy", topic: "ops", minutes: 15, needs: ["production-build", "migration"], starter: "Bonus · Docker Compose รัน Postgres + server + client ในคำสั่งเดียว" },
   { slug: "vps-deployment", title: "ขึ้นเว็บจริง: VPS, โดเมนย่อย และ https", step: "deploy", topic: "ops", minutes: 20, needs: ["docker-compose"], starter: "Bonus · Deploy ขึ้น server จริงพร้อมโดเมนย่อย" },
+  { slug: "vercel-deployment", title: "ขึ้นเว็บด้วย Vercel + Neon: ไม่ต้องดูแลเครื่องเอง", step: "deploy", topic: "ops", minutes: 25, needs: ["production-build", "migration"], starter: "Bonus · ขึ้นเว็บจริงด้วยบริการสำเร็จรูป (ทางเลือกของ VPS)" },
 ];
 
 export const legacy: LegacyLink[] = [
@@ -119,7 +120,6 @@ export const legacy: LegacyLink[] = [
   { step: "testing", title: "Debugging", link: "/09-debugging" },
   { step: "deploy", title: "เน็ตเวิร์กพื้นฐาน", link: "/17-network" },
   { step: "deploy", title: "Domain และ DNS", link: "/18-domain-dns" },
-  { step: "deploy", title: "บริการสำเร็จรูป (Vercel + Neon)", link: "/22-deploy-managed" },
   { step: "deploy", title: "เช่าเครื่อง VPS", link: "/19-server" },
   { step: "deploy", title: "CI/CD", link: "/21-cicd" },
   { step: "maintenance", title: "เปิดใช้จริง ดูแลระบบ ส่งมอบ", link: "/23-go-live" },

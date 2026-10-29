@@ -39,6 +39,7 @@
     "readme",
     "production-build",
     "docker-compose",
-    "vps-deployment"
+    "vps-deployment",
+    "vercel-deployment"
   ]
 }

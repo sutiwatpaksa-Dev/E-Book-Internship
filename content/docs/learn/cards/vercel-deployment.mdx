@@ -1,0 +1,260 @@
+---
+title: "ขึ้นเว็บด้วย Vercel + Neon: ไม่ต้องดูแลเครื่องเอง"
+---
+
+> ต่อจากการ์ด [Build สำหรับขึ้นระบบ](/learn/cards/production-build) เป็นอีกทางของการ์ด [ขึ้นเว็บจริงบน VPS](/learn/cards/vps-deployment) เลือกทางใดทางหนึ่งก็ได้ ข้อมูลแผนฟรีตรวจจากเว็บทางการเมื่อ 29 ต.ค. 2569 ก่อนใช้จริงให้เปิดลิงก์ดูอีกรอบ เพราะเปลี่ยนบ่อย
+
+## ความหมาย
+
+**บริการสำเร็จรูป (managed service)** คือเราส่งแค่โค้ดหรือข้อมูลไป แล้วผู้ให้บริการดูแลเครื่อง ระบบปฏิบัติการ https การขยายเครื่อง และการสำรองข้อมูลให้ทั้งหมด การ์ดนี้ใช้ 2 เจ้า:
+
+- **Vercel** รับหน้าเว็บ (`client/`) และ API (`server/`) จาก GitHub แล้ว build และเปิดให้คนเข้าได้ทันที
+- **Neon** เป็น PostgreSQL บน cloud (เครื่องอยู่ในศูนย์ข้อมูลของคนอื่น เราเช่าใช้ผ่านเน็ต) ต่อด้วย [connection string](/glossary#connection-string) เหมือน Postgres ในเครื่อง
+
+นึกภาพ: [VPS](/glossary#vps) คือเช่าตึกแถวมาเปิดร้านเอง ต้องติดไฟ ติดกุญแจ จ้างยามเอง ส่วนบริการสำเร็จรูปคือเช่าบูธในห้าง ห้างดูแลไฟ แอร์ ยาม ที่จอดรถให้ เราแค่ขนของมาวาง แลกกับต้องทำตามกฎห้าง (เปิดปิดตามเวลา ห้ามต่อเติมเอง)
+
+ระบบเว็บทุกระบบมี 4 ชิ้น แต่ละบริการรับดูแลไม่เท่ากัน:
+
+| ชิ้น | ระบบห้องสมุดของเรา | หน้าที่ |
+|---|---|---|
+| **หน้าเว็บ (hosting)** | `client/dist` ที่ได้จาก `bun run build` | ส่งไฟล์ html js css ให้ browser ผ่าน [CDN](/glossary#cdn) |
+| **API** | `server/` (Hono) | รับคำขอ `/api/...` ตรวจ login คุยกับฐานข้อมูล |
+| **ฐานข้อมูล** | PostgreSQL (members, books, loans, librarians) | เก็บข้อมูลถาวร |
+| **เก็บไฟล์ (storage)** | ยังไม่มี (ถ้าเพิ่มรูปปกหนังสือแบบอัปโหลดจะต้องใช้) | เก็บรูป pdf ไฟล์ที่ผู้ใช้อัปโหลด |
+
+## ที่มา
+
+การ์ด VPS สอนให้ทำเองทุกอย่าง: ติดตั้ง Docker, เปิด firewall, ตั้ง Caddy ให้ได้ https, สำรองฐานข้อมูลด้วย `pg_dump` ทุกวัน ถ้าลืมอัปเดตเครื่องก็โดนเจาะ ถ้าเครื่องล่มตอนตีสาม เราต้องตื่นมาแก้
+
+บริการสำเร็จรูปเกิดมาเพื่อตัดงานพวกนี้ทิ้ง push โค้ดขึ้น GitHub แล้วเว็บขึ้นเองใน 1–2 นาที แต่มีราคาที่ต้องจ่าย:
+
+- **แผนฟรีมีเพดาน** และบางเจ้า**หยุดเครื่องเมื่อไม่มีคนใช้** คำขอแรกหลังหยุดจะช้า ([cold start](/glossary#cold-start))
+- **ทำได้เท่าที่เขาเปิดให้ทำ** บน Vercel โค้ด API รันเป็น [serverless](/glossary#serverless) function คือ Vercel เปิดโปรแกรมเราขึ้นมาเมื่อมีคำขอ แล้วปิดหรือแตกเป็นหลายตัวเองตามคนเข้า ไม่ใช่โปรแกรมตัวเดียวที่เปิดค้างไว้ตลอดแบบบน VPS
+- **ย้ายออกยาก** ถ้าใช้ของเฉพาะเจ้านั้นเยอะ (เรียกว่า vendor lock-in)
+
+ข้อสองสำคัญที่สุด เพราะเปลี่ยนวิธีคิดของโค้ดบางส่วน (ดู "ในงาน STARTER" ด้านล่าง)
+
+## การใช้งาน
+
+### ตั้งค่าครั้งแรก
+
+ต้องมี 3 บัญชี สมัครฟรีทั้งหมด ไม่ต้องใส่บัตร:
+
+1. **GitHub** มี repo ของโปรเจกต์ที่มี `client/` และ `server/` อยู่แล้ว (ตามการ์ด [README](/learn/cards/readme))
+2. **Vercel** สมัครที่ [vercel.com](https://vercel.com) ด้วยปุ่ม **Continue with GitHub** (Vercel จะดึงโค้ดจาก GitHub ได้เลย)
+3. **Neon** สมัครที่ [neon.com](https://neon.com) จะใช้ GitHub หรืออีเมลก็ได้
+
+โค้ดต้องผ่านการ์ด [Build สำหรับขึ้นระบบ](/learn/cards/production-build) แล้ว: หน้าเว็บเรียก API ด้วย path `/api/...` เฉยๆ (ไม่ใส่ `http://localhost:3000`) และ `bun run build` ใน `client/` ผ่าน
+
+### 1. เลือกบริการ: ทำไมเป็น Vercel + Neon
+
+| บริการ | หน้าเว็บ | API | ฐานข้อมูล | เก็บไฟล์ | แผนฟรี (29 ต.ค. 2569) |
+|---|---|---|---|---|---|
+| **Vercel** | ✅ | ✅ function | ไม่มีของตัวเอง (ต่อ Neon / Supabase) | ✅ Vercel Blob | Hobby **ใช้ส่วนตัวเท่านั้น ห้ามใช้เชิงพาณิชย์** · function 1 ล้านครั้ง/เดือน · ส่งข้อมูล 100 GB/เดือน |
+| **Neon** | | | ✅ PostgreSQL | | 1 GB ต่อโปรเจกต์ · หยุดเองเมื่อไม่มีคนใช้ 5 นาที (ปิดไม่ได้ในแผนฟรี) · branch ฐานข้อมูลได้ 10 อันต่อโปรเจกต์ |
+| **Supabase** | | ✅ (Edge Functions = function เล็กๆ ที่เขาเปิดให้รัน) | ✅ PostgreSQL | ✅ Storage | 2 โปรเจกต์ · ฐานละ 500 MB · ไฟล์ 1 GB · **หยุดโปรเจกต์ถ้าไม่มีคนใช้ 7 วัน** · มีระบบ login ให้ด้วย |
+| **Firebase** | ✅ Hosting | ต้องอัปเป็นแผน Blaze (ใส่บัตร) | ✅ Firestore (**NoSQL** ไม่ใช่ SQL) | ต้องใช้แผน Blaze | Firestore 1 GiB · อ่าน 50,000 / เขียน 20,000 ครั้งต่อวัน |
+
+ถามตามลำดับ:
+
+1. **โค้ดเราใช้ฐานข้อมูลแบบไหนอยู่แล้ว?** ระบบห้องสมุดเขียนด้วย Drizzle + PostgreSQL ต้องเป็น Postgres → **Neon หรือ Supabase** ส่วน Firebase ใช้ Firestore ที่เป็น NoSQL ([ประเภทฐานข้อมูล](/06-sql-nosql)) ต้องเขียนส่วนข้อมูลใหม่หมด
+2. **ต้องการแค่ฐานข้อมูล หรืออยากได้ login + เก็บไฟล์มาด้วย?** เราทำ login เองแล้ว (JWT ใน cookie) ใช้แค่ฐานข้อมูล → **Neon** เรียบง่ายกว่า
+3. **หน้าเว็บกับ API อยู่ที่ไหน?** ต้องอยู่**โดเมนเดียวกัน** เพราะ cookie login ตั้ง `sameSite` ไว้ ถ้าแยกโดเมน cookie จะไม่ถูกส่งไปกับคำขอ → **Vercel** วาง `client/` และ `server/` ในโปรเจกต์เดียวได้ ด้วยระบบชื่อ **Services** (หลายชิ้นในโปรเจกต์เดียว โดเมนเดียว ยังเป็นรุ่น Beta)
+4. **เป็นงานลูกค้าที่หาเงินไหม?** ถ้าใช่ แผน Hobby ของ Vercel ใช้ไม่ได้ ต้องถามพี่เลี้ยงเรื่องแผนเสียเงิน หรือกลับไปใช้ VPS
+
+### 2. ภาพรวม: คำขอวิ่งไปไหนบ้าง
+
+```text
+browser ──► https://library-xxx.vercel.app
+              │
+              ├─ /api/books, /api/admin/... ──► service "api"  (server/ = Hono รันด้วย Bun เป็น function)
+              │                                     │
+              │                                     └──► Neon (Postgres, Singapore) ผ่าน DATABASE_URL
+              │
+              └─ ที่เหลือทั้งหมด (/, /books/2, /assets/...) ──► service "web" (client/dist จาก Vite บน CDN)
+```
+
+เทียบกับการ์ด Build: เดิม Hono ตัวเดียวทำทั้ง 2 ทาง บน Vercel แยกเป็น 2 ชิ้น แต่ยังอยู่**โดเมนเดียวกัน** หน้าเว็บจึงเรียก `fetch("/api/books")` ได้เหมือนเดิม และ cookie login ใช้ได้ไม่ต้องแก้
+
+### 3. ฐานข้อมูลบน Neon
+
+1. ที่หน้า Neon กด **New Project** ตั้งชื่อ เลือก region **AWS Asia Pacific 1 (Singapore)** (ใกล้ไทยที่สุด ยิ่งไกลยิ่งช้าทุกคำขอ)
+2. กดปุ่ม **Connect** จะได้ connection string หน้าตาแบบนี้ (รหัสจริงอยู่ตรง `****`):
+
+   ```text
+   postgresql://neondb_owner:****@ep-xxx-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+   ```
+
+   `sslmode=require` คือบังคับเข้ารหัสการเชื่อมต่อ (ข้อมูลวิ่งผ่านเน็ตจริง ห้ามส่งแบบเปิดเผย) ส่วน `channel_binding=require` เป็นการตรวจเพิ่มว่าคุยกับเครื่องของ Neon จริง ไม่ต้องแก้ทั้งคู่ ให้ก๊อปมา **2 แบบ** ด้วยสวิตช์ **Connection pooling** เก็บไว้ในโปรแกรมจัดการรหัสผ่าน หรือไฟล์โน้ตนอกโฟลเดอร์โปรเจกต์
+   - เปิดสวิตช์ = **pooled** (ชื่อเครื่องมี `-pooler`) ให้แอปบน Vercel ใช้ เพราะ function เปิดการเชื่อมต่อใหม่บ่อยมาก [pooler](/glossary#pooler) ช่วยรับไว้ไม่ให้ฐานข้อมูลเต็ม
+   - ปิดสวิตช์ = **direct** ใช้ตอน migrate เพราะเครื่องมือแก้ตารางบางตัวใช้ผ่าน pooler ไม่ได้
+3. migrate และ seed จากเครื่องเรา ในโฟลเดอร์ `server/` ค่าที่วางไว้หน้าคำสั่ง (`ชื่อ=ค่า คำสั่ง`) ใช้แทนค่าใน `server/.env` เฉพาะคำสั่งนั้น ส่วน `.env` ในเครื่องไม่เปลี่ยน
+
+   ไม่ควรพิมพ์ connection string ลงในบรรทัดคำสั่งตรงๆ เพราะทุกบรรทัดถูกจำไว้ในประวัติ Terminal ให้ใช้ `read -rs` รับค่าแทน: วางค่าแล้วกด Enter จอจะไม่แสดงอะไรและไม่ถูกจำ ค่าอยู่ในตัวแปรจนปิดหน้าต่างนั้น ใส่ `"$DIRECT"` ในเครื่องหมายคำพูดเสมอ เพราะในค่ามี `&` ที่ Terminal จะแปลงเป็นอย่างอื่น
+
+```bash
+# Mac (zsh) และ Windows (Git Bash) พิมพ์เหมือนกัน
+cd server
+read -rs DIRECT           # วางค่าแบบ direct แล้วกด Enter
+read -rs LIB_PASS         # พิมพ์รหัสบรรณารักษ์ใหม่ที่ยาว แล้วกด Enter
+DATABASE_URL="$DIRECT" bunx drizzle-kit migrate
+DATABASE_URL="$DIRECT" LIBRARIAN_EMAIL='you@example.com' LIBRARIAN_PASSWORD="$LIB_PASS" bun run seed
+```
+
+ควรเห็น: `migrations applied successfully!` แล้ว `seed เสร็จ` และ `บรรณารักษ์: you@example.com` จากนั้นเปิด **Tables** ในหน้าเว็บ Neon เห็นตาราง members, books, loans, librarians พร้อมข้อมูล ถ้า Tables ว่าง แปลว่าคำสั่งไปลงฐานในเครื่องแทน ตรวจว่า `DATABASE_URL="$DIRECT"` อยู่หน้าคำสั่งในบรรทัดเดียวกัน และ `DIRECT` ไม่ว่าง (หน้าต่าง Terminal เดียวกับที่ `read` ไว้)
+
+ห้ามใช้รหัสบรรณารักษ์ตัวเดียวกับในเครื่อง (ฐานนี้อยู่บนเน็ตจริง) และอย่าวาง connection string ในแชท ใน README หรือใน commit
+
+### 4. เตรียม repo ให้ Vercel
+
+**ไฟล์ `vercel.json` ที่โฟลเดอร์บนสุด** (ระดับเดียวกับ `client/` และ `server/`):
+
+```json
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "bunVersion": "1.x",
+  "regions": ["sin1"],
+  "services": {
+    "web": {
+      "root": "client/",
+      "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+    },
+    "api": {
+      "root": "server/",
+      "framework": "hono",
+      "entrypoint": "src/index.ts"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": { "service": "api" } },
+    { "source": "/(.*)", "destination": { "service": "web" } }
+  ]
+}
+```
+
+อ่านทีละส่วน:
+
+- `$schema` ให้ VS Code เติมคำและเตือนเมื่อพิมพ์ key ผิด ไม่มีผลกับเว็บ
+- `bunVersion` ให้ API รันด้วย Bun (ไม่ใส่จะเป็น Node.js แล้ว `Bun.password` ที่ใช้ตรวจรหัสจะพังทันที)
+- `regions` ให้ function รันที่ Singapore (`sin1`) ใกล้ Neon ที่เลือกไว้ API คุยกับฐานข้อมูลหลายรอบต่อคำขอ ถ้าอยู่คนละทวีป ทุกรอบช้าเพิ่ม
+- `services` บอกว่าโปรเจกต์นี้มี 2 ชิ้น build แยกกัน · `web` คือ Vite ใน `client/` · `api` คือ Hono ใน `server/` (`framework` บอกว่าเป็น Hono, `entrypoint` คือไฟล์ที่ `export default` ตัว Hono)
+- `rewrites` ด้านล่างสุดคือป้ายบอกทางตามภาพในข้อ 2: คำขอ `/api/...` ไปหา `api` ที่เหลือไปหา `web`
+- `rewrites` ใน `web` ส่ง `/books/2` ที่ไม่มีไฟล์จริงไปที่ `index.html` ให้ React Router จัดการ (หน้าที่เดียวกับ `site.get("*", ...)` ในการ์ด Build)
+
+Hono ใน `server/src/index.ts` **ไม่ต้องแก้** คำขอที่เข้า `api` มีแต่ `/api/...` ส่วนที่เสิร์ฟ `client/dist` จึงไม่ถูกเรียก (Vercel บอกไว้ว่า `serveStatic` ของ Hono ใช้ไม่ได้บนนั้น หน้าเว็บจึงต้องเป็น service ของตัวเอง) โค้ดเดิมยังใช้กับ Docker ได้เหมือนเดิม
+
+**`server/package.json`: ใช้ TypeScript รุ่น 5** เปิดไฟล์ดู ถ้าเจอ `"peerDependencies": { "typescript": "^7" }` (`bun init` รุ่นปัจจุบันใส่ไว้) ให้ลบก้อนนั้นทิ้ง (`peerDependencies` คือรุ่นที่แพ็กเกจบอกว่า "ต้องใช้คู่กับ" ไม่ได้ติดตั้งให้) ก้อนนี้มักอยู่ท้ายสุด ลบแล้ว**ต้องลบ `,` ท้ายก้อนก่อนหน้าด้วย** ไม่งั้น JSON พัง แล้วติดตั้งรุ่น 5 ด้วย `-d` (ลงใน `devDependencies` = ของที่ใช้ตอนพัฒนาและ build เท่านั้น ไม่ได้รันตอนมีคนใช้เว็บ):
+
+```bash
+cd server
+bun add -d typescript@5
+```
+
+ควรเห็น: ใน `server/package.json` ส่วน `devDependencies` มี `"typescript": "5"` (หรือ `^5.x`) และไม่มี `peerDependencies` ที่เป็น `^7` เหตุผล: ตัว build ของ Vercel ตรวจ type ด้วย TypeScript ของโปรเจกต์ ถ้าเป็นรุ่น 7 จะล้มด้วย `TypeError: Cannot read properties of undefined (reading 'readFile')` (ลองแล้ว 29 ต.ค. 2569)
+
+commit แล้ว push ขึ้น GitHub (จากโฟลเดอร์บนสุด) ครั้งแรกนี้ push เข้า `main` ตรงได้ เพราะยังไม่มีเว็บจริงให้พัง ส่วนครั้งต่อไปดูข้อ 6:
+
+```bash
+git status                     # server/.env ต้องไม่อยู่ในรายการ (การ์ด README)
+git add vercel.json server/package.json server/bun.lock
+git commit -m "chore: deploy on Vercel"
+git push
+```
+
+### 5. สร้างโปรเจกต์บน Vercel
+
+1. ที่หน้า Vercel กด **Add New… → Project** เลือก repo ของเรา ถ้าไม่เห็น (มักเป็น repo แบบ private) กด **Adjust GitHub App Permissions** แล้วเลือก repo นั้นให้ Vercel เข้าถึง
+2. หน้าตั้งค่า ปล่อย **Root Directory** เป็นโฟลเดอร์บนสุด และไม่ต้องแตะ Framework Preset หรือ Build Command (Vercel อ่าน `vercel.json` แล้วเห็นเอง 2 services ต่างคน build ของตัวเอง)
+3. เปิด **Environment Variables** ([env](/glossary#env)) ใส่ 2 ตัว:
+   - `DATABASE_URL` = ค่าแบบ **pooled** จาก Neon
+   - `JWT_SECRET` = สร้างใหม่ด้วยคำสั่งในการ์ด [JWT](/learn/cards/jwt-cookie) **ห้ามใช้ตัวเดียวกับในเครื่อง**
+
+   env แต่ละตัวเลือกได้ว่าใช้กับ environment ไหน (Production / Preview / Development) ตอนนี้มีแต่ฐานจริงฐานเดียว ให้ติ๊กแค่ **Production** เหตุผลอยู่ในข้อ 6
+4. กด **Deploy** แล้วรอ 1–2 นาที (1 deployment = การ[ขึ้นเว็บ](/glossary#deploy) 1 ครั้งจาก commit หนึ่ง)
+
+ควรเห็น: หน้า Congratulations พร้อม URL แบบ `ชื่อโปรเจกต์.vercel.app` แล้วไล่ตรวจ:
+
+| เปิด | ต้องได้ |
+|---|---|
+| `/api/books` | JSON `{"success":true,"data":[...]}` หนังสือจาก seed |
+| `/api/nope` | JSON `404` `NOT_FOUND` (ไม่ใช่หน้าเว็บ) |
+| `/books/2` แล้วกดรีเฟรช | หน้าหนังสือเล่ม 2 ไม่ใช่ 404 ของ Vercel |
+| login หลังบ้านด้วยอีเมลและรหัสที่ใส่ตอน seed ในข้อ 3 | เข้าได้ และใน DevTools → Application → Cookies เห็น cookie ติ๊ก `Secure` และ `HttpOnly` |
+
+แถว cookie: ติ๊ก `Secure` มาจาก `secure: process.env.NODE_ENV === "production"` ในการ์ด JWT บนเครื่องเราค่านี้มาจาก script `start` แต่ Vercel ไม่ได้เรียก `start` ค่า `NODE_ENV` ตอนรันจึงมาจาก Vercel ถ้าไม่เห็นติ๊ก `Secure` ให้เปิด **Logs** ดูว่า `NODE_ENV` เป็นอะไร (cookie ที่ไม่ Secure บน https ยังใช้ได้ แต่ถูกส่งผ่าน http ได้ด้วย)
+
+คำขอแรกหลังไม่มีคนใช้สักพักจะช้า 1–3 วินาที เพราะ Neon ปลุกฐานข้อมูลที่หยุดไว้ และ Vercel เปิด function ขึ้นมาใหม่ คำขอต่อไปจะเร็วตามปกติ
+
+### 6. อัปเดตเว็บ: เข้า `main` = ขึ้นจริง
+
+Vercel ผูกกับ GitHub และถือว่า branch `main` คือ **Production** (เว็บที่คนใช้จริง) เมื่อไรที่ `main` มี commit ใหม่ Vercel จะ build และขึ้นเว็บให้เอง ไม่มีปุ่มให้กด จึงคิดแบบนี้:
+
+- **`dev` คือที่ทำงานและทดสอบ** ทุกอย่างลองในเครื่องให้ผ่านก่อน (เช็กลิสต์จากขั้น [Testing](/learn/testing) และ build ผ่าน)
+- **merge เข้า `main` คือการตัดสินใจขึ้นจริง** ไม่มีด่านกลางอีกแล้ว ของที่เข้า `main` คนใช้จริงเห็นภายใน 1–2 นาที
+
+สร้าง branch และ merge ทำยังไง ดู[บทที่ 1 ข้อ 7](/01-git#7--branch-และ-merge) เพราะอย่างนี้ทีมจึงไม่ commit ตรงเข้า `main` และถ้ามี migration ใหม่ ต้อง migrate ฐานบน Neon ก่อนเข้า `main` (ทริคข้อ 1) ดูผลได้ที่แท็บ **Deployments** ของ Vercel รายการที่มาจาก `main` มีป้าย **Production**
+
+แล้ว push `dev` ขึ้น GitHub ล่ะ? ค่าเริ่มต้นของ Vercel จะ build ทุก branch ด้วย ได้เป็น **[Preview](/glossary#preview)** คือ URL แยกที่ใครมีลิงก์ก็เปิดได้ ถ้า env ติ๊ก Preview ไว้ด้วย Preview จะเขียนลงฐานจริง และทุก Preview กินพื้นที่เก็บ deployment ของแผนฟรี ทีมที่ทดสอบในเครื่องอยู่แล้วจึงมักปิดไว้ ให้ build เฉพาะ `main` ด้วย `git.deploymentEnabled` ใน `vercel.json` (ดู "เว็บคู่มือนี้" ด้านล่าง)
+
+ถ้าขึ้น Production แล้วพัง ไม่ต้องรีบแก้โค้ดใต้ความกดดัน ให้[ย้อนกลับ](/glossary#rollback)ก่อน: หน้า Overview ของโปรเจกต์ ที่กล่อง Production Deployment กด **Instant Rollback** → **Continue** → **Confirm Rollback** เว็บกลับไปเป็นอันก่อนหน้าทันที (Vercel เก็บของเดิมไว้ ไม่ต้อง build ใหม่) แผนฟรี (Hobby) ย้อนได้แค่ **deployment ก่อนหน้า 1 อัน**
+
+หลังย้อนแล้ว Vercel **หยุดเอา push ใหม่ขึ้น Production เอง** (กันไม่ให้ของพังกลับมาทับ) แก้โค้ดบน branch อื่นอย่างใจเย็น merge แล้วไปกด **Undo Rollback** ที่กล่องเดิม เลือก deployment ใหม่ที่แก้แล้ว ระบบถึงกลับมาขึ้นเองทุก push เหมือนเดิม ถ้าลืมข้อนี้จะงงว่า "push แล้วทำไมเว็บไม่เปลี่ยน"
+
+ข้อระวังเรื่องฐานข้อมูล: rollback ย้อนได้แค่**โค้ด** ไม่ย้อนตาราง ถ้า commit ที่พังมาพร้อม migration ใหม่ โค้ดเก่าต้องยังทำงานกับตารางใหม่ได้ (นี่คือเหตุผลที่ migration ควร "เพิ่ม" มากกว่า "ลบ/เปลี่ยนชื่อ")
+
+### 7. เวลามีปัญหา: ดู log
+
+เปิด deployment นั้นใน Vercel มี 2 ที่ให้ดู:
+
+- **Build Logs** สิ่งที่เกิดตอน build ถ้า deploy ไม่ผ่าน (สถานะ Error) ดูที่นี่ บรรทัดสีแดงล่างสุดมักบอกสาเหตุ
+- **Logs** (เมนูบนของโปรเจกต์) สิ่งที่ server พิมพ์ตอนมีคนใช้ ถ้าเว็บขึ้นแต่ `/api/...` ได้ `500` ดูที่นี่ จะเห็น error จาก `errorHandler` ของเรา
+
+## ทริคที่แนะนำ
+
+1. **migrate ก่อนเข้า `main` เสมอ:** ถ้า merge โค้ดที่ใช้คอลัมน์ใหม่เข้า `main` ก่อน migrate ฐานบน Neon เว็บจริงจะพังทันทีจนกว่าจะ migrate ลำดับที่ปลอดภัยคือ migrate ฐาน (ด้วยค่า direct) → merge เข้า `main` และ migration ต้องเป็นแบบ "เพิ่ม" เพื่อให้โค้ดเก่ายังทำงานได้ระหว่างรอ deploy
+2. **ทดสอบในเครื่องให้ใกล้ของจริงที่สุดก่อน merge:** ฐานในเครื่อง (Docker) กับ Neon เป็น Postgres เหมือนกัน แต่ข้อมูลต่างกัน ก่อน merge ให้ลอง `bun run build` ของ `client/` และไล่หน้าที่แก้กับข้อมูลที่หน้าตาเหมือนของจริง (seed ชุดเดียวกัน) เพราะ merge เข้า `main` แล้วคือคนใช้จริงเห็นทันที ไม่มีด่านกลาง
+3. **env เปลี่ยนแล้วต้อง Redeploy:** env ถูกอ่านตอน deployment ถูกสร้าง แก้ค่าใน Settings แล้วเว็บเดิมยังใช้ค่าเก่า ต้องไปที่ Deployments → `⋯` → **Redeploy** ปัญหา "แก้ env แล้วไม่หาย" ส่วนใหญ่มาจากข้อนี้
+
+## ปรับไปใช้จริง
+
+**ในงาน STARTER:** [Requirement หน้า 13](/api/files/requirement.pdf#page=13) (ต้อง login) Bonus "ขึ้นเว็บจริงบนอินเทอร์เน็ต พร้อมชื่อเว็บของตัวเอง" ทำได้ด้วยการ์ดนี้หรือการ์ด VPS อย่างใดอย่างหนึ่ง ทำ**หลังงานหลักครบ**และคุยกับพี่เลี้ยงก่อน เพราะแผน Hobby ห้ามใช้เชิงพาณิชย์ จุดที่งาน STARTER ต่างจากห้องสมุดและต้องคิดก่อนขึ้น:
+
+| เรื่อง | ทำไมต้องคิด | ทำยังไง |
+|---|---|---|
+| env ของงาน | นอกจาก `DATABASE_URL` และ `JWT_SECRET` มีค่าบัญชี admin สำหรับ seed | seed admin จากเครื่องด้วยค่า direct แบบข้อ 3 รหัส admin บนเว็บจริงต้องไม่ใช่รหัสใน README |
+| ฟอร์มติดต่อ **5 ครั้ง / 10 นาที / เครื่อง** ([หน้า 10](/api/files/requirement.pdf#page=10)) | ถ้านับใน `Map` ในหน่วยความจำ บน VPS ใช้ได้เพราะโปรแกรมเปิดค้างตัวเดียว แต่บน Vercel function มีหลายตัวและถูกปิดเปิดใหม่ตลอด แต่ละตัวนับแยกกัน ตัวนับหายทุกครั้ง กฎ 5 ครั้งจึงไม่ทำงานจริง โจทย์กันใส่รหัสผิดเกิน 5 ครั้งในการ์ด [JWT](/learn/cards/jwt-cookie) ที่ใช้ `Map` ก็พังแบบเดียวกัน | เก็บการนับใน**ฐานข้อมูล** (ตารางเล็กๆ เก็บ IP + เวลา แล้วนับแถวใน 10 นาทีล่าสุด) ทุก function เห็นข้อมูลชุดเดียวกัน |
+| IP ของคนส่งฟอร์ม | บน Vercel คำขอผ่าน proxy (เครื่องกลางที่รับคำขอแทนแล้วส่งต่อ) ของเขาก่อน IP ที่ server เห็นตรงๆ จึงไม่ใช่ของผู้ใช้ | อ่านจาก header (ข้อมูลแนบมากับคำขอ อ่านด้วย `c.req.header("x-forwarded-for")`) ค่าแรกก่อน `,` ซึ่ง Vercel ใส่ให้ |
+| รูปสินค้า/บริการ | รอบนี้ Requirement ให้ใส่เป็นลิงก์รูป ใช้ได้เลย | ถ้าทำ Bonus อัปโหลดรูป บน Vercel **เขียนไฟล์ลงเครื่องไม่ได้** (หายเมื่อ function ปิด) ต้องใช้ที่เก็บไฟล์ เช่น Vercel Blob |
+| ชื่อเว็บของตัวเอง | Bonus ข้อนี้ให้มีชื่อเว็บ | Vercel → Settings → **Domains** ใส่ชื่อโดเมน แล้วตั้ง DNS ตามที่หน้าจอบอก ([บทที่ 22 ข้อ 6](/22-deploy-managed#6--ใส่ชื่อเว็บจริง)) โดเมนของบริษัทต้องขอพี่เลี้ยง |
+| เปิดดูข้อมูลด้วย pgAdmin | Requirement ใช้ pgAdmin ดูฐาน | Register Server ใหม่ ใส่ host, user, รหัส และชื่อฐานจาก connection string แบบ direct แท็บ Parameters ตั้ง SSL mode = `require` |
+
+เกณฑ์: เปิดจาก URL จริงได้ ใส่ URL ไว้บนสุดของ README แล้วไล่เช็กลิสต์ทดสอบจากขั้น [Testing](/learn/testing) **บนเว็บจริง**ทุกข้อ ไม่ใช่แค่ในเครื่อง
+
+**เว็บคู่มือนี้:** ใช้ Vercel + Neon แบบเดียวกัน แต่เป็น Next.js ที่มีหน้าเว็บกับ API ในตัว จึงไม่ต้องใช้ services ดู [vercel.json](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/vercel.json) ที่ตั้ง region `sin1`, รัน migrate ก่อน build ทุกครั้ง และปิด Preview (`git.deploymentEnabled`) ให้ build เฉพาะ `main` เพราะ push `dev` วันละหลายรอบเคยทำให้พื้นที่เก็บ deployment ขึ้นไป 7 GB จาก 10 GB ส่วนการนับครั้งที่ใส่รหัสผิดเก็บในฐานข้อมูล (ตาราง `ip_failures` ใน [schema.ts](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/server/db/schema.ts)) ด้วยเหตุผลเดียวกับฟอร์มติดต่อข้างบน
+
+ลองคิด: ถ้าวันหนึ่งระบบห้องสมุดกลายเป็นงานลูกค้าที่มีคนใช้วันละพันคน แผนฟรีของ Vercel ใช้ต่อไม่ได้เพราะอะไร ระหว่างอัปแผนเสียเงินกับย้ายไป VPS ต้องดูอะไรบ้าง
+
+## ตัวเลือกอื่นที่คล้ายกัน
+
+| ทาง | ตัวอย่าง | เหมาะกับ |
+|---|---|---|
+| หน้าเว็บ + API ครบในที่เดียว (การ์ดนี้) | Vercel, Netlify | เว็บที่ API เป็น function ได้ ไม่มีงานรันค้างนาน |
+| server เปิดค้าง (ไม่ใช่ function) | Render, Railway, Fly.io | API ที่ต้องเปิดตลอด เช่น WebSocket งานเบื้องหลัง ใช้ `Dockerfile` จากการ์ด [Docker Compose](/learn/cards/docker-compose) ได้ ([บทที่ 22](/22-deploy-managed) ใช้ Render) |
+| ฐานข้อมูลอย่างเดียว | Neon, Supabase | ต่อจากที่ไหนก็ได้ด้วย connection string |
+| ครบชุด (BaaS: Backend as a Service) | Supabase, Firebase | เริ่มใหม่ อยากได้ login เก็บไฟล์ realtime โดยไม่เขียน API เอง |
+| เช่าเครื่องเอง | VPS ([การ์ด VPS](/learn/cards/vps-deployment)) | คุมได้ทุกอย่าง ราคาคงที่ แต่ดูแลเองทั้งหมด |
+
+## ลองเอง
+
+**โจทย์:** ขึ้นระบบห้องสมุดด้วย Vercel + Neon ตามข้อ 3–5 ให้ผ่านตาราง "ควรเห็น" ครบ 4 ข้อ จากนั้นทดลองวงจรอัปเดตเต็มรอบตามข้อ 6: แก้ข้อความหัวหน้าแรก 1 คำบน `dev` ทดสอบในเครื่อง แล้ว merge เข้า `main` ดูว่าเว็บจริงเปลี่ยนเอง สุดท้ายลอง Instant Rollback แล้ว Undo Rollback กลับมา
+
+<Hint level={1}>build ผ่านแต่ `/api/books` ได้ `500`? เปิด **Logs** ของโปรเจกต์ ส่วนมากคือ `DATABASE_URL` ไม่ได้ตั้ง หรือตั้งแล้วยังไม่ได้กด **Redeploy** (ทริคข้อ 3)</Hint>
+<Hint level={2}>login ได้ `200` แต่กดหน้าอื่นแล้วเด้งกลับไปหน้า login? เทียบโดเมนในแถบที่อยู่กับคำขอใน DevTools → Network ว่าเรียก `/api/...` โดเมนเดียวกันไหม ถ้าหน้าเว็บเรียก URL เต็มของที่อื่น (เช่น `http://localhost:3000`) cookie จะไม่ถูกส่ง ให้ใช้ path `/api/...` เฉยๆ แบบตอนพัฒนา</Hint>
+<Hint level={3}>ตรวจผล: เปิดเว็บใน Incognito (ไม่มี cookie เก่า) ไล่ 4 ข้อในตาราง แล้วเพิ่มหนังสือ 1 เล่มที่หน้าหลังบ้าน ใน Neon ไปที่ **SQL Editor** พิมพ์ `SELECT * FROM books ORDER BY id DESC LIMIT 1;` ต้องเห็นเล่มที่เพิ่งเพิ่ม วงจรอัปเดตตรวจที่แท็บ Deployments: commit ที่ merge ต้องมีป้าย Production และหลัง Undo Rollback ข้อความใหม่ต้องกลับมาที่ URL หลัก</Hint>
+
+## อ่านเพิ่ม
+
+- [บทที่ 22: บริการสำเร็จรูป (Neon + Render + Vercel)](/22-deploy-managed) ฉบับเต็ม (API อยู่บน Render แยกจากหน้าเว็บ): ใส่ชื่อเว็บจริง ปัญหาที่เจอบ่อย
+- [การ์ด ขึ้นเว็บจริงบน VPS](/learn/cards/vps-deployment) ทางที่ดูแลเองทั้งหมด เทียบกันจะเห็นว่าบริการสำเร็จรูปทำอะไรแทนเรา
+- เอกสารทางการ: [Hono on Vercel](https://vercel.com/docs/frameworks/backend/hono) · [Vercel Services](https://vercel.com/docs/services) · [Bun runtime บน Vercel](https://vercel.com/docs/functions/runtimes/bun) · [Instant Rollback](https://vercel.com/docs/instant-rollback) · [Neon connection pooling](https://neon.com/docs/connect/connection-pooling)
+- แผนฟรี: [Vercel Hobby](https://vercel.com/docs/plans/hobby) · [Neon](https://neon.com/docs/introduction/plans) · [Supabase](https://supabase.com/pricing) · [Firebase](https://firebase.google.com/pricing)
