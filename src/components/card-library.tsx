@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchContext } from "fumadocs-ui/contexts/search";
-import { Check, ClipboardList, Database, LayoutTemplate, Lock, Monitor, Plug, Rocket, Search, ShieldCheck, TestTube, type LucideIcon } from "lucide-react";
+import { Bot, Check, ClipboardList, Database, LayoutTemplate, Lock, Monitor, Plug, Rocket, Search, ShieldCheck, TestTube, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { cardUrl, mentorCardUrl, steps, topics, type LearnCard, type StepSlug, type TopicSlug } from "@/data/learn";
@@ -20,7 +20,7 @@ function useLibraryItems(): Item[] {
   return [...builtIn, ...mentor];
 }
 
-const topicIcon: Record<TopicSlug, LucideIcon> = { plan: ClipboardList, ux: LayoutTemplate, db: Database, api: Plug, auth: ShieldCheck, web: Monitor, test: TestTube, ops: Rocket };
+const topicIcon: Record<TopicSlug, LucideIcon> = { plan: ClipboardList, ux: LayoutTemplate, db: Database, api: Plug, auth: ShieldCheck, web: Monitor, test: TestTube, ops: Rocket, ai: Bot };
 
 // คลังการ์ด (/learn/cards): หยิบอ่านเรื่องที่ต้องใช้ ไม่ต้องเรียง
 // กรอง 3 ทางพร้อมกัน: ชื่อการ์ด, ขั้น (ใช้ตอนไหน), หมวด (เรื่องอะไร) · ผลแบ่งหัวข้อตามหมวด
@@ -37,6 +37,8 @@ export function CardLibrary() {
   const inStep = all.filter((c) => (step === "all" || c.step === step || c.alsoIn?.includes(step)) && (!q || c.title.toLowerCase().includes(q)));
   const list = inStep.filter((c) => topic === "all" || c.topic === topic);
   const groups = topics.map((t) => ({ ...t, cards: list.filter((c) => c.topic === t.slug) })).filter((g) => g.cards.length > 0);
+  // หมวดที่ยังไม่มีการ์ดเลย (เช่น ai ที่รอการ์ดของพี่เลี้ยงเผยแพร่) ไม่ขึ้นเป็นปุ่ม กดแล้วจะไม่เจออะไร
+  const shownTopics = topics.filter((t) => all.some((c) => c.topic === t.slug));
 
   return (
     <div className="not-prose my-6 flex flex-col gap-5">
@@ -66,7 +68,7 @@ export function CardLibrary() {
         <Chip on={topic === "all"} onClick={() => setTopic("all")}>
           ทั้งหมด
         </Chip>
-        {topics.map((t) => {
+        {shownTopics.map((t) => {
           const Icon = topicIcon[t.slug];
           const n = inStep.filter((c) => c.topic === t.slug).length;
           return (

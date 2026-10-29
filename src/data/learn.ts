@@ -22,7 +22,7 @@ export type LearnStep = {
 
 // หมวดของการ์ด ตัดข้ามขั้น: ER diagram (Design) กับ Drizzle (Coding) อยู่หมวดฐานข้อมูลเดียวกัน
 // คลังการ์ดกรองและแบ่งหัวข้อตามหมวดนี้ เรียงตามลำดับที่ใช้ในงานจริง
-export type TopicSlug = "plan" | "ux" | "db" | "api" | "auth" | "web" | "test" | "ops";
+export type TopicSlug = "plan" | "ux" | "db" | "api" | "auth" | "web" | "test" | "ops" | "ai";
 
 export const topics: { slug: TopicSlug; name: string }[] = [
   { slug: "plan", name: "วางแผนงาน" },
@@ -33,6 +33,8 @@ export const topics: { slug: TopicSlug; name: string }[] = [
   { slug: "web", name: "หน้าเว็บ" },
   { slug: "test", name: "ทดสอบ" },
   { slug: "ops", name: "ขึ้นระบบและดูแล" },
+  // ตอนนี้มีแต่การ์ดของพี่เลี้ยง (ก่อนเผยแพร่ ปุ่มหมวดในคลังการ์ดเป็นสีจาง 0 ใบ) การ์ดในโค้ดเรื่อง AI ใส่หมวดนี้ได้เลย
+  { slug: "ai", name: "ทำงานกับ AI" },
 ];
 
 export type LearnCard = {

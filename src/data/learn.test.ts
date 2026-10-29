@@ -13,8 +13,11 @@ describe("โครง 7 ขั้น", () => {
     for (const link of learnLinks) expect(setProgressSchema.safeParse({ link, done: true }).success).toBe(true);
   });
 
-  test("ทุกหมวดมีการ์ด (หมวดว่างจะเป็นปุ่มกรองที่กดแล้วไม่เจออะไร)", () => {
-    for (const t of topics) expect(cards.some((c) => c.topic === t.slug)).toBe(true);
+  // หมวดว่างไม่ขึ้นเป็นปุ่ม (card-library.tsx) แต่หมวดที่ตั้งไว้ให้การ์ดในโค้ดต้องมีการ์ดจริง กันลืมย้ายการ์ด
+  // ai: ตอนนี้มีแต่การ์ดของพี่เลี้ยงใน DB · ใส่การ์ดในโค้ดเมื่อไหร่ เอาออกจากรายการนี้
+  const MENTOR_ONLY_TOPICS = ["ai"];
+  test("ทุกหมวดมีการ์ด ยกเว้นหมวดที่รอการ์ดของพี่เลี้ยง", () => {
+    for (const t of topics) if (!MENTOR_ONLY_TOPICS.includes(t.slug)) expect(cards.some((c) => c.topic === t.slug)).toBe(true);
   });
 
   test("การ์ดที่อยู่ในช่วงย่อย ต้องเป็นช่วงที่ขั้นนั้นประกาศไว้", () => {
