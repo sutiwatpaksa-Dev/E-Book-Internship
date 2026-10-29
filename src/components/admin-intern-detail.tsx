@@ -2,12 +2,12 @@
 
 import { ArrowLeft, Check } from "lucide-react";
 import { useState } from "react";
-import { roadmap } from "@/data/roadmap";
+import { cardsOf, cardUrl, steps } from "@/data/learn";
 import { daysSince, isLockedNow, type AdminState } from "@/hooks/use-admin";
 import { toast } from "@/hooks/use-toast";
+import { cardEntries, cardSummary } from "@/lib/admin-stats";
 import { socialOf } from "@/lib/contact";
 import { eduSummary, SCHOOL_TYPE_LABEL } from "@/lib/education";
-import { summarize } from "@/lib/progress-summary";
 import { KIND_LABEL, timeAgo } from "@/lib/thread-labels";
 import type { AdminNav } from "./admin-panel";
 import { Button } from "./button";
@@ -17,15 +17,19 @@ import { StatusBadge } from "./status-badge";
 const fmt = (d: string | null) => (d ? new Date(d).toLocaleString("th-TH") : "ยังไม่เคยเข้า");
 const day = (d: string) => new Date(d).toLocaleDateString("th-TH", { day: "numeric", month: "short" });
 
-// หน้าน้องรายคน: ทุกอย่างของน้อง 1 คนในหน้าเดียว (ความคืบหน้ารายด่าน เรื่องที่คุยกัน และจัดการบัญชี)
+// ขั้นที่ยังไม่มีการ์ด (เช่น Maintenance) ไม่แสดง กล่อง 0/0 อ่านแล้วเหมือนน้องไม่ได้ทำ (เหมือนกราฟหน้าภาพรวม)
+const stepsWithCards = steps.filter((st) => cardsOf(st.slug).length > 0);
+
+// หน้าน้องรายคน: ทุกอย่างของน้อง 1 คนในหน้าเดียว (ความคืบหน้ารายขั้น เรื่องที่คุยกัน และจัดการบัญชี)
 export function AdminInternDetail({ admin, nav, userId }: { admin: AdminState; nav: AdminNav; userId: number }) {
   const [pending, setPending] = useState<"disable" | "reset" | null>(null);
   const u = admin.users.find((x) => x.id === userId);
   if (!u) return <p className="text-sm text-fd-muted-foreground">{admin.loading ? "กำลังโหลด…" : "ไม่พบบัญชีนี้"}</p>;
 
   const entries = admin.progress[u.id] ?? [];
-  const s = summarize(entries);
-  const doneAt = new Map(entries.map((e) => [e.link, e.doneAt]));
+  // นับการ์ด 7 ขั้นแบบเดียวกับตารางและกราฟหน้าภาพรวม (เดิมนับบท roadmap เก่า 0/28 ตัวเลขจึงไม่ตรงกัน)
+  const s = cardSummary(entries);
+  const doneAt = new Map(cardEntries(entries).map((e) => [e.link, e.doneAt]));
   const threads = admin.threads.filter((t) => t.owner === u.username);
   const days = daysSince(u.lastLoginAt);
   const edu = eduSummary(u) ? `${u.schoolType ? `${SCHOOL_TYPE_LABEL[u.schoolType]} · ` : ""}${eduSummary(u)}` : null;
@@ -130,32 +134,29 @@ export function AdminInternDetail({ admin, nav, userId }: { admin: AdminState; n
 
       <section aria-labelledby="progress-title" className="flex flex-col gap-3">
         <h2 id="progress-title" className="text-base font-semibold">
-          ความคืบหน้า: ผ่าน {s.doneCount}/{s.total} บท · อยู่ที่ {s.level}
+          ความคืบหน้า: ผ่าน {s.doneCount}/{s.total} การ์ด · {s.where}
         </h2>
         <div className="grid gap-3 sm:grid-cols-2">
-          {roadmap.map((level) => {
-            const main = level.items.filter((i) => !i.extra);
-            const passed = main.filter((i) => s.done.has(i.link)).length;
+          {stepsWithCards.map((st) => {
+            const list = cardsOf(st.slug);
+            const passed = list.filter((c) => doneAt.has(cardUrl(c.slug))).length;
             return (
-              <div key={level.title} className="flex flex-col gap-1.5 rounded-xl border border-fd-border bg-fd-card p-3">
+              <div key={st.slug} className="flex min-w-0 flex-col gap-1.5 rounded-xl border border-fd-border bg-fd-card p-3">
                 <div className="flex items-center justify-between text-sm font-semibold">
-                  {level.title}
-                  <span className={`tabular-nums ${passed === main.length ? "text-green-700 dark:text-green-400" : "text-fd-muted-foreground"}`}>
-                    {passed}/{main.length}
+                  {st.num}. {st.name} ({st.th})
+                  <span className={`tabular-nums ${passed === list.length ? "text-green-700 dark:text-green-400" : "text-fd-muted-foreground"}`}>
+                    {passed}/{list.length}
                   </span>
                 </div>
                 <ul className="flex flex-col gap-1 text-sm">
-                  {level.items.map((i) => {
-                    const at = doneAt.get(i.link);
+                  {list.map((c) => {
+                    const at = doneAt.get(cardUrl(c.slug));
                     return (
-                      <li key={i.link} className={`flex items-center gap-2 ${at ? "" : "text-fd-muted-foreground"}`}>
+                      <li key={c.slug} className={`flex items-center gap-2 ${at ? "" : "text-fd-muted-foreground"}`}>
                         <span className={`flex size-4 shrink-0 items-center justify-center rounded ${at ? "bg-fd-primary text-fd-primary-foreground" : "border border-fd-border"}`}>
                           {at && <Check className="size-3" strokeWidth={3} />}
                         </span>
-                        <span className="min-w-0 flex-1 truncate">
-                          {i.title}
-                          {i.extra && <span className="text-xs text-fd-muted-foreground"> (เสริม)</span>}
-                        </span>
+                        <span className="min-w-0 flex-1 truncate">{c.title}</span>
                         {at && <span className="text-xs text-fd-muted-foreground">{day(at)}</span>}
                       </li>
                     );
