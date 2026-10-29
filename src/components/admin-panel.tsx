@@ -4,6 +4,7 @@ import { FilePlus2, FileText, GraduationCap, History, Inbox, Layers, LayoutDashb
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { useAdmin } from "@/hooks/use-admin";
+import { useNavDrawer } from "@/hooks/use-nav-drawer";
 import { useUnread } from "@/hooks/use-unread";
 import { useContentAdmin } from "@/hooks/use-content-admin";
 import { AdminAnnouncements } from "./admin-announcements";
@@ -18,6 +19,7 @@ import { AdminUsers } from "./admin-users";
 import { Button } from "./button";
 import { ChatPanel } from "./chat-panel";
 import { ErrorText } from "./error-text";
+import { MobileDrawer } from "./mobile-drawer";
 
 type TabId = "overview" | "questions" | "requests" | "cards" | "notes" | "builtin" | "announcements" | "cohorts" | "users" | "files" | "audit";
 type Tab = { id: TabId; label: string; icon: LucideIcon };
@@ -51,13 +53,6 @@ const GROUPS: { label: string; tabs: Tab[] }[] = [
   },
 ];
 const TABS = GROUPS.flatMap((g) => g.tabs);
-// ขอบจางของแถบเมนูมือถือ: จางเฉพาะด้านที่ยังมีเมนูซ่อนอยู่ (เขียนครบทุกแบบ ให้ Tailwind เห็นชื่อ class เต็ม)
-const EDGE_MASK: Record<string, string> = {
-  "false-false": "",
-  "false-true": "[mask-image:linear-gradient(to_right,black_85%,transparent)]",
-  "true-false": "[mask-image:linear-gradient(to_left,black_85%,transparent)]",
-  "true-true": "[mask-image:linear-gradient(to_right,transparent,black_12%,black_88%,transparent)]",
-};
 const CONTENT_TABS: TabId[] = ["cards", "notes", "builtin", "announcements"];
 // ลิงก์เก่า ?tab=content (ก่อนแยกเมนู) ยังเปิดได้ · มี ?note= = มาจากปุ่ม "เพิ่มโน้ตหน้านี้" · มีแค่ ?t= = ลิงก์เรื่องในแชท
 function pickTab(tab: string | null, note: string | null, thread: number | null): TabId {
@@ -123,22 +118,6 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
     if (id !== view.thread) go({ tab: "questions", thread: id }, true);
   };
 
-  // มือถือ: เลื่อนแถบเมนูให้แท็บที่เปิดอยู่มาอยู่กลาง (เลื่อนแค่แถบ ไม่ใช้ scrollIntoView ที่อาจเลื่อนทั้งหน้า)
-  // และจางขอบด้านที่ยังเลื่อนต่อได้ ให้รู้ว่ามีเมนูอีก
-  const menu = useRef<HTMLElement>(null);
-  const [edges, setEdges] = useState({ left: false, right: false });
-  const measure = () => {
-    const m = menu.current;
-    if (m) setEdges({ left: m.scrollLeft > 4, right: m.scrollLeft + m.clientWidth < m.scrollWidth - 4 });
-  };
-  useEffect(() => {
-    const m = menu.current;
-    const el = document.getElementById(`tab-${tab}`);
-    if (!m || !el || m.scrollWidth <= m.clientWidth) return measure();
-    m.scrollTo({ left: el.offsetLeft - m.offsetLeft - (m.clientWidth - el.offsetWidth) / 2, behavior: "smooth" });
-    measure();
-  }, [tab]);
-
   const nav: AdminNav = {
     goTab: (id) => {
       if (id !== tab || viewHref(view) !== viewHref({ tab: id })) go({ tab: id });
@@ -152,51 +131,56 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
     openCohort: (id) => go({ tab: "cohorts", cohort: id }),
     openNote: (pageUrl) => go({ tab: "notes", note: pageUrl }),
   };
-  // เมนูเป็นลิงก์จริง: กดธรรมดา = สลับในหน้า · Ctrl/Cmd/กลางเมาส์ = เปิดแท็บใหม่ตามปกติของ browser
+  // เมนูเป็นลิงก์จริง: กดธรรมดา = สลับในหน้า (และปิดลิ้นชักบนมือถือ) · Ctrl/Cmd/กลางเมาส์ = เปิดแท็บใหม่ตามปกติของ browser
+  const drawer = useNavDrawer();
   const onMenuClick = (e: MouseEvent<HTMLAnchorElement>, id: TabId) => {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
     e.preventDefault();
+    drawer.setOpen(false);
     nav.goTab(id);
   };
   const newRequests = admin.threads.filter((t) => t.kind === "content_request" && t.status === "new").length;
   const badge = (id: TabId) => (id === "questions" ? waiting : id === "requests" ? newRequests : 0);
+  // เมนูชุดเดียว วางได้ 2 ที่: คอลัมน์ซ้ายบนจอกว้าง และลิ้นชักบนมือถือ
+  const menuGroups = (
+    <>
+      {GROUPS.map((g, i) => (
+        <div key={g.label} className="flex flex-col gap-0.5">
+          <span className={`px-3 pb-1 text-xs font-semibold text-fd-muted-foreground ${i === 0 ? "" : "pt-5"}`}>{g.label}</span>
+          {g.tabs.map((t) => {
+            const n = badge(t.id);
+            return (
+              <a
+                key={t.id}
+                href={viewHref({ tab: t.id })}
+                aria-current={t.id === tab ? "page" : undefined}
+                onClick={(e) => onMenuClick(e, t.id)}
+                className={`flex min-h-11 items-center gap-2.5 rounded-lg px-3 text-sm ${t.id === tab ? "bg-fd-primary/10 font-semibold text-fd-primary" : "font-medium hover:bg-fd-accent"}`}
+              >
+                <t.icon className="size-4" />
+                {t.label}
+                {n > 0 && (
+                  <span aria-label={`${n} เรื่องใหม่`} className="ms-auto rounded-full bg-orange-500 px-1.5 text-[11px] font-bold text-white">
+                    {n}
+                  </span>
+                )}
+              </a>
+            );
+          })}
+        </div>
+      ))}
+    </>
+  );
 
   return (
     <div className="flex flex-col gap-6 md:flex-row">
-      {/* จอแคบ: เมนูเป็นแถบเลื่อนแนวนอนแถวเดียว (หัวกลุ่มซ่อน) · จอกว้าง: คอลัมน์ซ้ายแบ่งกลุ่ม */}
-      <nav
-        ref={menu}
-        onScroll={measure}
-        aria-label="เมนูหลังบ้าน"
-        className={`-mx-4 flex shrink-0 gap-1 overflow-x-auto px-4 [scrollbar-width:none] md:sticky md:top-24 md:mx-0 md:w-56 md:flex-col md:gap-0 md:self-start md:px-0 md:[mask-image:none] ${EDGE_MASK[`${edges.left}-${edges.right}`]}`}
-      >
-        {GROUPS.map((g, i) => (
-          <div key={g.label} className="contents md:flex md:flex-col md:gap-0.5">
-            <span className={`px-3 pb-1 text-xs font-semibold text-fd-muted-foreground max-md:hidden ${i === 0 ? "" : "pt-5"}`}>{g.label}</span>
-            {g.tabs.map((t) => {
-              const n = badge(t.id);
-              return (
-                <a
-                  key={t.id}
-                  href={viewHref({ tab: t.id })}
-                  id={`tab-${t.id}`}
-                  aria-current={t.id === tab ? "page" : undefined}
-                  onClick={(e) => onMenuClick(e, t.id)}
-                  className={`flex min-h-11 shrink-0 items-center gap-2.5 rounded-lg px-3 text-sm whitespace-nowrap ${t.id === tab ? "bg-fd-primary/10 font-semibold text-fd-primary" : "font-medium hover:bg-fd-accent"}`}
-                >
-                  <t.icon className="size-4" />
-                  {t.label}
-                  {n > 0 && (
-                    <span aria-label={`${n} เรื่องใหม่`} className="ms-auto rounded-full bg-orange-500 px-1.5 text-[11px] font-bold text-white">
-                      {n}
-                    </span>
-                  )}
-                </a>
-              );
-            })}
-          </div>
-        ))}
+      {/* จอกว้าง: คอลัมน์ซ้ายแบ่งกลุ่ม · มือถือ: เมนูเดียวกันอยู่ในลิ้นชัก เปิดจากปุ่ม ☰ บนแถบบน (เหมือนหน้าคู่มือ) */}
+      <nav aria-label="เมนูหลังบ้าน" className="sticky top-24 w-56 shrink-0 self-start max-md:hidden">
+        {menuGroups}
       </nav>
+      <MobileDrawer title="เมนูหลังบ้าน">
+        <nav aria-label="เมนูหลังบ้าน">{menuGroups}</nav>
+      </MobileDrawer>
 
       <section aria-labelledby="admin-title" className="flex min-w-0 flex-1 flex-col gap-4">
         <h1 id="admin-title" className="text-2xl font-bold">

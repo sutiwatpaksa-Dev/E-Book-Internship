@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { AccountMenu } from "@/components/account-menu";
 import { BrandMark } from "@/components/brand-mark";
+import { MenuButton } from "@/components/mobile-drawer";
 import { NotificationBell } from "@/components/notification-bell";
 import { TODAY_URL } from "@/lib/nav-tree";
 
@@ -12,7 +13,9 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-fd-border bg-fd-background/95 backdrop-blur-sm">
-        <div className="flex h-16 items-center gap-3 px-4">
+        <div className="flex h-16 items-center gap-3 px-4 max-md:gap-2 max-md:ps-2">
+          {/* มือถือ: เมนูหลังบ้านอยู่ในลิ้นชักซ้าย แบบเดียวกับหน้าคู่มือ (เดิมเป็นแถบเลื่อนข้าง เห็นทีละ 3 เมนู) */}
+          <MenuButton label="เปิดเมนูหลังบ้าน" />
           <BrandMark size={30} />
           {/* มือถือ: เหลือคำว่า "หลังบ้าน" บรรทัดเดียว ปุ่มด้านขวาจะได้ไม่โดนบีบ */}
           <span className="flex min-w-0 flex-col leading-tight">

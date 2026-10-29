@@ -2,13 +2,13 @@
 
 import { useSearchContext } from "fumadocs-ui/contexts/search";
 import { ThemeSwitch } from "fumadocs-ui/layouts/shared/slots/theme-switch";
-import { Menu, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { stepBySlug, stepOfUrl } from "@/data/learn";
-import { useNavDrawer } from "@/hooks/use-nav-drawer";
 import { sectionOf, stageOf, TODAY_URL } from "@/lib/nav-tree";
 import { AccountMenu } from "./account-menu";
+import { MenuButton } from "./mobile-drawer";
 import { NotificationBell } from "./notification-bell";
 import { BrandMark } from "./brand-mark";
 import { useSite } from "./nav-provider";
@@ -21,16 +21,11 @@ const iconButton = "flex size-10 shrink-0 items-center justify-center rounded-lg
 // menu=false: หน้าที่ไม่มี sidebar (เช่น /today) ไม่ต้องมีปุ่ม ☰ ใช้แถบล่างแทน
 export function SiteHeader({ menu = true }: { menu?: boolean }) {
   const { version } = useSite();
-  const { open, setOpen } = useNavDrawer();
 
   return (
     <header className="sticky top-0 z-40 flex h-(--site-header-h) flex-col border-b border-fd-border bg-fd-background/95 backdrop-blur-sm">
       <div className="flex min-h-0 flex-1 items-center gap-1 px-2 sm:gap-3 md:px-4">
-        {menu && (
-          <button type="button" onClick={() => setOpen(true)} aria-label="เปิดเมนูบทเรียน" aria-expanded={open} className={`${iconButton} md:hidden`}>
-            <Menu className="size-5.5" />
-          </button>
-        )}
+        {menu && <MenuButton label="เปิดเมนูบทเรียน" />}
 
         <Link href={TODAY_URL} className="flex min-h-11 items-center gap-2.5 me-1">
           <BrandMark size={30} />
