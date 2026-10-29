@@ -33,6 +33,8 @@ export const newBookSchema = z.object({
 export type NewBook = z.infer<typeof newBookSchema>;   // { title: string } ได้ type ไม่ต้องเขียนซ้ำ
 ```
 
+บรรทัดสุดท้ายอ่านรวดเดียวว่า "type ของข้อมูลที่ `newBookSchema` ยอมรับ" (`typeof` ดึง type ของตัวแปร, `<...>` คือส่ง type เข้าไปให้ `z.infer` เรื่อง `<...>` อธิบายละเอียดในการ์ดดึงข้อมูลจาก API) ได้ type ที่ตรงกับกฎเสมอ แก้กฎแล้ว type เปลี่ยนตาม
+
 ### 2. ใช้ใน route (ต่อจากการ์ด Hono)
 
 ต่อจากไฟล์ route ในการ์ด [Hono](/learn/cards/hono) เพิ่มใน `server/src/routes/books.routes.ts`: import 2 บรรทัดแรกไว้บนสุดของไฟล์ (ใต้ import เดิม) ส่วน `bookRoutes.post` ไว้ท้ายไฟล์

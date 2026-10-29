@@ -154,7 +154,7 @@ authRoutes.post("/logout", (c) => {
 
 ### 4. ลองด้วย curl
 
-พิมพ์ตามนี้ได้ตรงๆ ทั้ง Mac และ Windows (ใช้ [Git Bash](/00-start#-windows-ใช้-git-bash-เท่านั้น) ตามบท 0) อย่าใช้ PowerShell: PowerShell 5.1 ตัดเครื่องหมาย `"` ใน `-d '...'` ทิ้งก่อนส่ง server ได้ JSON ที่พัง ตอบ `400` แทน `401` แล้วเราจะนึกว่าโค้ด login ผิด
+เปิด Terminal ที่โฟลเดอร์ `server/` (`cd server`) ก่อน เพราะคำสั่งรหัสถูกจะสร้างไฟล์ `cookies.txt` ไว้ในโฟลเดอร์ที่ยืนอยู่ ซึ่งต้องเป็นโฟลเดอร์ที่ `.gitignore` กันไว้ พิมพ์ตามนี้ได้ตรงๆ ทั้ง Mac และ Windows (ใช้ [Git Bash](/00-start#-windows-ใช้-git-bash-เท่านั้น) ตามบท 0) อย่าใช้ PowerShell: PowerShell 5.1 ตัดเครื่องหมาย `"` ใน `-d '...'` ทิ้งก่อนส่ง server ได้ JSON ที่พัง ตอบ `400` แทน `401` แล้วเราจะนึกว่าโค้ด login ผิด
 
 ```bash
 # รหัสผิด
@@ -173,7 +173,7 @@ HTTP/1.1 401 Unauthorized
 
 รหัสถูกได้บรรทัด `set-cookie` ที่มี `HttpOnly` และ `SameSite=Lax`
 
-> **`cookies.txt` คือบัตร login จริง** ใครได้ไฟล์นี้ไปก็เข้าหลังบ้านได้จนบัตรหมดอายุ เพิ่มบรรทัด `cookies.txt` ใน `server/.gitignore` ตอนนี้เลย ก่อน `git add` ครั้งถัดไป
+> **`cookies.txt` คือบัตร login จริง** ใครได้ไฟล์นี้ไปก็เข้าหลังบ้านได้จนบัตรหมดอายุ เพิ่มบรรทัด `cookies.txt` ใน `server/.gitignore` ตอนนี้เลย (ถ้าเผลอยิงจาก root ให้ลบ `cookies.txt` ที่ root ทิ้ง) ก่อน `git add` ครั้งถัดไป
 
 ```
 HTTP/1.1 200 OK

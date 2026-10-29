@@ -42,10 +42,24 @@ story 5 (ยืมเกิน 3 เล่ม) ยังไม่มีหน้
 | ยาวเกิน | วางข้อความยาว 300 ตัวในช่องชื่อ (สร้างได้ใน DevTools แท็บ Console: พิมพ์ `copy("ก".repeat(300))` กด Enter แล้ววาง) | บอกเป็นภาษาไทยว่ายาวเกิน ไม่ใช่ error 500 |
 | กดซ้ำเร็วๆ | กด "บันทึก" รัว 3 ครั้ง | ปุ่มเป็น "กำลังบันทึก..." กดไม่ได้ ได้แถวเดียว |
 | กำลังโหลดช้า | DevTools แท็บ Network เลือก **Slow 4G** แล้วรีเฟรช | เห็น "กำลังโหลด..." ไม่ใช่จอว่าง |
-| server ล่ม | ปิด server (กด `Ctrl+C` ใน Terminal ที่รัน) แล้วรีเฟรชหน้า | ขึ้นข้อความว่าผิดพลาด ไม่ใช่จอขาว · หน้าหลังบ้านที่ทำตามการ์ด [กันหน้าที่ต้อง login](/learn/cards/protected-routes) จะเด้งไปหน้า login แทน เพราะ `.catch(() => setState("out"))` นับทุก error ว่า "ยังไม่ได้ login" จดเป็นบั๊ก แล้วแก้ให้ถือว่าไม่ได้ login เฉพาะเมื่อ `ApiError` มี `status` เป็น `401` |
+| server ล่ม | ปิด server (กด `Ctrl+C` ใน Terminal ที่รัน) แล้วรีเฟรชหน้า | ขึ้นข้อความว่าผิดพลาด ไม่ใช่จอขาว · หน้าหลังบ้านที่ทำตามการ์ด [กันหน้าที่ต้อง login](/learn/cards/protected-routes) จะเด้งไปหน้า login แทน เพราะ `.catch(() => setState("out"))` นับทุก error ว่า "ยังไม่ได้ login" จดเป็นบั๊ก แล้วแก้ตามโค้ดใต้ตาราง |
 | ของที่ไม่มีจริง | เปิด `/books/99` และ `/abc` | "ไม่พบหนังสือ" และ "ไม่พบหน้านี้" เมนูด้านบนยังกดกลับได้ |
 
 `Ctrl+C` ใช้หยุด server ได้ทั้ง Windows และ Mac (บน Mac ก็เป็น `Ctrl` ไม่ใช่ `Cmd`)
+
+**แก้บั๊ก server ล่ม** ใน `client/src/components/require-librarian.tsx`: ถือว่า "ยังไม่ได้ login" เฉพาะเมื่อ server ตอบ `401` จริง (`status` มาจาก `ApiError` ในการ์ด [ดึงข้อมูลจาก API](/learn/cards/fetch-data)) ที่เหลือคือ "ติดต่อไม่ได้"
+
+```tsx
+import { ApiError } from "../api/client";   // เพิ่มบนสุด
+
+const [state, setState] = useState<"checking" | "in" | "out" | "error">("checking");
+
+authApi.me().then(() => setState("in")).catch((e) => setState(e instanceof ApiError && e.status === 401 ? "out" : "error"));
+
+if (state === "error") return <p className="p-8">ติดต่อ server ไม่ได้ ลองรีเฟรชอีกครั้ง</p>;   // วางเหนือ return สุดท้าย
+```
+
+**ควรเห็น:** ปิด server แล้วรีเฟรช `/admin/books` ขึ้น "ติดต่อ server ไม่ได้" ไม่เด้งไปหน้า login (Vite ตอบ `502` เมื่อ server ดับ ไม่ใช่ `401` ลองแล้ว) เปิด server กลับแล้วรีเฟรช เห็นตารางเหมือนเดิม
 
 **ถ้าทำตามการ์ดช่วง Coding มาครบ จะเจอบั๊กจริงอย่างน้อย 1 ข้อตรงนี้:** ชื่อยาว 300 ตัวได้ข้อความ `Too big: expected string to have <=200 characters` เพราะ `.max(200)` ในการ์ด [ตรวจข้อมูลด้วย Zod](/learn/cards/validation) ไม่ได้ใส่ข้อความไทยไว้ และหน้าหลังบ้านแสดงข้อความจาก server ตรงๆ นี่คือเหตุผลที่ต้องลองทางพัง: คนเขียนไม่เคยวาง 300 ตัว จึงไม่เคยเห็น จดเป็นรายงานบั๊ก (แบบข้อ 4) แล้วแก้ด้วย `.max(200, "ชื่อยาวเกิน 200 ตัวอักษร")`
 

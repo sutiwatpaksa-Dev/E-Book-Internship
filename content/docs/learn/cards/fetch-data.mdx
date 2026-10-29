@@ -42,9 +42,11 @@ type ApiResponse<T> =
   | { success: false; error: { code: string; message: string; details?: Record<string, string[]> } };
 
 export class ApiError extends Error {
+  status: number;                                // status จาก server เช่น 401 = ยังไม่ได้ login
   details?: Record<string, string[]>;            // error รายช่องจาก Zod ใช้ในการ์ดฟอร์ม
-  constructor(message: string, details?: Record<string, string[]>) {
+  constructor(message: string, status: number, details?: Record<string, string[]>) {
     super(message);
+    this.status = status;
     this.details = details;
   }
 }
@@ -52,8 +54,8 @@ export class ApiError extends Error {
 export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch(`/api${path}`, { credentials: "same-origin", ...init });
   const body = (await res.json().catch(() => null)) as ApiResponse<T> | null;
-  if (!body) throw new ApiError(`ผิดพลาด (${res.status})`);          // ไม่ได้ JSON กลับมา เช่น server ดับ
-  if (!body.success) throw new ApiError(body.error.message, body.error.details);
+  if (!body) throw new ApiError(`ผิดพลาด (${res.status})`, res.status);   // ไม่ได้ JSON กลับมา เช่น server ดับ
+  if (!body.success) throw new ApiError(body.error.message, res.status, body.error.details);
   return body.data;                                                   // ชิ้นส่วนได้แค่ data ไม่ต้องแกะเอง
 }
 
@@ -68,7 +70,7 @@ export const jsonBody = (method: string, data: unknown): RequestInit => ({
 
 - **`<T>`** (generic) คือช่องว่างของ type ที่คนเรียกเติมเอง `request<Book[]>("/books")` แปลว่า "data ที่ได้คือ `Book[]`" ฟังก์ชันเดียวจึงใช้ได้ทุก endpoint และ editor ยังรู้ type ของผล
 - **`ApiResponse<T>`** บอกว่าคำตอบมีได้ 2 หน้าตา (`|` = หรือ) พอเช็ก `body.success` แล้ว TypeScript รู้เองว่าเป็นแบบไหน จึงอ่าน `body.data` หรือ `body.error` ได้ถูกตัว
-- **`class ApiError extends Error`** สร้าง error ชนิดใหม่ที่เป็น `Error` ทุกอย่าง (`throw` / `catch` ได้ปกติ) แต่มีช่อง `details` เพิ่ม ส่วน `super(message)` คือเรียกตัวสร้างของ `Error` ให้ตั้งข้อความก่อน แล้วค่อยเก็บของเราเพิ่ม
+- **`class ApiError extends Error`** สร้าง error ชนิดใหม่ที่เป็น `Error` ทุกอย่าง (`throw` / `catch` ได้ปกติ) แต่มีช่อง `status` (เลข status ของคำตอบ ใช้แยกว่า "ยังไม่ได้ login" กับ "server ดับ") และ `details` เพิ่ม ส่วน `super(message)` คือเรียกตัวสร้างของ `Error` ให้ตั้งข้อความก่อน แล้วค่อยเก็บของเราเพิ่ม
 - **`as ApiResponse<T> | null`** บอก TypeScript ว่า "เชื่อเถอะ JSON นี้หน้าตาแบบนี้" เพราะ TypeScript ตรวจของที่มาจาก server ตอนรันไม่ได้ เราจึงรับรองเอง
 
 ```ts

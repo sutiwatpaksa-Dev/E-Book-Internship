@@ -133,13 +133,13 @@ describe("ด่าน login ของหลังบ้าน", () => {
     expect((await res.json()).error.code).toBe("UNAUTHORIZED");
   });
   test("บัตรปลอม ได้ 401", async () => {
-    const res = await app.request("/api/admin/books", { headers: { Cookie: "session=ปลอม" } });
+    const res = await app.request("/api/admin/books", { headers: { Cookie: "session=not.a.jwt" } });
     expect(res.status).toBe(401);
   });
 });
 ```
 
-Bun อ่าน `server/.env` ให้เองตอน `bun test` ด่านจึงมี `JWT_SECRET` ใช้ตรวจบัตร (ชื่อ `session` มาจาก `SESSION_COOKIE` ในการ์ด [JWT ใน cookie](/learn/cards/jwt-cookie)) แต่จำไว้ว่า bonus นับเมื่องานหลักครบแล้วเท่านั้น
+ค่าใน header ต้องเป็นตัวอังกฤษ ตัวเลข และเครื่องหมายเท่านั้น (ใส่ภาษาไทยแล้ว `Request` จะโยน `TypeError: Header 'Cookie' has invalid value` ก่อนถึง server ลองแล้ว) · Bun อ่าน `server/.env` ให้เองตอน `bun test` ด่านจึงมี `JWT_SECRET` ใช้ตรวจบัตร (ชื่อ `session` มาจาก `SESSION_COOKIE` ในการ์ด [JWT ใน cookie](/learn/cards/jwt-cookie)) แต่จำไว้ว่า bonus นับเมื่องานหลักครบแล้วเท่านั้น
 
 **เว็บคู่มือนี้:** กฎว่าหน้าไหนต้อง login และหน้าไหนเฉพาะพี่เลี้ยง มีเทสต์อยู่ที่ [src/lib/page-access.test.ts บน GitHub](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/src/lib/page-access.test.ts) อ่านชื่อเทสต์อย่างเดียวก็รู้กฎครบ เช่น "หน้า STARTER ต้อง login" และ "หน้า Dev เฉพาะพี่เลี้ยง" ทุกเวอร์ชันของเว็บนี้ต้องผ่าน `bun test` ก่อนออก
 

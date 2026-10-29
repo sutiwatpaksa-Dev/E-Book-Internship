@@ -5,6 +5,14 @@ title: "📝 มีอะไรใหม่"
 
 บันทึกการเปลี่ยนแปลงของคู่มือในแต่ละเวอร์ชัน เวอร์ชันล่าสุดอยู่บนสุด
 
+## v2.1.16 · 29 ต.ค. 2569
+
+- แก้การ์ดตามผลตรวจ 29 ต.ค. (ลองรันจริงทุกข้อ)
+  - [เทสต์อัตโนมัติ](/learn/cards/unit-test): ตัวอย่างบัตรปลอมเดิมใส่ภาษาไทยใน cookie ทำให้เทสต์พังก่อนถึง server เปลี่ยนเป็นตัวอังกฤษแล้ว
+  - [ดึงข้อมูลจาก API](/learn/cards/fetch-data): `ApiError` มี `status` แล้ว [ทดสอบด้วยมือ](/learn/cards/manual-testing) จึงมีโค้ดแก้บั๊ก "server ล่มแล้วเด้งไปหน้า login" ให้ทำตามได้จริง
+  - [README](/learn/cards/readme): ตรวจว่า `.env` ไม่หลุดขึ้น GitHub ด้วย `git check-ignore` (เดิม `git status` มองไม่เห็นไฟล์ในโฟลเดอร์ใหม่)
+  - [JWT ใน cookie](/learn/cards/jwt-cookie) บอกให้ยิง curl จาก `server/` · [Tailwind](/learn/cards/tailwind), [Zod](/learn/cards/validation), [Password hash](/learn/cards/password-hash), [Build สำหรับขึ้นระบบ](/learn/cards/production-build) อธิบายจุดที่ชวนงงเพิ่ม
+
 ## v2.1.15 · 28 ต.ค. 2569
 
 - **การ์ดขั้น [Deploy](/learn/deploy) 3 ใบ** ต่อจากโปรเจกต์ห้องสมุดที่ทำมาตลอดขั้น Coding และลองรันจริงครบทุกคำสั่ง

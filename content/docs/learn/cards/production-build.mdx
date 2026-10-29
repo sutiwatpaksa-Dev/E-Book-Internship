@@ -97,7 +97,7 @@ bun run start
 | อยู่ที่ `/books/3` แล้วกดรีเฟรช | ยังเห็นหนังสือเล่ม 3 (ไม่ใช่ 404) |
 | `http://localhost:3000/api/books` | JSON `{"success":true,"data":[...]}` |
 | `http://localhost:3000/api/bookz` | JSON `404` `NOT_FOUND` (ไม่ใช่หน้าเว็บ) |
-| login หลังบ้านที่ `/admin/login` | เข้าได้ เห็นตารางหนังสือ |
+| login หลังบ้านที่ `/admin/login` แล้วกดเมนู "หนังสือ" | เข้าได้ เห็นตารางหนังสือที่ `/admin/books` |
 
 login ได้ทั้งที่ cookie เป็น `Secure` เพราะ Chrome และ Firefox ถือว่า `http://localhost` ปลอดภัยพอ (ลองแล้วทั้งด้วย curl และ Chrome) ตอนซ้อมแบบ http ให้ใช้ Chrome หรือ Firefox เพราะ Safari อาจไม่เก็บ cookie `Secure` บน http บนเว็บจริงต้องเป็น https การ์ด [ขึ้นเว็บจริง](/learn/cards/deploy-online) จะทำให้
 

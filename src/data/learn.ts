@@ -99,7 +99,7 @@ export const cards: LearnCard[] = [
   { slug: "manual-testing", title: "ทดสอบด้วยมือแบบมีแผน", step: "testing", topic: "test", minutes: 10, needs: ["user-stories", "user-flow", "crud-ui"], starter: "วันที่ 9 · ตรวจความเรียบร้อย (responsive, loading/error) + Review รอบที่ 2" },
   { slug: "unit-test", title: "เทสต์อัตโนมัติด้วย bun test", step: "testing", topic: "test", minutes: 10, needs: ["validation", "layers", "manual-testing"], starter: "Bonus หน้า 13 · test ครอบคลุม validator" },
   { slug: "readme", title: "README ที่คนอื่นรันตามได้", step: "documentation", topic: "plan", minutes: 10, needs: ["password-hash", "jwt-cookie", "api-testing", "crud-ui"], starter: "วันที่ 10 · README (ติดตั้ง, .env, migration/seed, รัน, บัญชี admin ทดสอบ)" },
-  { slug: "production-build", title: "Build สำหรับขึ้นระบบ: server เดียวเสิร์ฟทั้งเว็บ", step: "deploy", topic: "ops", minutes: 12, needs: ["crud-ui", "jwt-cookie"], starter: "Bonus · Deploy / Docker Compose (เริ่มจากการ์ดนี้)" },
+  { slug: "production-build", title: "Build สำหรับขึ้นระบบ: server เดียวเสิร์ฟทั้งเว็บ", step: "deploy", topic: "ops", minutes: 12, needs: ["crud-ui", "jwt-cookie", "readme"], starter: "Bonus · Deploy / Docker Compose (เริ่มจากการ์ดนี้)" },
   { slug: "docker-compose", title: "Docker Compose: ทั้งระบบในคำสั่งเดียว", step: "deploy", topic: "ops", minutes: 15, needs: ["production-build", "migration"], starter: "Bonus · Docker Compose รัน Postgres + server + client ในคำสั่งเดียว" },
   { slug: "deploy-online", title: "ขึ้นเว็บจริง: VPS, โดเมนย่อย และ https", step: "deploy", topic: "ops", minutes: 20, needs: ["docker-compose"], starter: "Bonus · Deploy ขึ้น server จริงพร้อมโดเมนย่อย" },
 ];
