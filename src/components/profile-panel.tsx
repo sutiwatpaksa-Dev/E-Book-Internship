@@ -119,6 +119,7 @@ function MentorCard({ m }: { m: MentorContact }) {
     ["ชื่อเล่น", m.nickname],
     ["ตำแหน่ง", m.jobTitle],
     ["เบอร์โทร", m.phone],
+    ["อีเมล", m.email],
     ["จบจาก", gradOf(m) || null],
     ["ถนัดด้าน", m.expertise],
     ["ช่องทางอื่น", socialOf(m) || null],
@@ -256,6 +257,7 @@ function MentorFieldsForm({ v, set }: { v: ProfileFields; set: Setter }) {
         <Input className={field} value={txt("jobTitle")} onChange={(e) => set("jobTitle", e.target.value)} maxLength={100} autoComplete="organization-title" placeholder="เช่น Senior Full-stack Developer" />
       </Field>
       <PhoneField v={v} set={set} />
+      <EmailField v={v} set={set} />
       <Field label="จบจาก (สถานศึกษา)">
         <Input className={field} value={txt("schoolName")} onChange={(e) => set("schoolName", e.target.value)} maxLength={150} placeholder="เช่น มหาวิทยาลัยบูรพา" />
       </Field>
@@ -276,6 +278,7 @@ function InternContactForm({ v, set }: { v: ProfileFields; set: Setter }) {
         ช่องติดต่อด้านล่างไม่บังคับ พี่เลี้ยงทุกคนเห็น (น้องคนอื่นไม่เห็น) ใช้ติดต่อเรื่องงานและเอกสารฝึกงาน
       </p>
       <PhoneField v={v} set={set} />
+      <EmailField v={v} set={set} />
       <ExpertiseField v={v} set={set} label="ด้านที่สนใจ / ถนัด" hint="พี่เลี้ยงจะได้รู้ว่าน้องอยากฝึกเรื่องไหน" placeholder="เช่น หน้าเว็บ React, ฐานข้อมูล, อยากลอง Deploy" />
       <SocialFields v={v} set={set} />
     </>
@@ -301,6 +304,16 @@ function PhoneField({ v, set }: { v: ProfileFields; set: Setter }) {
     <Field label="เบอร์โทร">
       <Input className={field} type="tel" inputMode="tel" value={txt("phone")} onChange={(e) => set("phone", e.target.value)} maxLength={25} autoComplete="tel" placeholder="เช่น 081-234-5678" aria-invalid={!!problem("phone")} />
       <Err k="phone" />
+    </Field>
+  );
+}
+
+function EmailField({ v, set }: { v: ProfileFields; set: Setter }) {
+  const { txt, problem, Err } = contactProblem(v);
+  return (
+    <Field label="อีเมล">
+      <Input className={field} type="email" inputMode="email" value={txt("email")} onChange={(e) => set("email", e.target.value)} maxLength={254} autoComplete="email" autoCapitalize="none" spellCheck={false} placeholder="เช่น somchai@gmail.com" aria-invalid={!!problem("email")} />
+      <Err k="email" />
     </Field>
   );
 }

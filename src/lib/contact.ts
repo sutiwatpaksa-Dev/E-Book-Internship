@@ -11,6 +11,14 @@ export function phoneProblem(v: string | null | undefined) {
   return /^0\d{8,9}$/.test(digits) ? null : "เบอร์ไทยขึ้นต้นด้วย 0 และมี 9–10 หลัก เช่น 081-234-5678";
 }
 
+// อีเมล: ชื่อ@โดเมน.นามสกุล ตัวอังกฤษ ตัวเลข . _ % + - (แบบที่ผู้ให้บริการอีเมลทั่วไปรับ) ยาวไม่เกิน 254 ตัว (เพดานของมาตรฐานอีเมล RFC 5321)
+// ไม่รับภาษาไทย: อีเมลไทยมีในมาตรฐานแต่ระบบส่วนใหญ่ส่งไม่ถึง ใส่ไว้แล้วพี่เลี้ยงติดต่อไม่ได้
+export function emailProblem(v: string | null | undefined) {
+  if (!v) return null;
+  if (v.length > 254) return "อีเมลยาวไม่เกิน 254 ตัว";
+  return /^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/i.test(v) ? null : "อีเมลต้องเป็นแบบ ชื่อ@โดเมน เช่น somchai@gmail.com (ตัวอังกฤษเท่านั้น)";
+}
+
 // LINE ID: ตัวอังกฤษพิมพ์เล็ก ตัวเลข . _ - ยาว 4–20 (กติกาของ LINE เอง ภาษาไทยตั้งเป็น ID ไม่ได้)
 export function lineProblem(v: string | null | undefined) {
   if (!v) return null;
@@ -35,4 +43,4 @@ type Socials = { lineId?: string | null; instagram?: string | null; facebook?: s
 export const socialOf = (m: Socials) =>
   [m.lineId && `LINE: ${m.lineId}`, m.instagram && `IG: ${m.instagram}`, m.facebook && `Facebook: ${m.facebook}`].filter(Boolean).join(" · ");
 
-export const CONTACT_RULES = { phone: phoneProblem, lineId: lineProblem, instagram: instagramProblem, facebook: facebookProblem } as const;
+export const CONTACT_RULES = { phone: phoneProblem, email: emailProblem, lineId: lineProblem, instagram: instagramProblem, facebook: facebookProblem } as const;

@@ -41,6 +41,7 @@ export const users = pgTable("users", {
   // ของพี่เลี้ยงเท่านั้น: น้องในรุ่นที่พี่ดูแลเห็น ใช้กรอกเอกสารฝึกงาน (ชื่อ ตำแหน่ง เบอร์ของผู้ดูแล)
   jobTitle: text("job_title"),
   phone: text("phone"),
+  email: text("email"),
   expertise: text("expertise"),
   lineId: text("line_id"),
   instagram: text("instagram"),

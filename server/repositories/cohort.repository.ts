@@ -48,6 +48,7 @@ export const cohortRepository = {
         nickname: users.nickname,
         jobTitle: users.jobTitle,
         phone: users.phone,
+        email: users.email,
         schoolName: users.schoolName,
         major: users.major,
         expertise: users.expertise,

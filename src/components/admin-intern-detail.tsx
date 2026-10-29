@@ -37,6 +37,7 @@ export function AdminInternDetail({ admin, nav, userId }: { admin: AdminState; n
   const contact: [string, string | null][] = [
     ["การศึกษา", edu],
     ["เบอร์โทร", u.phone ?? null],
+    ["อีเมล", u.email ?? null],
     ["สนใจ / ถนัด", u.expertise ?? null],
     ["ช่องทางอื่น", socialOf(u) || null],
   ];

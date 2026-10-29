@@ -27,6 +27,7 @@ const publicColumns = {
   eduLevel: users.eduLevel,
   // ช่องติดต่อ: list นี้ส่งให้หลังบ้านเท่านั้น (route ของพี่เลี้ยง) หน้าน้องรายคนใช้แสดง
   phone: users.phone,
+  email: users.email,
   expertise: users.expertise,
   lineId: users.lineId,
   instagram: users.instagram,

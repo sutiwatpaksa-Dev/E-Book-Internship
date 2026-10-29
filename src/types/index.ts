@@ -33,6 +33,7 @@ export type ProfileFields = {
 export type MentorFields = {
   jobTitle: string | null;
   phone: string | null;
+  email: string | null;
   expertise: string | null;
   lineId: string | null;
   instagram: string | null;

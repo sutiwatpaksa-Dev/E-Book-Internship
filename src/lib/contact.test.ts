@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { facebookProblem, instagramProblem, lineProblem, phoneProblem } from "./contact";
+import { emailProblem, facebookProblem, instagramProblem, lineProblem, phoneProblem } from "./contact";
 
 describe("เบอร์โทร", () => {
   test("เบอร์ไทยที่ถูก", () => {
@@ -9,6 +9,16 @@ describe("เบอร์โทร", () => {
     for (const v of ["34342442342342423242", "12345", "081-234-567x", "เบอร์ที่ทำงาน", "812345678"]) expect(phoneProblem(v)).not.toBeNull();
   });
   test("ว่าง = ไม่กรอก ผ่าน", () => expect(phoneProblem(null)).toBeNull());
+});
+
+describe("อีเมล", () => {
+  test("อีเมลที่ถูก", () => {
+    for (const v of ["somchai@gmail.com", "Sutiwat.P@blicktechconsultant.co.th", "first.last+intern@company.co.th", "a_b-c@sub.mail.example.org"]) expect(emailProblem(v)).toBeNull();
+  });
+  test("ไม่มี @ ไม่มีโดเมน ภาษาไทย หรือยาวเกิน ไม่ผ่าน", () => {
+    for (const v of ["somchai", "somchai@", "somchai@gmail", "@gmail.com", "som chai@gmail.com", "สมชาย@gmail.com", "a@b..com", `${"a".repeat(250)}@x.co`]) expect(emailProblem(v)).not.toBeNull();
+  });
+  test("ว่าง = ไม่กรอก ผ่าน", () => expect(emailProblem(null)).toBeNull());
 });
 
 describe("ช่องทางเสริม", () => {

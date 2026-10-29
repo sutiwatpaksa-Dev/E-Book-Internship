@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { facebookProblem, instagramProblem, lineProblem, phoneProblem } from "../../src/lib/contact";
+import { emailProblem, facebookProblem, instagramProblem, lineProblem, phoneProblem } from "../../src/lib/contact";
 import { EDU_LEVELS, SCHOOL_TYPES } from "../db/schema";
 
 // ช่องข้อความว่าง = ไม่กรอก (เก็บเป็น null ไม่ใช่ "") · ตัดช่องว่างหัวท้ายก่อนนับความยาว
@@ -32,6 +32,7 @@ export const profileSchema = z.object({
   jobTitle: text(100, "ตำแหน่ง"),
   // กฎเดียวกับฟอร์ม (src/lib/contact.ts) · ข้อความที่ผิดส่งกลับไปให้หน้าเว็บแสดง
   phone: text(25, "เบอร์โทร").superRefine((v, ctx) => check(ctx, phoneProblem(v))),
+  email: text(254, "อีเมล").superRefine((v, ctx) => check(ctx, emailProblem(v))),
   expertise: text(300, "ด้านที่สนใจ/ถนัด"),
   lineId: text(20, "LINE ID").superRefine((v, ctx) => check(ctx, lineProblem(v))),
   instagram: text(31, "Instagram").superRefine((v, ctx) => check(ctx, instagramProblem(v))),
@@ -40,6 +41,6 @@ export const profileSchema = z.object({
 
 // ช่องที่แต่ละ role กรอกได้ · น้องไม่มีช่องตำแหน่ง/เบอร์ พี่เลี้ยงไม่มีประเภทสถานศึกษา/ระดับ
 // น้องกรอกช่องติดต่อได้เหมือนพี่เลี้ยง (พี่เลี้ยงทุกคนเห็นในหน้าน้องรายคน) · expertise ของน้อง = ด้านที่สนใจ/ถนัด
-export const INTERN_FIELDS = ["fullName", "nickname", "schoolType", "schoolName", "major", "eduLevel", "phone", "expertise", "lineId", "instagram", "facebook"] as const;
-export const MENTOR_FIELDS = ["fullName", "nickname", "jobTitle", "phone", "schoolName", "major", "expertise", "lineId", "instagram", "facebook"] as const;
+export const INTERN_FIELDS = ["fullName", "nickname", "schoolType", "schoolName", "major", "eduLevel", "phone", "email", "expertise", "lineId", "instagram", "facebook"] as const;
+export const MENTOR_FIELDS = ["fullName", "nickname", "jobTitle", "phone", "email", "schoolName", "major", "expertise", "lineId", "instagram", "facebook"] as const;
 export type ProfileInput = z.infer<typeof profileSchema>;
