@@ -7,5 +7,11 @@
   "bunVersion": "1.4.x",
   "regions": [
     "sin1"
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "**": false,
+      "main": true
+    }
+  }
 }
