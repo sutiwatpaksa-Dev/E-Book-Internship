@@ -1,8 +1,8 @@
 "use client";
 
-import { EyeOff, FilePlus2, NotebookPen, Pencil } from "lucide-react";
+import { ExternalLink, EyeOff, FilePlus2, NotebookPen, Pencil } from "lucide-react";
 import { useState } from "react";
-import { cards as builtIn, cardUrl, mentorCardUrl, steps, topics } from "@/data/learn";
+import { cards as builtIn, cardUrl, mentorCardUrl, stepUrl, steps, topics, type StepSlug } from "@/data/learn";
 import type { ContentAdminState } from "@/hooks/use-content-admin";
 import { timeAgo } from "@/lib/thread-labels";
 import type { MentorCardInput, MentorCardSummary, PageNote } from "@/types";
@@ -75,7 +75,14 @@ export function AdminMentorCards({ content }: { content: ContentAdminState }) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-fd-muted-foreground">เขียนแล้วขึ้นในคลังการ์ดตามขั้นและหมวดที่เลือก · น้องเห็นเฉพาะที่เผยแพร่แล้ว และต้อง login ถึงอ่านเนื้อหาได้</p>
+        {/* บอกครบในที่เดียวว่าร่างกับเผยแพร่ต่างกันยังไง และเผยแพร่แล้วไปขึ้นตรงไหน (เดิมบอกแค่ "น้องเห็นเฉพาะที่เผยแพร่" พี่เลี้ยงหาไม่เจอว่าการ์ดไปอยู่ไหน) */}
+        <div className="flex max-w-2xl flex-col gap-1 text-sm text-fd-muted-foreground">
+          <p>
+            <strong className="text-fd-foreground">ร่าง</strong> เห็นแค่พี่เลี้ยง · กด <strong className="text-fd-foreground">แก้</strong> แล้วกด{" "}
+            <strong className="text-fd-foreground">เผยแพร่</strong> น้องถึงจะเห็น (ถอนกลับเป็นร่างได้ทุกเมื่อ)
+          </p>
+          <p>เผยแพร่แล้วขึ้น 3 ที่: หน้าขั้นที่เลือก (หัวข้อ &quot;การ์ดจากพี่เลี้ยง&quot;), แผนที่ 7 ขั้นในเมนูซ้าย และคลังการ์ดตามหมวด · น้องต้อง login ถึงอ่านเนื้อหาได้</p>
+        </div>
         <Button onClick={() => setEditing({ id: null, card: EMPTY_CARD })} className="min-h-11">
           <FilePlus2 className="size-4" /> การ์ดใหม่
         </Button>
@@ -87,7 +94,7 @@ export function AdminMentorCards({ content }: { content: ContentAdminState }) {
       ) : (
         // relative: ป้าย sr-only ในหัวตารางเป็น position:absolute ถ้ากล่องเลื่อนไม่มี position มันจะหลุดออกนอกกล่อง ดันหน้าทั้งหน้าให้กว้างเกินจอมือถือ
         <div className="relative overflow-x-auto rounded-xl border border-fd-border">
-          <table className="w-full min-w-[640px] text-sm">
+          <table className="w-full min-w-[760px] text-sm">
             <thead className="bg-fd-muted/60 text-start text-xs text-fd-muted-foreground">
               <tr>
                 <th className="px-3 py-2 text-start font-medium">สถานะ</th>
@@ -95,6 +102,7 @@ export function AdminMentorCards({ content }: { content: ContentAdminState }) {
                 <th className="px-3 py-2 text-start font-medium">ขั้น · หมวด</th>
                 <th className="px-3 py-2 text-start font-medium">คนเขียน</th>
                 <th className="px-3 py-2 text-start font-medium">แก้ล่าสุด</th>
+                <th className="px-3 py-2 text-start font-medium">หน้าที่น้องเห็น</th>
                 <th className="px-3 py-2">
                   <span className="sr-only">จัดการ</span>
                 </th>
@@ -112,6 +120,9 @@ export function AdminMentorCards({ content }: { content: ContentAdminState }) {
                   </td>
                   <td className="px-3 py-2 text-fd-muted-foreground">{c.author}</td>
                   <td className="px-3 py-2 text-fd-muted-foreground">{timeAgo(c.updatedAt)}</td>
+                  <td className="px-3 py-2">
+                    <StudentLinks card={c} />
+                  </td>
                   <td className="px-3 py-2 text-end">
                     <Button variant="ghost" onClick={() => open(c)} className="min-h-10">
                       <Pencil className="size-4" /> แก้
@@ -124,6 +135,22 @@ export function AdminMentorCards({ content }: { content: ContentAdminState }) {
         </div>
       )}
     </div>
+  );
+}
+
+// เปิดแท็บใหม่ หลังบ้านจะได้ไม่หาย · ร่างยังไม่มีหน้าให้น้องเห็น (API ส่งเฉพาะที่เผยแพร่) จึงบอกเป็นข้อความแทนลิงก์ที่เปิดแล้วว่าง
+function StudentLinks({ card }: { card: MentorCardSummary }) {
+  if (card.status !== "published") return <span className="text-xs whitespace-nowrap text-fd-muted-foreground">น้องยังไม่เห็น</span>;
+  const link = "inline-flex min-h-10 items-center gap-1 whitespace-nowrap text-fd-primary underline-offset-2 hover:underline";
+  return (
+    <span className="flex flex-wrap gap-x-3">
+      <a href={mentorCardUrl(card.slug)} target="_blank" rel="noreferrer" className={link}>
+        การ์ด <ExternalLink className="size-3.5" aria-hidden />
+      </a>
+      <a href={stepUrl(card.step as StepSlug)} target="_blank" rel="noreferrer" className={link}>
+        หน้าขั้น <ExternalLink className="size-3.5" aria-hidden />
+      </a>
+    </span>
   );
 }
 
