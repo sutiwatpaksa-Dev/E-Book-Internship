@@ -1,7 +1,8 @@
 "use client";
 
 import { FilePlus2, FileText, GraduationCap, History, Inbox, Layers, LayoutDashboard, Megaphone, MessageCircle, NotebookPen, Users, type LucideIcon } from "lucide-react";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { useAdmin } from "@/hooks/use-admin";
 import { useUnread } from "@/hooks/use-unread";
 import { useContentAdmin } from "@/hooks/use-content-admin";
@@ -50,66 +51,112 @@ const GROUPS: { label: string; tabs: Tab[] }[] = [
   },
 ];
 const TABS = GROUPS.flatMap((g) => g.tabs);
+// ขอบจางของแถบเมนูมือถือ: จางเฉพาะด้านที่ยังมีเมนูซ่อนอยู่ (เขียนครบทุกแบบ ให้ Tailwind เห็นชื่อ class เต็ม)
+const EDGE_MASK: Record<string, string> = {
+  "false-false": "",
+  "false-true": "[mask-image:linear-gradient(to_right,black_85%,transparent)]",
+  "true-false": "[mask-image:linear-gradient(to_left,black_85%,transparent)]",
+  "true-true": "[mask-image:linear-gradient(to_right,transparent,black_12%,black_88%,transparent)]",
+};
 const CONTENT_TABS: TabId[] = ["cards", "notes", "builtin", "announcements"];
-// ลิงก์เก่า ?tab=content (ก่อนแยกเมนู) ยังเปิดได้ · มี ?note= = มาจากปุ่ม "เพิ่มโน้ตหน้านี้"
-function pickTab(tab: string | undefined, note: string | undefined): TabId {
+// ลิงก์เก่า ?tab=content (ก่อนแยกเมนู) ยังเปิดได้ · มี ?note= = มาจากปุ่ม "เพิ่มโน้ตหน้านี้" · มีแค่ ?t= = ลิงก์เรื่องในแชท
+function pickTab(tab: string | null, note: string | null, thread: number | null): TabId {
   if (note) return "notes";
   if (tab === "content") return "cards";
+  if (!tab && thread) return "questions";
   return TABS.some((t) => t.id === tab) ? (tab as TabId) : "overview";
+}
+
+// หน้าที่เปิดอยู่เก็บใน URL ที่เดียว (ไม่ใช่ state): รีเฟรชแล้วอยู่หน้าเดิม, ปุ่ม Back ใช้ได้, ส่งลิงก์ให้พี่เลี้ยงอีกคนได้
+// เช่น ?tab=users · ?tab=overview&intern=7 · ?tab=cohorts&cohort=2 · ?tab=questions&t=5 · ?tab=notes&note=/learn/cards/hono
+type View = { tab: TabId; intern?: number | null; cohort?: number | null; thread?: number | null; note?: string };
+const positive = (v: string | null) => {
+  const n = Number(v);
+  return Number.isInteger(n) && n > 0 ? n : null;
+};
+function readView(p: URLSearchParams): View {
+  const thread = positive(p.get("t"));
+  const tab = pickTab(p.get("tab"), p.get("note"), thread);
+  // ค่าย่อยมีความหมายเฉพาะใต้แท็บของมัน (?tab=users&intern=7 = แค่หน้าบัญชี)
+  return {
+    tab,
+    intern: tab === "overview" ? positive(p.get("intern")) : null,
+    cohort: tab === "cohorts" ? positive(p.get("cohort")) : null,
+    thread: tab === "questions" ? thread : null,
+    note: tab === "notes" ? (p.get("note") ?? undefined) : undefined,
+  };
+}
+function viewHref(v: View) {
+  const p = new URLSearchParams({ tab: v.tab });
+  if (v.intern) p.set("intern", String(v.intern));
+  if (v.cohort) p.set("cohort", String(v.cohort));
+  if (v.thread) p.set("t", String(v.thread));
+  if (v.note) p.set("note", v.note);
+  return `/dev/admin?${p}`;
 }
 
 // แท็บต่างๆ พากันไปหน้าอื่นผ่านตัวนี้ (เช่น ภาพรวม → น้องรายคน → เปิดแชทของน้อง)
 export type AdminNav = { goTab: (id: TabId) => void; openIntern: (id: number) => void; openThread: (id: number) => void; openNote: (pageUrl: string) => void; openCohort: (id: number | null) => void };
 
 // หลังบ้านพี่เลี้ยง: เมนูแท็บซ้าย (มือถือเป็นแถบเลื่อนด้านบน) + เนื้อหาของแท็บที่เลือก
-type Props = { titles: Record<string, string>; initialTab?: string; initialThread?: number | null; initialNote?: string };
-
-export function AdminPanel({ titles, initialTab = "overview", initialThread = null, initialNote }: Props) {
+export function AdminPanel({ titles }: { titles: Record<string, string> }) {
   const admin = useAdmin();
   const content = useContentAdmin();
-  // เปิดแท็บจากลิงก์ได้ เช่น /dev/admin?tab=questions จากเมนูบัญชี
-  const [tab, setTab] = useState<TabId>(pickTab(initialTab, initialNote));
-  // หน้าที่จะเขียนโน้ตให้ (จาก ?note= หรือปุ่มในภาพรวม) · key ของ AdminNotes เปลี่ยนตาม ฟอร์มจึงเปิดใหม่พร้อมหน้านั้น
-  const [notePage, setNotePage] = useState(initialNote);
-  // เปิดหน้าน้องรายคนอยู่ (อยู่ใต้แท็บภาพรวม) · เรื่องที่สั่งให้แชทเปิด
-  const [internId, setInternId] = useState<number | null>(null);
-  const [threadId, setThreadId] = useState<number | null>(initialThread);
-  // หน้ารุ่นที่เปิดอยู่ (อยู่ใต้เมนูรุ่นฝึกงาน) · null = รายการรุ่น
-  const [cohortId, setCohortId] = useState<number | null>(null);
+  // pushState ของ browser ทำให้ useSearchParams อัปเดตเอง (Next ไม่โหลดหน้าใหม่ ข้อมูลที่โหลดไว้ยังอยู่)
+  const view = readView(useSearchParams());
+  const { tab } = view;
+  const go = (v: View, replace = false) => window.history[replace ? "replaceState" : "pushState"](null, "", viewHref(v));
   const active = TABS.find((t) => t.id === tab)!;
   const waiting = useUnread();
-  const intern = internId !== null ? admin.users.find((u) => u.id === internId) : undefined;
+  const intern = view.intern ? admin.users.find((u) => u.id === view.intern) : undefined;
+
+  // แชทเลือกเรื่องเอง: จด id ลง URL แบบ replace (รีเฟรช/แชร์ลิงก์แล้วเปิดเรื่องเดิม แต่ไม่เพิ่มประวัติทุกคลิก)
+  // URL เปลี่ยนจากข้างนอก (ลิงก์แจ้งเตือน, ปุ่ม Back, เปิดจากหน้าน้อง) = สร้างแชทใหม่ให้เปิดเรื่องนั้น
+  // effect ของลูกรันก่อนของแม่ ตอนแชทเพิ่งสร้าง selected จึงตรงกับ URL แล้ว ไม่สร้างซ้ำ
+  const selected = useRef<number | null | undefined>(undefined);
+  const [chatKey, setChatKey] = useState(0);
+  useEffect(() => {
+    if (tab === "questions" && view.thread !== selected.current) setChatKey((k) => k + 1);
+  }, [tab, view.thread]);
+  const onSelectThread = (id: number | null) => {
+    selected.current = id;
+    if (id !== view.thread) go({ tab: "questions", thread: id }, true);
+  };
+
+  // มือถือ: เลื่อนแถบเมนูให้แท็บที่เปิดอยู่มาอยู่กลาง (เลื่อนแค่แถบ ไม่ใช้ scrollIntoView ที่อาจเลื่อนทั้งหน้า)
+  // และจางขอบด้านที่ยังเลื่อนต่อได้ ให้รู้ว่ามีเมนูอีก
+  const menu = useRef<HTMLElement>(null);
+  const [edges, setEdges] = useState({ left: false, right: false });
+  const measure = () => {
+    const m = menu.current;
+    if (m) setEdges({ left: m.scrollLeft > 4, right: m.scrollLeft + m.clientWidth < m.scrollWidth - 4 });
+  };
+  useEffect(() => {
+    const m = menu.current;
+    const el = document.getElementById(`tab-${tab}`);
+    if (!m || !el || m.scrollWidth <= m.clientWidth) return measure();
+    m.scrollTo({ left: el.offsetLeft - m.offsetLeft - (m.clientWidth - el.offsetWidth) / 2, behavior: "smooth" });
+    measure();
+  }, [tab]);
 
   const nav: AdminNav = {
     goTab: (id) => {
-      setInternId(null);
-      setThreadId(null);
-      setNotePage(undefined);
-      setCohortId(null);
-      setTab(id);
+      if (id !== tab || viewHref(view) !== viewHref({ tab: id })) go({ tab: id });
       // ข้อมูลในแท็บอาจเก่าแล้ว (เช่นเพิ่งตอบแชทไป) โหลดใหม่ทุกครั้งที่สลับ
       admin.reload();
       if (CONTENT_TABS.includes(id)) content.reload();
       content.clearError();
     },
-    openIntern: (id) => {
-      setTab("overview");
-      setInternId(id);
-    },
-    openThread: (id) => {
-      setInternId(null);
-      setThreadId(id);
-      setTab("questions");
-    },
-    openCohort: (id) => {
-      setCohortId(id);
-      setTab("cohorts");
-    },
-    openNote: (pageUrl) => {
-      setInternId(null);
-      setNotePage(pageUrl);
-      setTab("notes");
-    },
+    openIntern: (id) => go({ tab: "overview", intern: id }),
+    openThread: (id) => go({ tab: "questions", thread: id }),
+    openCohort: (id) => go({ tab: "cohorts", cohort: id }),
+    openNote: (pageUrl) => go({ tab: "notes", note: pageUrl }),
+  };
+  // เมนูเป็นลิงก์จริง: กดธรรมดา = สลับในหน้า · Ctrl/Cmd/กลางเมาส์ = เปิดแท็บใหม่ตามปกติของ browser
+  const onMenuClick = (e: MouseEvent<HTMLAnchorElement>, id: TabId) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    e.preventDefault();
+    nav.goTab(id);
   };
   const newRequests = admin.threads.filter((t) => t.kind === "content_request" && t.status === "new").length;
   const badge = (id: TabId) => (id === "questions" ? waiting : id === "requests" ? newRequests : 0);
@@ -117,19 +164,24 @@ export function AdminPanel({ titles, initialTab = "overview", initialThread = nu
   return (
     <div className="flex flex-col gap-6 md:flex-row">
       {/* จอแคบ: เมนูเป็นแถบเลื่อนแนวนอนแถวเดียว (หัวกลุ่มซ่อน) · จอกว้าง: คอลัมน์ซ้ายแบ่งกลุ่ม */}
-      <nav aria-label="เมนูหลังบ้าน" className="-mx-4 flex shrink-0 gap-1 overflow-x-auto px-4 [scrollbar-width:none] md:sticky md:top-24 md:mx-0 md:w-56 md:flex-col md:gap-0 md:self-start md:px-0">
+      <nav
+        ref={menu}
+        onScroll={measure}
+        aria-label="เมนูหลังบ้าน"
+        className={`-mx-4 flex shrink-0 gap-1 overflow-x-auto px-4 [scrollbar-width:none] md:sticky md:top-24 md:mx-0 md:w-56 md:flex-col md:gap-0 md:self-start md:px-0 md:[mask-image:none] ${EDGE_MASK[`${edges.left}-${edges.right}`]}`}
+      >
         {GROUPS.map((g, i) => (
           <div key={g.label} className="contents md:flex md:flex-col md:gap-0.5">
             <span className={`px-3 pb-1 text-xs font-semibold text-fd-muted-foreground max-md:hidden ${i === 0 ? "" : "pt-5"}`}>{g.label}</span>
             {g.tabs.map((t) => {
               const n = badge(t.id);
               return (
-                <button
+                <a
                   key={t.id}
-                  type="button"
+                  href={viewHref({ tab: t.id })}
                   id={`tab-${t.id}`}
                   aria-current={t.id === tab ? "page" : undefined}
-                  onClick={() => nav.goTab(t.id)}
+                  onClick={(e) => onMenuClick(e, t.id)}
                   className={`flex min-h-11 shrink-0 items-center gap-2.5 rounded-lg px-3 text-sm whitespace-nowrap ${t.id === tab ? "bg-fd-primary/10 font-semibold text-fd-primary" : "font-medium hover:bg-fd-accent"}`}
                 >
                   <t.icon className="size-4" />
@@ -139,7 +191,7 @@ export function AdminPanel({ titles, initialTab = "overview", initialThread = nu
                       {n}
                     </span>
                   )}
-                </button>
+                </a>
               );
             })}
           </div>
@@ -167,21 +219,21 @@ export function AdminPanel({ titles, initialTab = "overview", initialThread = nu
         )}
 
         {tab === "overview" &&
-          (internId !== null ? <AdminInternDetail admin={admin} nav={nav} userId={internId} /> : <AdminOverview admin={admin} content={content} nav={nav} titles={titles} />)}
-        {/* key: สั่งเปิดเรื่องใหม่จากหน้าอื่น ให้แชทเริ่มใหม่ที่เรื่องนั้น */}
-        {tab === "questions" && <ChatPanel key={threadId ?? "list"} side="dev" titles={titles} initialId={threadId} />}
+          (view.intern ? <AdminInternDetail admin={admin} nav={nav} userId={view.intern} /> : <AdminOverview admin={admin} content={content} nav={nav} titles={titles} />)}
+        {/* key: สั่งเปิดเรื่องใหม่จากข้างนอก ให้แชทเริ่มใหม่ที่เรื่องนั้น (ดู chatKey ข้างบน) */}
+        {tab === "questions" && <ChatPanel key={chatKey} side="dev" titles={titles} initialId={view.thread ?? null} onSelect={onSelectThread} />}
         {tab === "requests" && <AdminRequests admin={admin} nav={nav} />}
         {CONTENT_TABS.includes(tab) && content.loading ? (
           <p className="text-sm text-fd-muted-foreground">กำลังโหลด…</p>
         ) : (
           <>
             {tab === "cards" && <AdminMentorCards content={content} />}
-            {tab === "notes" && <AdminNotes key={notePage ?? "list"} content={content} initialPage={notePage} titles={titles} />}
+            {tab === "notes" && <AdminNotes key={view.note ?? "list"} content={content} initialPage={view.note} titles={titles} />}
             {tab === "builtin" && <AdminBuiltInCards content={content} />}
             {tab === "announcements" && <AdminAnnouncements content={content} />}
           </>
         )}
-        {tab === "cohorts" && <AdminCohorts admin={admin} nav={nav} cohortId={cohortId} />}
+        {tab === "cohorts" && <AdminCohorts admin={admin} nav={nav} cohortId={view.cohort ?? null} />}
         {tab === "users" && <AdminUsers admin={admin} nav={nav} />}
         {tab === "files" && <AdminFiles admin={admin} />}
         {tab === "audit" && <AdminAudit />}

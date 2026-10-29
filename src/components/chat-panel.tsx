@@ -1,7 +1,7 @@
 "use client";
 
 import { MessageCircle, Plus } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useChat, type ChatSide } from "@/hooks/use-chat";
 import type { ThreadKind } from "@/types";
 import { Button } from "./button";
@@ -25,12 +25,18 @@ type Props = {
   // เปิดมาจากลิงก์ ?t=12 (เปิดเรื่องนั้นเลย) หรือ ?new=content_request (เปิดฟอร์มขอเนื้อหา)
   initialId?: number | null;
   initialNew?: ThreadKind | null;
+  // บอกหน้าที่ครอบอยู่ว่าตอนนี้เปิดเรื่องไหน (หลังบ้านจดลง URL) · เรียกตอนเริ่มด้วย
+  onSelect?: (id: number | null) => void;
 };
 
 // แชทแบบรายการเรื่อง + ห้องแชท (คล้าย LINE/Messenger) ใช้ทั้งน้องและพี่เลี้ยง
 // มือถือ: เห็นรายการก่อน แตะเรื่องแล้วค่อยเห็นห้องแชท (ปุ่ม ← กลับ)
-export function ChatPanel({ side, titles, initialId = null, initialNew = null }: Props) {
+export function ChatPanel({ side, titles, initialId = null, initialNew = null, onSelect }: Props) {
   const chat = useChat(side, initialId);
+  // เก็บ onSelect ใน ref: แม่สร้างฟังก์ชันใหม่ทุก render ถ้าใส่ใน deps จะเรียกซ้ำทุกครั้ง
+  const report = useRef(onSelect);
+  report.current = onSelect;
+  useEffect(() => report.current?.(chat.selectedId), [chat.selectedId]);
   const [composing, setComposing] = useState<ThreadKind | null>(initialNew);
   const [filter, setFilter] = useState<Filter>("all");
 

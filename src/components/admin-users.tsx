@@ -190,10 +190,11 @@ export function AdminUsers({ admin, nav }: { admin: AdminState; nav: AdminNav })
         </ConfirmBox>
       )}
 
-      {/* จอแคบ (ต่ำกว่า 760px): ตารางเลื่อนซ้าย-ขวาได้ แทนการบีบปุ่มจนแถวสูงเกินไป · จอคอมพอดีจอ ไม่มีแถบเลื่อน */}
-      <div className="overflow-x-auto rounded-xl border border-fd-border">
-        <table className="w-full min-w-[760px] text-sm">
-          <thead className="bg-fd-muted text-left">
+      {/* จอแคบ (มือถือ): แถวละการ์ด ปุ่มจัดการอยู่ในการ์ดเลย ไม่ต้องเลื่อนตารางไปขวาสุด (เดิมกว้าง 760px ในจอ 335px)
+          ใช้ markup ชุดเดียวกับตาราง เปลี่ยนแค่ CSS ใต้ md: ข้อมูลไม่ต้องเขียนซ้ำ 2 ที่ · ชื่อช่องมาจาก data-label */}
+      <div className="md:overflow-x-auto md:rounded-xl md:border md:border-fd-border">
+        <table className="w-full text-sm max-md:block md:min-w-[760px]">
+          <thead className="bg-fd-muted text-left max-md:hidden">
             <tr>
               <th className="px-3 py-2">ชื่อผู้ใช้</th>
               <th className="px-3 py-2">บทบาท</th>
@@ -203,18 +204,18 @@ export function AdminUsers({ admin, nav }: { admin: AdminState; nav: AdminNav })
               <th className="px-3 py-2 text-end">จัดการ</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="max-md:flex max-md:flex-col max-md:gap-3">
             {shown.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-3 py-6 text-center text-fd-muted-foreground">
+              <tr className="max-md:block">
+                <td colSpan={6} className="px-3 py-6 text-center text-fd-muted-foreground max-md:block">
                   {admin.loading ? "กำลังโหลด…" : "ไม่พบบัญชีที่ตรงกับที่ค้นหา"}
                 </td>
               </tr>
             )}
             {shown.map((u) => (
-              <tr key={u.id} className="border-t border-fd-border">
+              <tr key={u.id} className="border-t border-fd-border max-md:grid max-md:grid-cols-2 max-md:gap-x-3 max-md:gap-y-2.5 max-md:rounded-xl max-md:border max-md:bg-fd-card max-md:p-3">
                 {/* ทุกแถวมี 2 บรรทัด (ชื่อผู้ใช้ + ชื่อจริง) แถวจึงสูงเท่ากัน ยังไม่กรอกชื่อ = บอกตรงๆ */}
-                <td className="px-3 py-2">
+                <td className="px-3 py-2 max-md:col-span-2 max-md:p-0">
                   <span className="flex items-center gap-2 font-medium">
                     {/* น้อง: กดชื่อเปิดหน้าน้องรายคน (โปรไฟล์ ช่องติดต่อ ความคืบหน้า) */}
                     {u.role === "intern" ? (
@@ -229,7 +230,7 @@ export function AdminUsers({ admin, nav }: { admin: AdminState; nav: AdminNav })
                   <span className="block text-xs text-fd-muted-foreground">{u.fullName ?? "ยังไม่ระบุชื่อ"}</span>
                 </td>
                 {/* บทบาทเป็นป้ายนิ่ง ไม่ใช่ dropdown: สิทธิ์สำคัญ ไม่ควรเปลี่ยนได้จากการคลิกพลาด · Super admin เปลี่ยนผ่านปุ่มข้างป้าย (มีกล่องยืนยัน) */}
-                <td className="px-3 py-2">
+                <td data-label="บทบาท" className="px-3 py-2 max-md:p-0 max-md:before:block max-md:before:text-xs max-md:before:text-fd-muted-foreground max-md:before:content-[attr(data-label)]">
                   <span className="flex items-center gap-1">
                     <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${ROLE_BADGE[u.role]}`}>{ROLE_LABEL[u.role]}</span>
                     {isSuper && !isMe(u) && (
@@ -245,14 +246,14 @@ export function AdminUsers({ admin, nav }: { admin: AdminState; nav: AdminNav })
                     )}
                   </span>
                 </td>
-                <td className="px-3 py-2 whitespace-nowrap text-fd-muted-foreground">{u.role === "intern" ? cohortName(u.cohortId) : "–"}</td>
-                <td className={`px-3 py-2 whitespace-nowrap ${u.disabled || isLockedNow(u) || u.resetRequestedAt ? "text-orange-700 dark:text-orange-400" : ""}`}>
+                <td data-label="รุ่น" className="px-3 py-2 whitespace-nowrap text-fd-muted-foreground max-md:p-0 max-md:whitespace-normal max-md:before:block max-md:before:text-xs max-md:before:text-fd-muted-foreground max-md:before:content-[attr(data-label)]">{u.role === "intern" ? cohortName(u.cohortId) : "–"}</td>
+                <td data-label="สถานะ" className={`px-3 py-2 whitespace-nowrap max-md:p-0 max-md:before:block max-md:before:text-xs max-md:before:text-fd-muted-foreground max-md:before:content-[attr(data-label)] ${u.disabled || isLockedNow(u) || u.resetRequestedAt ? "text-orange-700 dark:text-orange-400" : ""}`}>
                   {u.disabled ? "ปิดอยู่" : u.resetRequestedAt ? "ขอรีเซ็ตรหัสผ่าน" : isLockedNow(u) ? "ล็อกชั่วคราว" : u.secretKind === "pin" ? "รอตั้งรหัสผ่าน" : "ใช้งาน"}
                   {u.resetRequestedAt && !u.disabled && <span className="block text-xs text-fd-muted-foreground">{fmt(u.resetRequestedAt)}</span>}
                 </td>
-                <td className="px-3 py-2 whitespace-nowrap">{fmt(u.lastLoginAt)}</td>
-                <td className="px-3 py-2">
-                  <div className="flex justify-end gap-1 whitespace-nowrap">
+                <td data-label="เข้าล่าสุด" className="px-3 py-2 whitespace-nowrap max-md:p-0 max-md:before:block max-md:before:text-xs max-md:before:text-fd-muted-foreground max-md:before:content-[attr(data-label)]">{fmt(u.lastLoginAt)}</td>
+                <td className="px-3 py-2 max-md:col-span-2 max-md:border-t max-md:border-fd-border max-md:p-0 max-md:pt-2">
+                  <div className="flex justify-end gap-1 whitespace-nowrap max-md:flex-wrap max-md:justify-start">
                     {isLockedNow(u) && (
                       <Button variant="ghost" onClick={() => admin.updateUser(u, { unlock: true })}>
                         ปลดล็อก
