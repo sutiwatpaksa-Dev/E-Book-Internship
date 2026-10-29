@@ -1,12 +1,13 @@
 "use client";
 
-import { Search, UserPlus, Users } from "lucide-react";
+import { ArrowLeftRight, Search, UserPlus, Users } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { isLockedNow, type AdminState } from "@/hooks/use-admin";
 import { inCohort, type CohortFilter } from "@/lib/cohort";
 import type { Role, User } from "@/types";
 import { ROLE_BADGE, ROLE_LABEL } from "./account-menu";
 import { AdminBulkCreate } from "./admin-bulk-create";
+import type { AdminNav } from "./admin-panel";
 import { CohortSelect, defaultCohortId } from "./admin-cohorts";
 import { Button } from "./button";
 import { ConfirmBox } from "./confirm-box";
@@ -14,8 +15,8 @@ import { Field, Input, inputClass } from "./field";
 
 const PAGE_SIZE = 10;
 const fmt = (d: string | null) => (d ? new Date(d).toLocaleString("th-TH") : "–");
-// สีพื้นมาจากป้าย role (ROLE_BADGE) จึงไม่ใส่ bg ที่นี่ ไม่งั้นสองคลาสชนกัน
-const selectClass = "rounded-md border border-fd-border px-2 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-60";
+// แถบกรอง: ทุกชิ้นสูง 36px เท่ากัน (ช่องค้นหา, ปุ่มกลุ่ม, ตัวเลือกรุ่น) สายตาจะอ่านเป็นแถวเดียว
+const toolbarInput = `${inputClass} h-9 py-0`;
 const FILTERS: { id: Role | "all"; label: string }[] = [
   { id: "all", label: "ทั้งหมด" },
   { id: "intern", label: ROLE_LABEL.intern },
@@ -35,7 +36,7 @@ const CONFIRM_TEXT = {
 };
 
 // แท็บบัญชีผู้ใช้: สร้างบัญชี ค้นหา กรองตาม role แบ่งหน้า และจัดการทีละบัญชี
-export function AdminUsers({ admin }: { admin: AdminState }) {
+export function AdminUsers({ admin, nav }: { admin: AdminState; nav: AdminNav }) {
   const [showCreate, setShowCreate] = useState(false);
   const [showBulk, setShowBulk] = useState(false);
   const [newUsername, setNewUsername] = useState("");
@@ -57,6 +58,7 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
   // บัญชีพี่เลี้ยงจัดการได้เฉพาะ Super admin · บัญชีน้องพี่เลี้ยงทุกคนจัดการได้ (เหมือนเดิม)
   const isSuper = !!admin.me?.superAdmin;
   const canManage = (u: User) => isSuper || u.role === "intern";
+  const isMe = (u: User) => u.id === admin.me?.id;
   const cohortName = (id: number | null) => admin.cohorts.find((c) => c.id === id)?.name ?? "–";
   // คนที่ขอรีเซ็ตรหัสผ่านขึ้นก่อน (รออยู่) ที่เหลือเรียงตามชื่อเหมือนเดิม
   rows.sort((a, b) => Number(!!b.resetRequestedAt) - Number(!!a.resetRequestedAt));
@@ -128,10 +130,11 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
               setQuery(e.target.value);
               setPage(1);
             }}
-            className={`${inputClass} ps-9`}
+            className={`${toolbarInput} ps-9`}
           />
         </label>
-        <div role="group" aria-label="กรองตามบทบาท" className="flex gap-1">
+        {/* ปุ่มกลุ่มแบบเดียวกับช่องกรอก (มุม 8px ขอบเดียว) ไม่ใช่ pill แยกกัน */}
+        <div role="group" aria-label="กรองตามบทบาท" className="flex h-9 rounded-lg border border-fd-border p-0.5">
           {FILTERS.map((f) => (
             <button
               key={f.id}
@@ -141,16 +144,16 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
                 setFilter(f.id);
                 setPage(1);
               }}
-              className={`h-9 rounded-full border px-3.5 text-sm ${filter === f.id ? "border-fd-primary bg-fd-primary font-semibold text-fd-primary-foreground" : "border-fd-border hover:bg-fd-accent"}`}
+              className={`rounded-md px-3 text-sm ${filter === f.id ? "bg-fd-primary font-semibold text-fd-primary-foreground" : "text-fd-muted-foreground hover:bg-fd-accent hover:text-fd-foreground"}`}
             >
               {f.label}
             </button>
           ))}
         </div>
-        <label className="flex items-center gap-2 text-sm font-medium">
-          รุ่น
+        <label>
+          <span className="sr-only">กรองตามรุ่น</span>
           <select
-            className={`${inputClass} w-auto`}
+            className={`${toolbarInput} w-auto`}
             value={String(cohortFilter)}
             onChange={(e) => {
               const v = e.target.value;
@@ -158,7 +161,7 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
               setPage(1);
             }}
           >
-            <option value="all">ทุกรุ่น</option>
+            <option value="all">รุ่น: ทุกรุ่น</option>
             {admin.cohorts.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -187,9 +190,9 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
         </ConfirmBox>
       )}
 
-      {/* จอแคบ: ตารางเลื่อนซ้าย-ขวาได้ แทนการบีบปุ่มจนแถวสูงเกินไป */}
+      {/* จอแคบ (ต่ำกว่า 760px): ตารางเลื่อนซ้าย-ขวาได้ แทนการบีบปุ่มจนแถวสูงเกินไป · จอคอมพอดีจอ ไม่มีแถบเลื่อน */}
       <div className="overflow-x-auto rounded-xl border border-fd-border">
-        <table className="w-full min-w-[860px] text-sm">
+        <table className="w-full min-w-[760px] text-sm">
           <thead className="bg-fd-muted text-left">
             <tr>
               <th className="px-3 py-2">ชื่อผู้ใช้</th>
@@ -210,27 +213,40 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
             )}
             {shown.map((u) => (
               <tr key={u.id} className="border-t border-fd-border">
-                <td className="px-3 py-2 font-medium">
-                  {u.username}
-                  {u.fullName && <span className="block text-xs font-normal text-fd-muted-foreground">{u.fullName}</span>}
-                  {u.role === "dev" && u.superAdmin && <span className="ms-2 rounded-full bg-fd-primary/10 px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-fd-primary">Super admin</span>}
-                </td>
+                {/* ทุกแถวมี 2 บรรทัด (ชื่อผู้ใช้ + ชื่อจริง) แถวจึงสูงเท่ากัน ยังไม่กรอกชื่อ = บอกตรงๆ */}
                 <td className="px-3 py-2">
-                  <select
-                    aria-label={`บทบาทของ ${u.username}`}
-                    // มีแค่ 2 บทบาท เปลี่ยนทางไหนก็แตะบัญชีพี่เลี้ยง จึงล็อกทั้งช่องเมื่อไม่ใช่ Super admin
-                    disabled={!isSuper}
-                    title={isSuper ? undefined : "เปลี่ยนบทบาทได้เฉพาะ Super admin"}
-                    className={`${selectClass} ${ROLE_BADGE[u.role]}`}
-                    value={u.role}
-                    onChange={(e) => setPending({ kind: "role", user: u, role: e.target.value as Role })}
-                  >
-                    <option value="intern">{ROLE_LABEL.intern}</option>
-                    <option value="dev">{ROLE_LABEL.dev}</option>
-                  </select>
+                  <span className="flex items-center gap-2 font-medium">
+                    {/* น้อง: กดชื่อเปิดหน้าน้องรายคน (โปรไฟล์ ช่องติดต่อ ความคืบหน้า) */}
+                    {u.role === "intern" ? (
+                      <button type="button" onClick={() => nav.openIntern(u.id)} className="text-fd-primary underline-offset-2 hover:underline">
+                        {u.username}
+                      </button>
+                    ) : (
+                      u.username
+                    )}
+                    {u.role === "dev" && u.superAdmin && <span className="rounded-full bg-fd-primary/10 px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-fd-primary">Super admin</span>}
+                  </span>
+                  <span className="block text-xs text-fd-muted-foreground">{u.fullName ?? "ยังไม่ระบุชื่อ"}</span>
+                </td>
+                {/* บทบาทเป็นป้ายนิ่ง ไม่ใช่ dropdown: สิทธิ์สำคัญ ไม่ควรเปลี่ยนได้จากการคลิกพลาด · Super admin เปลี่ยนผ่านปุ่มข้างป้าย (มีกล่องยืนยัน) */}
+                <td className="px-3 py-2">
+                  <span className="flex items-center gap-1">
+                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${ROLE_BADGE[u.role]}`}>{ROLE_LABEL[u.role]}</span>
+                    {isSuper && !isMe(u) && (
+                      <button
+                        type="button"
+                        aria-label={`เปลี่ยน ${u.username} เป็น${ROLE_LABEL[u.role === "intern" ? "dev" : "intern"]}`}
+                        title={`เปลี่ยนเป็น${ROLE_LABEL[u.role === "intern" ? "dev" : "intern"]}`}
+                        onClick={() => setPending({ kind: "role", user: u, role: u.role === "intern" ? "dev" : "intern" })}
+                        className="inline-flex size-7 items-center justify-center rounded-md text-fd-muted-foreground hover:bg-fd-accent hover:text-fd-foreground"
+                      >
+                        <ArrowLeftRight className="size-3.5" />
+                      </button>
+                    )}
+                  </span>
                 </td>
                 <td className="px-3 py-2 whitespace-nowrap text-fd-muted-foreground">{u.role === "intern" ? cohortName(u.cohortId) : "–"}</td>
-                <td className={`px-3 py-2 ${u.disabled || isLockedNow(u) || u.resetRequestedAt ? "text-orange-700 dark:text-orange-400" : ""}`}>
+                <td className={`px-3 py-2 whitespace-nowrap ${u.disabled || isLockedNow(u) || u.resetRequestedAt ? "text-orange-700 dark:text-orange-400" : ""}`}>
                   {u.disabled ? "ปิดอยู่" : u.resetRequestedAt ? "ขอรีเซ็ตรหัสผ่าน" : isLockedNow(u) ? "ล็อกชั่วคราว" : u.secretKind === "pin" ? "รอตั้งรหัสผ่าน" : "ใช้งาน"}
                   {u.resetRequestedAt && !u.disabled && <span className="block text-xs text-fd-muted-foreground">{fmt(u.resetRequestedAt)}</span>}
                 </td>
@@ -242,13 +258,20 @@ export function AdminUsers({ admin }: { admin: AdminState }) {
                         ปลดล็อก
                       </Button>
                     )}
-                    {(canManage(u) || u.id === admin.me?.id) && (
+                    {(canManage(u) || isMe(u)) && (
                       // มีคำขอรีเซ็ต: ปุ่มเด่นขึ้น เป็นงานที่น้องรออยู่
                       <Button variant={u.resetRequestedAt ? "primary" : "ghost"} onClick={() => setPending({ kind: "reset", user: u })}>
                         ออก PIN ใหม่
                       </Button>
                     )}
-                    {!canManage(u) ? null : u.disabled ? (
+                    {/* ไม่มีปุ่มให้กด = บอกเหตุผลแทนช่องว่าง (server ก็ไม่ให้ปิดบัญชีตัวเอง) */}
+                    {isMe(u) ? (
+                      <span className="inline-flex h-9 items-center px-2 text-xs text-fd-muted-foreground">บัญชีของคุณ</span>
+                    ) : !canManage(u) ? (
+                      <span className="inline-flex h-9 items-center px-2 text-xs text-fd-muted-foreground" title="บัญชีพี่เลี้ยงจัดการได้เฉพาะ Super admin">
+                        เฉพาะ Super admin
+                      </span>
+                    ) : u.disabled ? (
                       <Button variant="ghost" onClick={() => admin.updateUser(u, { disabled: false })}>
                         เปิดบัญชี
                       </Button>

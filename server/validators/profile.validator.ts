@@ -34,6 +34,7 @@ export const profileSchema = z.object({
 });
 
 // ช่องที่แต่ละ role กรอกได้ · น้องไม่มีช่องตำแหน่ง/เบอร์ พี่เลี้ยงไม่มีประเภทสถานศึกษา/ระดับ
-export const INTERN_FIELDS = ["fullName", "nickname", "schoolType", "schoolName", "major", "eduLevel"] as const;
+// น้องกรอกช่องติดต่อได้เหมือนพี่เลี้ยง (พี่เลี้ยงทุกคนเห็นในหน้าน้องรายคน) · expertise ของน้อง = ด้านที่สนใจ/ถนัด
+export const INTERN_FIELDS = ["fullName", "nickname", "schoolType", "schoolName", "major", "eduLevel", "phone", "expertise", "lineId", "instagram", "facebook"] as const;
 export const MENTOR_FIELDS = ["fullName", "nickname", "jobTitle", "phone", "schoolName", "major", "expertise", "lineId", "instagram", "facebook"] as const;
 export type ProfileInput = z.infer<typeof profileSchema>;

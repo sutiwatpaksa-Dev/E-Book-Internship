@@ -30,4 +30,9 @@ export function facebookProblem(v: string | null | undefined) {
   return /^[a-z0-9.]{5,50}$/i.test(v) ? null : "Facebook ใส่ลิงก์ facebook.com/... หรือชื่อผู้ใช้ภาษาอังกฤษ";
 }
 
+// LINE · IG · Facebook ต่อกันบรรทัดเดียว (ข้ามช่องที่ว่าง) ใช้ทั้งการ์ดพี่เลี้ยงและหน้าน้องรายคนในหลังบ้าน
+type Socials = { lineId?: string | null; instagram?: string | null; facebook?: string | null };
+export const socialOf = (m: Socials) =>
+  [m.lineId && `LINE: ${m.lineId}`, m.instagram && `IG: ${m.instagram}`, m.facebook && `Facebook: ${m.facebook}`].filter(Boolean).join(" · ");
+
 export const CONTACT_RULES = { phone: phoneProblem, lineId: lineProblem, instagram: instagramProblem, facebook: facebookProblem } as const;

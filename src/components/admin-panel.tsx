@@ -117,7 +117,7 @@ export function AdminPanel({ titles, initialTab = "overview", initialThread = nu
   return (
     <div className="flex flex-col gap-6 md:flex-row">
       {/* จอแคบ: เมนูเป็นแถบเลื่อนแนวนอนแถวเดียว (หัวกลุ่มซ่อน) · จอกว้าง: คอลัมน์ซ้ายแบ่งกลุ่ม */}
-      <nav aria-label="เมนูหลังบ้าน" className="-mx-4 flex shrink-0 gap-1 overflow-x-auto px-4 [scrollbar-width:none] md:mx-0 md:w-56 md:flex-col md:gap-0 md:px-0">
+      <nav aria-label="เมนูหลังบ้าน" className="-mx-4 flex shrink-0 gap-1 overflow-x-auto px-4 [scrollbar-width:none] md:sticky md:top-24 md:mx-0 md:w-56 md:flex-col md:gap-0 md:self-start md:px-0">
         {GROUPS.map((g, i) => (
           <div key={g.label} className="contents md:flex md:flex-col md:gap-0.5">
             <span className={`px-3 pb-1 text-xs font-semibold text-fd-muted-foreground max-md:hidden ${i === 0 ? "" : "pt-5"}`}>{g.label}</span>
@@ -182,7 +182,7 @@ export function AdminPanel({ titles, initialTab = "overview", initialThread = nu
           </>
         )}
         {tab === "cohorts" && <AdminCohorts admin={admin} nav={nav} cohortId={cohortId} />}
-        {tab === "users" && <AdminUsers admin={admin} />}
+        {tab === "users" && <AdminUsers admin={admin} nav={nav} />}
         {tab === "files" && <AdminFiles admin={admin} />}
         {tab === "audit" && <AdminAudit />}
       </section>

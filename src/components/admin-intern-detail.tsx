@@ -4,6 +4,8 @@ import { ArrowLeft, Check } from "lucide-react";
 import { useState } from "react";
 import { roadmap } from "@/data/roadmap";
 import { daysSince, isLockedNow, type AdminState } from "@/hooks/use-admin";
+import { toast } from "@/hooks/use-toast";
+import { socialOf } from "@/lib/contact";
 import { eduSummary, SCHOOL_TYPE_LABEL } from "@/lib/education";
 import { summarize } from "@/lib/progress-summary";
 import { KIND_LABEL, timeAgo } from "@/lib/thread-labels";
@@ -26,6 +28,23 @@ export function AdminInternDetail({ admin, nav, userId }: { admin: AdminState; n
   const doneAt = new Map(entries.map((e) => [e.link, e.doneAt]));
   const threads = admin.threads.filter((t) => t.owner === u.username);
   const days = daysSince(u.lastLoginAt);
+  const edu = eduSummary(u) ? `${u.schoolType ? `${SCHOOL_TYPE_LABEL[u.schoolType]} · ` : ""}${eduSummary(u)}` : null;
+  // ช่องที่น้องกรอกเอง ว่าง = บอกว่ายังไม่ได้กรอก (ไม่ซ่อน จะได้รู้ว่าต้องทักให้กรอก)
+  const contact: [string, string | null][] = [
+    ["การศึกษา", edu],
+    ["เบอร์โทร", u.phone ?? null],
+    ["สนใจ / ถนัด", u.expertise ?? null],
+    ["ช่องทางอื่น", socialOf(u) || null],
+  ];
+  async function copy() {
+    const lines = [`ชื่อ: ${u!.fullName ?? u!.username}${u!.nickname ? ` (${u!.nickname})` : ""}`, ...contact.filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`)];
+    try {
+      await navigator.clipboard.writeText(lines.join("\n"));
+      toast.success(`คัดลอกข้อมูลของ ${u!.nickname || u!.username} แล้ว`);
+    } catch {
+      toast.error("คัดลอกไม่ได้ ลองเลือกข้อความแล้วคัดลอกเอง");
+    }
+  }
 
   const confirm = async () => {
     const kind = pending;
@@ -46,14 +65,34 @@ export function AdminInternDetail({ admin, nav, userId }: { admin: AdminState; n
         </span>
       </div>
       {/* โปรไฟล์ที่น้องกรอกเอง (ยังไม่กรอก = บอกตรงๆ ไม่ซ่อน จะได้รู้ว่าต้องทักให้กรอก) */}
-      <div className="flex flex-col gap-0.5 rounded-xl border border-fd-border p-4 text-sm">
-        <strong className="text-base">
-          {u.fullName ?? <span className="font-normal text-fd-muted-foreground">ยังไม่ได้กรอกชื่อ-นามสกุล</span>}
-          {u.nickname && <span className="font-normal text-fd-muted-foreground"> ({u.nickname})</span>}
-        </strong>
-        <span className="text-fd-muted-foreground">
-          {eduSummary(u) ? `${u.schoolType ? `${SCHOOL_TYPE_LABEL[u.schoolType]} · ` : ""}${eduSummary(u)}` : "ยังไม่ได้กรอกข้อมูลการศึกษา (น้องกรอกเองที่เมนูบัญชี → โปรไฟล์ของฉัน)"}
-        </span>
+      <div className="flex flex-col gap-3 rounded-xl border border-fd-border bg-fd-card p-4 text-sm">
+        <div className="flex items-start justify-between gap-3">
+          <strong className="min-w-0 text-base">
+            {u.fullName ?? <span className="font-normal text-fd-muted-foreground">ยังไม่ได้กรอกชื่อ-นามสกุล</span>}
+            {u.nickname && <span className="font-normal text-fd-muted-foreground"> ({u.nickname})</span>}
+            <span className="block text-xs font-normal text-fd-muted-foreground">{u.username}</span>
+          </strong>
+          <Button variant="ghost" onClick={copy} className="shrink-0 border border-fd-border">
+            คัดลอก
+          </Button>
+        </div>
+        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
+          {contact.map(([k, v]) => (
+            <div key={k} className="contents">
+              <dt className="text-fd-muted-foreground">{k}</dt>
+              <dd className="min-w-0 break-words">
+                {k === "เบอร์โทร" && v ? (
+                  <a href={`tel:${v.replace(/[^\d+]/g, "")}`} className="font-medium text-fd-primary hover:underline">
+                    {v}
+                  </a>
+                ) : (
+                  (v ?? <span className="text-fd-muted-foreground">ยังไม่ได้กรอก</span>)
+                )}
+              </dd>
+            </div>
+          ))}
+        </dl>
+        <p className="text-xs text-fd-muted-foreground">น้องกรอกเองที่เมนูบัญชี → โปรไฟล์ของฉัน · พี่เลี้ยงทุกคนเห็นข้อมูลนี้</p>
         {u.secretKind === "pin" && <span className="text-orange-700 dark:text-orange-400">ยังใช้ PIN ชั่วคราว: login ครั้งหน้าระบบจะให้ตั้งรหัสผ่าน</span>}
       </div>
 

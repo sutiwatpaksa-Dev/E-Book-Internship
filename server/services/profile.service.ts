@@ -18,10 +18,11 @@ export const profileService = {
     const cohort = c ? { name: c.name, startsOn: c.startsOn, endsOn: c.endsOn, endedAt: c.endedAt, mentors: await cohortRepository.mentorsOf(c.id) } : null;
     return { username: u.username, role: u.role, passwordSet: u.secretKind === "password", lastLoginAt: u.lastLoginAt, cohort, ...pick(u) };
   },
-  // เก็บเฉพาะช่องของ role ตัวเอง: น้องส่งช่องเบอร์โทรมาก็ไม่ถูกเก็บ
+  // เก็บเฉพาะช่องของ role ตัวเอง: น้องส่งช่องตำแหน่งงาน (jobTitle) มาก็ไม่ถูกเก็บ
   async update(id: number, role: Role, input: ProfileInput) {
     const allowed = Object.fromEntries(fieldsOf(role).filter((k) => k in input).map((k) => [k, input[k]]));
-    if (!(await userRepository.update(id, allowed))) throw new Error("NOT_FOUND");
+    // ไม่เหลือช่องให้เก็บ (ส่งมาแต่ช่องของ role อื่น) = ไม่ต้องเขียน DB · Drizzle โยน "No values to set" ถ้า set ว่าง
+    if (Object.keys(allowed).length > 0 && !(await userRepository.update(id, allowed))) throw new Error("NOT_FOUND");
     // update คืนแค่คอลัมน์ที่หลังบ้านใช้ อ่านแถวเต็มใหม่เพื่อส่งช่องของพี่เลี้ยงกลับไปด้วย
     return pick((await userRepository.findById(id))!);
   },

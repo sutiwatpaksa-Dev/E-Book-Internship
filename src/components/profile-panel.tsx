@@ -8,7 +8,7 @@ import { cardUrl, cards, nextUp } from "@/data/learn";
 import { useProgress } from "@/hooks/use-progress";
 import { toast } from "@/hooks/use-toast";
 import { cohortDay, cohortRange } from "@/lib/cohort";
-import { CONTACT_RULES } from "@/lib/contact";
+import { CONTACT_RULES, socialOf } from "@/lib/contact";
 import type { MentorContact, Profile, ProfileFields } from "@/types";
 import { ROLE_BADGE, ROLE_LABEL } from "./account-menu";
 import { Button } from "./button";
@@ -94,8 +94,6 @@ export function ProfilePanel({ initialTab }: { initialTab: Tab }) {
 // ข้อมูลพี่เลี้ยงประจำรุ่น ไว้กรอกเอกสารฝึกงาน (ชื่อผู้ดูแล ตำแหน่ง เบอร์โทร) · server ส่งมาเฉพาะพี่เลี้ยงของรุ่นตัวเอง
 const nameOf = (m: MentorContact) => m.fullName || m.nickname || m.username;
 const gradOf = (m: MentorContact) => [m.schoolName, m.major].filter(Boolean).join(" · ");
-const socialOf = (m: MentorContact) =>
-  [m.lineId && `LINE: ${m.lineId}`, m.instagram && `IG: ${m.instagram}`, m.facebook && `Facebook: ${m.facebook}`].filter(Boolean).join(" · ");
 
 function MentorContacts({ mentors }: { mentors: MentorContact[] }) {
   return (
@@ -244,17 +242,11 @@ function InternSummary({ profile: { cohort, lastLoginAt } }: { profile: Profile 
 
 type Setter = <K extends keyof ProfileFields>(k: K, value: ProfileFields[K]) => void;
 
+const txtOf = (v: ProfileFields) => (k: keyof ProfileFields) => (v[k] as string | null | undefined) ?? "";
+
 // ช่องของพี่เลี้ยง: น้องในรุ่นที่พี่ดูแลเห็นทั้งหมด (คนนอกรุ่นและคนที่ไม่ได้ login ไม่เห็น)
 function MentorFieldsForm({ v, set }: { v: ProfileFields; set: Setter }) {
-  const txt = (k: keyof ProfileFields) => (v[k] as string | null | undefined) ?? "";
-  // บอกผิดใต้ช่องทันทีที่พิมพ์ (server ตรวจซ้ำด้วยกฎเดียวกัน)
-  const problem = (k: keyof typeof CONTACT_RULES) => CONTACT_RULES[k](txt(k).trim());
-  const Err = ({ k }: { k: keyof typeof CONTACT_RULES }) =>
-    problem(k) ? (
-      <span role="alert" className="text-xs text-red-700 dark:text-red-400">
-        {problem(k)}
-      </span>
-    ) : null;
+  const txt = txtOf(v);
   return (
     <>
       <p className="rounded-lg bg-fd-primary/10 px-3 py-2 text-sm sm:col-span-2">
@@ -263,39 +255,86 @@ function MentorFieldsForm({ v, set }: { v: ProfileFields; set: Setter }) {
       <Field label="ตำแหน่ง">
         <Input className={field} value={txt("jobTitle")} onChange={(e) => set("jobTitle", e.target.value)} maxLength={100} autoComplete="organization-title" placeholder="เช่น Senior Full-stack Developer" />
       </Field>
-      <Field label="เบอร์โทร">
-        <Input className={field} type="tel" inputMode="tel" value={txt("phone")} onChange={(e) => set("phone", e.target.value)} maxLength={25} autoComplete="tel" placeholder="เช่น 081-234-5678" aria-invalid={!!problem("phone")} />
-        <Err k="phone" />
-      </Field>
+      <PhoneField v={v} set={set} />
       <Field label="จบจาก (สถานศึกษา)">
         <Input className={field} value={txt("schoolName")} onChange={(e) => set("schoolName", e.target.value)} maxLength={150} placeholder="เช่น มหาวิทยาลัยบูรพา" />
       </Field>
       <Field label="คณะ / สาขา">
         <Input className={field} value={txt("major")} onChange={(e) => set("major", e.target.value)} maxLength={150} placeholder="เช่น วิทยาการคอมพิวเตอร์" />
       </Field>
-      <div className="sm:col-span-2">
-        <Field label="ถนัดด้าน" hint="น้องจะได้รู้ว่าเรื่องไหนควรถามพี่คนนี้">
-          <textarea value={txt("expertise")} onChange={(e) => set("expertise", e.target.value)} maxLength={300} className={`${inputClass} min-h-20`} placeholder="เช่น React, ออกแบบฐานข้อมูล, Deploy บน Vercel" />
-        </Field>
-      </div>
-      <fieldset className="grid gap-4 sm:col-span-2 sm:grid-cols-3">
-        <legend className="mb-2 text-sm font-semibold">
-          ช่องทางติดต่อเสริม <span className="font-normal text-fd-muted-foreground">(ไม่บังคับ)</span>
-        </legend>
-        <Field label="LINE ID">
-          <Input className={field} value={txt("lineId")} onChange={(e) => set("lineId", e.target.value)} maxLength={20} autoCapitalize="none" spellCheck={false} aria-invalid={!!problem("lineId")} />
-          <Err k="lineId" />
-        </Field>
-        <Field label="Instagram">
-          <Input className={field} value={txt("instagram")} onChange={(e) => set("instagram", e.target.value)} maxLength={31} autoCapitalize="none" spellCheck={false} placeholder="@ชื่อผู้ใช้" aria-invalid={!!problem("instagram")} />
-          <Err k="instagram" />
-        </Field>
-        <Field label="Facebook">
-          <Input className={field} value={txt("facebook")} onChange={(e) => set("facebook", e.target.value)} maxLength={100} autoCapitalize="none" spellCheck={false} placeholder="ลิงก์ facebook.com/..." aria-invalid={!!problem("facebook")} />
-          <Err k="facebook" />
-        </Field>
-      </fieldset>
+      <ExpertiseField v={v} set={set} label="ถนัดด้าน" hint="น้องจะได้รู้ว่าเรื่องไหนควรถามพี่คนนี้" placeholder="เช่น React, ออกแบบฐานข้อมูล, Deploy บน Vercel" />
+      <SocialFields v={v} set={set} />
     </>
+  );
+}
+
+// ช่องติดต่อของน้อง: พี่เลี้ยงทุกคนเห็นในหลังบ้าน (หน้าน้องรายคน) ไว้ติดต่อเรื่องงานและเอกสารฝึกงาน
+function InternContactForm({ v, set }: { v: ProfileFields; set: Setter }) {
+  return (
+    <>
+      <p className="rounded-lg bg-fd-primary/10 px-3 py-2 text-sm sm:col-span-2">
+        ช่องติดต่อด้านล่างไม่บังคับ พี่เลี้ยงทุกคนเห็น (น้องคนอื่นไม่เห็น) ใช้ติดต่อเรื่องงานและเอกสารฝึกงาน
+      </p>
+      <PhoneField v={v} set={set} />
+      <ExpertiseField v={v} set={set} label="ด้านที่สนใจ / ถนัด" hint="พี่เลี้ยงจะได้รู้ว่าน้องอยากฝึกเรื่องไหน" placeholder="เช่น หน้าเว็บ React, ฐานข้อมูล, อยากลอง Deploy" />
+      <SocialFields v={v} set={set} />
+    </>
+  );
+}
+
+// บอกผิดใต้ช่องทันทีที่พิมพ์ (server ตรวจซ้ำด้วยกฎเดียวกันใน src/lib/contact.ts)
+function contactProblem(v: ProfileFields) {
+  const txt = txtOf(v);
+  const problem = (k: keyof typeof CONTACT_RULES) => CONTACT_RULES[k](txt(k).trim());
+  const Err = ({ k }: { k: keyof typeof CONTACT_RULES }) =>
+    problem(k) ? (
+      <span role="alert" className="text-xs text-red-700 dark:text-red-400">
+        {problem(k)}
+      </span>
+    ) : null;
+  return { txt, problem, Err };
+}
+
+function PhoneField({ v, set }: { v: ProfileFields; set: Setter }) {
+  const { txt, problem, Err } = contactProblem(v);
+  return (
+    <Field label="เบอร์โทร">
+      <Input className={field} type="tel" inputMode="tel" value={txt("phone")} onChange={(e) => set("phone", e.target.value)} maxLength={25} autoComplete="tel" placeholder="เช่น 081-234-5678" aria-invalid={!!problem("phone")} />
+      <Err k="phone" />
+    </Field>
+  );
+}
+
+function ExpertiseField({ v, set, label, hint, placeholder }: { v: ProfileFields; set: Setter; label: string; hint: string; placeholder: string }) {
+  return (
+    <div className="sm:col-span-2">
+      <Field label={label} hint={hint}>
+        <textarea value={txtOf(v)("expertise")} onChange={(e) => set("expertise", e.target.value)} maxLength={300} className={`${inputClass} min-h-20`} placeholder={placeholder} />
+      </Field>
+    </div>
+  );
+}
+
+function SocialFields({ v, set }: { v: ProfileFields; set: Setter }) {
+  const { txt, problem, Err } = contactProblem(v);
+  return (
+    <fieldset className="grid gap-4 sm:col-span-2 sm:grid-cols-3">
+      <legend className="mb-2 text-sm font-semibold">
+        ช่องทางติดต่อเสริม <span className="font-normal text-fd-muted-foreground">(ไม่บังคับ)</span>
+      </legend>
+      <Field label="LINE ID">
+        <Input className={field} value={txt("lineId")} onChange={(e) => set("lineId", e.target.value)} maxLength={20} autoCapitalize="none" spellCheck={false} aria-invalid={!!problem("lineId")} />
+        <Err k="lineId" />
+      </Field>
+      <Field label="Instagram">
+        <Input className={field} value={txt("instagram")} onChange={(e) => set("instagram", e.target.value)} maxLength={31} autoCapitalize="none" spellCheck={false} placeholder="@ชื่อผู้ใช้" aria-invalid={!!problem("instagram")} />
+        <Err k="instagram" />
+      </Field>
+      <Field label="Facebook">
+        <Input className={field} value={txt("facebook")} onChange={(e) => set("facebook", e.target.value)} maxLength={100} autoCapitalize="none" spellCheck={false} placeholder="facebook.com/..." aria-invalid={!!problem("facebook")} />
+        <Err k="facebook" />
+      </Field>
+    </fieldset>
   );
 }
 
@@ -329,7 +368,14 @@ function InfoForm({ profile, onSaved }: { profile: Profile; onSaved: (p: Profile
       </Field>
 
       {/* น้อง: การศึกษา (ให้พี่เลี้ยงรู้จัก) · พี่เลี้ยง: ข้อมูลที่น้องใช้กรอกเอกสารฝึกงาน */}
-      {profile.role === "intern" ? <EducationFields value={v} onChange={(e) => setV({ ...v, ...e })} /> : <MentorFieldsForm v={v} set={set} />}
+      {profile.role === "intern" ? (
+        <>
+          <EducationFields value={v} onChange={(e) => setV({ ...v, ...e })} />
+          <InternContactForm v={v} set={set} />
+        </>
+      ) : (
+        <MentorFieldsForm v={v} set={set} />
+      )}
 
       {error && (
         <div className="sm:col-span-2">
