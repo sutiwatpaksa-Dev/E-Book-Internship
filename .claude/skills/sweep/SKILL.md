@@ -19,12 +19,18 @@ sweep มีไว้**หาและรายงาน**เท่านั้�
 | 2 | ลิงก์ภายใน | ทุก `](/...)` ต้องมีไฟล์ใน `content/docs/` · anchor `#...` ต้องตรงกับ heading ที่แปลงแบบ github-slugger (ระวังขีด `--` ซ้อนกัน) · ห้าม URL-encode ภาษาไทยใน href |
 | 3 | ลำดับบท | บทเดิม: อยู่ใน `content/docs/meta.json` และ `src/data/roadmap.ts` · การ์ด: อยู่ใน `cards` ของ `src/data/learn.ts` และ `meta.json` ของ `content/docs/learn/cards/` (`bun test` ตรวจ `needs` / `part`) |
 | 4 | Windows / Mac | กฎบท 0: Windows ใช้ Git Bash เท่านั้น คำสั่งต้องรันได้ทั้ง Mac และ Git Bash · จับคำสั่งที่สอนทาง PowerShell / `cmd` / `curl.exe` · path ที่ขึ้นต้น `/` ซึ่ง Git Bash แปลงให้ (ต้องใช้ `MSYS_NO_PATHCONV=1`) · เครื่องมือที่ไม่มีใน Git Bash |
-| 5 | โค้ดตัวอย่าง | import ครบไหม, ชื่อไฟล์และ path ตรงกับที่บทอื่นใช้ไหม, ตัวอย่างร้าน (laptop / Bit Café) ไม่ปนกัน, Express กับ Hono ไม่ปนกันในบทเดียว |
+| 5 | โค้ดตัวอย่าง | import ครบไหม, ชื่อไฟล์และ path ตรงกับที่บทอื่นใช้ไหม, ตัวอย่างไม่ปนโดเมน (บทเดิม: laptop / Bit Café · การ์ด: ห้องสมุด members / books / loans), Express กับ Hono ไม่ปนกันในบทเดียว |
 | 6 | MDX | `{` `}` `<` ในข้อความธรรมดาต้องอยู่ใน backtick หรือ escape · ก่อน `</details>` ต้องมีบรรทัดว่าง · หัวข้อ (`#`) ห้ามมีลิงก์ (Fumadocs ห่อหัวข้อด้วย `<a>` อยู่แล้ว ได้ `<a>` ซ้อน `<a>` = hydration error) ตรวจด้วย `bun test src/lib/content-rules.test.ts` |
 | 7 | ตารางเครื่องมือ | `src/data/tool-groups.ts`: `checkedAt` เก่ากว่า 12 เดือนไหม, `url` ชี้เว็บทางการไหม |
-| 8 | ค่าลับ / ข้อมูลส่วนตัว | `git grep -nE "(postgres(ql)?://[^ ]+:[^ ]+@|SESSION_SECRET=.+|sk-[A-Za-z0-9]{20,})"` ห้ามมีค่าจริง |
+| 8 | ค่าลับ / ข้อมูลส่วนตัว | รันคำสั่งค้นค่าลับใต้ตาราง ห้ามมีค่าจริง (เจอแค่ตัว pattern ในไฟล์นี้ถือว่าผ่าน) |
 | 9 | รูป | ทุก `/img/...` มีไฟล์ใน `public/img/` · svg มี `<title>` |
 | 10 | การ์ดต่อกันได้ | เรียก agent `card-reader` (`.claude/agents/card-reader.md`) อ่านการ์ดที่เปลี่ยนตั้งแต่ sweep รอบก่อน + การ์ดถัดไป 1–2 ใบที่ต่อโค้ดกัน (ดู `git log --stat` และ `needs` ใน `src/data/learn.ts`) ไม่ต้องอ่านทุกใบทุกรอบ · ข้อ "ควรรันจริงเพื่อยืนยัน" ของ agent ให้รันจริงก่อนจัดเป็น P1 |
+
+คำสั่งค้นค่าลับ (ข้อ 8):
+
+```bash
+git grep -nE "(postgres(ql)?://[^ ]+:[^ ]+@|SESSION_SECRET=.+|sk-[A-Za-z0-9]{20,})"
+```
 
 ตัวอย่างคำสั่งตรวจลิงก์ภายในแบบเร็ว:
 

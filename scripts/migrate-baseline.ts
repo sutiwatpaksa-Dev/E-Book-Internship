@@ -4,9 +4,10 @@
 // เทียบตารางในฐานกับ snapshot ของไฟล์ migration ทุกจุด ตรงครบถึงจะเติมบันทึกให้ได้
 // ไม่ตรงแม้จุดเดียว = ไม่เขียนอะไร เพราะการเติมบันทึกจะกลบความต่างไว้ แล้วไปพังทีหลังแบบหาสาเหตุยาก
 //
-// scripts/migrate.ts เรียกตัวนี้เองตอน build preview ของ branch dev (production ไม่เรียก)
+// scripts/migrate.ts เรียกตัวนี้เองเฉพาะตอน build preview ของ branch dev (production ไม่เรียก)
+// ตั้งแต่ v2.1.18c Vercel ไม่ build dev แล้ว ทางนั้นจึงไม่ทำงาน ใช้วิธีรันมือกับ production แทน
 // รันมือก็ได้ ค่าเริ่มต้นอ่านอย่างเดียว ใส่ --apply ถึงจะเขียน:
-//   bun --env-file=.env.preview scripts/migrate-baseline.ts [--apply]
+//   bun --env-file=.env.production scripts/migrate-baseline.ts [--apply]   (--apply กับ production ต้องขออนุมัติก่อน)
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { Client } from "pg";

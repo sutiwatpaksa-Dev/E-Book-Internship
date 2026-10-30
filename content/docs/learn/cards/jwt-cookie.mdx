@@ -32,7 +32,7 @@ bun -e "console.log(require('crypto').randomBytes(48).toString('base64'))"
 
 ได้ข้อความยาว 64 ตัว เอาไปใส่ใน `server/.env` **ห้ามคิดกุญแจเอง** เช่น `library-secret` เพราะเดาได้ ใครรู้กุญแจก็ทำบัตรของบรรณารักษ์ปลอมได้ (ใส่แค่ชื่อ `JWT_SECRET=` ใน `.env.example`)
 
-```
+```text
 JWT_SECRET=<ค่าที่สุ่มได้>
 ```
 
@@ -166,7 +166,7 @@ curl -i -c cookies.txt -H "Content-Type: application/json" -d '{"email":"librari
 
 **ควรเห็น:** รหัสผิดและอีเมลที่ไม่มีในระบบ ได้คำตอบเหมือนกันทุกตัวอักษร
 
-```
+```text
 HTTP/1.1 401 Unauthorized
 {"success":false,"error":{"code":"INVALID_CREDENTIALS","message":"อีเมลหรือรหัสผ่านไม่ถูกต้อง"}}
 ```
@@ -175,7 +175,7 @@ HTTP/1.1 401 Unauthorized
 
 > **`cookies.txt` คือบัตร login จริง** ใครได้ไฟล์นี้ไปก็เข้าหลังบ้านได้จนบัตรหมดอายุ เพิ่มบรรทัด `cookies.txt` ใน `server/.gitignore` ตอนนี้เลย (ถ้าเผลอยิงจาก root ให้ลบ `cookies.txt` ที่ root ทิ้ง) ก่อน `git add` ครั้งถัดไป
 
-```
+```text
 HTTP/1.1 200 OK
 set-cookie: session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzkzMDAwMTkzfQ.KmqsziJ6...; Max-Age=86400; Path=/; HttpOnly; SameSite=Lax
 {"success":true,"data":{"id":1,"email":"librarian@library.local","name":"บรรณารักษ์"}}
