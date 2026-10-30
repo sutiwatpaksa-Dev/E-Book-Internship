@@ -14,7 +14,7 @@ import { BrandMark } from "./brand-mark";
 import { useSite } from "./nav-provider";
 import { SectionLinks } from "./section-links";
 
-const iconButton = "flex size-10 shrink-0 items-center justify-center rounded-lg hover:bg-fd-accent";
+const iconButton = "flex size-11 shrink-0 items-center justify-center rounded-lg hover:bg-fd-accent";
 
 // แถบบนสุดทุกหน้า: โลโก้ · เมนูหลัก 4 หมวด · ค้นหา · โหมดมืด · บัญชี
 // ความสูงมาจากตัวแปร --site-header-h ใน global.css ซึ่ง Fumadocs ใช้ต่อ (sidebar/สารบัญขวาติดอยู่ใต้แถบนี้พอดี)

@@ -64,7 +64,7 @@ export function CardLibrary() {
         ))}
       </FilterRow>
 
-      <FilterRow label="หมวด">
+      <FilterRow label="หมวด" wrap>
         <Chip on={topic === "all"} onClick={() => setTopic("all")}>
           ทั้งหมด
         </Chip>
@@ -113,12 +113,17 @@ export function CardLibrary() {
   );
 }
 
-function FilterRow({ label, children }: { label: string; children: ReactNode }) {
+// wrap=false: มือถือเลื่อนแนวนอนแถวเดียว ไม่ดันการ์ดลงไปไกล ขอบขวาจางลงเป็นสัญญาณว่ายังมีต่อ
+// wrap=true: ตัดบรรทัดเสมอ ใช้กับแถวที่ยาวหลายจอ (เลื่อนข้างเกือบ 4 จอ คนจะไม่รู้ว่ามีอะไรอยู่ท้ายแถว)
+// จอกว้างขึ้นตัดบรรทัดตามปกติทั้งสองแบบ
+function FilterRow({ label, wrap = false, children }: { label: string; wrap?: boolean; children: ReactNode }) {
+  const row = wrap
+    ? "flex flex-wrap gap-2"
+    : "no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 mask-r-from-85% sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:mask-none";
   return (
     <div role="group" aria-label={`กรองตาม${label}`} className="flex flex-col gap-2">
-      <span className="text-xs font-semibold text-fd-muted-foreground">{label}</span>
-      {/* มือถือเลื่อนแนวนอนแถวเดียว ไม่ดันการ์ดลงไปไกล · จอกว้างขึ้นตัดบรรทัดตามปกติ */}
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">{children}</div>
+      <span className="text-[13px] font-semibold text-fd-muted-foreground">{label}</span>
+      <div className={row}>{children}</div>
     </div>
   );
 }

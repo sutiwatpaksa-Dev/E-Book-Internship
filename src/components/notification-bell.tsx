@@ -42,7 +42,7 @@ export function NotificationBell() {
           if (!open) n.open();
           setOpen((v) => !v);
         }}
-        className="relative flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-fd-accent"
+        className="relative flex size-11 shrink-0 items-center justify-center rounded-full hover:bg-fd-accent"
       >
         <Bell className="size-5" />
         {n.unread > 0 && (

@@ -9,7 +9,7 @@ import { useNavDrawer } from "@/hooks/use-nav-drawer";
 export function MenuButton({ label }: { label: string }) {
   const { open, setOpen } = useNavDrawer();
   return (
-    <button type="button" onClick={() => setOpen(true)} aria-label={label} aria-expanded={open} className="flex size-10 shrink-0 items-center justify-center rounded-lg hover:bg-fd-accent md:hidden">
+    <button type="button" onClick={() => setOpen(true)} aria-label={label} aria-expanded={open} className="flex size-11 shrink-0 items-center justify-center rounded-lg hover:bg-fd-accent md:hidden">
       <Menu className="size-5.5" />
     </button>
   );
@@ -41,7 +41,7 @@ export function MobileDrawer({ title, footer, children }: { title: string; foote
       <div role="dialog" aria-modal="true" aria-label={title} className="flex h-full w-[86%] max-w-[340px] flex-col bg-fd-background shadow-xl animate-fd-fade-in">
         <div className="flex h-14 shrink-0 items-center justify-between border-b border-fd-border px-4">
           <span className="font-semibold">{title}</span>
-          <button ref={closeRef} type="button" onClick={close} aria-label="ปิดเมนู" className="flex size-10 items-center justify-center rounded-lg hover:bg-fd-accent">
+          <button ref={closeRef} type="button" onClick={close} aria-label="ปิดเมนู" className="flex size-11 items-center justify-center rounded-lg hover:bg-fd-accent">
             <X className="size-5" />
           </button>
         </div>

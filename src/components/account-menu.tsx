@@ -64,7 +64,7 @@ export function AccountMenu() {
       <Link
         href="/login"
         aria-label="เข้าสู่ระบบ"
-        className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-fd-primary px-3 text-sm font-medium text-fd-primary-foreground hover:opacity-90 sm:px-3.5"
+        className="inline-flex h-11 shrink-0 items-center gap-2 rounded-lg bg-fd-primary px-3 text-sm font-medium text-fd-primary-foreground hover:opacity-90 sm:px-3.5"
       >
         <LogIn className="size-4" />
         <span className="max-sm:hidden">เข้าสู่ระบบ</span>
@@ -80,7 +80,7 @@ export function AccountMenu() {
         aria-expanded={open}
         aria-label={`บัญชี ${username ?? ""}`}
         onClick={() => setOpen((v) => !v)}
-        className="flex h-10 items-center gap-2 rounded-full border border-fd-border bg-fd-background p-1 hover:bg-fd-accent sm:pe-2.5"
+        className="flex h-11 items-center gap-2 rounded-full border border-fd-border bg-fd-background p-1.5 hover:bg-fd-accent sm:pe-2.5"
       >
         <span className="relative flex size-8 items-center justify-center rounded-full bg-fd-primary/10 text-sm font-bold text-fd-primary">
           {username?.[0]?.toUpperCase() ?? "·"}

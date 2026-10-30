@@ -102,6 +102,20 @@
   font-weight: 600;
 }
 
+/* หัวข้อที่มีชื่อไฟล์ยาว เช่น `server/src/routes/books.routes.ts` ตัดบรรทัดกลางชื่อได้
+   ไม่งั้นทั้งหน้ากว้างเกินจอมือถือ (ปุ่มคัดลอกลิงก์หัวข้อหลุดขอบขวา) */
+.prose :is(h2, h3, h4) code {
+  overflow-wrap: anywhere;
+}
+
+/* แถบเลื่อนข้าง (carousel 7 ขั้น, chip กรอง) ไม่ต้องโชว์ scrollbar การ์ดที่ถูกตัดขอบบอกอยู่แล้วว่าเลื่อนได้ */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* ภาพ ASCII ในกล่องโค้ดไม่ตัดบรรทัด */
 .prose pre {
   white-space: pre;
@@ -113,7 +127,8 @@
   border-radius: 10px;
   border: 1px solid var(--color-fd-border);
 }
-.prose img + em {
+.prose img + em,
+.prose a:has(> img) + em {
   display: block;
   text-align: center;
   font-size: 0.85em;

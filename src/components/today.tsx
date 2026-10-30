@@ -2,7 +2,7 @@
 
 import { ArrowRight, Check, FileText, LifeBuoy, LogIn } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { authApi } from "@/api/auth.api";
 import { cardUrl, cardsOf, nextUp, steps, stepUrl, type LearnCard, type LearnStep } from "@/data/learn";
 import { useCatalog } from "@/hooks/use-catalog";
@@ -171,17 +171,26 @@ function Stuck({ role }: { role: string | null }) {
 
 // แถบ 7 ขั้น: ขั้นปัจจุบันเด่น ขั้นที่การ์ดครบมีเครื่องหมายถูก (ขั้นที่ยังไม่มีการ์ดไม่นับว่าครบ)
 function StepStrip({ done, current, cards }: { done: ReadonlySet<string>; current: LearnStep; cards: readonly LearnCard[] }) {
+  // มือถือแถบนี้เลื่อนข้าง: เลื่อนให้ขั้นปัจจุบันอยู่กลางเอง คนที่อยู่ขั้น 5 จะได้ไม่เห็นแค่ขั้น 1–2
+  // ตั้ง scrollLeft ของแถบตรงๆ ไม่ใช้ scrollIntoView เพราะตัวนั้นเลื่อนทั้งหน้าลงมาด้วยถ้าแถบอยู่ต่ำกว่าจอ
+  const strip = useRef<HTMLOListElement>(null);
+  useEffect(() => {
+    const el = strip.current?.querySelector<HTMLElement>('[aria-current="step"]')?.parentElement;
+    if (!strip.current || !el) return;
+    strip.current.scrollLeft = el.offsetLeft - (strip.current.clientWidth - el.clientWidth) / 2;
+  }, [current.slug]);
+
   return (
     <section aria-labelledby="steps-title" className="flex flex-col gap-3 lg:col-span-12">
-      <div className="flex items-baseline justify-between gap-3">
+      <div className="flex items-center justify-between gap-3">
         <h2 id="steps-title" className="font-semibold">
           เส้นทาง 7 ขั้น
         </h2>
-        <Link href="/learn" className="text-sm font-medium text-fd-primary hover:underline">
+        <Link href="/learn" className="inline-flex min-h-11 items-center text-sm font-medium text-fd-primary hover:underline">
           ดูแผนที่ทั้งหมด
         </Link>
       </div>
-      <ol className="-mx-4 flex snap-x scroll-px-4 gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0 lg:grid-cols-7">
+      <ol ref={strip} className="no-scrollbar -mx-4 flex snap-x scroll-px-4 gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0 lg:grid-cols-7">
         {steps.map((s) => {
           const list = cardsOf(s.slug, cards);
           const complete = list.length > 0 && list.every((c) => done.has(cardUrl(c.slug)));
@@ -199,7 +208,7 @@ function StepStrip({ done, current, cards }: { done: ReadonlySet<string>; curren
                   {complete ? <Check aria-label="ครบแล้ว" className="size-4" strokeWidth={3} /> : s.num}
                 </span>
                 <span className="text-sm font-semibold">{s.name}</span>
-                <span className="text-xs text-fd-muted-foreground">{s.th}</span>
+                <span className="text-[13px] text-fd-muted-foreground">{s.th}</span>
               </Link>
             </li>
           );
@@ -237,11 +246,11 @@ function UpNext({ done, skip, cards }: { done: ReadonlySet<string>; skip: LearnC
   const list = cards.filter((c) => c !== skip && !done.has(cardUrl(c.slug))).slice(0, 3);
   return (
     <section aria-labelledby="next-title" className={`${box} flex flex-col gap-3 lg:col-span-5`}>
-      <div className="flex items-baseline justify-between gap-2">
+      <div className="flex items-center justify-between gap-2">
         <h2 id="next-title" className="font-semibold">
           การ์ดถัดไป
         </h2>
-        <Link href="/learn/cards" className="text-sm font-medium text-fd-primary hover:underline">
+        <Link href="/learn/cards" className="inline-flex min-h-11 items-center text-sm font-medium text-fd-primary hover:underline">
           คลังการ์ด
         </Link>
       </div>
