@@ -1,22 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 330" role="img" aria-label="Destructuring: แกะของออกจากกล่อง" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
 <title>Destructuring: แกะของออกจากกล่อง</title><desc>object แกะตามชื่อ ลำดับไม่สำคัญ array แกะตามลำดับ ชื่อตั้งเองได้</desc>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="328" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">Destructuring: แกะของออกจากกล่อง</text>
-<text x="210" y="62" font-size="16" text-anchor="middle" fill="#0b3c91" font-weight="bold">object: แกะตาม &quot;ชื่อ&quot;</text>
-<rect x="30" y="80" width="360" height="70" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#00767f" font-weight="bold">Destructuring: แกะของออกจากกล่อง</text>
+<text x="210" y="62" font-size="16" text-anchor="middle" fill="#00767f" font-weight="bold">object: แกะตาม &quot;ชื่อ&quot;</text>
+<rect x="30" y="80" width="360" height="70" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="210.0" y="109.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">laptop = {</text>
 <text x="210.0" y="131.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">model: &quot;ThinkPad&quot;, price: 45000 }</text>
-<line x1="210" y1="152" x2="210" y2="186" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="210" y1="152" x2="210" y2="186" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <rect x="30" y="188" width="360" height="44" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
 <text x="210.0" y="215.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">const { model, price } = laptop</text>
 <rect x="30" y="246" width="360" height="44" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
 <text x="210.0" y="273.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">const { model: name } = laptop</text>
 <text x="210" y="314" font-size="15" text-anchor="middle" fill="#64748b" font-weight="normal">ตัวหลังคือเปลี่ยนชื่อ: ได้ตัวแปร name</text>
-<text x="595" y="62" font-size="16" text-anchor="middle" fill="#0b3c91" font-weight="bold">array: แกะตาม &quot;ลำดับ&quot;</text>
-<rect x="420" y="80" width="350" height="70" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="595" y="62" font-size="16" text-anchor="middle" fill="#00767f" font-weight="bold">array: แกะตาม &quot;ลำดับ&quot;</text>
+<rect x="420" y="80" width="350" height="70" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="595.0" y="120.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">pair = [ value, setValue ]</text>
-<line x1="595" y1="152" x2="595" y2="186" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="595" y1="152" x2="595" y2="186" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <rect x="420" y="188" width="350" height="44" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
 <text x="595.0" y="215.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">const [value, setValue] = pair</text>
 <rect x="420" y="246" width="350" height="44" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>

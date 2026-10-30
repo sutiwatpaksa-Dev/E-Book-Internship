@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-label="rateLimit ใช้ IP ไหนนับ ขึ้นกับ TRUST_PROXY" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
 <title>rateLimit ใช้ IP ไหนนับ ขึ้นกับ TRUST_PROXY</title><desc>ไม่มี proxy ใช้ IP ที่ต่อเข้ามาตรงๆ มี proxy ที่ไว้ใจ ใช้ค่าท้ายสุดของ X-Forwarded-For</desc>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a4fb0"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0e8a94"/></marker></defs>
 <rect x="1" y="1" width="798" height="448" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">rateLimit ใช้ IP ไหนนับ? ขึ้นกับ TRUST_PROXY</text>
-<rect x="30" y="48" width="360" height="336" rx="12" fill="#ffffff" stroke="#1a4fb0" stroke-width="2"/>
-<text x="210" y="74" font-size="16" text-anchor="middle" fill="#1a4fb0" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">TRUST_PROXY=false</text>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#00767f" font-weight="bold">rateLimit ใช้ IP ไหนนับ? ขึ้นกับ TRUST_PROXY</text>
+<rect x="30" y="48" width="360" height="336" rx="12" fill="#ffffff" stroke="#0e8a94" stroke-width="2"/>
+<text x="210" y="74" font-size="16" text-anchor="middle" fill="#0e8a94" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">TRUST_PROXY=false</text>
 <text x="210" y="96" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">(ค่าเริ่มต้น · ไม่มี proxy ตอนพัฒนา)</text>
-<rect x="60" y="110" width="300" height="40" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="60" y="110" width="300" height="40" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="210.0" y="135.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">client</text>
-<line x1="210" y1="150" x2="210" y2="184" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="210" y1="150" x2="210" y2="184" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <rect x="60" y="184" width="300" height="40" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
 <text x="210.0" y="209.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">Hono API  (ต่อเข้ามาตรงๆ)</text>
 <rect x="60" y="254" width="300" height="50" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
@@ -21,12 +21,12 @@
 <rect x="410" y="48" width="360" height="336" rx="12" fill="#ffffff" stroke="#d97706" stroke-width="2"/>
 <text x="590" y="74" font-size="16" text-anchor="middle" fill="#b45309" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">TRUST_PROXY=true</text>
 <text x="590" y="96" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">(มี proxy ที่เราไว้ใจอยู่ข้างหน้า)</text>
-<rect x="440" y="106" width="300" height="34" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="440" y="106" width="300" height="34" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="590.0" y="128.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">client</text>
-<line x1="590" y1="140" x2="590" y2="166" stroke="#0b3c91" stroke-width="2" marker-end="url(#an)"/>
+<line x1="590" y1="140" x2="590" y2="166" stroke="#00767f" stroke-width="2" marker-end="url(#an)"/>
 <rect x="440" y="166" width="300" height="34" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
 <text x="590.0" y="188.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">proxy ของเรา (เช่น Caddy)</text>
-<line x1="590" y1="200" x2="590" y2="226" stroke="#0b3c91" stroke-width="2" marker-end="url(#an)"/>
+<line x1="590" y1="200" x2="590" y2="226" stroke="#00767f" stroke-width="2" marker-end="url(#an)"/>
 <rect x="440" y="226" width="300" height="34" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
 <text x="590.0" y="248.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">Hono API</text>
 <text x="590" y="282" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">X-Forwarded-For ที่ Hono ได้รับ</text>

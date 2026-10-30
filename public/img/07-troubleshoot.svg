@@ -1,47 +1,47 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 385" role="img" aria-label="แผนผังแก้ปัญหา 4 error ที่เจอบ่อยเมื่อต่อฐานข้อมูล">
 <title>แผนผังแก้ปัญหา 4 error ที่เจอบ่อยเมื่อต่อฐานข้อมูล</title>
-<defs><marker id="arn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="aro" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="ars" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a4fb0"/></marker></defs>
+<defs><marker id="arn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="aro" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="ars" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0e8a94"/></marker></defs>
 <rect x="1" y="1" width="798" height="383" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
 <rect x="250" y="16" width="300" height="44" rx="22" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
 <text x="400" y="45" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ต่อฐานข้อมูลไม่ได้! อ่าน error ให้ออกก่อน</text>
 <line x1="400" y1="60" x2="108.0" y2="92" stroke="#64748b" stroke-width="2" marker-end="url(#ars)"/>
-<rect x="16" y="92" width="184" height="274" rx="12" fill="#ffffff" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="16" y="92" width="184" height="274" rx="12" fill="#ffffff" stroke="#0e8a94" stroke-width="2"/>
 <rect x="16" y="92" width="184" height="92" rx="12" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
 <text x="108.0" y="126" font-size="15" fill="#dc2626" text-anchor="middle" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace">Connection refused</text>
-<text x="28" y="214" font-size="15" fill="#0b3c91" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">สาเหตุ</text>
+<text x="28" y="214" font-size="15" fill="#00767f" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">สาเหตุ</text>
 <text x="28" y="238" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ไม่มีโปรแกรมฟังอยู่</text>
 <text x="28" y="260" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ที่ host:port นั้น</text>
 <text x="28" y="314" font-size="15" fill="#16a34a" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">วิธีแก้</text>
 <text x="28" y="338" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">docker ps ดูว่ารันไหม</text>
 <text x="28" y="360" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">เช็ค port ให้ตรง</text>
 <line x1="400" y1="60" x2="302.0" y2="92" stroke="#64748b" stroke-width="2" marker-end="url(#ars)"/>
-<rect x="210" y="92" width="184" height="274" rx="12" fill="#ffffff" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="210" y="92" width="184" height="274" rx="12" fill="#ffffff" stroke="#0e8a94" stroke-width="2"/>
 <rect x="210" y="92" width="184" height="92" rx="12" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
 <text x="302.0" y="126" font-size="15" fill="#dc2626" text-anchor="middle" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace">password</text>
 <text x="302.0" y="150" font-size="15" fill="#dc2626" text-anchor="middle" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace">authentication failed</text>
-<text x="222" y="214" font-size="15" fill="#0b3c91" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">สาเหตุ</text>
+<text x="222" y="214" font-size="15" fill="#00767f" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">สาเหตุ</text>
 <text x="222" y="238" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ชื่อผู้ใช้หรือรหัสผ่าน</text>
 <text x="222" y="260" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ไม่ตรง</text>
 <text x="222" y="314" font-size="15" fill="#16a34a" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">วิธีแก้</text>
 <text x="222" y="338" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">เทียบกับ POSTGRES_</text>
 <text x="222" y="360" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">PASSWORD / .env</text>
 <line x1="400" y1="60" x2="496.0" y2="92" stroke="#64748b" stroke-width="2" marker-end="url(#ars)"/>
-<rect x="404" y="92" width="184" height="274" rx="12" fill="#ffffff" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="404" y="92" width="184" height="274" rx="12" fill="#ffffff" stroke="#0e8a94" stroke-width="2"/>
 <rect x="404" y="92" width="184" height="92" rx="12" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
 <text x="496.0" y="126" font-size="15" fill="#dc2626" text-anchor="middle" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace">database ...</text>
 <text x="496.0" y="150" font-size="15" fill="#dc2626" text-anchor="middle" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace">does not exist</text>
-<text x="416" y="214" font-size="15" fill="#0b3c91" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">สาเหตุ</text>
+<text x="416" y="214" font-size="15" fill="#00767f" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">สาเหตุ</text>
 <text x="416" y="238" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ชื่อ database ผิด</text>
 <text x="416" y="260" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">หรือยังไม่ได้สร้าง</text>
 <text x="416" y="314" font-size="15" fill="#16a34a" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">วิธีแก้</text>
 <text x="416" y="338" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">\l ดูรายชื่อ</text>
 <text x="416" y="360" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">CREATE DATABASE</text>
 <line x1="400" y1="60" x2="690.0" y2="92" stroke="#64748b" stroke-width="2" marker-end="url(#ars)"/>
-<rect x="598" y="92" width="184" height="274" rx="12" fill="#ffffff" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="598" y="92" width="184" height="274" rx="12" fill="#ffffff" stroke="#0e8a94" stroke-width="2"/>
 <rect x="598" y="92" width="184" height="92" rx="12" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
 <text x="690.0" y="126" font-size="15" fill="#dc2626" text-anchor="middle" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace">port is</text>
 <text x="690.0" y="150" font-size="15" fill="#dc2626" text-anchor="middle" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace">already allocated</text>
-<text x="610" y="214" font-size="15" fill="#0b3c91" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">สาเหตุ</text>
+<text x="610" y="214" font-size="15" fill="#00767f" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">สาเหตุ</text>
 <text x="610" y="238" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">port ฝั่งเรามีคนใช้</text>
 <text x="610" y="260" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">อยู่แล้ว</text>
 <text x="610" y="314" font-size="15" fill="#16a34a" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">วิธีแก้</text>

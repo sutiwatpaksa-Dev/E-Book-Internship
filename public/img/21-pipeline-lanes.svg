@@ -1,25 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 440" role="img" aria-label="สายพาน CI/CD สองเส้นทาง" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
 <title>สายพาน CI/CD สองเส้นทาง</title><desc>เปิด PR ตรวจอย่างเดียว ส่วนรวมเข้า main ตรวจแล้วขึ้นระบบ รอคนอนุมัติ แล้วเช็คเว็บ</desc>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a4fb0"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0e8a94"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="438" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">สายพานที่เราจะสร้าง: PR ตรวจ, main ตรวจ + ขึ้นระบบ</text>
-<text x="30" y="68" font-size="16" text-anchor="start" fill="#0b3c91" font-weight="bold">เส้นทาง A: ส่งงานใน branch / เปิด PR</text>
-<rect x="30" y="82" width="150" height="66" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#00767f" font-weight="bold">สายพานที่เราจะสร้าง: PR ตรวจ, main ตรวจ + ขึ้นระบบ</text>
+<text x="30" y="68" font-size="16" text-anchor="start" fill="#00767f" font-weight="bold">เส้นทาง A: ส่งงานใน branch / เปิด PR</text>
+<rect x="30" y="82" width="150" height="66" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="105.0" y="109.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">เปิด PR</text>
 <text x="105.0" y="131.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">หรือ push branch</text>
 <rect x="220" y="82" width="330" height="66" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
 <text x="385.0" y="98.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold">ตรวจงาน (job check)</text>
 <text x="385.0" y="120.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">server: ติดตั้ง → ชนิดข้อมูล → ทดสอบ</text>
 <text x="385.0" y="142.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">หน้าเว็บ: ติดตั้ง → แพ็กเว็บ</text>
-<line x1="182" y1="115" x2="218" y2="115" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="182" y1="115" x2="218" y2="115" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <rect x="590" y="82" width="180" height="66" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
 <text x="680.0" y="109.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">ผ่าน = ไฟเขียว</text>
 <text x="680.0" y="131.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">รวมงานได้</text>
 <line x1="552" y1="115" x2="588" y2="115" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
 <text x="400" y="172" font-size="15" text-anchor="middle" fill="#dc2626" font-weight="bold">ไม่ผ่าน = ห้ามรวมงาน (ไม่มีการขึ้นระบบ)</text>
 <line x1="30" y1="192" x2="770" y2="192" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 5"/>
-<text x="30" y="222" font-size="16" text-anchor="start" fill="#0b3c91" font-weight="bold">เส้นทาง B: รวมงานเข้า main</text>
-<rect x="30" y="240" width="120" height="70" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="30" y="222" font-size="16" text-anchor="start" fill="#00767f" font-weight="bold">เส้นทาง B: รวมงานเข้า main</text>
+<rect x="30" y="240" width="120" height="70" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="90.0" y="269.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">รวม PR</text>
 <text x="90.0" y="291.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">เข้า main</text>
 <rect x="180" y="240" width="150" height="70" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
@@ -33,14 +33,14 @@
 <text x="645.0" y="258.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold">ขึ้นระบบจริง (job deploy)</text>
 <text x="645.0" y="280.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">SSH เข้าเครื่องเช่า</text>
 <text x="645.0" y="302.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">→ deploy.sh</text>
-<line x1="152" y1="275" x2="178" y2="275" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
-<line x1="332" y1="275" x2="358" y2="275" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
-<line x1="492" y1="275" x2="518" y2="275" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="152" y1="275" x2="178" y2="275" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="332" y1="275" x2="358" y2="275" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="492" y1="275" x2="518" y2="275" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <rect x="520" y="350" width="250" height="60" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
 <text x="645.0" y="374.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold">Health check</text>
 <text x="645.0" y="396.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">เปิดเว็บจริงเช็คว่ายังตอบ</text>
 <line x1="645" y1="312" x2="645" y2="348" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
-<text x="30" y="360" font-size="15" text-anchor="start" fill="#0b3c91" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">needs: check</text>
+<text x="30" y="360" font-size="15" text-anchor="start" fill="#00767f" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">needs: check</text>
 <text x="30" y="382" font-size="14" text-anchor="start" fill="#64748b" font-weight="normal">deploy รอ check ผ่านก่อนเสมอ</text>
 <text x="30" y="402" font-size="14" text-anchor="start" fill="#64748b" font-weight="normal">ถ้าขั้นไหนแดง งานหยุดตรงนั้น</text>
 <rect x="360" y="350" width="130" height="60" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>

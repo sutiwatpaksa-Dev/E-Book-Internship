@@ -1,43 +1,43 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 340" role="img" aria-label="JOIN 4 แบบ: INNER, LEFT, RIGHT, FULL แสดงเป็นวงกลม">
 <title>JOIN 4 แบบ: INNER, LEFT, RIGHT, FULL แสดงเป็นวงกลม</title>
-<defs><marker id="arn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="aro" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="ars" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a4fb0"/></marker></defs>
+<defs><marker id="arn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="aro" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="ars" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0e8a94"/></marker></defs>
 <rect x="1" y="1" width="798" height="338" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
-<text x="400" y="34" font-size="16" fill="#0b3c91" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">A = ตารางซ้าย (customers)    B = ตารางขวา (rentals)    สีเขียว = แถวที่ได้ผลลัพธ์</text>
+<text x="400" y="34" font-size="16" fill="#00767f" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">A = ตารางซ้าย (customers)    B = ตารางขวา (rentals)    สีเขียว = แถวที่ได้ผลลัพธ์</text>
 <clipPath id="ca0"><circle cx="72" cy="130" r="52"/></clipPath>
 <circle cx="128" cy="130" r="52" fill="#86efac" clip-path="url(#ca0)"/>
-<circle cx="72" cy="130" r="52" fill="none" stroke="#1a4fb0" stroke-width="3"/>
+<circle cx="72" cy="130" r="52" fill="none" stroke="#0e8a94" stroke-width="3"/>
 <circle cx="128" cy="130" r="52" fill="none" stroke="#f59e0b" stroke-width="3"/>
-<text x="50" y="136" font-size="20" fill="#1a4fb0" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">A</text>
+<text x="50" y="136" font-size="20" fill="#0e8a94" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">A</text>
 <text x="150" y="136" font-size="20" fill="#b45309" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">B</text>
-<text x="100" y="218" font-size="17" fill="#0b3c91" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">INNER JOIN</text>
+<text x="100" y="218" font-size="17" fill="#00767f" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">INNER JOIN</text>
 <text x="100" y="242" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">เฉพาะแถวที่จับคู่ได้</text>
 <text x="100" y="262" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ทั้งสองฝั่ง</text>
 <clipPath id="ca1"><circle cx="272" cy="130" r="52"/></clipPath>
 <circle cx="272" cy="130" r="52" fill="#86efac" stroke="#16a34a" stroke-width="0"/>
-<circle cx="272" cy="130" r="52" fill="none" stroke="#1a4fb0" stroke-width="3"/>
+<circle cx="272" cy="130" r="52" fill="none" stroke="#0e8a94" stroke-width="3"/>
 <circle cx="328" cy="130" r="52" fill="none" stroke="#f59e0b" stroke-width="3"/>
-<text x="250" y="136" font-size="20" fill="#1a4fb0" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">A</text>
+<text x="250" y="136" font-size="20" fill="#0e8a94" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">A</text>
 <text x="350" y="136" font-size="20" fill="#b45309" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">B</text>
-<text x="300" y="218" font-size="17" fill="#0b3c91" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">LEFT JOIN</text>
+<text x="300" y="218" font-size="17" fill="#00767f" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">LEFT JOIN</text>
 <text x="300" y="242" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ทุกแถวของ A</text>
 <text x="300" y="262" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ไม่มีคู่ใน B → NULL</text>
 <clipPath id="ca2"><circle cx="472" cy="130" r="52"/></clipPath>
 <circle cx="528" cy="130" r="52" fill="#86efac" stroke="#16a34a" stroke-width="0"/>
-<circle cx="472" cy="130" r="52" fill="none" stroke="#1a4fb0" stroke-width="3"/>
+<circle cx="472" cy="130" r="52" fill="none" stroke="#0e8a94" stroke-width="3"/>
 <circle cx="528" cy="130" r="52" fill="none" stroke="#f59e0b" stroke-width="3"/>
-<text x="450" y="136" font-size="20" fill="#1a4fb0" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">A</text>
+<text x="450" y="136" font-size="20" fill="#0e8a94" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">A</text>
 <text x="550" y="136" font-size="20" fill="#b45309" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">B</text>
-<text x="500" y="218" font-size="17" fill="#0b3c91" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">RIGHT JOIN</text>
+<text x="500" y="218" font-size="17" fill="#00767f" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">RIGHT JOIN</text>
 <text x="500" y="242" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ทุกแถวของ B</text>
 <text x="500" y="262" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ไม่มีคู่ใน A → NULL</text>
 <clipPath id="ca3"><circle cx="672" cy="130" r="52"/></clipPath>
 <circle cx="672" cy="130" r="52" fill="#86efac" stroke="#16a34a" stroke-width="0"/>
 <circle cx="728" cy="130" r="52" fill="#86efac" stroke="#16a34a" stroke-width="0"/>
-<circle cx="672" cy="130" r="52" fill="none" stroke="#1a4fb0" stroke-width="3"/>
+<circle cx="672" cy="130" r="52" fill="none" stroke="#0e8a94" stroke-width="3"/>
 <circle cx="728" cy="130" r="52" fill="none" stroke="#f59e0b" stroke-width="3"/>
-<text x="650" y="136" font-size="20" fill="#1a4fb0" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">A</text>
+<text x="650" y="136" font-size="20" fill="#0e8a94" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">A</text>
 <text x="750" y="136" font-size="20" fill="#b45309" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">B</text>
-<text x="700" y="218" font-size="17" fill="#0b3c91" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">FULL JOIN</text>
+<text x="700" y="218" font-size="17" fill="#00767f" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">FULL JOIN</text>
 <text x="700" y="242" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ทุกแถวของทั้งสองฝั่ง</text>
 <text x="700" y="262" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ไม่มีคู่ → NULL</text>
 <text x="400" y="325" font-size="15" fill="#64748b" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ข้อมูลบทนี้: customers 3 คน, rentals 3 รายการ → INNER ได้ 3 แถว · LEFT ได้ 4 แถว (มานีได้ NULL)</text>

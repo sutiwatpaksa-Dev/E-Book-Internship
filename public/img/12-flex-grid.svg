@@ -1,19 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 420" role="img" aria-label="จัดวาง: flex (เรียงแถว) กับ grid (ตาราง)" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
 <title>จัดวาง: flex (เรียงแถว) กับ grid (ตาราง)</title><desc>flex จัดชิ้นเรียงในแถวเดียวแนวเดียว grid แบ่งเป็นช่องตารางแถวและคอลัมน์</desc>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="418" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">จัดวาง: flex (เรียงแถว) กับ grid (ตาราง)</text>
-<text x="190" y="64" font-size="16" text-anchor="middle" fill="#0b3c91" font-weight="bold">flex  =  เรียงในแนวเดียว</text>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#00767f" font-weight="bold">จัดวาง: flex (เรียงแถว) กับ grid (ตาราง)</text>
+<text x="190" y="64" font-size="16" text-anchor="middle" fill="#00767f" font-weight="bold">flex  =  เรียงในแนวเดียว</text>
 <rect x="40" y="80" width="300" height="70" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
-<rect x="52" y="98" width="60" height="34" rx="5" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
-<rect x="126" y="98" width="100" height="34" rx="5" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
-<rect x="240" y="98" width="50" height="34" rx="5" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
+<rect x="52" y="98" width="60" height="34" rx="5" fill="#d5f2f3" stroke="#0e8a94" stroke-width="1.5"/>
+<rect x="126" y="98" width="100" height="34" rx="5" fill="#d5f2f3" stroke="#0e8a94" stroke-width="1.5"/>
+<rect x="240" y="98" width="50" height="34" rx="5" fill="#d5f2f3" stroke="#0e8a94" stroke-width="1.5"/>
 <text x="190" y="176" font-size="14" text-anchor="middle" fill="#d97706" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">flex items-center gap-4</text>
 <rect x="40" y="200" width="300" height="70" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
-<rect x="52" y="218" width="60" height="34" rx="5" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/><rect x="268" y="218" width="60" height="34" rx="5" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
+<rect x="52" y="218" width="60" height="34" rx="5" fill="#d5f2f3" stroke="#0e8a94" stroke-width="1.5"/><rect x="268" y="218" width="60" height="34" rx="5" fill="#d5f2f3" stroke="#0e8a94" stroke-width="1.5"/>
 <text x="190" y="296" font-size="14" text-anchor="middle" fill="#d97706" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">flex justify-between</text>
 <text x="190" y="330" font-size="14" text-anchor="middle" fill="#64748b" font-weight="normal">ใช้กับ: เมนูบน, โลโก้ + ชื่อร้าน, ปุ่มเรียงกัน</text>
-<text x="590" y="64" font-size="16" text-anchor="middle" fill="#0b3c91" font-weight="bold">grid  =  แบ่งเป็นช่อง</text>
+<text x="590" y="64" font-size="16" text-anchor="middle" fill="#00767f" font-weight="bold">grid  =  แบ่งเป็นช่อง</text>
 <rect x="440" y="80" width="300" height="190" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
 <rect x="454" y="94" width="81" height="76" rx="5" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
 <text x="494" y="138" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">1</text>
@@ -29,5 +29,5 @@
 <text x="680" y="226" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">6</text>
 <text x="590" y="296" font-size="14" text-anchor="middle" fill="#d97706" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">grid grid-cols-3 gap-4</text>
 <text x="590" y="330" font-size="14" text-anchor="middle" fill="#64748b" font-weight="normal">ใช้กับ: การ์ดสินค้า, ส่วนท้ายหน้า (3 คอลัมน์)</text>
-<text x="400" y="392" font-size="14" text-anchor="middle" fill="#0b3c91" font-weight="normal">จอเล็ก: ใช้ grid-cols-1 แล้วค่อยเพิ่มคอลัมน์ด้วย md: / xl:</text>
+<text x="400" y="392" font-size="14" text-anchor="middle" fill="#00767f" font-weight="normal">จอเล็ก: ใช้ grid-cols-1 แล้วค่อยเพิ่มคอลัมน์ด้วย md: / xl:</text>
 </svg>

@@ -10,7 +10,7 @@ import { threadService } from "../services/thread.service";
 import { cohortService } from "../services/cohort.service";
 import { userService } from "../services/user.service";
 import { cohortAssignSchema } from "../validators/cohort.validator";
-import { messageSchema, statusSchema } from "../validators/thread.validator";
+import { messageSchema, sendMessageSchema, statusSchema } from "../validators/thread.validator";
 import { createManySchema, createUserSchema, updateUserSchema } from "../validators/user.validator";
 
 export const adminRoutes = new Hono<AuthVars>();
@@ -60,6 +60,13 @@ adminRoutes.patch("/users/:id", async (c) => {
 adminRoutes.get("/progress", async (c) => c.json(await progressService.byUser()));
 adminRoutes.get("/audit", async (c) => c.json(await auditService.latest()));
 
+
+// ส่งข้อความหาน้อง (ต้องมาก่อน /threads/:id ไม่งั้น "send" ถูกอ่านเป็น id)
+adminRoutes.post("/threads/send", async (c) => {
+  const parsed = sendMessageSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: "เลือกผู้รับ ใส่หัวข้อ (3–120 ตัวอักษร) และข้อความอย่างน้อย 5 ตัวอักษร (ไม่เกิน 2,000)" }, 400);
+  return c.json(await threadService.sendToInterns(c.get("user").id, parsed.data), 201);
+});
 
 adminRoutes.get("/threads", async (c) => c.json(await threadService.listAll()));
 adminRoutes.get("/threads/unread-count", async (c) => c.json({ count: await threadService.unreadForDevs() }));

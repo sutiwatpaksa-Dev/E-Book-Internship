@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 420" role="img" aria-label="การทำงานของ breakpoint" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="16">
 <title>การทำงานของ breakpoint</title>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#0b3c91"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#dc2626"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f59e0b"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#00767f"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#dc2626"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f59e0b"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="418" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="20" text-anchor="middle" fill="#0b3c91" font-weight="bold">Breakpoint: กด pause วิดีโอตรงบรรทัดที่สงสัย</text>
+<text x="400" y="30" font-size="20" text-anchor="middle" fill="#00767f" font-weight="bold">Breakpoint: กด pause วิดีโอตรงบรรทัดที่สงสัย</text>
 <rect x="24" y="48" width="430" height="212" rx="8" fill="#0f172a"/>
 <text x="66" y="78" font-size="15" text-anchor="start" fill="#e2e8f0" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">function rent(id: number) {</text>
 <text x="60" y="78" font-size="14" text-anchor="end" fill="#94a3b8" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">1</text>
@@ -18,8 +18,8 @@
 <circle cx="40" cy="137" r="8" fill="#dc2626"/>
 <text x="40" y="246" font-size="15" text-anchor="start" fill="#fca5a5" font-weight="normal">จุดแดง = breakpoint (คลิกซ้ายเลขบรรทัด)</text>
 <line x1="474" y1="150" x2="520" y2="150" stroke="#f59e0b" stroke-width="2.5" marker-end="url(#ao)"/>
-<rect x="526" y="48" width="250" height="212" rx="10" fill="#fff" stroke="#1a4fb0" stroke-width="2"/>
-<text x="651" y="76" font-size="16" text-anchor="middle" fill="#1a4fb0" font-weight="bold">Variables (ตอนหยุด)</text>
+<rect x="526" y="48" width="250" height="212" rx="10" fill="#fff" stroke="#0e8a94" stroke-width="2"/>
+<text x="651" y="76" font-size="16" text-anchor="middle" fill="#0e8a94" font-weight="bold">Variables (ตอนหยุด)</text>
 <text x="544" y="112" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">id = 99</text>
 <text x="544" y="142" font-size="15" text-anchor="start" fill="#dc2626" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">l = undefined</text>
 <text x="544" y="170" font-size="15" text-anchor="start" fill="#dc2626" font-weight="normal">ต้นเหตุ: find(99) หาไม่เจอ</text>
@@ -27,7 +27,7 @@
 <rect x="24" y="282" width="238" height="44" rx="10" fill="#16a34a" stroke="#16a34a" stroke-width="2"/>
 <text x="143.0" y="309.6" font-size="16" text-anchor="middle" fill="#fff" font-weight="bold">Continue  (F5)</text>
 <text x="143" y="352" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ไปต่อจนเจอจุดแดงถัดไป</text>
-<rect x="278" y="282" width="238" height="44" rx="10" fill="#1a4fb0" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="278" y="282" width="238" height="44" rx="10" fill="#0e8a94" stroke="#0e8a94" stroke-width="2"/>
 <text x="397.0" y="309.6" font-size="16" text-anchor="middle" fill="#fff" font-weight="bold">Step Over  (F10)</text>
 <text x="397" y="352" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ไปบรรทัดถัดไป</text>
 <rect x="532" y="282" width="238" height="44" rx="10" fill="#f59e0b" stroke="#f59e0b" stroke-width="2"/>

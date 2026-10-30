@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 526" role="img" aria-label="CORS และ preflight" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
 <title>CORS และ preflight</title><desc>เบราว์เซอร์ส่ง OPTIONS ถามก่อน server ตอบ header อนุญาต จึงส่ง POST จริง</desc>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="524" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">CORS: เบราว์เซอร์ถามก่อนว่า "เว็บนี้เรียก API นี้ได้ไหม?"</text>
-<rect x="40" y="46" width="260" height="60" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#00767f" font-weight="bold">CORS: เบราว์เซอร์ถามก่อนว่า "เว็บนี้เรียก API นี้ได้ไหม?"</text>
+<rect x="40" y="46" width="260" height="60" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="170.0" y="69.7" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">เบราว์เซอร์</text>
 <text x="170.0" y="92.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">หน้าเว็บที่ localhost:5173</text>
 <rect x="500" y="46" width="260" height="60" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
@@ -19,9 +19,9 @@
 <text x="400" y="257" font-size="14" text-anchor="middle" fill="#64748b" font-weight="normal">server ตอบว่า "origin นี้ได้"</text>
 <rect x="190" y="274" width="420" height="40" rx="8" fill="#fef3c7" stroke="#d97706"/>
 <text x="400" y="300" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">3 เบราว์เซอร์เช็ค: origin อยู่ในรายการ → ปล่อยผ่าน</text>
-<line x1="172" y1="357" x2="628" y2="357" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="172" y1="357" x2="628" y2="357" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <text x="400" y="347" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">4 POST /laptops (คำขอจริง)</text>
-<line x1="628" y1="407" x2="172" y2="407" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="628" y1="407" x2="172" y2="407" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <text x="400" y="397" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">5 201 Created + JSON</text>
 <rect x="40" y="440" width="720" height="66" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="1.5"/>
 <text x="400.0" y="466.7" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ถ้า server ไม่ส่ง Access-Control-Allow-Origin กลับมา</text>

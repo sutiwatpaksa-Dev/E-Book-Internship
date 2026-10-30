@@ -1,42 +1,42 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 484" role="img" aria-label="ลำดับตั้งค่าเครื่องครั้งแรก" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
 <title>ลำดับตั้งค่าเครื่องครั้งแรก</title><desc>อัปเดต สร้างผู้ใช้ deploy ปิด root และรหัสผ่าน เปิด ufw อัปเดตอัตโนมัติ และ swap</desc>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="482" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">ตั้งค่าเครื่องครั้งแรก: ทำทีละขั้นตามลำดับนี้</text>
-<rect x="30" y="52" width="740" height="56" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
-<circle cx="76" cy="80" r="22" fill="#0b3c91"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#00767f" font-weight="bold">ตั้งค่าเครื่องครั้งแรก: ทำทีละขั้นตามลำดับนี้</text>
+<rect x="30" y="52" width="740" height="56" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
+<circle cx="76" cy="80" r="22" fill="#00767f"/>
 <text x="76" y="86" font-size="18" text-anchor="middle" fill="#ffffff" font-weight="bold">1</text>
 <text x="116" y="76" font-size="16" text-anchor="start" fill="#0f172a" font-weight="bold">อัปเดตเครื่อง + ตั้งเวลาไทย</text>
 <text x="116" y="98" font-size="14" text-anchor="start" fill="#475569" font-weight="normal">apt update &amp;&amp; apt upgrade · timedatectl</text>
-<text x="750" y="86" font-size="14" text-anchor="end" fill="#1a4fb0" font-weight="bold">ข้อ 3.1</text>
+<text x="750" y="86" font-size="14" text-anchor="end" fill="#0e8a94" font-weight="bold">ข้อ 3.1</text>
 <line x1="76" y1="110" x2="76" y2="126" stroke="#64748b" stroke-width="2" marker-end="url(#as)"/>
-<rect x="30" y="126" width="740" height="56" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
-<circle cx="76" cy="154" r="22" fill="#0b3c91"/>
+<rect x="30" y="126" width="740" height="56" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
+<circle cx="76" cy="154" r="22" fill="#00767f"/>
 <text x="76" y="160" font-size="18" text-anchor="middle" fill="#ffffff" font-weight="bold">2</text>
 <text x="116" y="150" font-size="16" text-anchor="start" fill="#0f172a" font-weight="bold">สร้างบัญชี deploy (ไม่ใช้ root ทำงานทุกวัน)</text>
 <text x="116" y="172" font-size="14" text-anchor="start" fill="#475569" font-weight="normal">adduser · usermod -aG sudo · ก๊อป public key</text>
-<text x="750" y="160" font-size="14" text-anchor="end" fill="#1a4fb0" font-weight="bold">ข้อ 3.2</text>
+<text x="750" y="160" font-size="14" text-anchor="end" fill="#0e8a94" font-weight="bold">ข้อ 3.2</text>
 <line x1="76" y1="184" x2="76" y2="200" stroke="#64748b" stroke-width="2" marker-end="url(#as)"/>
 <rect x="30" y="200" width="740" height="56" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
-<circle cx="76" cy="228" r="22" fill="#0b3c91"/>
+<circle cx="76" cy="228" r="22" fill="#00767f"/>
 <text x="76" y="234" font-size="18" text-anchor="middle" fill="#ffffff" font-weight="bold">3</text>
 <text x="116" y="224" font-size="16" text-anchor="start" fill="#0f172a" font-weight="bold">ปิด root และปิดการเข้าด้วยรหัสผ่าน</text>
 <text x="116" y="246" font-size="14" text-anchor="start" fill="#475569" font-weight="normal">PermitRootLogin no · PasswordAuthentication no</text>
-<text x="750" y="234" font-size="14" text-anchor="end" fill="#1a4fb0" font-weight="bold">ข้อ 3.3</text>
+<text x="750" y="234" font-size="14" text-anchor="end" fill="#0e8a94" font-weight="bold">ข้อ 3.3</text>
 <line x1="76" y1="258" x2="76" y2="274" stroke="#64748b" stroke-width="2" marker-end="url(#as)"/>
 <rect x="30" y="274" width="740" height="56" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
-<circle cx="76" cy="302" r="22" fill="#0b3c91"/>
+<circle cx="76" cy="302" r="22" fill="#00767f"/>
 <text x="76" y="308" font-size="18" text-anchor="middle" fill="#ffffff" font-weight="bold">4</text>
 <text x="116" y="298" font-size="16" text-anchor="start" fill="#0f172a" font-weight="bold">เปิดยาม ufw ให้ผ่านแค่ 22 / 80 / 443</text>
 <text x="116" y="320" font-size="14" text-anchor="start" fill="#475569" font-weight="normal">ufw allow OpenSSH ก่อน แล้วค่อย ufw enable</text>
-<text x="750" y="308" font-size="14" text-anchor="end" fill="#1a4fb0" font-weight="bold">ข้อ 3.4</text>
+<text x="750" y="308" font-size="14" text-anchor="end" fill="#0e8a94" font-weight="bold">ข้อ 3.4</text>
 <line x1="76" y1="332" x2="76" y2="348" stroke="#64748b" stroke-width="2" marker-end="url(#as)"/>
-<rect x="30" y="348" width="740" height="56" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
-<circle cx="76" cy="376" r="22" fill="#0b3c91"/>
+<rect x="30" y="348" width="740" height="56" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
+<circle cx="76" cy="376" r="22" fill="#00767f"/>
 <text x="76" y="382" font-size="18" text-anchor="middle" fill="#ffffff" font-weight="bold">5</text>
 <text x="116" y="372" font-size="16" text-anchor="start" fill="#0f172a" font-weight="bold">อัปเดตความปลอดภัยเอง + เปิด swap 2 GB</text>
 <text x="116" y="394" font-size="14" text-anchor="start" fill="#475569" font-weight="normal">unattended-upgrades · fallocate /swapfile</text>
-<text x="750" y="382" font-size="14" text-anchor="end" fill="#1a4fb0" font-weight="bold">ข้อ 3.5-3.6</text>
+<text x="750" y="382" font-size="14" text-anchor="end" fill="#0e8a94" font-weight="bold">ข้อ 3.5-3.6</text>
 <rect x="30" y="416" width="740" height="52" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
 <text x="400.0" y="447.0" font-size="15" text-anchor="middle" fill="#b91c1c" font-weight="normal">ขั้น 3.2 - 3.4: เปิด Terminal หน้าต่างใหม่ ลองเข้าให้ได้ก่อน แล้วค่อยปิดหน้าต่างเดิม</text>
 </svg>

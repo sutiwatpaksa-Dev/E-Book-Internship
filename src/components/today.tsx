@@ -4,13 +4,16 @@ import { ArrowRight, Check, FileText, FolderGit2, LifeBuoy, LogIn } from "lucide
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { authApi } from "@/api/auth.api";
+import { progressApi } from "@/api/progress.api";
 import { submissionsApi } from "@/api/submissions.api";
 import { cardUrl, cardsOf, nextUp, steps, stepUrl, type LearnCard, type LearnStep } from "@/data/learn";
 import { useCatalog } from "@/hooks/use-catalog";
 import { useProgress } from "@/hooks/use-progress";
 import { useSession } from "@/hooks/use-session";
+import { dailyCounts, shortDay } from "@/lib/admin-stats";
 import { latestOnly } from "@/lib/submission";
-import type { MySubmissions } from "@/types";
+import type { MySubmissions, ProgressEntry } from "@/types";
+import { ChartCard, ColumnChart, Figure, ProgressRows } from "./admin-charts";
 import { AnnouncementBanner } from "./announcement-banner";
 import { VerdictBadge } from "./status-badge";
 
@@ -43,6 +46,7 @@ export function Today() {
         <Stuck role={role} />
         {/* งานบน GitHub อยู่ใต้กล่องทำต่อ ไม่ต้องเลื่อนหา */}
         {role === "intern" && <MyWork />}
+        {role && <MyCharts done={done} cards={cards} />}
         <StepStrip done={done} current={up.step} cards={cards} />
         <StarterTask step={up.step} />
         <UpNext done={done} skip={up.card} cards={cards} />
@@ -327,6 +331,46 @@ function MyWork() {
       <Link href={SUBMIT_LINK} className="inline-flex min-h-11 w-fit items-center gap-1.5 rounded-xl bg-fd-primary px-4 text-sm font-semibold text-fd-primary-foreground hover:brightness-110">
         {repo ? "ส่งงาน / ดูผลตรวจ" : "ส่งลิงก์ repo"} <ArrowRight className="size-4" />
       </Link>
+    </section>
+  );
+}
+
+// กราฟความคืบหน้าของตัวเอง: การ์ดที่ผ่านต่อวัน (14 วัน) + ความคืบหน้าแต่ละขั้น · ใช้กราฟชุดเดียวกับหลังบ้าน (admin-charts)
+const DAYS = 14;
+function MyCharts({ done, cards }: { done: ReadonlySet<string>; cards: readonly LearnCard[] }) {
+  const [entries, setEntries] = useState<ProgressEntry[]>([]);
+  useEffect(() => {
+    progressApi
+      .list()
+      .then(setEntries)
+      .catch(() => {});
+    // ติ๊กใหม่แล้วกราฟต้องเปลี่ยนตาม: done เปลี่ยนเมื่อไรก็โหลดเวลาที่ผ่านใหม่
+  }, [done.size]);
+
+  const days = dailyCounts(
+    entries.filter((e) => cards.some((c) => e.link === cardUrl(c.slug))).map((e) => e.doneAt),
+    DAYS,
+  ).map((d) => ({ key: d.day, label: shortDay(d.day), value: d.value }));
+  const total = days.reduce((n, d) => n + d.value, 0);
+  const rows = steps.map((s) => {
+    const list = cardsOf(s.slug, cards);
+    const n = list.filter((c) => done.has(cardUrl(c.slug))).length;
+    return { key: s.slug, label: `${s.num}. ${s.name} · ${s.th}`, pct: list.length ? Math.round((n / list.length) * 100) : 0, note: `${n}/${list.length} ใบ` };
+  });
+
+  return (
+    <section aria-label="ความคืบหน้าของฉัน" className="grid gap-4 lg:col-span-12 lg:grid-cols-2">
+      <ChartCard
+        title="การ์ดที่ผ่านต่อวัน"
+        sub={`${DAYS} วันล่าสุด`}
+        figure={<Figure value={total} label={`ใบใน ${DAYS} วัน`} />}
+        table={{ head: ["วัน", "การ์ดที่ผ่าน (ใบ)"], rows: days.map((d) => [d.label, d.value]) }}
+      >
+        <ColumnChart data={days} unit="ใบ" />
+      </ChartCard>
+      <ChartCard title="ความคืบหน้าแต่ละขั้น" sub="สัดส่วนการ์ดที่ผ่านในแต่ละขั้น" table={{ head: ["ขั้น", "ผ่านแล้ว (%)", "จำนวน"], rows: rows.map((r) => [r.label, r.pct, r.note]) }}>
+        <ProgressRows rows={rows} />
+      </ChartCard>
     </section>
   );
 }

@@ -1,27 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 390" role="img" aria-label="Props: ข้อมูลไหลจากชิ้นส่วนแม่ลงไปหาลูก" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
 <title>Props: ข้อมูลไหลจากชิ้นส่วนแม่ลงไปหาลูก</title><desc>App ส่ง props ลงไปให้ ServiceCard แต่ละใบ ข้อมูลไหลจากบนลงล่างเท่านั้น</desc>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="388" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">Props: ข้อมูลไหลจากชิ้นส่วนแม่ลงไปหาลูก</text>
-<rect x="280" y="50" width="240" height="70" rx="10" fill="#0b3c91" stroke="#0b3c91" stroke-width="2"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#00767f" font-weight="bold">Props: ข้อมูลไหลจากชิ้นส่วนแม่ลงไปหาลูก</text>
+<rect x="280" y="50" width="240" height="70" rx="10" fill="#00767f" stroke="#00767f" stroke-width="2"/>
 <text x="400.0" y="79.2" font-size="15" text-anchor="middle" fill="#ffffff" font-weight="bold">App</text>
 <text x="400.0" y="101.2" font-size="15" text-anchor="middle" fill="#ffffff" font-weight="normal">(มีรายการ services)</text>
 <line x1="400" y1="122" x2="140" y2="190" stroke="#d97706" stroke-width="2.5" marker-end="url(#ao)"/>
-<rect x="40" y="192" width="200" height="60" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="40" y="192" width="200" height="60" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="140.0" y="216.4" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold">ServiceCard</text>
 <text x="140.0" y="237.4" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">service = ลาเต้</text>
 <rect x="40" y="282" width="200" height="50" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
 <text x="140.0" y="311.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">การ์ด "ลาเต้"</text>
 <line x1="140" y1="254" x2="140" y2="280" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
 <line x1="400" y1="122" x2="400" y2="190" stroke="#d97706" stroke-width="2.5" marker-end="url(#ao)"/>
-<rect x="300" y="192" width="200" height="60" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="300" y="192" width="200" height="60" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="400.0" y="216.4" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold">ServiceCard</text>
 <text x="400.0" y="237.4" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">service = มอคค่า</text>
 <rect x="300" y="282" width="200" height="50" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
 <text x="400.0" y="311.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">การ์ด "มอคค่า"</text>
 <line x1="400" y1="254" x2="400" y2="280" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
 <line x1="400" y1="122" x2="660" y2="190" stroke="#d97706" stroke-width="2.5" marker-end="url(#ao)"/>
-<rect x="560" y="192" width="200" height="60" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="560" y="192" width="200" height="60" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="660.0" y="216.4" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold">ServiceCard</text>
 <text x="660.0" y="237.4" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">service = จัดเลี้ยง</text>
 <rect x="560" y="282" width="200" height="50" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>

@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 482" role="img" aria-label="ขั้นตอนเข้าเครื่องด้วย SSH key" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
 <title>ขั้นตอนเข้าเครื่องด้วย SSH key</title><desc>เครื่องเช่าส่งโจทย์ เครื่องเราเซ็นด้วยลูกกุญแจ เครื่องเช่าตรวจด้วยแม่กุญแจ</desc>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="480" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">SSH key: เข้าเครื่องโดยไม่ต้องส่งรหัสผ่านออกไปเลย</text>
-<rect x="40" y="46" width="250" height="84" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#00767f" font-weight="bold">SSH key: เข้าเครื่องโดยไม่ต้องส่งรหัสผ่านออกไปเลย</text>
+<rect x="40" y="46" width="250" height="84" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="165.0" y="71.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">เครื่องเรา</text>
 <text x="165.0" y="93.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ลูกกุญแจ (private key)</text>
 <text x="165.0" y="115.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">id_ed25519 ไม่ออกจากเครื่อง</text>
@@ -13,13 +13,13 @@
 <text x="635.0" y="115.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">~/.ssh/authorized_keys</text>
 <line x1="165" y1="130" x2="165" y2="420" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 5"/>
 <line x1="635" y1="130" x2="635" y2="420" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 5"/>
-<line x1="167" y1="168" x2="633" y2="168" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="167" y1="168" x2="633" y2="168" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <text x="400" y="158" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">1 ssh deploy@203.0.113.10 (ขอเข้า)</text>
 <line x1="633" y1="220" x2="167" y2="220" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
 <text x="400" y="210" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">2 ส่งโจทย์สุ่มมาให้ ("เซ็นข้อความนี้ให้หน่อย")</text>
 <rect x="190" y="238" width="420" height="40" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
 <text x="400.0" y="263.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">3 เครื่องเรา: เซ็นโจทย์ด้วยลูกกุญแจ (ในเครื่อง)</text>
-<line x1="167" y1="320" x2="633" y2="320" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="167" y1="320" x2="633" y2="320" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <text x="400" y="310" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">4 ส่งเฉพาะ "ลายเซ็น" กลับไป (ไม่ใช่ลูกกุญแจ)</text>
 <rect x="190" y="336" width="420" height="40" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
 <text x="400.0" y="361.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">5 เครื่องเช่า: เอาแม่กุญแจตรวจลายเซ็น ถูก = ให้เข้า</text>

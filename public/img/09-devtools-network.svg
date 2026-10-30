@@ -1,13 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 490" role="img" aria-label="หน้าตา DevTools แท็บ Network" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="16">
 <title>หน้าตา DevTools แท็บ Network</title>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#0b3c91"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#dc2626"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f59e0b"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#00767f"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#dc2626"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f59e0b"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="488" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="20" text-anchor="middle" fill="#0b3c91" font-weight="bold">DevTools &gt; Network: อ่านคำขอที่ล้มเหลว</text>
+<text x="400" y="30" font-size="20" text-anchor="middle" fill="#00767f" font-weight="bold">DevTools &gt; Network: อ่านคำขอที่ล้มเหลว</text>
 <rect x="24" y="46" width="752" height="300" rx="8" fill="#fff" stroke="#94a3b8" stroke-width="2"/>
 <text x="78.0" y="73" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">Elements</text>
 <text x="167.5" y="73" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">Console</text>
 <text x="252.5" y="73" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">Sources</text>
-<rect x="298" y="52" width="79" height="30" rx="5" fill="#1a4fb0"/>
+<rect x="298" y="52" width="79" height="30" rx="5" fill="#0e8a94"/>
 <text x="337.5" y="73" font-size="15" text-anchor="middle" fill="#fff" font-weight="bold">Network</text>
 <text x="439.0" y="73" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">Application</text>
 <line x1="24" y1="88" x2="776" y2="88" stroke="#cbd5e1"/>
@@ -49,7 +49,7 @@
 <text x="62" y="396" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">Status: 2xx สำเร็จ · 4xx เราส่งผิด · 5xx server พัง</text>
 <circle cx="44" cy="417" r="8" fill="#f59e0b"/>
 <text x="62" y="422" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">Payload: สิ่งที่เราส่งไปจริงๆ ตรงกับที่คิดไหม</text>
-<circle cx="44" cy="443" r="8" fill="#1a4fb0"/>
+<circle cx="44" cy="443" r="8" fill="#0e8a94"/>
 <text x="62" y="448" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">Response: สิ่งที่ server ตอบกลับมา มักบอกสาเหตุ</text>
 <text x="400" y="482" font-size="14" text-anchor="middle" fill="#64748b" font-weight="normal">ชื่อเมนูอาจต่างเล็กน้อยตาม browser และเวอร์ชัน แต่หลักการเหมือนกัน</text>
 </svg>

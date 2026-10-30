@@ -9,6 +9,8 @@ import { useUnread } from "@/hooks/use-unread";
 import { cardEntries, cardSummary, dailyCounts, loginBuckets, shortDay, stepProgress } from "@/lib/admin-stats";
 import { inCohort, type CohortFilter } from "@/lib/cohort";
 import { timeAgo } from "@/lib/thread-labels";
+import { internHref } from "@/lib/admin-links";
+import { RowLink } from "./row-link";
 import { ChartCard, ColumnChart, Figure, ProgressRows, SegmentBar } from "./admin-charts";
 import type { AdminNav } from "./admin-panel";
 
@@ -208,11 +210,11 @@ export function AdminOverview({ admin, content, nav, titles }: Props) {
                     const s = cardSummary(admin.progress[u.id]);
                     const isStale = !u.lastLoginAt || (daysSince(u.lastLoginAt) ?? 0) > STALE_DAYS;
                     return (
-                      <tr key={u.id} className="border-t border-fd-border">
+                      <tr key={u.id} className="relative border-t border-fd-border hover:bg-fd-accent/50">
                         <td className="px-3 py-2">
-                          <button type="button" onClick={() => nav.openIntern(u.id)} className="font-medium text-fd-primary underline-offset-2 hover:underline">
+                          <RowLink href={internHref(u.id)} onGo={() => nav.openIntern(u.id)}>
                             {u.username}
-                          </button>
+                          </RowLink>
                           {isLockedNow(u) && <span className="ms-2 text-xs text-orange-700 dark:text-orange-400">ล็อกอยู่</span>}
                         </td>
                         <td className="px-3 py-2 whitespace-nowrap">{s.where}</td>

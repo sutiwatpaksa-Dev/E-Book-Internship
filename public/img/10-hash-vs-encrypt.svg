@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 440" role="img" aria-label="Hash กับ Encrypt ต่างกัน" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="16">
 <title>Hash กับ Encrypt ต่างกัน</title>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#0b3c91"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#dc2626"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f59e0b"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#00767f"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#dc2626"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f59e0b"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="438" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="28" font-size="20" text-anchor="middle" fill="#0b3c91" font-weight="bold">Encrypt ย้อนกลับได้ · Hash ย้อนกลับไม่ได้</text>
+<text x="400" y="28" font-size="20" text-anchor="middle" fill="#00767f" font-weight="bold">Encrypt ย้อนกลับได้ · Hash ย้อนกลับไม่ได้</text>
 <rect x="16" y="44" width="768" height="170" rx="10" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
 <text x="32" y="72" font-size="17" text-anchor="start" fill="#dc2626" font-weight="bold">Encrypt (เข้ารหัส): มีกุญแจ ก็ถอดกลับได้</text>
 <rect x="32" y="92" width="150" height="56" rx="10" fill="#fff" stroke="#dc2626" stroke-width="2"/>
@@ -32,7 +32,7 @@
 <text x="165.0" y="344.25" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">somchai1234</text>
 <line x1="232" y1="339" x2="290" y2="339" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
 <text x="262" y="330" font-size="14" text-anchor="middle" fill="#16a34a" font-weight="normal">verify</text>
-<rect x="292" y="322" width="300" height="34" rx="10" fill="#e8effc" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="292" y="322" width="300" height="34" rx="10" fill="#e6f5f6" stroke="#0e8a94" stroke-width="2"/>
 <text x="442.0" y="344.25" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">เทียบกับ hash ใน DB: ตรง?</text>
 <text x="604" y="344" font-size="15" text-anchor="start" fill="#16a34a" font-weight="bold">ตรง = เข้าได้</text>
 <text x="400" y="386" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">hash ที่รั่วไป ถอดกลับเป็นรหัสไม่ได้ ได้แต่ลองเดา (ซึ่งช้าโดยตั้งใจ)</text>

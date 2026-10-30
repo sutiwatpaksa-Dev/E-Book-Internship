@@ -1,37 +1,37 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 350" role="img" aria-label="วงจร debug 5 ขั้น" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="16">
 <title>วงจร debug 5 ขั้น</title>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#0b3c91"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#dc2626"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f59e0b"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#00767f"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#dc2626"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f59e0b"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="348" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="34" font-size="20" text-anchor="middle" fill="#0b3c91" font-weight="bold">วงจรนักสืบ: ทำซ้ำจนกว่าจะหาย</text>
-<rect x="22" y="62" width="130" height="104" rx="10" fill="#e8effc" stroke="#0b3c91" stroke-width="2"/>
+<text x="400" y="34" font-size="20" text-anchor="middle" fill="#00767f" font-weight="bold">วงจรนักสืบ: ทำซ้ำจนกว่าจะหาย</text>
+<rect x="22" y="62" width="130" height="104" rx="10" fill="#e6f5f6" stroke="#00767f" stroke-width="2"/>
 <text x="87" y="96" font-size="17" text-anchor="middle" fill="#0f172a" font-weight="bold">ทำให้เกิดซ้ำ</text>
 <circle cx="36" cy="62" r="14" fill="#f59e0b"/>
 <text x="36" y="67.6" font-size="16" text-anchor="middle" fill="#fff" font-weight="bold">1</text>
 <text x="87" y="124" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ทำอะไร ใส่อะไร</text>
 <text x="87" y="145" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">แล้วพัง</text>
-<line x1="154" y1="114" x2="174" y2="114" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
-<rect x="176" y="62" width="130" height="104" rx="10" fill="#e8effc" stroke="#0b3c91" stroke-width="2"/>
+<line x1="154" y1="114" x2="174" y2="114" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
+<rect x="176" y="62" width="130" height="104" rx="10" fill="#e6f5f6" stroke="#00767f" stroke-width="2"/>
 <text x="241" y="96" font-size="17" text-anchor="middle" fill="#0f172a" font-weight="bold">แคบขอบเขต</text>
 <circle cx="190" cy="62" r="14" fill="#f59e0b"/>
 <text x="190" y="67.6" font-size="16" text-anchor="middle" fill="#fff" font-weight="bold">2</text>
 <text x="241" y="124" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">พังที่ไฟล์ไหน</text>
 <text x="241" y="145" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">บรรทัดไหน</text>
-<line x1="308" y1="114" x2="328" y2="114" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
-<rect x="330" y="62" width="130" height="104" rx="10" fill="#e8effc" stroke="#0b3c91" stroke-width="2"/>
+<line x1="308" y1="114" x2="328" y2="114" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
+<rect x="330" y="62" width="130" height="104" rx="10" fill="#e6f5f6" stroke="#00767f" stroke-width="2"/>
 <text x="395" y="96" font-size="17" text-anchor="middle" fill="#0f172a" font-weight="bold">ตั้งสมมติฐาน</text>
 <circle cx="344" cy="62" r="14" fill="#f59e0b"/>
 <text x="344" y="67.6" font-size="16" text-anchor="middle" fill="#fff" font-weight="bold">3</text>
 <text x="395" y="124" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">น่าจะเพราะ X</text>
 <text x="395" y="145" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">เป็น undefined</text>
-<line x1="462" y1="114" x2="482" y2="114" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
-<rect x="484" y="62" width="130" height="104" rx="10" fill="#e8effc" stroke="#0b3c91" stroke-width="2"/>
+<line x1="462" y1="114" x2="482" y2="114" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
+<rect x="484" y="62" width="130" height="104" rx="10" fill="#e6f5f6" stroke="#00767f" stroke-width="2"/>
 <text x="549" y="96" font-size="17" text-anchor="middle" fill="#0f172a" font-weight="bold">แก้ทีละอย่าง</text>
 <circle cx="498" cy="62" r="14" fill="#f59e0b"/>
 <text x="498" y="67.6" font-size="16" text-anchor="middle" fill="#fff" font-weight="bold">4</text>
 <text x="549" y="124" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">เปลี่ยนแค่</text>
 <text x="549" y="145" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">จุดเดียว</text>
-<line x1="616" y1="114" x2="636" y2="114" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
-<rect x="638" y="62" width="130" height="104" rx="10" fill="#e8effc" stroke="#0b3c91" stroke-width="2"/>
+<line x1="616" y1="114" x2="636" y2="114" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
+<rect x="638" y="62" width="130" height="104" rx="10" fill="#e6f5f6" stroke="#00767f" stroke-width="2"/>
 <text x="703" y="96" font-size="17" text-anchor="middle" fill="#0f172a" font-weight="bold">ตรวจซ้ำ</text>
 <circle cx="652" cy="62" r="14" fill="#f59e0b"/>
 <text x="652" y="67.6" font-size="16" text-anchor="middle" fill="#fff" font-weight="bold">5</text>

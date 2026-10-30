@@ -10,24 +10,40 @@
   --radius-2xl: 0.625rem;
 }
 
-/* โทนสีเดียวกับเอกสารบริษัท (navy 072A6B / 0B3C91) */
+/* โทนสีเดียวกับเว็บบริษัท blicktech.shop: เขียวน้ำทะเล (teal) บนพื้นขาวอมฟ้า · โหมดมืดเป็นกรมท่าเข้ม
+   ค่า oklch ยกมาจากชุดสี brand ของเว็บนั้น (500 = oklch 71% .13 196) แต่สีหลักที่ใช้เป็นพื้นปุ่มและสีลิงก์ใช้ขั้น 700
+   เพราะขั้น 500 ตัวหนังสือขาวอ่านไม่ออก (contrast 2.4:1) ขั้น 700 ได้ 5.4:1 */
 :root {
-  --color-fd-primary: #0b3c91;
+  --color-fd-background: oklch(98.4% 0.003 236);
+  --color-fd-foreground: oklch(21% 0.024 267);
+  --color-fd-card: oklch(100% 0 0);
+  --color-fd-card-foreground: oklch(21% 0.024 267);
+  --color-fd-popover: oklch(100% 0 0);
+  --color-fd-popover-foreground: oklch(21% 0.024 267);
+  --color-fd-muted: oklch(96% 0.005 235);
+  --color-fd-muted-foreground: oklch(48% 0.028 257);
+  --color-fd-secondary: oklch(94.5% 0.008 235);
+  --color-fd-secondary-foreground: oklch(21% 0.024 267);
+  --color-fd-accent: oklch(93% 0.04 200);
+  --color-fd-accent-foreground: oklch(35% 0.06 212);
+  --color-fd-border: oklch(90.5% 0.01 250);
+  --color-fd-ring: oklch(71% 0.13 196);
+  --color-fd-primary: oklch(51% 0.1 203);
   --color-fd-primary-foreground: #ffffff;
   /* สีของ Roadmap หน้าแรก: กล่องด่านสีเหลือง เส้นแกนสีน้ำเงิน แบบเดียวกับ roadmap.sh */
   --rm-node-bg: #ffe066;
   --rm-node-fg: #1f2328;
   --rm-item-bg: #fff6d6;
-  --rm-line: #2f6feb;
+  --rm-line: oklch(60% 0.115 200);
   --rm-done: #2da44e;
   /* ส่วนท้ายหน้า: น้ำเงินเข้มทั้งสองโหมด */
-  --footer-bg: #0f1b33;
-  --footer-fg: #c9d3e6;
-  --footer-line: #24345a;
-  --footer-muted: #9fb0cf;
+  --footer-bg: oklch(20% 0.025 264);
+  --footer-fg: oklch(88% 0.012 250);
+  --footer-line: oklch(31.5% 0.016 264);
+  --footer-muted: oklch(72% 0.025 252);
   /* ฝั่งซ้ายของหน้า login: พื้นน้ำเงินมีรูปพื้นหลังโทนมืด ตัวหนังสือจึงต้องขาวทั้งสองโหมด
      (ถ้าใช้ fd-primary ตรงๆ โหมดมืดจะเป็นฟ้าอ่อน + ตัวหนังสือดำ ซึ่งทับรูปมืดแล้วอ่านไม่ออก) */
-  --login-panel-bg: #0b3c91;
+  --login-panel-bg: oklch(35% 0.06 212);
   --login-panel-fg: #ffffff;
   /* ป้าย "จากพี่เลี้ยง" บนการ์ดที่เขียนจากหลังบ้าน (contrast 7:1 ทั้งสองโหมด) */
   --mentor-badge-bg: #fef3c7;
@@ -35,12 +51,12 @@
   /* กราฟหลังบ้าน (admin-charts.tsx): แท่งเดี่ยวใช้สีหลัก · ramp 4 ขั้นสีเดียวไล่เข้ม→อ่อน ใช้กับกลุ่มที่มีลำดับ
      (เข้าวันนี้ → ยังไม่เคยเข้า) ตรวจด้วยตัวตรวจสีแล้ว: ขั้นห่างกันพอ และขั้นอ่อนสุดยังเห็นบนพื้น (2:1 ขึ้นไป) */
   --chart-bar: var(--color-fd-primary);
-  --chart-track: #e1e7f2;
-  --chart-grid: #e3e5e8;
-  --chart-r1: #0b3c91;
-  --chart-r2: #2f5fb5;
-  --chart-r3: #5f88d0;
-  --chart-r4: #8fabdc;
+  --chart-track: oklch(93% 0.012 215);
+  --chart-grid: oklch(91% 0.008 250);
+  --chart-r1: oklch(43% 0.08 206);
+  --chart-r2: oklch(51% 0.1 203);
+  --chart-r3: oklch(62% 0.118 199);
+  --chart-r4: oklch(75% 0.125 197);
 
   /* ความสูง headbar (site-header.tsx) มือถือรวมแถบ "อยู่ด่านไหน" ด้วย
      ส่งต่อให้ Fumadocs ผ่าน --fd-banner-height: sidebar และสารบัญขวาจะติดอยู่ใต้ headbar พอดี */
@@ -58,23 +74,37 @@
 }
 
 .dark {
-  --color-fd-primary: #7aa7ff;
-  --color-fd-primary-foreground: #0b1020;
+  --color-fd-background: oklch(15.8% 0.014 264);
+  --color-fd-foreground: oklch(98.4% 0.003 236);
+  --color-fd-card: oklch(21% 0.016 264);
+  --color-fd-card-foreground: oklch(98.4% 0.003 236);
+  --color-fd-popover: oklch(22% 0.018 264);
+  --color-fd-popover-foreground: oklch(98.4% 0.003 236);
+  --color-fd-muted: oklch(25.5% 0.015 264);
+  --color-fd-muted-foreground: oklch(72% 0.025 252);
+  --color-fd-secondary: oklch(26% 0.016 264);
+  --color-fd-secondary-foreground: oklch(98.4% 0.003 236);
+  --color-fd-accent: oklch(33% 0.06 205);
+  --color-fd-accent-foreground: oklch(81% 0.105 198);
+  --color-fd-border: oklch(31.5% 0.016 264);
+  --color-fd-ring: oklch(71% 0.13 196);
+  --color-fd-primary: oklch(76% 0.125 197);
+  --color-fd-primary-foreground: oklch(18% 0.035 210);
   --rm-node-bg: #d4a72c;
   --rm-node-fg: #1b1b1f;
   --rm-item-bg: #2b2a24;
-  --rm-line: #4c8dff;
+  --rm-line: oklch(71% 0.13 196);
   --rm-done: #3fb950;
-  --login-panel-bg: #0f1b33;
+  --login-panel-bg: oklch(26% 0.045 216);
   --mentor-badge-bg: #3b2a0a;
   --mentor-badge-fg: #fcd34d;
   /* โหมดมืด: ขั้นที่เด่นสุด (เข้าวันนี้) เป็นสีสว่างสุด ไม่ใช่กลับสีอัตโนมัติ */
-  --chart-track: #1f2a40;
-  --chart-grid: #2b2e33;
-  --chart-r1: #a9c4ff;
-  --chart-r2: #7aa7ff;
-  --chart-r3: #4a73c4;
-  --chart-r4: #2f4a80;
+  --chart-track: oklch(27% 0.02 240);
+  --chart-grid: oklch(28% 0.014 264);
+  --chart-r1: oklch(87% 0.08 199);
+  --chart-r2: oklch(76% 0.125 197);
+  --chart-r3: oklch(60% 0.115 200);
+  --chart-r4: oklch(43% 0.08 206);
 }
 
 /* ภาษาไทยอ่านสบายขึ้นเมื่อบรรทัดห่างกว่าค่าเริ่มต้น */

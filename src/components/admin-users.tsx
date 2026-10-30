@@ -1,5 +1,8 @@
 "use client";
 
+import { internHref } from "@/lib/admin-links";
+import { RowLink } from "./row-link";
+import { RowMenu } from "./row-menu";
 import { ArrowLeftRight, Search, UserPlus, Users } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { isLockedNow, type AdminState } from "@/hooks/use-admin";
@@ -213,15 +216,15 @@ export function AdminUsers({ admin, nav }: { admin: AdminState; nav: AdminNav })
               </tr>
             )}
             {shown.map((u) => (
-              <tr key={u.id} className="border-t border-fd-border max-md:grid max-md:grid-cols-2 max-md:gap-x-3 max-md:gap-y-2.5 max-md:rounded-xl max-md:border max-md:bg-fd-card max-md:p-3">
+              <tr key={u.id} className="relative border-t border-fd-border hover:bg-fd-accent/50 max-md:grid max-md:grid-cols-2 max-md:gap-x-3 max-md:gap-y-2.5 max-md:rounded-xl max-md:border max-md:bg-fd-card max-md:p-3">
                 {/* ทุกแถวมี 2 บรรทัด (ชื่อผู้ใช้ + ชื่อจริง) แถวจึงสูงเท่ากัน ยังไม่กรอกชื่อ = บอกตรงๆ */}
                 <td className="px-3 py-2 max-md:col-span-2 max-md:p-0">
                   <span className="flex items-center gap-2 font-medium">
                     {/* น้อง: กดชื่อเปิดหน้าน้องรายคน (โปรไฟล์ ช่องติดต่อ ความคืบหน้า) */}
                     {u.role === "intern" ? (
-                      <button type="button" onClick={() => nav.openIntern(u.id)} className="text-fd-primary underline-offset-2 hover:underline">
+                      <RowLink href={internHref(u.id)} onGo={() => nav.openIntern(u.id)}>
                         {u.username}
-                      </button>
+                      </RowLink>
                     ) : (
                       u.username
                     )}
@@ -253,15 +256,15 @@ export function AdminUsers({ admin, nav }: { admin: AdminState; nav: AdminNav })
                 </td>
                 <td data-label="เข้าล่าสุด" className="px-3 py-2 whitespace-nowrap max-md:p-0 max-md:before:block max-md:before:text-xs max-md:before:text-fd-muted-foreground max-md:before:content-[attr(data-label)]">{fmt(u.lastLoginAt)}</td>
                 <td className="px-3 py-2 max-md:col-span-2 max-md:border-t max-md:border-fd-border max-md:p-0 max-md:pt-2">
-                  <div className="flex justify-end gap-1 whitespace-nowrap max-md:flex-wrap max-md:justify-start">
+                  {/* ปุ่มที่ต้องทำตอนนี้อยู่ข้างนอก (ปลดล็อก, น้องขอรีเซ็ต) ที่เหลือเก็บในเมนู ⋯ แถวจะได้ไม่รก */}
+                  <div className="flex items-center justify-end gap-1 whitespace-nowrap max-md:flex-wrap max-md:justify-start">
                     {isLockedNow(u) && (
-                      <Button variant="ghost" onClick={() => admin.updateUser(u, { unlock: true })}>
+                      <Button variant="ghost" className="relative z-10" onClick={() => admin.updateUser(u, { unlock: true })}>
                         ปลดล็อก
                       </Button>
                     )}
-                    {(canManage(u) || isMe(u)) && (
-                      // มีคำขอรีเซ็ต: ปุ่มเด่นขึ้น เป็นงานที่น้องรออยู่
-                      <Button variant={u.resetRequestedAt ? "primary" : "ghost"} onClick={() => setPending({ kind: "reset", user: u })}>
+                    {u.resetRequestedAt && (canManage(u) || isMe(u)) && (
+                      <Button className="relative z-10" onClick={() => setPending({ kind: "reset", user: u })}>
                         ออก PIN ใหม่
                       </Button>
                     )}
@@ -272,15 +275,17 @@ export function AdminUsers({ admin, nav }: { admin: AdminState; nav: AdminNav })
                       <span className="inline-flex h-9 items-center px-2 text-xs text-fd-muted-foreground" title="บัญชีพี่เลี้ยงจัดการได้เฉพาะ Super admin">
                         เฉพาะ Super admin
                       </span>
-                    ) : u.disabled ? (
-                      <Button variant="ghost" onClick={() => admin.updateUser(u, { disabled: false })}>
-                        เปิดบัญชี
-                      </Button>
-                    ) : (
-                      <Button variant="ghost" onClick={() => setPending({ kind: "disable", user: u })}>
-                        ปิดบัญชี
-                      </Button>
-                    )}
+                    ) : null}
+                    <RowMenu
+                      label={`จัดการ ${u.username}`}
+                      items={[
+                        ...(u.role === "intern" && !u.disabled ? [{ label: "ส่งข้อความ", onSelect: () => nav.compose({ kind: "user", user: u }) }] : []),
+                        ...((canManage(u) || isMe(u)) && !u.resetRequestedAt ? [{ label: "ออก PIN ใหม่", onSelect: () => setPending({ kind: "reset", user: u }) }] : []),
+                        ...(!isMe(u) && canManage(u)
+                          ? [u.disabled ? { label: "เปิดบัญชี", onSelect: () => admin.updateUser(u, { disabled: false }) } : { label: "ปิดบัญชี", danger: true, onSelect: () => setPending({ kind: "disable", user: u }) }]
+                          : []),
+                      ]}
+                    />
                   </div>
                 </td>
               </tr>

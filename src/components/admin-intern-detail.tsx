@@ -62,8 +62,8 @@ export function AdminInternDetail({ admin, nav, userId }: { admin: AdminState; n
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center gap-3">
-        <Button variant="ghost" onClick={() => nav.goTab("overview")}>
-          <ArrowLeft className="size-4" /> ภาพรวม
+        <Button variant="ghost" onClick={() => nav.back("overview")}>
+          <ArrowLeft className="size-4" /> กลับ
         </Button>
         <span className="text-sm text-fd-muted-foreground">
           {u.disabled ? "ปิดบัญชีอยู่" : isLockedNow(u) ? "ล็อกชั่วคราว" : "ใช้งาน"} · เข้าล่าสุด {fmt(u.lastLoginAt)}
@@ -103,6 +103,9 @@ export function AdminInternDetail({ admin, nav, userId }: { admin: AdminState; n
       </div>
 
       <div className="flex flex-wrap gap-2">
+        {!u.disabled && (
+          <Button onClick={() => nav.compose({ kind: "user", user: u })}>ส่งข้อความ</Button>
+        )}
         {isLockedNow(u) && (
           <Button variant="ghost" onClick={() => admin.updateUser(u, { unlock: true })}>
             ปลดล็อก

@@ -1,17 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 440" role="img" aria-label="CSRF ไหลยังไง" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="16">
 <title>CSRF ไหลยังไง</title>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#0b3c91"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#dc2626"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f59e0b"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#00767f"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#dc2626"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f59e0b"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="438" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="20" text-anchor="middle" fill="#0b3c91" font-weight="bold">CSRF: เว็บอื่นหลอกให้ browser เราส่งคำสั่งแทน</text>
+<text x="400" y="30" font-size="20" text-anchor="middle" fill="#00767f" font-weight="bold">CSRF: เว็บอื่นหลอกให้ browser เราส่งคำสั่งแทน</text>
 <rect x="16" y="60" width="200" height="86" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
 <text x="116.0" y="87.25" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">เว็บร้าย</text>
 <text x="116.0" y="108.25" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">evil.example</text>
 <text x="116.0" y="129.25" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">ฟอร์มซ่อน POST ไปธนาคาร</text>
-<rect x="300" y="60" width="200" height="86" rx="10" fill="#fff" stroke="#0b3c91" stroke-width="2"/>
+<rect x="300" y="60" width="200" height="86" rx="10" fill="#fff" stroke="#00767f" stroke-width="2"/>
 <text x="400.0" y="87.25" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">Browser ของเรา</text>
 <text x="400.0" y="108.25" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">login ธนาคารค้างไว้</text>
 <text x="400.0" y="129.25" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">มี cookie อยู่</text>
-<rect x="584" y="60" width="200" height="86" rx="10" fill="#e8effc" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="584" y="60" width="200" height="86" rx="10" fill="#e6f5f6" stroke="#0e8a94" stroke-width="2"/>
 <text x="684.0" y="87.25" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">เว็บธนาคาร</text>
 <text x="684.0" y="108.25" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">bank.example</text>
 <text x="684.0" y="129.25" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">เห็น cookie ถูกต้อง</text>

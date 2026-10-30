@@ -21,6 +21,7 @@ export const adminApi = {
   listThreads: () => request<ThreadSummary[]>("/admin/threads"),
   unreadThreads: () => request<{ count: number }>("/admin/threads/unread-count"),
   getThread: (id: number) => request<ThreadDetail>(`/admin/threads/${id}`),
+  sendMessage: (input: { userIds?: number[]; cohortId?: number; subject: string; body: string }) => request<{ count: number }>("/admin/threads/send", jsonBody("POST", input)),
   replyThread: (id: number, body: string) => request<null>(`/admin/threads/${id}/messages`, jsonBody("POST", { body })),
   listCohorts: () => request<Cohort[]>("/admin/cohorts"),
   createCohort: (input: CohortInput) => request<{ id: number }>("/admin/cohorts", jsonBody("POST", input)),

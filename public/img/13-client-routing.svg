@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 380" role="img" aria-label="กดลิงก์แบบ a href เทียบกับ Link" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
 <title>กดลิงก์แบบ a href เทียบกับ Link</title><desc>a href ทำให้โหลดใหม่ทั้งหน้า Link แค่สลับเนื้อหาในหน้าเดิมโดยไม่ถาม server</desc>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a4fb0"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0e8a94"/></marker></defs>
 <rect x="1" y="1" width="798" height="378" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">กดลิงก์ในเว็บเราเอง: โหลดใหม่ทั้งหน้า หรือ สลับเนื้อหาในหน้าเดิม?</text>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#00767f" font-weight="bold">กดลิงก์ในเว็บเราเอง: โหลดใหม่ทั้งหน้า หรือ สลับเนื้อหาในหน้าเดิม?</text>
 <text x="205" y="64" font-size="17" text-anchor="middle" fill="#dc2626" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">&lt;a href="/contact"&gt;  ✗</text>
 <text x="595" y="64" font-size="17" text-anchor="middle" fill="#16a34a" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">&lt;Link to="/contact"&gt;  ✓</text>
-<rect x="30" y="82" width="350" height="54" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="30" y="82" width="350" height="54" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="205.0" y="114.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ผู้ใช้กดลิงก์</text>
 <line x1="205" y1="136" x2="205" y2="154" stroke="#64748b" stroke-width="2.5" marker-end="url(#as)"/>
 <rect x="30" y="154" width="350" height="54" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
@@ -19,14 +19,14 @@
 <rect x="30" y="298" width="350" height="54" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
 <text x="205.0" y="319.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">โหลดใหม่ทั้งหน้า</text>
 <text x="205.0" y="341.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ข้อมูลที่จำไว้หาย หน้ากระพริบ</text>
-<rect x="420" y="82" width="350" height="54" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="420" y="82" width="350" height="54" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="595.0" y="114.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ผู้ใช้กดลิงก์</text>
 <line x1="595" y1="136" x2="595" y2="154" stroke="#64748b" stroke-width="2.5" marker-end="url(#as)"/>
-<rect x="420" y="154" width="350" height="54" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="420" y="154" width="350" height="54" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="595.0" y="175.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">Router เปลี่ยนลิงก์ด้านบนเป็น /contact</text>
 <text x="595.0" y="197.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">(ไม่ถาม server)</text>
 <line x1="595" y1="208" x2="595" y2="226" stroke="#64748b" stroke-width="2.5" marker-end="url(#as)"/>
-<rect x="420" y="226" width="350" height="54" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="420" y="226" width="350" height="54" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="595.0" y="247.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">เทียบ /contact</text>
 <text x="595.0" y="269.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">กับรายการ Route</text>
 <line x1="595" y1="280" x2="595" y2="298" stroke="#64748b" stroke-width="2.5" marker-end="url(#as)"/>

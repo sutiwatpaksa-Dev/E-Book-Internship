@@ -1,19 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 370" role="img" aria-label="ปัญหาอยู่ชั้นไหน ดูที่ไหน" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="16">
 <title>ปัญหาอยู่ชั้นไหน ดูที่ไหน</title>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#0b3c91"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#dc2626"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f59e0b"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#00767f"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#dc2626"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f59e0b"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="368" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="20" text-anchor="middle" fill="#0b3c91" font-weight="bold">ปัญหาอยู่ชั้นไหน? ไล่ดูทีละชั้น</text>
-<rect x="30" y="56" width="220" height="70" rx="10" fill="#e8effc" stroke="#0b3c91" stroke-width="2"/>
+<text x="400" y="30" font-size="20" text-anchor="middle" fill="#00767f" font-weight="bold">ปัญหาอยู่ชั้นไหน? ไล่ดูทีละชั้น</text>
+<rect x="30" y="56" width="220" height="70" rx="10" fill="#e6f5f6" stroke="#00767f" stroke-width="2"/>
 <text x="140.0" y="85.6" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">Browser</text>
 <text x="140.0" y="107.6" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">หน้าเว็บ (React)</text>
-<rect x="290" y="56" width="220" height="70" rx="10" fill="#e8effc" stroke="#0b3c91" stroke-width="2"/>
+<rect x="290" y="56" width="220" height="70" rx="10" fill="#e6f5f6" stroke="#00767f" stroke-width="2"/>
 <text x="400.0" y="85.6" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">API</text>
 <text x="400.0" y="107.6" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">server (Hono/Express)</text>
-<rect x="550" y="56" width="220" height="70" rx="10" fill="#e8effc" stroke="#0b3c91" stroke-width="2"/>
+<rect x="550" y="56" width="220" height="70" rx="10" fill="#e6f5f6" stroke="#00767f" stroke-width="2"/>
 <text x="660.0" y="85.6" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">Database</text>
 <text x="660.0" y="107.6" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">Postgres / MySQL</text>
-<line x1="252" y1="91" x2="288" y2="91" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
-<line x1="512" y1="91" x2="548" y2="91" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="252" y1="91" x2="288" y2="91" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="512" y1="91" x2="548" y2="91" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <line x1="288" y1="111" x2="252" y2="111" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
 <line x1="548" y1="111" x2="512" y2="111" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
 <rect x="30" y="168" width="220" height="128" rx="10" fill="#fff" stroke="#f59e0b" stroke-width="2"/>

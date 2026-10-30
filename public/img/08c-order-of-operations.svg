@@ -1,16 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 440" role="img" aria-label="ลำดับงานระหว่าง storage กับฐานข้อมูลตอนเพิ่ม เปลี่ยน และลบรูป"><title>ลำดับงานระหว่าง storage กับฐานข้อมูลตอนเพิ่ม เปลี่ยน และลบรูป</title>
-<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker>
 <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker>
 <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker></defs>
 <rect x="1" y="1" width="798" height="438" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="34" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="18" font-weight="700" fill="#0b3c91" text-anchor="middle">ลำดับงาน: ถ้าพังกลางทาง ต้องเหลือแค่ “ไฟล์กำพร้า” ไม่ใช่ “รูปแตก”</text>
+<text x="400" y="34" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="18" font-weight="700" fill="#00767f" text-anchor="middle">ลำดับงาน: ถ้าพังกลางทาง ต้องเหลือแค่ “ไฟล์กำพร้า” ไม่ใช่ “รูปแตก”</text>
 <rect x="24" y="62" width="96" height="70" rx="8" fill="#e2e8f0" stroke="#64748b" stroke-width="1.5"/>
 <text x="72" y="104" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="17" font-weight="700" fill="#0f172a" text-anchor="middle">เพิ่ม</text>
 <rect x="150" y="62" width="170" height="70" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
 <text x="235" y="92" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="middle">① PUT ไฟล์ใหม่</text>
 <text x="235" y="114" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="middle">storage</text>
-<line x1="322" y1="97" x2="348" y2="97" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#a)"/>
-<rect x="350" y="62" width="170" height="70" rx="8" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
+<line x1="322" y1="97" x2="348" y2="97" stroke="#00767f" stroke-width="2.5" marker-end="url(#a)"/>
+<rect x="350" y="62" width="170" height="70" rx="8" fill="#d5f2f3" stroke="#0e8a94" stroke-width="1.5"/>
 <text x="435" y="92" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="middle">② INSERT แถว</text>
 <text x="435" y="114" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="middle">ฐานข้อมูล</text>
 <text x="635" y="92" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="600" fill="#15803d" text-anchor="middle">พังหลังขั้น ①</text>
@@ -20,20 +20,20 @@
 <rect x="150" y="152" width="170" height="70" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
 <text x="235" y="182" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="middle">① PUT ไฟล์ใหม่</text>
 <text x="235" y="204" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="middle">key ใหม่</text>
-<line x1="322" y1="187" x2="348" y2="187" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#a)"/>
-<rect x="350" y="152" width="170" height="70" rx="8" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
+<line x1="322" y1="187" x2="348" y2="187" stroke="#00767f" stroke-width="2.5" marker-end="url(#a)"/>
+<rect x="350" y="152" width="170" height="70" rx="8" fill="#d5f2f3" stroke="#0e8a94" stroke-width="1.5"/>
 <text x="435" y="182" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="middle">② UPDATE แถว</text>
 <text x="435" y="204" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="middle">ชี้ key ใหม่</text>
-<line x1="522" y1="187" x2="548" y2="187" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#a)"/>
+<line x1="522" y1="187" x2="548" y2="187" stroke="#00767f" stroke-width="2.5" marker-end="url(#a)"/>
 <rect x="550" y="152" width="170" height="70" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
 <text x="635" y="182" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="middle">③ DELETE ไฟล์เก่า</text>
 <text x="635" y="204" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="middle">storage</text>
 <rect x="24" y="242" width="96" height="70" rx="8" fill="#e2e8f0" stroke="#64748b" stroke-width="1.5"/>
 <text x="72" y="284" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="17" font-weight="700" fill="#0f172a" text-anchor="middle">ลบ</text>
-<rect x="150" y="242" width="170" height="70" rx="8" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
+<rect x="150" y="242" width="170" height="70" rx="8" fill="#d5f2f3" stroke="#0e8a94" stroke-width="1.5"/>
 <text x="235" y="272" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="middle">① DELETE แถว</text>
 <text x="235" y="294" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="middle">ฐานข้อมูล</text>
-<line x1="322" y1="277" x2="348" y2="277" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#a)"/>
+<line x1="322" y1="277" x2="348" y2="277" stroke="#00767f" stroke-width="2.5" marker-end="url(#a)"/>
 <rect x="350" y="242" width="170" height="70" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
 <text x="435" y="272" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="middle">② DELETE ไฟล์</text>
 <text x="435" y="294" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="middle">storage</text>

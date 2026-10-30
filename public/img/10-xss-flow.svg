@@ -1,22 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 440" role="img" aria-label="XSS ไหลยังไง และกันยังไง" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="16">
 <title>XSS ไหลยังไง และกันยังไง</title>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#0b3c91"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#dc2626"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f59e0b"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#00767f"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#dc2626"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f59e0b"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="438" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="20" text-anchor="middle" fill="#0b3c91" font-weight="bold">XSS: ข้อมูลที่แสดงบนหน้าเว็บกลายเป็นโค้ด</text>
+<text x="400" y="30" font-size="20" text-anchor="middle" fill="#00767f" font-weight="bold">XSS: ข้อมูลที่แสดงบนหน้าเว็บกลายเป็นโค้ด</text>
 <rect x="16" y="52" width="170" height="70" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
 <text x="101.0" y="81.75" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">คนร้าย</text>
 <text x="101.0" y="102.75" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">คอมเมนต์ที่มีโค้ด</text>
-<rect x="240" y="52" width="150" height="70" rx="10" fill="#e8effc" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="240" y="52" width="150" height="70" rx="10" fill="#e6f5f6" stroke="#0e8a94" stroke-width="2"/>
 <text x="315.0" y="81.75" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">เว็บเรา + DB</text>
 <text x="315.0" y="102.75" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">เก็บไว้ตามที่ส่งมา</text>
-<rect x="444" y="52" width="150" height="70" rx="10" fill="#fff" stroke="#0b3c91" stroke-width="2"/>
+<rect x="444" y="52" width="150" height="70" rx="10" fill="#fff" stroke="#00767f" stroke-width="2"/>
 <text x="519.0" y="81.75" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">เหยื่อ</text>
 <text x="519.0" y="102.75" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">เปิดหน้าคอมเมนต์</text>
 <rect x="646" y="52" width="138" height="70" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
 <text x="715.0" y="81.75" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">browser เหยื่อ</text>
 <text x="715.0" y="102.75" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">รันโค้ดนั้น</text>
 <line x1="188" y1="87" x2="238" y2="87" stroke="#dc2626" stroke-width="2.5" marker-end="url(#ar)"/>
-<line x1="392" y1="87" x2="442" y2="87" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="392" y1="87" x2="442" y2="87" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <line x1="596" y1="87" x2="644" y2="87" stroke="#dc2626" stroke-width="2.5" marker-end="url(#ar)"/>
 <circle cx="213" cy="66" r="11" fill="#f59e0b"/>
 <text x="213" y="70.55" font-size="13" text-anchor="middle" fill="#fff" font-weight="bold">1</text>

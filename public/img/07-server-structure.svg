@@ -1,43 +1,43 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" role="img" aria-label="โครงสร้าง server, database, role และ table ของ PostgreSQL">
 <title>โครงสร้าง server, database, role และ table ของ PostgreSQL</title>
-<defs><marker id="arn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="aro" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="ars" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a4fb0"/></marker></defs>
+<defs><marker id="arn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="aro" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="ars" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0e8a94"/></marker></defs>
 <rect x="1" y="1" width="798" height="398" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
-<text x="115" y="40" font-size="17" fill="#0b3c91" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">Role (ผู้ใช้)</text>
+<text x="115" y="40" font-size="17" fill="#00767f" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">Role (ผู้ใช้)</text>
 <rect x="20" y="70" width="190" height="70" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
 <text x="115" y="98" font-size="16" fill="#0f172a" text-anchor="middle" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace">app_user</text>
 <text x="115" y="122" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ใช้ในแอปของเรา</text>
 <rect x="20" y="165" width="190" height="70" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
 <text x="115" y="193" font-size="16" fill="#0f172a" text-anchor="middle" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace">postgres</text>
 <text x="115" y="217" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">superuser ทำได้ทุกอย่าง</text>
-<rect x="20" y="260" width="190" height="70" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="20" y="260" width="190" height="70" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="115" y="288" font-size="16" fill="#0f172a" text-anchor="middle" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace">reader</text>
 <text x="115" y="312" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">อ่านอย่างเดียว</text>
-<rect x="270" y="50" width="510" height="332" rx="12" fill="#f1f5f9" stroke="#0b3c91" stroke-width="2" stroke-dasharray="6 4"/>
-<text x="525" y="40" font-size="17" fill="#0b3c91" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">PostgreSQL server (1 ตัว ฟังที่ port 5432)</text>
+<rect x="270" y="50" width="510" height="332" rx="12" fill="#f1f5f9" stroke="#00767f" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="525" y="40" font-size="17" fill="#00767f" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">PostgreSQL server (1 ตัว ฟังที่ port 5432)</text>
 <rect x="290" y="66" width="470" height="142" rx="10" fill="#ffffff" stroke="#0f766e" stroke-width="2"/>
 <rect x="290" y="66" width="470" height="34" rx="10" fill="#0f766e" stroke="#0f766e" stroke-width="2"/>
 <rect x="290" y="84" width="470" height="16" rx="0" fill="#0f766e" stroke="#0f766e" stroke-width="0"/>
 <text x="525" y="89" font-size="16" fill="#ffffff" text-anchor="middle" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace">database: shop</text>
 <text x="304" y="126" font-size="15" fill="#64748b" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">schema: public</text>
-<rect x="304" y="138" width="138" height="44" rx="6" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
+<rect x="304" y="138" width="138" height="44" rx="6" fill="#d5f2f3" stroke="#0e8a94" stroke-width="1.5"/>
 <text x="373" y="165" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="ui-monospace, Menlo, Consolas, monospace">customers</text>
-<rect x="452" y="138" width="138" height="44" rx="6" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
+<rect x="452" y="138" width="138" height="44" rx="6" fill="#d5f2f3" stroke="#0e8a94" stroke-width="1.5"/>
 <text x="521" y="165" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="ui-monospace, Menlo, Consolas, monospace">rentals</text>
-<rect x="600" y="138" width="138" height="44" rx="6" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
+<rect x="600" y="138" width="138" height="44" rx="6" fill="#d5f2f3" stroke="#0e8a94" stroke-width="1.5"/>
 <text x="669" y="165" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="ui-monospace, Menlo, Consolas, monospace">laptops</text>
 <rect x="290" y="226" width="470" height="142" rx="10" fill="#ffffff" stroke="#0f766e" stroke-width="2"/>
 <rect x="290" y="226" width="470" height="34" rx="10" fill="#0f766e" stroke="#0f766e" stroke-width="2"/>
 <rect x="290" y="244" width="470" height="16" rx="0" fill="#0f766e" stroke="#0f766e" stroke-width="0"/>
 <text x="525" y="249" font-size="16" fill="#ffffff" text-anchor="middle" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace">database: bitcafe</text>
 <text x="304" y="286" font-size="15" fill="#64748b" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">schema: public</text>
-<rect x="304" y="298" width="138" height="44" rx="6" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
+<rect x="304" y="298" width="138" height="44" rx="6" fill="#d5f2f3" stroke="#0e8a94" stroke-width="1.5"/>
 <text x="373" y="325" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="ui-monospace, Menlo, Consolas, monospace">users</text>
-<rect x="452" y="298" width="138" height="44" rx="6" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
+<rect x="452" y="298" width="138" height="44" rx="6" fill="#d5f2f3" stroke="#0e8a94" stroke-width="1.5"/>
 <text x="521" y="325" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="ui-monospace, Menlo, Consolas, monospace">orders</text>
-<rect x="600" y="298" width="138" height="44" rx="6" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
+<rect x="600" y="298" width="138" height="44" rx="6" fill="#d5f2f3" stroke="#0e8a94" stroke-width="1.5"/>
 <text x="669" y="325" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="ui-monospace, Menlo, Consolas, monospace">menu_items</text>
 <line x1="210" y1="105" x2="290" y2="115" stroke="#16a34a" stroke-width="3" marker-end="url(#arg)"/>
 <line x1="210" y1="190" x2="290" y2="170" stroke="#dc2626" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arr)"/>
 <line x1="210" y1="210" x2="290" y2="280" stroke="#dc2626" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arr)"/>
-<line x1="210" y1="295" x2="290" y2="310" stroke="#1a4fb0" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arb)"/>
+<line x1="210" y1="295" x2="290" y2="310" stroke="#0e8a94" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arb)"/>
 </svg>

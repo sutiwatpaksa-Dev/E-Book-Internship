@@ -91,7 +91,9 @@ export type AdminAssignment = Assignment & { id: number; pdf: FileInfo | null; c
 export type AssignmentInput = Pick<Assignment, "name" | "brief" | "sections" | "rounds">;
 
 // เรื่องที่น้องคุยกับพี่เลี้ยง (รูปร่างตรงกับ server/routes/thread.routes.ts)
-export type ThreadKind = "question" | "content_request";
+export type ThreadKind = "question" | "content_request" | "mentor_message";
+// ประเภทที่น้องเปิดเองได้ (ข้อความจากพี่เลี้ยงเปิดได้เฉพาะฝั่งพี่เลี้ยง)
+export type InternThreadKind = Exclude<ThreadKind, "mentor_message">;
 export type ThreadStatus = "waiting" | "answered" | "closed" | "new" | "accepted" | "in_progress" | "done" | "declined";
 
 export type ThreadSummary = {

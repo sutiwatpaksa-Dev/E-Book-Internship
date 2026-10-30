@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 380" role="img" aria-label="@theme: ตั้งสีร้านที่เดียว ใช้ทั้งเว็บ" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
 <title>@theme: ตั้งสีร้านที่เดียว ใช้ทั้งเว็บ</title><desc>ตั้งสีใน @theme ครั้งเดียว แล้วทุกคลาสทั้งเว็บใช้สีนั้น แก้บรรทัดเดียวเปลี่ยนทั้งเว็บ</desc>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="378" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">@theme: ตั้งสีร้านที่เดียว ใช้ทั้งเว็บ</text>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#00767f" font-weight="bold">@theme: ตั้งสีร้านที่เดียว ใช้ทั้งเว็บ</text>
 <rect x="30" y="60" width="230" height="90" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
 <text x="145.0" y="88.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold">src/index.css</text>
 <text x="145.0" y="109.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">@theme {</text>
@@ -10,13 +10,13 @@
 <rect x="40" y="160" width="210" height="30" rx="6" fill="#6b3e26"/>
 <text x="145" y="181" font-size="14" text-anchor="middle" fill="#ffffff" font-weight="normal">#6b3e26 สีน้ำตาล</text>
 <line x1="262" y1="105" x2="318" y2="80" stroke="#d97706" stroke-width="2" marker-end="url(#ao)"/>
-<rect x="320" y="56" width="200" height="46" rx="8" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="320" y="56" width="200" height="46" rx="8" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="420.0" y="83.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">bg-brand  พื้นปุ่ม</text>
 <line x1="262" y1="105" x2="318" y2="138" stroke="#d97706" stroke-width="2" marker-end="url(#ao)"/>
-<rect x="320" y="114" width="200" height="46" rx="8" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="320" y="114" width="200" height="46" rx="8" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="420.0" y="141.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">text-brand  ชื่อร้านใน Navbar</text>
 <line x1="262" y1="105" x2="318" y2="196" stroke="#d97706" stroke-width="2" marker-end="url(#ao)"/>
-<rect x="320" y="172" width="200" height="46" rx="8" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="320" y="172" width="200" height="46" rx="8" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="420.0" y="199.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">border-brand  ขอบกล่อง</text>
 <rect x="30" y="236" width="230" height="90" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
 <text x="145.0" y="275.4" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold">อยากเปลี่ยนเป็น #2f7d32</text>

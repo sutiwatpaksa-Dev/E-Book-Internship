@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 350" role="img" aria-label="กฎของ Hooks: เรียกที่ระดับบนสุดของ component เท่านั้น" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
 <title>กฎของ Hooks: เรียกที่ระดับบนสุดของ component เท่านั้น</title><desc>Hook ต้องไม่อยู่ใน if ลูป หรือฟังก์ชันซ้อน เพื่อให้ลำดับการเรียกเหมือนเดิมทุกรอบ</desc>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="348" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">กฎของ Hooks: เรียกที่ระดับบนสุดของ component เท่านั้น</text>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#00767f" font-weight="bold">กฎของ Hooks: เรียกที่ระดับบนสุดของ component เท่านั้น</text>
 <text x="210" y="62" font-size="17" text-anchor="middle" fill="#dc2626" font-weight="bold">ผิด ❌</text>
 <text x="590" y="62" font-size="17" text-anchor="middle" fill="#16a34a" font-weight="bold">ถูก ✅</text>
 <rect x="30" y="78" width="360" height="150" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
@@ -21,5 +21,5 @@
 <text x="210" y="276" font-size="15" text-anchor="middle" fill="#dc2626" font-weight="normal">→ React นับลำดับสับสน พังทันที</text>
 <text x="590" y="254" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ทุกรอบเรียก hook ตามลำดับเดิมเสมอ</text>
 <text x="590" y="276" font-size="15" text-anchor="middle" fill="#16a34a" font-weight="normal">→ React จำได้ว่า hook ตัวไหนเป็นของใคร</text>
-<text x="400" y="326" font-size="15" text-anchor="middle" fill="#0b3c91" font-weight="bold">เหมือนล็อกเกอร์เลขที่ 1, 2, 3: ข้ามเลขเมื่อไหร่ ของก็สลับ</text>
+<text x="400" y="326" font-size="15" text-anchor="middle" fill="#00767f" font-weight="bold">เหมือนล็อกเกอร์เลขที่ 1, 2, 3: ข้ามเลขเมื่อไหร่ ของก็สลับ</text>
 </svg>

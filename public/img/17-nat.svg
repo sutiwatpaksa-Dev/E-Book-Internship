@@ -1,28 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 380" role="img" aria-label="IP ภายในกับ IP สาธารณะ" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
 <title>IP ภายในกับ IP สาธารณะ</title><desc>อุปกรณ์ในบ้านใช้ IP ภายใน เราเตอร์แปลงเป็น IP สาธารณะ 1 ตัวเพื่อออกอินเทอร์เน็ต เครื่องเช่ามี IP สาธารณะของตัวเอง</desc>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="378" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="19" text-anchor="middle" fill="#0b3c91" font-weight="bold">IP ภายในกับ IP สาธารณะ</text>
+<text x="400" y="30" font-size="19" text-anchor="middle" fill="#00767f" font-weight="bold">IP ภายในกับ IP สาธารณะ</text>
 <rect x="20" y="60" width="290" height="270" rx="14" fill="#f1f5f9" stroke="#64748b" stroke-width="2" stroke-dasharray="6 4"/>
-<text x="165" y="86" font-size="15" text-anchor="middle" fill="#0b3c91" font-weight="bold">ในบ้าน (IP ภายใน)</text>
-<rect x="40" y="110" width="150" height="56" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="165" y="86" font-size="15" text-anchor="middle" fill="#00767f" font-weight="bold">ในบ้าน (IP ภายใน)</text>
+<rect x="40" y="110" width="150" height="56" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="115.0" y="132.8" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">โน้ตบุ๊ก</text>
 <text x="115.0" y="153.8" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">192.168.1.25</text>
-<rect x="40" y="182" width="150" height="56" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="40" y="182" width="150" height="56" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="115.0" y="204.8" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">มือถือ</text>
 <text x="115.0" y="225.8" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">192.168.1.30</text>
-<rect x="40" y="254" width="150" height="56" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="40" y="254" width="150" height="56" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="115.0" y="276.8" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">ทีวี</text>
 <text x="115.0" y="297.8" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">192.168.1.40</text>
-<line x1="190" y1="138" x2="235" y2="138" stroke="#1a4fb0" stroke-width="1.5"/>
-<line x1="190" y1="210" x2="235" y2="210" stroke="#1a4fb0" stroke-width="1.5"/>
-<line x1="190" y1="282" x2="235" y2="282" stroke="#1a4fb0" stroke-width="1.5"/>
-<line x1="235" y1="138" x2="235" y2="282" stroke="#1a4fb0" stroke-width="1.5"/>
+<line x1="190" y1="138" x2="235" y2="138" stroke="#0e8a94" stroke-width="1.5"/>
+<line x1="190" y1="210" x2="235" y2="210" stroke="#0e8a94" stroke-width="1.5"/>
+<line x1="190" y1="282" x2="235" y2="282" stroke="#0e8a94" stroke-width="1.5"/>
+<line x1="235" y1="138" x2="235" y2="282" stroke="#0e8a94" stroke-width="1.5"/>
 <rect x="335" y="160" width="150" height="100" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
 <text x="410.0" y="194.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">เราเตอร์</text>
 <text x="410.0" y="215.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">แปลงที่อยู่</text>
 <text x="410.0" y="236.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ภายใน ↔ ภายนอก</text>
-<line x1="235" y1="210" x2="333" y2="210" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="235" y1="210" x2="333" y2="210" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <text x="410" y="290" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">IP สาธารณะ</text>
 <text x="410" y="312" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">1 ตัวใช้ร่วมกัน</text>
 <line x1="485" y1="210" x2="568" y2="210" stroke="#d97706" stroke-width="2.5" marker-end="url(#ao)" marker-start="url(#ao)"/>

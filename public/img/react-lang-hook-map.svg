@@ -1,46 +1,46 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-label="อยากทำอะไร → ใช้ Hook ไหน" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
 <title>อยากทำอะไร → ใช้ Hook ไหน</title><desc>แผนที่เลือก hook ตามความต้องการ</desc>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="478" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">อยากทำอะไร → ใช้ Hook ไหน</text>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#00767f" font-weight="bold">อยากทำอะไร → ใช้ Hook ไหน</text>
 <rect x="30" y="50" width="440" height="42" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
 <text x="250.0" y="76.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">จำค่าที่เปลี่ยนแล้วหน้าจอต้องเปลี่ยนตาม</text>
-<line x1="472" y1="71" x2="508" y2="71" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
-<rect x="510" y="50" width="260" height="42" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<line x1="472" y1="71" x2="508" y2="71" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
+<rect x="510" y="50" width="260" height="42" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="640.0" y="76.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">useState</text>
 <rect x="30" y="102" width="440" height="42" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
 <text x="250.0" y="128.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">ทำงานข้างนอกหลังวาดเสร็จ (ดึง API, ตั้ง timer)</text>
-<line x1="472" y1="123" x2="508" y2="123" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
-<rect x="510" y="102" width="260" height="42" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<line x1="472" y1="123" x2="508" y2="123" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
+<rect x="510" y="102" width="260" height="42" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="640.0" y="128.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">useEffect</text>
 <rect x="30" y="154" width="440" height="42" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
 <text x="250.0" y="180.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">จับ DOM ตรงๆ / จำค่าที่ไม่ทำให้วาดใหม่</text>
-<line x1="472" y1="175" x2="508" y2="175" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="472" y1="175" x2="508" y2="175" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <rect x="510" y="154" width="260" height="42" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
 <text x="640.0" y="180.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">useRef</text>
 <rect x="30" y="206" width="440" height="42" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
 <text x="250.0" y="232.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">เปลี่ยนหน้าด้วยโค้ด</text>
-<line x1="472" y1="227" x2="508" y2="227" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="472" y1="227" x2="508" y2="227" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <rect x="510" y="206" width="260" height="42" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
 <text x="640.0" y="232.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">useNavigate</text>
 <rect x="30" y="258" width="440" height="42" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
 <text x="250.0" y="284.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">อ่านค่าจาก path เช่น /laptops/7</text>
-<line x1="472" y1="279" x2="508" y2="279" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="472" y1="279" x2="508" y2="279" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <rect x="510" y="258" width="260" height="42" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
 <text x="640.0" y="284.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">useParams</text>
 <rect x="30" y="310" width="440" height="42" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
 <text x="250.0" y="336.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">อ่าน/เขียนค่าหลัง ? เช่น ?brand=dell</text>
-<line x1="472" y1="331" x2="508" y2="331" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="472" y1="331" x2="508" y2="331" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <rect x="510" y="310" width="260" height="42" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
 <text x="640.0" y="336.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">useSearchParams</text>
 <rect x="30" y="362" width="440" height="42" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
 <text x="250.0" y="388.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">คำนวณหนักๆ ไม่ให้ซ้ำ (ใช้เมื่อช้าจริงเท่านั้น)</text>
-<line x1="472" y1="383" x2="508" y2="383" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="472" y1="383" x2="508" y2="383" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <rect x="510" y="362" width="260" height="42" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
 <text x="640.0" y="388.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">useMemo / useCallback</text>
 <rect x="30" y="414" width="440" height="42" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
 <text x="250.0" y="440.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">ใช้ค่าร่วมกันทั้งแอป ไม่ต้องส่ง props ต่อกัน</text>
-<line x1="472" y1="435" x2="508" y2="435" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="472" y1="435" x2="508" y2="435" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <rect x="510" y="414" width="260" height="42" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
 <text x="640.0" y="440.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">useContext</text>
 </svg>

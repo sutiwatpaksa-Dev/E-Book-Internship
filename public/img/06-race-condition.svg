@@ -1,16 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-label="พนักงาน 2 คนเช่าเครื่องเดียวกันพร้อมกัน เทียบก่อนและหลังแก้">
 <title>พนักงาน 2 คนเช่าเครื่องเดียวกันพร้อมกัน เทียบก่อนและหลังแก้</title>
-<defs><marker id="arn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="aro" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="ars" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a4fb0"/></marker></defs>
+<defs><marker id="arn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="aro" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="ars" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0e8a94"/></marker></defs>
 <rect x="1" y="1" width="798" height="448" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
 <text x="400" y="32" font-size="17" fill="#dc2626" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ไม่ป้องกัน: ต่างคนต่าง “ดูแล้วว่าง” แล้วเช่าพร้อมกัน</text>
-<text x="140" y="66" font-size="16" fill="#0b3c91" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">10:00</text>
-<text x="530" y="66" font-size="16" fill="#0b3c91" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">10:01</text>
-<text x="20" y="107" font-size="16" fill="#1a4fb0" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">พนักงาน A</text>
-<rect x="120" y="80" width="230" height="44" rx="8" fill="#ffffff" stroke="#1a4fb0" stroke-width="2"/>
+<text x="140" y="66" font-size="16" fill="#00767f" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">10:00</text>
+<text x="530" y="66" font-size="16" fill="#00767f" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">10:01</text>
+<text x="20" y="107" font-size="16" fill="#0e8a94" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">พนักงาน A</text>
+<rect x="120" y="80" width="230" height="44" rx="8" fill="#ffffff" stroke="#0e8a94" stroke-width="2"/>
 <text x="235" y="108" font-size="16" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ดู: AS-01 ว่าง ✓</text>
 <rect x="400" y="80" width="260" height="44" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
 <text x="530" y="108" font-size="16" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">เช่าให้ลูกค้า 1 สำเร็จ</text>
-<line x1="350" y1="102" x2="400" y2="102" stroke="#1a4fb0" stroke-width="2" marker-end="url(#arb)"/>
+<line x1="350" y1="102" x2="400" y2="102" stroke="#0e8a94" stroke-width="2" marker-end="url(#arb)"/>
 <text x="20" y="163" font-size="16" fill="#b45309" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">พนักงาน B</text>
 <rect x="120" y="136" width="230" height="44" rx="8" fill="#ffffff" stroke="#b45309" stroke-width="2"/>
 <text x="235" y="164" font-size="16" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ดู: AS-01 ว่าง ✓</text>
@@ -21,7 +21,7 @@
 <line x1="30" y1="232" x2="770" y2="232" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="6 6"/>
 <text x="400" y="264" font-size="17" fill="#16a34a" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">แก้: เปลี่ยนสถานะแบบมีเงื่อนไข (หรือ SELECT ... FOR UPDATE)</text>
 <text x="400" y="288" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="ui-monospace, Menlo, Consolas, monospace">UPDATE laptops SET status='rented' WHERE serial='AS-01' AND status='available';</text>
-<text x="20" y="336" font-size="16" fill="#1a4fb0" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">พนักงาน A</text>
+<text x="20" y="336" font-size="16" fill="#0e8a94" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">พนักงาน A</text>
 <rect x="120" y="309" width="540" height="44" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
 <text x="390" y="337" font-size="16" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">UPDATE 1  → ได้เครื่อง ทำขั้นต่อไป</text>
 <text x="20" y="392" font-size="16" fill="#b45309" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">พนักงาน B</text>

@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 430" role="img" aria-label="ปัญหา N+1 เทียบกับการดึงพร้อมกันด้วย with หรือ include">
 <title>ปัญหา N+1 เทียบกับการดึงพร้อมกันด้วย with หรือ include</title>
-<defs><marker id="arn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="aro" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="ars" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a4fb0"/></marker></defs>
+<defs><marker id="arn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="aro" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="ars" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0e8a94"/></marker></defs>
 <rect x="1" y="1" width="798" height="428" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
 <text x="200" y="34" font-size="18" fill="#dc2626" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">N+1: ถามทีละคน</text>
 <text x="600" y="34" font-size="18" fill="#16a34a" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ดึงพร้อมกัน (with / include)</text>
-<rect x="20" y="60" width="130" height="120" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="20" y="60" width="130" height="120" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="85" y="126" font-size="17" fill="#0f172a" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">แอป</text>
 <rect x="300" y="60" width="130" height="120" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
 <text x="365" y="126" font-size="17" fill="#0f172a" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">DB</text>
@@ -18,7 +18,7 @@
 <text x="225" y="226" font-size="16" fill="#dc2626" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">รวม 101 รอบไป-กลับ</text>
 <text x="225" y="252" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">1 ครั้งดึงลูกค้า + 100 ครั้งดึง rentals</text>
 <text x="225" y="276" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">คนเพิ่ม = รอบเพิ่ม (ช้าลงเรื่อยๆ)</text>
-<rect x="440" y="60" width="130" height="120" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="440" y="60" width="130" height="120" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="505" y="126" font-size="17" fill="#0f172a" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">แอป</text>
 <rect x="670" y="60" width="110" height="120" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
 <text x="725" y="126" font-size="17" fill="#0f172a" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">DB</text>
@@ -30,7 +30,7 @@
 <text x="610" y="232" font-size="16" fill="#16a34a" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">1–2 query ไม่ว่ากี่คน</text>
 <text x="610" y="260" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">คนเพิ่ม เวลาแทบไม่เพิ่ม</text>
 <line x1="430" y1="60" x2="430" y2="300" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="6 6"/>
-<text x="400" y="330" font-size="16" fill="#0b3c91" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ซื้อของทีละชิ้น ขับกลับบ้านทุกครั้ง   เทียบกับ   จดรายการแล้วซื้อทีเดียว</text>
+<text x="400" y="330" font-size="16" fill="#00767f" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ซื้อของทีละชิ้น ขับกลับบ้านทุกครั้ง   เทียบกับ   จดรายการแล้วซื้อทีเดียว</text>
 <text x="400" y="364" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="ui-monospace, Menlo, Consolas, monospace">Drizzle: with: { rentals: true }  ·  Prisma: include: { rentals: true }</text>
 <text x="400" y="396" font-size="15" fill="#64748b" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">วิธีจับได้: เปิด log ของ ORM แล้วนับว่า 1 หน้าจอยิง query กี่ครั้ง</text>
 </svg>

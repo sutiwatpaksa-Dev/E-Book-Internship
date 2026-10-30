@@ -2,6 +2,7 @@ import { auditRepository } from "../repositories/audit.repository";
 
 // ชื่อการกระทำเป็นรหัสคงที่ หน้าเว็บแปลเป็นภาษาคนเอง (เปลี่ยนคำที่แสดงได้โดยไม่ต้องแก้ข้อมูลเก่า)
 export type AuditAction =
+  | "thread.send"
   | "user.create"
   | "user.reset_pin"
   | "user.password"

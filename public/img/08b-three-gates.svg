@@ -1,29 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" role="img" aria-label="กฎผ่าน 3 ด่าน: Zod, service, ฐานข้อมูล"><title>กฎผ่าน 3 ด่าน: Zod, service, ฐานข้อมูล</title>
-<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker>
 <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker></defs>
 <rect x="1" y="1" width="798" height="358" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="34" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="18" font-weight="700" fill="#0b3c91" text-anchor="middle">กฎหนึ่งข้อ อาจมีด่านมากกว่าหนึ่งด่าน</text>
+<text x="400" y="34" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="18" font-weight="700" fill="#00767f" text-anchor="middle">กฎหนึ่งข้อ อาจมีด่านมากกว่าหนึ่งด่าน</text>
 <rect x="24" y="96" width="110" height="96" rx="8" fill="#e2e8f0" stroke="#64748b" stroke-width="1.5"/>
 <text x="79" y="136" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="17" font-weight="700" fill="#0f172a" text-anchor="middle">คำขอ</text>
 <text x="79" y="164" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="middle">POST /rentals</text>
-<rect x="170" y="70" width="186" height="150" rx="8" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
+<rect x="170" y="70" width="186" height="150" rx="8" fill="#d5f2f3" stroke="#0e8a94" stroke-width="1.5"/>
 <text x="263" y="100" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="16" font-weight="700" fill="#0f172a" text-anchor="middle">ด่าน 1 · Zod</text>
 <text x="263" y="126" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="600" fill="#334155" text-anchor="middle">รูปแบบข้อมูล</text>
 <text x="263" y="156" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="middle">ช่องครบ? เป็นตัวเลข?</text>
 <text x="263" y="198" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="600" fill="#dc2626" text-anchor="middle">ผิด → 400</text>
-<line x1="136" y1="144" x2="168" y2="144" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#a)"/>
+<line x1="136" y1="144" x2="168" y2="144" stroke="#00767f" stroke-width="2.5" marker-end="url(#a)"/>
 <rect x="380" y="70" width="186" height="150" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
 <text x="473" y="100" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="16" font-weight="700" fill="#0f172a" text-anchor="middle">ด่าน 2 · service</text>
 <text x="473" y="126" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="600" fill="#334155" text-anchor="middle">กฎธุรกิจ</text>
 <text x="473" y="156" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="middle">ลูกค้ามีจริง? เครื่องว่าง?</text>
 <text x="473" y="198" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="600" fill="#dc2626" text-anchor="middle">ผิด → 404 / 409</text>
-<line x1="358" y1="144" x2="378" y2="144" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#a)"/>
+<line x1="358" y1="144" x2="378" y2="144" stroke="#00767f" stroke-width="2.5" marker-end="url(#a)"/>
 <rect x="590" y="70" width="186" height="150" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
 <text x="683" y="100" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="16" font-weight="700" fill="#0f172a" text-anchor="middle">ด่าน 3 · ฐานข้อมูล</text>
 <text x="683" y="126" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="14" font-weight="600" fill="#334155" text-anchor="middle">constraint</text>
 <text x="683" y="156" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="middle">UNIQUE · CHECK · FK</text>
 <text x="683" y="198" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="600" fill="#dc2626" text-anchor="middle">ผิด → 23505 → 409</text>
-<line x1="568" y1="144" x2="588" y2="144" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#a)"/>
+<line x1="568" y1="144" x2="588" y2="144" stroke="#00767f" stroke-width="2.5" marker-end="url(#a)"/>
 <text x="170" y="252" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="start">เร็ว · ไม่แตะฐานข้อมูล</text>
 <text x="776" y="252" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="end">ช้ากว่า · แต่ไม่มีใครข้ามได้</text>
 <line x1="170" y1="264" x2="776" y2="264" stroke="#94a3b8" stroke-width="2" marker-end="url(#a)"/>

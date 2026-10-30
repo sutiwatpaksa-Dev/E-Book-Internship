@@ -4,9 +4,11 @@ import { FileUp, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { requirementUrl } from "@/api/files.api";
 import type { AdminState } from "@/hooks/use-admin";
+import { COHORT_STATUS_LABEL, cohortStatus } from "@/lib/cohort";
 import { DEFAULT_ROUNDS, roundsProblem, type RoundDef } from "@/lib/submission";
-import type { AdminAssignment, AssignmentInput, AssignmentSection } from "@/types";
+import type { AdminAssignment, AssignmentInput, AssignmentSection, Cohort } from "@/types";
 import { Button } from "./button";
+import { ConfirmBox } from "./confirm-box";
 import { Field, Input, inputClass } from "./field";
 
 const fmt = (d: string) => new Date(d).toLocaleString("th-TH");
@@ -33,7 +35,6 @@ export function AdminFiles({ admin }: { admin: AdminState }) {
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<number | null>(null);
   const { assignments, exampleRepo } = admin;
-  const cohortName = (id: number) => admin.cohorts.find((c) => c.id === id)?.name ?? `รุ่น ${id}`;
   // โจทย์ใหม่เริ่มจากหัวข้อของ STARTER: key เดียวกัน ลิงก์ในคู่มือจึงใช้ได้ทันที แก้แค่เลขหน้า
   const template = assignments.find((a) => a.slug === "starter")?.sections ?? [];
   const roundsTemplate = assignments.find((a) => a.slug === "starter")?.rounds ?? DEFAULT_ROUNDS;
@@ -69,7 +70,7 @@ export function AdminFiles({ admin }: { admin: AdminState }) {
                 {a.name}
               </h2>
               <span className="text-xs text-fd-muted-foreground">
-                {a.slug} · {a.sections.length} หัวข้อ · {a.rounds.length} รอบส่ง · {a.cohortIds.length ? `ใช้ใน ${a.cohortIds.map(cohortName).join(", ")}` : "ยังไม่มีรุ่นใช้"}
+                {a.slug} · {a.sections.length} หัวข้อ · {a.rounds.length} รอบส่ง · {a.cohortIds.length ? `ใช้ใน ${a.cohortIds.length} รุ่น` : "ยังไม่มีรุ่นใช้"}
               </span>
             </div>
             <Button variant="ghost" onClick={() => setEditing(editing === a.id ? null : a.id)} aria-expanded={editing === a.id} className="min-h-11">
@@ -89,6 +90,7 @@ export function AdminFiles({ admin }: { admin: AdminState }) {
             />
           )}
 
+          <CohortPicker admin={admin} assignment={a} />
           <Pdf admin={admin} assignment={a} />
         </section>
       ))}
@@ -236,6 +238,72 @@ function RoundsEditor({ rounds, onChange, error }: { rounds: RoundDef[]; onChang
         </Button>
       </div>
       {error && <p role="alert" className="text-sm text-red-700 dark:text-red-400">{error}</p>}
+    </fieldset>
+  );
+}
+
+// เลือกว่ารุ่นไหนใช้โจทย์นี้ ได้จากหน้านี้เลย (เดิมต้องเข้าไปทีละรุ่น) · กฎเดียวกับหน้ารุ่น:
+// รุ่นที่จบแล้วแก้ไม่ได้ และเอาโจทย์ออกจากรุ่นที่เริ่มแล้วต้องยืนยัน (น้องจะไม่เห็นโจทย์นั้นทันที)
+const ORDER: Record<string, number> = { active: 0, upcoming: 1, overdue: 2, ended: 3 };
+function CohortPicker({ admin, assignment: a }: { admin: AdminState; assignment: AdminAssignment }) {
+  const cohorts = [...admin.cohorts].sort((x, y) => ORDER[cohortStatus(x)] - ORDER[cohortStatus(y)] || y.id - x.id);
+  const [picked, setPicked] = useState<Set<number>>(new Set(a.cohortIds));
+  const [confirm, setConfirm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const locked = (c: Cohort) => !!c.endedAt;
+  const added = cohorts.filter((c) => picked.has(c.id) && !a.cohortIds.includes(c.id));
+  const removed = cohorts.filter((c) => !picked.has(c.id) && a.cohortIds.includes(c.id));
+  const changed = added.length + removed.length > 0;
+  // เอาออกจากรุ่นที่เริ่มแล้ว = น้องเห็นโจทย์หายทันที ต้องยืนยัน
+  const needsConfirm = removed.some((c) => cohortStatus(c) !== "upcoming");
+  const toggle = (id: number) => setPicked((p) => new Set(p.has(id) ? [...p].filter((x) => x !== id) : [...p, id]));
+
+  const save = async () => {
+    setConfirm(false);
+    setSaving(true);
+    // หน้ารุ่นเก็บ "ชุดโจทย์ทั้งหมดของรุ่น" จึงคำนวณชุดใหม่ต่อรุ่นจากข้อมูลล่าสุดแล้วส่งทีละรุ่น
+    for (const c of [...added, ...removed]) {
+      const others = admin.assignments.filter((x) => x.id !== a.id && x.cohortIds.includes(c.id)).map((x) => x.id);
+      const ids = picked.has(c.id) ? [...others, a.id] : others;
+      if (!(await admin.setCohortAssignments(c, ids))) break;
+    }
+    setSaving(false);
+  };
+
+  return (
+    <fieldset className="flex flex-col gap-1 rounded-lg border border-fd-border p-3">
+      <legend className="px-1 text-sm font-semibold">รุ่นที่ใช้โจทย์นี้</legend>
+      {cohorts.length === 0 ? (
+        <p className="text-fd-muted-foreground">ยังไม่มีรุ่น สร้างได้ที่เมนู &quot;รุ่นฝึกงาน&quot;</p>
+      ) : (
+        <ul className="grid gap-x-4 sm:grid-cols-2">
+          {cohorts.map((c) => (
+            <li key={c.id}>
+              <label className={`flex min-h-11 items-center gap-2.5 rounded-lg px-2 ${locked(c) ? "opacity-60" : "cursor-pointer hover:bg-fd-accent"}`}>
+                <input type="checkbox" className="size-5 shrink-0" checked={picked.has(c.id)} disabled={locked(c) || saving} onChange={() => toggle(c.id)} />
+                <span className="min-w-0 flex-1 truncate font-medium">{c.name}</span>
+                <span className="shrink-0 text-xs text-fd-muted-foreground">{COHORT_STATUS_LABEL[cohortStatus(c)]}</span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      )}
+      {cohorts.some(locked) && <p className="text-xs text-fd-muted-foreground">รุ่นที่จบแล้วแก้ไม่ได้ (เปิดรุ่นกลับที่หน้ารุ่นก่อนถ้าจำเป็น)</p>}
+      {confirm && (
+        <ConfirmBox title={`เอา ${a.name} ออกจาก ${removed.length} รุ่น?`} confirmLabel="เอาออก" danger onCancel={() => setConfirm(false)} onConfirm={save}>
+          {removed.map((c) => c.name).join(", ")}: โจทย์จะหายจากแผงเอกสารของน้องทันที (งานที่ทำไปแล้วไม่หาย) · บันทึกลงประวัติการแก้ไข
+        </ConfirmBox>
+      )}
+      {changed && !confirm && (
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <Button disabled={saving} onClick={() => (needsConfirm ? setConfirm(true) : void save())} className="min-h-11">
+            {saving ? "กำลังบันทึก…" : `บันทึก (เพิ่ม ${added.length} · เอาออก ${removed.length})`}
+          </Button>
+          <Button variant="ghost" disabled={saving} onClick={() => setPicked(new Set(a.cohortIds))} className="min-h-11">
+            ยกเลิก
+          </Button>
+        </div>
+      )}
     </fieldset>
   );
 }

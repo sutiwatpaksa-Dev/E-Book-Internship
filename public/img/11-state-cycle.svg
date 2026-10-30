@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" role="img" aria-label="State: เปลี่ยนค่า → React วาดใหม่ (วนไปเรื่อยๆ)" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
 <title>State: เปลี่ยนค่า → React วาดใหม่ (วนไปเรื่อยๆ)</title><desc>กดปุ่ม เรียก setOpen ค่า state ใหม่ React วาดชิ้นส่วนใหม่ หน้าจอเปลี่ยน แล้วรอการกดครั้งต่อไป</desc>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="398" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">State: เปลี่ยนค่า → React วาดใหม่ (วนไปเรื่อยๆ)</text>
-<rect x="40" y="70" width="200" height="90" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#00767f" font-weight="bold">State: เปลี่ยนค่า → React วาดใหม่ (วนไปเรื่อยๆ)</text>
+<rect x="40" y="70" width="200" height="90" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="140.0" y="98.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold">1 ผู้ใช้กดปุ่ม</text>
 <text x="140.0" y="119.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">onClick={() =&gt;</text>
 <text x="140.0" y="140.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">setOpen(!open)}</text>
@@ -15,8 +15,8 @@
 <text x="660.0" y="98.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold">3 React วาดใหม่</text>
 <text x="660.0" y="119.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">เรียกฟังก์ชัน</text>
 <text x="660.0" y="140.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">MenuToggle อีกรอบ</text>
-<line x1="242" y1="115" x2="298" y2="115" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
-<line x1="502" y1="115" x2="558" y2="115" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="242" y1="115" x2="298" y2="115" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="502" y1="115" x2="558" y2="115" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <rect x="560" y="230" width="200" height="100" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
 <text x="660.0" y="263.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold">4 หน้าจอเปลี่ยน</text>
 <text x="660.0" y="284.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal">ปุ่มเป็น "ปิดเมนู ✕"</text>

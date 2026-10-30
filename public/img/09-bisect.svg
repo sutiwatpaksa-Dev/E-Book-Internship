@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 330" role="img" aria-label="หาว่า commit ไหนทำให้พัง แบบหารครึ่ง" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="16">
 <title>หาว่า commit ไหนทำให้พัง แบบหารครึ่ง</title>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#0b3c91"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#dc2626"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f59e0b"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#00767f"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#dc2626"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f59e0b"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="328" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="20" text-anchor="middle" fill="#0b3c91" font-weight="bold">Bisect: หารครึ่งหา commit ที่ทำให้พัง</text>
+<text x="400" y="30" font-size="20" text-anchor="middle" fill="#00767f" font-weight="bold">Bisect: หารครึ่งหา commit ที่ทำให้พัง</text>
 <circle cx="64" cy="150" r="22" fill="#16a34a"/>
 <text x="64" y="155.6" font-size="16" text-anchor="middle" fill="#fff" font-weight="bold">C1</text>
 <line x1="86" y1="150" x2="138" y2="150" stroke="#94a3b8" stroke-width="2"/>
@@ -39,5 +39,5 @@
 <circle cx="44" cy="283" r="10" fill="#dc2626"/>
 <text x="44" y="287.55" font-size="13" text-anchor="middle" fill="#fff" font-weight="bold">3</text>
 <text x="64" y="288" font-size="16" text-anchor="start" fill="#0f172a" font-weight="normal">ทดสอบ 3: C5  พัง และ C4 ดี = เจอ!</text>
-<text x="400" y="320" font-size="16" text-anchor="middle" fill="#0b3c91" font-weight="bold">8 commit ใช้ทดสอบ 3 ครั้ง · 1,000 commit ใช้ประมาณ 10 ครั้ง</text>
+<text x="400" y="320" font-size="16" text-anchor="middle" fill="#00767f" font-weight="bold">8 commit ใช้ทดสอบ 3 ครั้ง · 1,000 commit ใช้ประมาณ 10 ครั้ง</text>
 </svg>

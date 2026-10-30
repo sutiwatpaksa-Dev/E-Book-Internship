@@ -170,7 +170,10 @@ export const files = pgTable("files", {
 
 // เรื่องที่น้องคุยกับพี่เลี้ยง: ถามเรื่องที่ติด หรือขอเนื้อหาเพิ่ม (เช่น "อยากได้บท Python")
 // เห็นกันแค่เจ้าของเรื่องกับพี่เลี้ยง น้องคนอื่นไม่เห็น
-export const THREAD_KINDS = ["question", "content_request"] as const;
+// mentor_message = พี่เลี้ยงเริ่มเรื่องหาน้อง (น้องยังเป็นเจ้าของเรื่อง ตอบกลับได้) · ใช้สถานะแบบคำถาม
+export const THREAD_KINDS = ["question", "content_request", "mentor_message"] as const;
+// ประเภทที่น้องเปิดเองได้ (mentor_message เปิดได้เฉพาะฝั่งพี่เลี้ยง)
+export const INTERN_THREAD_KINDS = ["question", "content_request"] as const;
 export type ThreadKind = (typeof THREAD_KINDS)[number];
 // คำถาม: ระบบเปลี่ยนเองตามว่าใครพิมพ์ล่าสุด (รอตอบ ↔ ตอบแล้ว) พี่เลี้ยงปิดเรื่องได้
 // ขอเนื้อหา: พี่เลี้ยงเลื่อนเองทีละขั้น ไม่ทำต้องบอกเหตุผล

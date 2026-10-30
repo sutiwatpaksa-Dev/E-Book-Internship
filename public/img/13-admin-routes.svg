@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 410" role="img" aria-label="หน้าจัดการร้านเป็นหน้าซ้อนหน้า" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
 <title>หน้าจัดการร้านเป็นหน้าซ้อนหน้า</title><desc>Route admin ถูกห่อด้วย RequireAuth และ AdminLayout มีหน้าลูก 3 หน้า ถ้ายังไม่ login พาไป admin/login</desc>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a4fb0"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0e8a94"/></marker></defs>
 <rect x="1" y="1" width="798" height="408" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">หน้าจัดการร้าน: หน้าซ้อนหน้า + ด่าน RequireAuth</text>
-<rect x="30" y="50" width="400" height="230" rx="12" fill="#ffffff" stroke="#1a4fb0" stroke-width="2.5"/>
-<text x="46" y="74" font-size="16" text-anchor="start" fill="#1a4fb0" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">path="admin"</text>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#00767f" font-weight="bold">หน้าจัดการร้าน: หน้าซ้อนหน้า + ด่าน RequireAuth</text>
+<rect x="30" y="50" width="400" height="230" rx="12" fill="#ffffff" stroke="#0e8a94" stroke-width="2.5"/>
+<text x="46" y="74" font-size="16" text-anchor="start" fill="#0e8a94" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">path="admin"</text>
 <text x="46" y="96" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">RequireAuth  ครอบ  AdminLayout</text>
 <rect x="46" y="108" width="368" height="46" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
 <text x="230.0" y="136.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">/admin  DashboardPage</text>
@@ -12,7 +12,7 @@
 <text x="230.0" y="192.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">/admin/settings  SettingsPage</text>
 <rect x="46" y="220" width="368" height="46" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
 <text x="230.0" y="248.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">/admin/services  ServicesPage</text>
-<rect x="30" y="296" width="400" height="44" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="30" y="296" width="400" height="44" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="230.0" y="323.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">path="admin/login"  →  LoginPage  (ไม่ผ่านด่าน)</text>
 <rect x="470" y="50" width="300" height="62" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
 <text x="620.0" y="75.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">RequireAuth ถาม server</text>

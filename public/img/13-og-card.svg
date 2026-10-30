@@ -1,13 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" role="img" aria-label="แท็กในหน้าเว็บกลายเป็นผลค้นหาและการ์ดแชร์" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
 <title>แท็กในหน้าเว็บกลายเป็นผลค้นหาและการ์ดแชร์</title><desc>title และ meta description ใช้ในผลค้นหา Google ส่วน og tags ใช้ทำการ์ดตอนแชร์ใน LINE หรือ Facebook</desc>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a4fb0"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0e8a94"/></marker></defs>
 <rect x="1" y="1" width="798" height="398" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">แท็กที่ &lt;Seo&gt; สร้าง ไปโผล่ตรงไหน</text>
-<rect x="30" y="50" width="350" height="330" rx="12" fill="#ffffff" stroke="#1a4fb0" stroke-width="2.5"/>
-<text x="46" y="74" font-size="16" text-anchor="start" fill="#1a4fb0" font-weight="bold">ส่วนหัวของหน้า (head)</text>
-<rect x="46" y="88" width="318" height="44" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#00767f" font-weight="bold">แท็กที่ &lt;Seo&gt; สร้าง ไปโผล่ตรงไหน</text>
+<rect x="30" y="50" width="350" height="330" rx="12" fill="#ffffff" stroke="#0e8a94" stroke-width="2.5"/>
+<text x="46" y="74" font-size="16" text-anchor="start" fill="#0e8a94" font-weight="bold">ส่วนหัวของหน้า (head)</text>
+<rect x="46" y="88" width="318" height="44" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="205.0" y="114.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">&lt;title&gt;</text>
-<rect x="46" y="144" width="318" height="44" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="46" y="144" width="318" height="44" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="205.0" y="170.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">&lt;meta name="description"&gt;</text>
 <rect x="46" y="200" width="318" height="44" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
 <text x="205.0" y="226.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">&lt;meta property="og:title"&gt;</text>
@@ -15,9 +15,9 @@
 <text x="205.0" y="282.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">&lt;meta property="og:description"&gt;</text>
 <rect x="46" y="312" width="318" height="44" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
 <text x="205.0" y="338.9" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">&lt;meta property="og:image"&gt;</text>
-<text x="440" y="66" font-size="15" text-anchor="start" fill="#1a4fb0" font-weight="bold">ผลค้นหา Google  (title + description)</text>
-<rect x="430" y="76" width="340" height="112" rx="10" fill="#ffffff" stroke="#1a4fb0" stroke-width="2"/>
-<text x="446" y="104" font-size="16" text-anchor="start" fill="#1a4fb0" font-weight="bold">Bit Café — กาแฟสดและจัดเลี้ยง</text>
+<text x="440" y="66" font-size="15" text-anchor="start" fill="#0e8a94" font-weight="bold">ผลค้นหา Google  (title + description)</text>
+<rect x="430" y="76" width="340" height="112" rx="10" fill="#ffffff" stroke="#0e8a94" stroke-width="2"/>
+<text x="446" y="104" font-size="16" text-anchor="start" fill="#0e8a94" font-weight="bold">Bit Café — กาแฟสดและจัดเลี้ยง</text>
 <text x="446" y="128" font-size="15" text-anchor="start" fill="#16a34a" font-weight="normal">example.com/about</text>
 <text x="446" y="154" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">กาแฟสดและเบเกอรี่ รับจัดเลี้ยง</text>
 <text x="446" y="176" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">ใกล้สุขุมวิท เปิดทุกวัน</text>
@@ -28,8 +28,8 @@
 <text x="446" y="318" font-size="16" text-anchor="start" fill="#0f172a" font-weight="bold">Bit Café — กาแฟสดและจัดเลี้ยง</text>
 <text x="446" y="344" font-size="15" text-anchor="start" fill="#0f172a" font-weight="normal">กาแฟสดและเบเกอรี่ รับจัดเลี้ยง</text>
 <text x="446" y="366" font-size="15" text-anchor="start" fill="#64748b" font-weight="normal">example.com</text>
-<polyline points="364,110 400,110 400,132 424,132" fill="none" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
-<polyline points="364,166 392,166 392,132 424,132" fill="none" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<polyline points="364,110 400,110 400,132 424,132" fill="none" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
+<polyline points="364,166 392,166 392,132 424,132" fill="none" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <polyline points="364,222 400,222 400,300 424,300" fill="none" stroke="#d97706" stroke-width="2.5" marker-end="url(#ao)"/>
 <polyline points="364,278 400,278 400,300 424,300" fill="none" stroke="#d97706" stroke-width="2.5" marker-end="url(#ao)"/>
 <polyline points="364,334 410,334 410,300 424,300" fill="none" stroke="#d97706" stroke-width="2.5" marker-end="url(#ao)"/>

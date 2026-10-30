@@ -49,6 +49,13 @@ export const userRepository = {
     (await db.select({ id: users.id }).from(users).where(and(eq(users.disabled, false), eq(users.role, "dev"), eq(users.superAdmin, true)))).map((u) => u.id),
   listPublic: () => db.select(publicColumns).from(users).orderBy(asc(users.username)),
   // ผู้รับแจ้งเตือน: บัญชีที่ยังเปิดใช้ ของบทบาทที่ระบุ
+  // น้องที่ยังใช้งานอยู่ ตามรายชื่อหรือรุ่น (ใช้ตอนพี่เลี้ยงส่งข้อความ)
+  activeInterns: (where: { ids?: number[]; cohortId?: number }) =>
+    db
+      .select({ id: users.id, username: users.username })
+      .from(users)
+      .where(and(eq(users.disabled, false), eq(users.role, "intern"), where.ids ? inArray(users.id, where.ids) : undefined, where.cohortId ? eq(users.cohortId, where.cohortId) : undefined))
+      .orderBy(asc(users.username)),
   activeIdsByRole: async (roles: Role[]) =>
     (await db.select({ id: users.id }).from(users).where(and(eq(users.disabled, false), inArray(users.role, roles)))).map((u) => u.id),
   // ชื่อซ้ำคืน undefined (ให้ service ตัดสินว่าจะทำอะไรต่อ)

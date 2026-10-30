@@ -1,20 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" role="img" aria-label="วนไม่หยุด vs แก้แล้ว" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
 <title>วนไม่หยุด vs แก้แล้ว</title><desc>setState ใน effect ที่ไม่มี dependency array ทำให้วนไม่หยุด ใส่ [] หรือเงื่อนไขเพื่อหยุด</desc>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="398" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">วนไม่หยุด vs แก้แล้ว</text>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#00767f" font-weight="bold">วนไม่หยุด vs แก้แล้ว</text>
 <rect x="20" y="55" width="370" height="325" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
 <text x="205" y="85" font-size="16" text-anchor="middle" fill="#dc2626" font-weight="bold">ผิด: วนไม่หยุด 🔁</text>
 <rect x="35" y="100" width="340" height="62" rx="8" fill="#0f172a"/>
 <text x="47" y="125" font-size="15" fill="#f8fafc" font-family="monospace">useEffect(() =&gt; {</text>
 <text x="47" y="148" font-size="15" fill="#f8fafc" font-family="monospace" xml:space="preserve">  setN(n + 1);  // ไม่มี [...]</text>
-<rect x="50" y="190" width="140" height="60" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="50" y="190" width="140" height="60" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="120.0" y="214.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">render</text>
 <text x="120.0" y="236.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">n = 0, 1, 2, ...</text>
 <rect x="235" y="190" width="140" height="60" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
 <text x="305.0" y="214.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">effect: setN</text>
 <text x="305.0" y="236.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ค่าใหม่</text>
-<line x1="192" y1="215" x2="233" y2="215" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="192" y1="215" x2="233" y2="215" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <path d="M305,252 L305,280 L120,280 L120,252" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#ar)"/>
 <text x="205" y="305" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">วาดใหม่ → effect รันอีก → วาดใหม่ ...</text>
 <text x="205" y="340" font-size="15" text-anchor="middle" fill="#dc2626" font-weight="bold">Console เตือน Maximum update depth</text>
@@ -23,13 +23,13 @@
 <rect x="425" y="100" width="340" height="62" rx="8" fill="#0f172a"/>
 <text x="437" y="125" font-size="15" fill="#f8fafc" font-family="monospace">useEffect(() =&gt; {</text>
 <text x="437" y="148" font-size="15" fill="#f8fafc" font-family="monospace" xml:space="preserve">  setN(1);  }, []);  // ใส่ []</text>
-<rect x="440" y="190" width="140" height="60" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="440" y="190" width="140" height="60" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="510.0" y="214.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">render</text>
 <text x="510.0" y="236.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">รอบแรก</text>
 <rect x="625" y="190" width="140" height="60" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
 <text x="695.0" y="214.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">effect: setN</text>
 <text x="695.0" y="236.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">รันครั้งเดียว</text>
-<line x1="582" y1="215" x2="623" y2="215" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="582" y1="215" x2="623" y2="215" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <rect x="525" y="280" width="140" height="50" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
 <text x="595.0" y="299.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">render อีกรอบ</text>
 <text x="595.0" y="321.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">แล้วหยุด</text>

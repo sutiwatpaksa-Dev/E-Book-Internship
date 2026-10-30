@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 330" role="img" aria-label="ไฟล์ตั้งต้นของ Vite + React ทำงานต่อกันอย่างไร" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
 <title>ไฟล์ตั้งต้นของ Vite + React ทำงานต่อกันอย่างไร</title><desc>เบราว์เซอร์โหลด index.html แล้ว main.tsx สั่งให้ React วาด App ลงในกล่อง root</desc>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="328" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">ไฟล์ตั้งต้นของ Vite + React ทำงานต่อกันอย่างไร</text>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#00767f" font-weight="bold">ไฟล์ตั้งต้นของ Vite + React ทำงานต่อกันอย่างไร</text>
 <rect x="30" y="60" width="200" height="100" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
 <text x="130.0" y="93.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">index.html</text>
 <text x="130.0" y="115.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">&lt;div id="root"&gt;</text>
@@ -11,12 +11,12 @@
 <text x="390.0" y="93.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">src/main.tsx</text>
 <text x="390.0" y="115.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">สั่ง React วาด</text>
 <text x="390.0" y="137.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">&lt;App /&gt; ลงใน root</text>
-<rect x="550" y="60" width="200" height="100" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="550" y="60" width="200" height="100" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="650.0" y="93.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">src/app.tsx</text>
 <text x="650.0" y="115.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ชิ้นส่วนแรกของเรา</text>
 <text x="650.0" y="137.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">(แก้ที่นี่)</text>
-<line x1="232" y1="110" x2="288" y2="110" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
-<line x1="492" y1="110" x2="548" y2="110" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="232" y1="110" x2="288" y2="110" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="492" y1="110" x2="548" y2="110" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <text x="260" y="98" font-size="14" text-anchor="middle" fill="#64748b" font-weight="normal">โหลด</text>
 <text x="520" y="98" font-size="14" text-anchor="middle" fill="#64748b" font-weight="normal">เรียกใช้</text>
 <line x1="650" y1="162" x2="650" y2="205" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>

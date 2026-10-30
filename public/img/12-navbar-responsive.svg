@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 430" role="img" aria-label="Navbar: hidden md:flex  และ  md:hidden" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
 <title>Navbar: hidden md:flex  และ  md:hidden</title><desc>บนมือถือเมนูถูกซ่อนและมีปุ่ม hamburger บนจอตั้งแต่ md ขึ้นไปเมนูเรียงแนวนอนและปุ่มหายไป</desc>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="428" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">Navbar: hidden md:flex  และ  md:hidden</text>
-<text x="150" y="58" font-size="16" text-anchor="middle" fill="#0b3c91" font-weight="bold">มือถือ (&lt; 768px)</text>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#00767f" font-weight="bold">Navbar: hidden md:flex  และ  md:hidden</text>
+<text x="150" y="58" font-size="16" text-anchor="middle" fill="#00767f" font-weight="bold">มือถือ (&lt; 768px)</text>
 <rect x="40" y="70" width="220" height="200" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
 <rect x="40" y="70" width="220" height="44" rx="10" fill="#6b3e26"/>
 <text x="54" y="98" font-size="15" text-anchor="start" fill="#ffffff" font-weight="bold">☕ Bit Café</text>
@@ -11,7 +11,7 @@
 <text x="150" y="150" font-size="14" text-anchor="middle" fill="#dc2626" font-weight="normal">ลิงก์เมนู: hidden (ซ่อน)</text>
 <text x="150" y="180" font-size="14" text-anchor="middle" fill="#16a34a" font-weight="bold">ปุ่ม ☰: เห็น</text>
 <text x="150" y="210" font-size="14" text-anchor="middle" fill="#64748b" font-weight="normal">(กดแล้วเมนูไหลลงมา)</text>
-<text x="540" y="58" font-size="16" text-anchor="middle" fill="#0b3c91" font-weight="bold">จอใหญ่ (ตั้งแต่ 768px)</text>
+<text x="540" y="58" font-size="16" text-anchor="middle" fill="#00767f" font-weight="bold">จอใหญ่ (ตั้งแต่ 768px)</text>
 <rect x="300" y="70" width="460" height="200" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
 <rect x="300" y="70" width="460" height="44" rx="10" fill="#6b3e26"/>
 <text x="314" y="98" font-size="15" text-anchor="start" fill="#ffffff" font-weight="bold">☕ Bit Café</text>

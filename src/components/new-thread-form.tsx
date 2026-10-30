@@ -2,12 +2,12 @@
 
 import { useState, type FormEvent } from "react";
 import { KIND_LABEL } from "@/lib/thread-labels";
-import type { NewThread, ThreadKind } from "@/types";
+import type { NewThread, InternThreadKind } from "@/types";
 import { Button } from "./button";
 import { Field, Input, inputClass } from "./field";
 
 // คำแนะนำก่อนเขียน: คำถามที่บอกว่าลองอะไรไปแล้ว หรือคำขอที่บอกว่าจะเอาไปใช้ทำอะไร พี่เลี้ยงตอบได้ตรงกว่า
-const HINT: Record<ThreadKind, { text: string; placeholder: string }> = {
+const HINT: Record<InternThreadKind, { text: string; placeholder: string }> = {
   question: {
     text: "ก่อนถาม ลองอ่าน error ทั้งบรรทัด ค้นในบทและหน้าศัพท์ แล้วลองแก้เองอย่างน้อยหนึ่งวิธี · เขียนให้บอก ทำอะไรอยู่ · คาดว่าจะได้อะไร · ได้อะไรจริง (วาง error) · ลองอะไรไปแล้ว",
     placeholder: "ทำอะไรอยู่ / คาดว่าจะได้ / ได้จริง / ลองอะไรไปแล้ว",
@@ -19,8 +19,8 @@ const HINT: Record<ThreadKind, { text: string; placeholder: string }> = {
 };
 
 type Props = {
-  kinds?: ThreadKind[];
-  defaultKind?: ThreadKind;
+  kinds?: InternThreadKind[];
+  defaultKind?: InternThreadKind;
   pageUrl?: string;
   onSubmit: (t: NewThread) => Promise<unknown>;
   onCancel?: () => void;
@@ -28,7 +28,7 @@ type Props = {
 
 // ฟอร์มเริ่มเรื่องใหม่ (ใช้ทั้งในหน้าแชทและกล่องท้ายบท)
 export function NewThreadForm({ kinds = ["question", "content_request"], defaultKind = "question", pageUrl, onSubmit, onCancel }: Props) {
-  const [kind, setKind] = useState<ThreadKind>(defaultKind);
+  const [kind, setKind] = useState<InternThreadKind>(defaultKind);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);

@@ -14,6 +14,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "cohort.assignments": "ตั้งโจทย์ของรุ่น",
   "submission.review": "ตรวจงานที่ส่ง",
   "thread.status": "เปลี่ยนสถานะเรื่อง",
+  "thread.send": "ส่งข้อความหาน้อง",
   "card.create": "สร้างการ์ด",
   "card.update": "แก้การ์ด",
   "card.publish": "เผยแพร่การ์ด",

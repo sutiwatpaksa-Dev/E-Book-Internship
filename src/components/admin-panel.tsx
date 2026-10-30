@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { useAdmin } from "@/hooks/use-admin";
 import { useNavDrawer } from "@/hooks/use-nav-drawer";
+import { STATUS_LABEL } from "@/lib/thread-labels";
 import { useUnread } from "@/hooks/use-unread";
 import { useContentAdmin } from "@/hooks/use-content-admin";
 import { AdminAnnouncements } from "./admin-announcements";
@@ -15,6 +16,8 @@ import { AdminCohorts } from "./admin-cohorts";
 import { AdminInternDetail } from "./admin-intern-detail";
 import { AdminOverview } from "./admin-overview";
 import { AdminRequests } from "./admin-requests";
+import { AdminSearch, type SearchItem } from "./admin-search";
+import { AdminSendMessage, type ComposeTarget } from "./admin-send-message";
 import { AdminSubmissions } from "./admin-submissions";
 import { submissionsApi } from "@/api/submissions.api";
 import { AdminUsers } from "./admin-users";
@@ -94,7 +97,7 @@ function viewHref(v: View) {
 }
 
 // แท็บต่างๆ พากันไปหน้าอื่นผ่านตัวนี้ (เช่น ภาพรวม → น้องรายคน → เปิดแชทของน้อง)
-export type AdminNav = { goTab: (id: TabId) => void; openIntern: (id: number) => void; openThread: (id: number) => void; openNote: (pageUrl: string) => void; openCohort: (id: number | null) => void };
+export type AdminNav = { goTab: (id: TabId) => void; openIntern: (id: number) => void; openThread: (id: number) => void; openNote: (pageUrl: string) => void; openCohort: (id: number | null) => void; compose: (to: ComposeTarget) => void; back: (fallbackTab: TabId) => void };
 
 // หลังบ้านพี่เลี้ยง: เมนูแท็บซ้าย (มือถือเป็นแถบเลื่อนด้านบน) + เนื้อหาของแท็บที่เลือก
 export function AdminPanel({ titles }: { titles: Record<string, string> }) {
@@ -103,7 +106,22 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
   // pushState ของ browser ทำให้ useSearchParams อัปเดตเอง (Next ไม่โหลดหน้าใหม่ ข้อมูลที่โหลดไว้ยังอยู่)
   const view = readView(useSearchParams());
   const { tab } = view;
-  const go = (v: View, replace = false) => window.history[replace ? "replaceState" : "pushState"](null, "", viewHref(v));
+  // นับว่าเรา push หน้าไปกี่ครั้งในหน้านี้ (ปุ่ม "กลับ" ในหน้าละเอียดใช้ดูว่าย้อนด้วยประวัติเบราว์เซอร์ได้ไหม)
+  // กดกลับแล้วต้อง "ย้อน" ไม่ใช่ "push หน้าเดิมซ้ำ" ไม่งั้นปุ่ม Back ของเบราว์เซอร์จะวนกลับมาหน้าละเอียดอีก
+  const pushed = useRef(0);
+  useEffect(() => {
+    const onPop = () => (pushed.current = Math.max(0, pushed.current - 1));
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+  const go = (v: View, replace = false) => {
+    window.history[replace ? "replaceState" : "pushState"](null, "", viewHref(v));
+    // เปิดหน้าใหม่ให้เริ่มที่บนสุด (เดิมค้างตำแหน่งเลื่อนของรายการ) · ตอนกดกลับ เบราว์เซอร์คืนตำแหน่งเดิมให้เอง
+    if (!replace) {
+      pushed.current++;
+      window.scrollTo({ top: 0 });
+    }
+  };
   const active = TABS.find((t) => t.id === tab)!;
   const waiting = useUnread();
   // จำนวนงานรอตรวจบนเมนู · โหลดใหม่หลังบันทึกผลตรวจ
@@ -131,7 +149,11 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
     if (id !== view.thread) go({ tab: "questions", thread: id }, true);
   };
 
+  const [composeTo, setComposeTo] = useState<ComposeTarget | null>(null);
   const nav: AdminNav = {
+    compose: setComposeTo,
+    // เปิดจากลิงก์ตรงๆ (ไม่มีประวัติในหน้านี้) = ไปหน้ารายการแบบ replace แทน push ไม่งั้นกด Back แล้วเด้งกลับหน้าละเอียดอีก
+    back: (fallbackTab) => (pushed.current > 0 ? window.history.back() : go({ tab: fallbackTab }, true)),
     goTab: (id) => {
       if (id !== tab || viewHref(view) !== viewHref({ tab: id })) go({ tab: id });
       // ข้อมูลในแท็บอาจเก่าแล้ว (เช่นเพิ่งตอบแชทไป) โหลดใหม่ทุกครั้งที่สลับ
@@ -144,6 +166,16 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
     openCohort: (id) => go({ tab: "cohorts", cohort: id }),
     openNote: (pageUrl) => go({ tab: "notes", note: pageUrl }),
   };
+  // รายการให้ค้นหา: หน้าทั้งหมด + น้องรายคน + รุ่น + เรื่องในแชท (ข้อมูลมาจากที่โหลดไว้แล้ว ไม่ยิง API เพิ่ม)
+  const cohortName = (id: number | null) => admin.cohorts.find((c) => c.id === id)?.name;
+  const searchItems: SearchItem[] = [
+    ...GROUPS.flatMap((g) => g.tabs.map((t) => ({ id: `tab-${t.id}`, group: "หน้า", label: t.label, hint: g.label, run: () => nav.goTab(t.id) }))),
+    ...admin.users
+      .filter((u) => u.role === "intern")
+      .map((u) => ({ id: `u-${u.id}`, group: "น้อง", label: u.username, hint: [u.nickname, u.fullName, cohortName(u.cohortId)].filter(Boolean).join(" · "), run: () => nav.openIntern(u.id) })),
+    ...admin.cohorts.map((c) => ({ id: `c-${c.id}`, group: "รุ่น", label: c.name, hint: `${c.internCount} คน`, run: () => nav.openCohort(c.id) })),
+    ...admin.threads.map((t) => ({ id: `t-${t.id}`, group: "เรื่องในแชท", label: t.subject, hint: STATUS_LABEL[t.status], run: () => nav.openThread(t.id) })),
+  ];
   // เมนูเป็นลิงก์จริง: กดธรรมดา = สลับในหน้า (และปิดลิ้นชักบนมือถือ) · Ctrl/Cmd/กลางเมาส์ = เปิดแท็บใหม่ตามปกติของ browser
   const drawer = useNavDrawer();
   const onMenuClick = (e: MouseEvent<HTMLAnchorElement>, id: TabId) => {
@@ -196,9 +228,12 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
       </MobileDrawer>
 
       <section aria-labelledby="admin-title" className="flex min-w-0 flex-1 flex-col gap-4">
-        <h1 id="admin-title" className="text-2xl font-bold">
-          {intern ? `น้อง ${intern.username}` : active.label}
-        </h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 id="admin-title" className="text-2xl font-bold">
+            {intern ? `น้อง ${intern.username}` : active.label}
+          </h1>
+          <AdminSearch items={searchItems} />
+        </div>
 
         {admin.error && <ErrorText>{admin.error}</ErrorText>}
         {CONTENT_TABS.includes(tab) && content.error && <ErrorText>{content.error}</ErrorText>}
@@ -235,6 +270,7 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
         {tab === "users" && <AdminUsers admin={admin} nav={nav} />}
         {tab === "files" && <AdminFiles admin={admin} />}
         {tab === "audit" && <AdminAudit />}
+        {composeTo && <AdminSendMessage target={composeTo} users={admin.users} onClose={() => { setComposeTo(null); admin.reload(); }} />}
       </section>
     </div>
   );

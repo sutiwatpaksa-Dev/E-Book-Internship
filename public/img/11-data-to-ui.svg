@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 300" role="img" aria-label="React: ข้อมูล + ชิ้นส่วน = หน้าเว็บ" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
 <title>React: ข้อมูล + ชิ้นส่วน = หน้าเว็บ</title><desc>ข้อมูลผ่านชิ้นส่วน (component) กลายเป็นหน้าเว็บ ข้อมูลเปลี่ยน หน้าเว็บวาดใหม่</desc>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="298" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">React: ข้อมูล + ชิ้นส่วน = หน้าเว็บ</text>
-<rect x="30" y="70" width="220" height="110" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#00767f" font-weight="bold">React: ข้อมูล + ชิ้นส่วน = หน้าเว็บ</text>
+<rect x="30" y="70" width="220" height="110" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="140.0" y="108.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">ข้อมูล</text>
 <text x="140.0" y="130.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">{ name: "ลาเต้" }</text>
 <text x="140.0" y="152.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">{ name: "มอคค่า" }</text>
@@ -15,8 +15,8 @@
 <text x="660.0" y="108.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">หน้าเว็บ</text>
 <text x="660.0" y="130.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">☕ ลาเต้</text>
 <text x="660.0" y="152.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">☕ มอคค่า</text>
-<line x1="252" y1="125" x2="288" y2="125" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
-<line x1="512" y1="125" x2="548" y2="125" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="252" y1="125" x2="288" y2="125" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="512" y1="125" x2="548" y2="125" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <path d="M660,184 L660,222 L140,222 L140,184" fill="none" stroke="#d97706" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#ao)"/>
 <text x="400" y="250" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ข้อมูลเปลี่ยนเมื่อไหร่ React วาดหน้าเว็บใหม่ให้เอง</text>
 <text x="400" y="275" font-size="15" text-anchor="middle" fill="#64748b" font-weight="normal">เราเขียนแค่ "ข้อมูลเป็นแบบนี้ → หน้าตาเป็นแบบนี้"</text>

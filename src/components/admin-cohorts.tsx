@@ -1,5 +1,7 @@
 "use client";
 
+import { cohortHref, internHref } from "@/lib/admin-links";
+import { RowLink } from "./row-link";
 import { ArrowLeft, Copy, GraduationCap, KeyRound, Pencil, Plus } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { cardUrl, cards } from "@/data/learn";
@@ -87,11 +89,11 @@ function CohortList({ admin, nav }: { admin: AdminState; nav: AdminNav }) {
               {admin.cohorts.map((c) => {
                 const pct = avg(c);
                 return (
-                  <tr key={c.id} className="border-t border-fd-border">
+                  <tr key={c.id} className="relative border-t border-fd-border hover:bg-fd-accent/50">
                     <td className="px-3 py-2">
-                      <button type="button" onClick={() => nav.openCohort(c.id)} className="min-h-10 text-start font-semibold text-fd-primary hover:underline">
+                      <RowLink href={cohortHref(c.id)} onGo={() => nav.openCohort(c.id)} className="inline-flex min-h-10 items-center font-semibold">
                         {c.name}
-                      </button>
+                      </RowLink>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap text-fd-muted-foreground">{cohortRange(c)}</td>
                     <td className="px-3 py-2 tabular-nums">{c.internCount}</td>
@@ -166,8 +168,8 @@ function CohortDetail({ admin, nav, cohort: c }: { admin: AdminState; nav: Admin
 
   return (
     <div className="flex flex-col gap-5">
-      <button type="button" onClick={() => nav.openCohort(null)} className="inline-flex min-h-10 items-center gap-1.5 self-start text-sm font-medium text-fd-primary hover:underline">
-        <ArrowLeft className="size-4" /> รุ่นทั้งหมด
+      <button type="button" onClick={() => nav.back("cohorts")} className="inline-flex min-h-10 items-center gap-1.5 self-start text-sm font-medium text-fd-primary hover:underline">
+        <ArrowLeft className="size-4" /> กลับ
       </button>
 
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -182,7 +184,10 @@ function CohortDetail({ admin, nav, cohort: c }: { admin: AdminState; nav: Admin
             {status === "overdue" && " · เลยวันจบแล้ว ถ้าฝึกจบจริงกด \"จบรุ่น\""}
           </span>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => nav.compose({ kind: "cohort", cohort: c })} disabled={members.length === 0} className="min-h-11">
+            ส่งข้อความถึงทั้งรุ่น
+          </Button>
           <Button variant="ghost" onClick={() => setEditing((v) => !v)} aria-expanded={editing} className="min-h-11">
             <Pencil className="size-4" /> แก้ข้อมูลรุ่น
           </Button>
@@ -254,11 +259,11 @@ function CohortDetail({ admin, nav, cohort: c }: { admin: AdminState; nav: Admin
                 {members.map((u) => {
                   const d = daysSince(u.lastLoginAt);
                   return (
-                    <tr key={u.id} className="border-t border-fd-border">
+                    <tr key={u.id} className="relative border-t border-fd-border hover:bg-fd-accent/50">
                       <td className="px-3 py-2">
-                        <button type="button" onClick={() => nav.openIntern(u.id)} className="min-h-10 font-medium text-fd-primary hover:underline">
+                        <RowLink href={internHref(u.id)} onGo={() => nav.openIntern(u.id)} className="inline-flex min-h-10 items-center">
                           {u.username}
-                        </button>
+                        </RowLink>
                         {u.disabled && <span className="ms-2 text-xs text-orange-700 dark:text-orange-400">ปิดอยู่</span>}
                       </td>
                       <td className="px-3 py-2 tabular-nums">

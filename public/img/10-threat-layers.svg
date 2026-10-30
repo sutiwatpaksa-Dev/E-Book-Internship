@@ -1,29 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 380" role="img" aria-label="ด่านป้องกันหลายชั้น" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="16">
 <title>ด่านป้องกันหลายชั้น</title>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#0b3c91"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#dc2626"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f59e0b"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#00767f"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#dc2626"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f59e0b"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="378" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="32" font-size="20" text-anchor="middle" fill="#0b3c91" font-weight="bold">ปกป้องหลายชั้น: ด่านเดียวพลาด ยังมีด่านต่อไป</text>
+<text x="400" y="32" font-size="20" text-anchor="middle" fill="#00767f" font-weight="bold">ปกป้องหลายชั้น: ด่านเดียวพลาด ยังมีด่านต่อไป</text>
 <rect x="12" y="70" width="92" height="130" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
 <text x="58.0" y="119.25" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">คนร้าย</text>
 <text x="58.0" y="140.25" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">หรือ</text>
 <text x="58.0" y="161.25" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">ความพลาด</text>
-<rect x="126" y="70" width="118" height="130" rx="10" fill="#e8effc" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="126" y="70" width="118" height="130" rx="10" fill="#e6f5f6" stroke="#0e8a94" stroke-width="2"/>
 <text x="185" y="100" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">HTTPS</text>
 <text x="185" y="148" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">กันคนกลาง</text>
 <text x="185" y="170" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ดักอ่าน</text>
 <line x1="104" y1="135" x2="124" y2="135" stroke="#dc2626" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="262" y="70" width="118" height="130" rx="10" fill="#e8effc" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="262" y="70" width="118" height="130" rx="10" fill="#e6f5f6" stroke="#0e8a94" stroke-width="2"/>
 <text x="321" y="100" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">ตรวจ input</text>
 <text x="321" y="148" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">กันข้อมูล</text>
 <text x="321" y="170" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">แปลกปลอม</text>
 <line x1="240" y1="135" x2="260" y2="135" stroke="#dc2626" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="398" y="70" width="118" height="130" rx="10" fill="#e8effc" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="398" y="70" width="118" height="130" rx="10" fill="#e6f5f6" stroke="#0e8a94" stroke-width="2"/>
 <text x="457" y="100" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">login +</text>
 <text x="457" y="120" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">สิทธิ์</text>
 <text x="457" y="148" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">รู้ว่าเป็นใคร</text>
 <text x="457" y="170" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ทำอะไรได้</text>
 <line x1="376" y1="135" x2="396" y2="135" stroke="#dc2626" stroke-width="2.5" marker-end="url(#ar)"/>
-<rect x="534" y="70" width="118" height="130" rx="10" fill="#e8effc" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="534" y="70" width="118" height="130" rx="10" fill="#e6f5f6" stroke="#0e8a94" stroke-width="2"/>
 <text x="593" y="100" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">สิทธิ์ DB</text>
 <text x="593" y="120" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="bold">น้อยที่สุด</text>
 <text x="593" y="148" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">พังได้</text>

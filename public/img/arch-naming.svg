@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 300" role="img" aria-label="กฎตั้งชื่อ"><title>กฎตั้งชื่อ</title>
-<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker>
 <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker></defs>
 <rect x="1" y="1" width="798" height="298" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="32" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="18" font-weight="700" fill="#0b3c91" text-anchor="middle">กฎตั้งชื่อ: ภาษาอังกฤษ ตัวพิมพ์เล็ก คั่นคำด้วย -</text>
+<text x="400" y="32" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="18" font-weight="700" fill="#00767f" text-anchor="middle">กฎตั้งชื่อ: ภาษาอังกฤษ ตัวพิมพ์เล็ก คั่นคำด้วย -</text>
 <rect x="40" y="64" width="350" height="200" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5" />
 <text x="215" y="94" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="17" font-weight="700" fill="#16a34a" text-anchor="middle">✓ ทำแบบนี้</text>
 <text x="215" y="134" font-family="IBM Plex Sans Thai, Sarabun, sans-serif" font-size="16" font-weight="600" fill="#0f172a" text-anchor="middle">laptop-cards/</text>

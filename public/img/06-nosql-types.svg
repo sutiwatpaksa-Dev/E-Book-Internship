@@ -1,58 +1,58 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 350" role="img" aria-label="NoSQL 4 ประเภท: Document, Key-Value, Wide-Column, Graph">
 <title>NoSQL 4 ประเภท: Document, Key-Value, Wide-Column, Graph</title>
-<defs><marker id="arn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="aro" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="ars" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a4fb0"/></marker></defs>
+<defs><marker id="arn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="aro" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="ars" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0e8a94"/></marker></defs>
 <rect x="1" y="1" width="798" height="348" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
-<rect x="20" y="16" width="180" height="318" rx="12" fill="#ffffff" stroke="#1a4fb0" stroke-width="2"/>
-<text x="110.0" y="46" font-size="18" fill="#0b3c91" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">Document</text>
+<rect x="20" y="16" width="180" height="318" rx="12" fill="#ffffff" stroke="#0e8a94" stroke-width="2"/>
+<text x="110.0" y="46" font-size="18" fill="#00767f" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">Document</text>
 <text x="110.0" y="70" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">เอกสาร JSON</text>
-<rect x="55.0" y="88" width="110" height="90" rx="8" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
-<text x="110.0" y="142" font-size="34" fill="#1a4fb0" text-anchor="middle" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace">{ }</text>
+<rect x="55.0" y="88" width="110" height="90" rx="8" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
+<text x="110.0" y="142" font-size="34" fill="#0e8a94" text-anchor="middle" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace">{ }</text>
 <text x="32" y="222" font-size="15" fill="#64748b" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ตัวอย่าง</text>
 <text x="32" y="244" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">MongoDB, Firestore</text>
 <text x="32" y="276" font-size="15" fill="#64748b" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ใช้กับ</text>
 <text x="32" y="298" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ข้อมูลรูปร่างหลากหลาย</text>
-<rect x="210" y="16" width="180" height="318" rx="12" fill="#ffffff" stroke="#1a4fb0" stroke-width="2"/>
-<text x="300.0" y="46" font-size="18" fill="#0b3c91" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">Key-Value</text>
+<rect x="210" y="16" width="180" height="318" rx="12" fill="#ffffff" stroke="#0e8a94" stroke-width="2"/>
+<text x="300.0" y="46" font-size="18" fill="#00767f" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">Key-Value</text>
 <text x="300.0" y="70" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">กุญแจ → ค่า</text>
 <rect x="230.0" y="110" width="60" height="36" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
 <text x="260.0" y="134" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="ui-monospace, Menlo, Consolas, monospace">key</text>
 <rect x="310.0" y="110" width="60" height="36" rx="6" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
 <text x="340.0" y="134" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="ui-monospace, Menlo, Consolas, monospace">value</text>
-<line x1="290.0" y1="128" x2="310.0" y2="128" stroke="#0b3c91" stroke-width="2" marker-end="url(#arn)"/>
+<line x1="290.0" y1="128" x2="310.0" y2="128" stroke="#00767f" stroke-width="2" marker-end="url(#arn)"/>
 <rect x="230.0" y="156" width="60" height="26" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
 <rect x="310.0" y="156" width="60" height="26" rx="6" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
-<line x1="290.0" y1="169" x2="310.0" y2="169" stroke="#0b3c91" stroke-width="2" marker-end="url(#arn)"/>
+<line x1="290.0" y1="169" x2="310.0" y2="169" stroke="#00767f" stroke-width="2" marker-end="url(#arn)"/>
 <text x="222" y="222" font-size="15" fill="#64748b" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ตัวอย่าง</text>
 <text x="222" y="244" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">Redis</text>
 <text x="222" y="276" font-size="15" fill="#64748b" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ใช้กับ</text>
 <text x="222" y="298" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">cache, session</text>
-<rect x="400" y="16" width="180" height="318" rx="12" fill="#ffffff" stroke="#1a4fb0" stroke-width="2"/>
-<text x="490.0" y="46" font-size="18" fill="#0b3c91" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">Wide-Column</text>
+<rect x="400" y="16" width="180" height="318" rx="12" fill="#ffffff" stroke="#0e8a94" stroke-width="2"/>
+<text x="490.0" y="46" font-size="18" fill="#00767f" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">Wide-Column</text>
 <text x="490.0" y="70" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">แถวคอลัมน์ไม่เท่ากัน</text>
-<rect x="428.0" y="96" width="28" height="22" rx="3" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
-<rect x="460.0" y="96" width="28" height="22" rx="3" fill="#fef3c7" stroke="#1a4fb0" stroke-width="1.5"/>
-<rect x="492.0" y="96" width="28" height="22" rx="3" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
-<rect x="524.0" y="96" width="28" height="22" rx="3" fill="#fef3c7" stroke="#1a4fb0" stroke-width="1.5"/>
-<rect x="428.0" y="122" width="28" height="22" rx="3" fill="#fef3c7" stroke="#1a4fb0" stroke-width="1.5"/>
-<rect x="460.0" y="122" width="28" height="22" rx="3" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
-<rect x="428.0" y="148" width="28" height="22" rx="3" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
-<rect x="460.0" y="148" width="28" height="22" rx="3" fill="#fef3c7" stroke="#1a4fb0" stroke-width="1.5"/>
-<rect x="492.0" y="148" width="28" height="22" rx="3" fill="#dbeafe" stroke="#1a4fb0" stroke-width="1.5"/>
+<rect x="428.0" y="96" width="28" height="22" rx="3" fill="#d5f2f3" stroke="#0e8a94" stroke-width="1.5"/>
+<rect x="460.0" y="96" width="28" height="22" rx="3" fill="#fef3c7" stroke="#0e8a94" stroke-width="1.5"/>
+<rect x="492.0" y="96" width="28" height="22" rx="3" fill="#d5f2f3" stroke="#0e8a94" stroke-width="1.5"/>
+<rect x="524.0" y="96" width="28" height="22" rx="3" fill="#fef3c7" stroke="#0e8a94" stroke-width="1.5"/>
+<rect x="428.0" y="122" width="28" height="22" rx="3" fill="#fef3c7" stroke="#0e8a94" stroke-width="1.5"/>
+<rect x="460.0" y="122" width="28" height="22" rx="3" fill="#d5f2f3" stroke="#0e8a94" stroke-width="1.5"/>
+<rect x="428.0" y="148" width="28" height="22" rx="3" fill="#d5f2f3" stroke="#0e8a94" stroke-width="1.5"/>
+<rect x="460.0" y="148" width="28" height="22" rx="3" fill="#fef3c7" stroke="#0e8a94" stroke-width="1.5"/>
+<rect x="492.0" y="148" width="28" height="22" rx="3" fill="#d5f2f3" stroke="#0e8a94" stroke-width="1.5"/>
 <text x="412" y="222" font-size="15" fill="#64748b" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ตัวอย่าง</text>
 <text x="412" y="244" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">Cassandra</text>
 <text x="412" y="276" font-size="15" fill="#64748b" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ใช้กับ</text>
 <text x="412" y="298" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">IoT, log มหาศาล</text>
-<rect x="590" y="16" width="180" height="318" rx="12" fill="#ffffff" stroke="#1a4fb0" stroke-width="2"/>
-<text x="680.0" y="46" font-size="18" fill="#0b3c91" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">Graph</text>
+<rect x="590" y="16" width="180" height="318" rx="12" fill="#ffffff" stroke="#0e8a94" stroke-width="2"/>
+<text x="680.0" y="46" font-size="18" fill="#00767f" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">Graph</text>
 <text x="680.0" y="70" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">จุดและเส้นเชื่อม</text>
 <line x1="635.0" y1="110" x2="670.0" y2="150" stroke="#64748b" stroke-width="2"/>
 <line x1="720.0" y1="100" x2="670.0" y2="150" stroke="#64748b" stroke-width="2"/>
 <line x1="670.0" y1="150" x2="730.0" y2="170" stroke="#64748b" stroke-width="2"/>
 <line x1="635.0" y1="110" x2="720.0" y2="100" stroke="#64748b" stroke-width="2"/>
-<circle cx="635.0" cy="110" r="13" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
-<circle cx="720.0" cy="100" r="13" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
-<circle cx="670.0" cy="150" r="13" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
-<circle cx="730.0" cy="170" r="13" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<circle cx="635.0" cy="110" r="13" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
+<circle cx="720.0" cy="100" r="13" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
+<circle cx="670.0" cy="150" r="13" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
+<circle cx="730.0" cy="170" r="13" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="602" y="222" font-size="15" fill="#64748b" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ตัวอย่าง</text>
 <text x="602" y="244" font-size="15" fill="#0f172a" text-anchor="start" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">Neo4j</text>
 <text x="602" y="276" font-size="15" fill="#64748b" text-anchor="start" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ใช้กับ</text>

@@ -2,6 +2,8 @@ import { QUESTION_STATUSES, REQUEST_STATUSES, type Role, type ThreadKind, type T
 import { threadRepository } from "../repositories/thread.repository";
 import { userRepository } from "../repositories/user.repository";
 import { auditService } from "./audit.service";
+import { cohortRepository } from "../repositories/cohort.repository";
+import type { SendMessageInput } from "../validators/thread.validator";
 import { cohortService } from "./cohort.service";
 import { notificationService } from "./notification.service";
 
@@ -19,7 +21,9 @@ const STATUS_LABEL: Record<ThreadStatus, string> = {
   declined: "ไม่ทำ",
 };
 
-const allowedStatuses = (kind: ThreadKind): readonly ThreadStatus[] => (kind === "question" ? QUESTION_STATUSES : REQUEST_STATUSES);
+// ขอเนื้อหามีสถานะของตัวเอง ที่เหลือ (คำถาม, ข้อความจากพี่เลี้ยง) ใช้สถานะแบบคำถาม: รอตอบ ↔ ตอบแล้ว
+const isRequest = (kind: ThreadKind) => kind === "content_request";
+const allowedStatuses = (kind: ThreadKind): readonly ThreadStatus[] => (isRequest(kind) ? REQUEST_STATUSES : QUESTION_STATUSES);
 
 // กดแจ้งเตือนแล้วเปิดเรื่องนั้นเลย: พี่เลี้ยงเปิดในหลังบ้าน น้องเปิดในหน้าคุยกับพี่เลี้ยง
 const devLink = (id: number) => `/dev/admin?tab=questions&t=${id}`;
@@ -72,11 +76,25 @@ export const threadService = {
   // น้องพิมพ์ต่อในคำถาม = กลับไปรอพี่เลี้ยงตอบ (แม้เคยปิดไปแล้ว) · ขอเนื้อหาสถานะไม่เปลี่ยน พี่เลี้ยงเป็นคนเลื่อน
   async replyMine(userId: number, id: number, body: string) {
     const t = await ownedThread(userId, id);
-    await threadRepository.addMessages(id, userId, "intern", [{ body }], t.kind === "question" ? "waiting" : undefined);
+    await threadRepository.addMessages(id, userId, "intern", [{ body }], isRequest(t.kind) ? undefined : "waiting");
     await notificationService.toRoles(["dev"], { kind: "intern_reply", title: `${await nameOf(userId)} ตอบกลับ: ${t.subject}`, link: devLink(id) });
   },
 
   // ---- ฝั่งพี่เลี้ยง ----
+  // ส่งข้อความหาน้อง: รายชื่อหรือทั้งรุ่น · ข้ามบัญชีที่ปิดอยู่ · ได้เรื่องคนละเรื่อง (น้องตอบกลับแล้วเห็นแค่ของตัวเอง)
+  async sendToInterns(devId: number, input: SendMessageInput) {
+    if (input.cohortId) {
+      const c = await cohortRepository.findById(input.cohortId);
+      if (!c) throw new Error("COHORT_NOT_FOUND");
+    }
+    const to = await userRepository.activeInterns({ ids: input.userIds, cohortId: input.cohortId });
+    if (to.length === 0) throw new Error("NO_RECIPIENTS");
+    const created = await threadRepository.createFromMentor(devId, to.map((u) => u.id), input.subject, input.body);
+    await Promise.all(created.map((c) => notificationService.toUser(c.userId, { kind: "mentor_message", title: `พี่เลี้ยงส่งข้อความ: ${input.subject}`, link: internLink(c.threadId) })));
+    await auditService.log(devId, "thread.send", input.subject, input.cohortId ? `ทั้งรุ่น ${to.length} คน` : `${to.length} คน: ${to.map((u) => u.username).slice(0, 5).join(", ")}${to.length > 5 ? " …" : ""}`);
+    return { count: to.length };
+  },
+
   listAll: () => threadRepository.listAll(),
   unreadForDevs: () => threadRepository.countUnread("dev"),
 
@@ -87,7 +105,7 @@ export const threadService = {
 
   async replyAsDev(devId: number, id: number, body: string) {
     const t = await anyThread(id);
-    await threadRepository.addMessages(id, devId, "dev", [{ body }], t.kind === "question" ? "answered" : undefined);
+    await threadRepository.addMessages(id, devId, "dev", [{ body }], isRequest(t.kind) ? undefined : "answered");
     await notificationService.toUser(t.createdBy, { kind: "dev_reply", title: `พี่เลี้ยงตอบแล้ว: ${t.subject}`, link: internLink(id) });
   },
 

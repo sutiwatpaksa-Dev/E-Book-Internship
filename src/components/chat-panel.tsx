@@ -3,7 +3,7 @@
 import { MessageCircle, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useChat, type ChatSide } from "@/hooks/use-chat";
-import type { ThreadKind } from "@/types";
+import type { InternThreadKind, ThreadKind } from "@/types";
 import { Button } from "./button";
 import { EmptyState } from "./empty-state";
 import { ErrorText } from "./error-text";
@@ -17,6 +17,7 @@ const FILTERS: { id: Filter; label: string }[] = [
   { id: "unread", label: "ยังไม่อ่าน" },
   { id: "question", label: "คำถาม" },
   { id: "content_request", label: "ขอเนื้อหา" },
+  { id: "mentor_message", label: "จากพี่เลี้ยง" },
 ];
 
 type Props = {
@@ -24,7 +25,7 @@ type Props = {
   titles: Record<string, string>;
   // เปิดมาจากลิงก์ ?t=12 (เปิดเรื่องนั้นเลย) หรือ ?new=content_request (เปิดฟอร์มขอเนื้อหา)
   initialId?: number | null;
-  initialNew?: ThreadKind | null;
+  initialNew?: InternThreadKind | null;
   // บอกหน้าที่ครอบอยู่ว่าตอนนี้เปิดเรื่องไหน (หลังบ้านจดลง URL) · เรียกตอนเริ่มด้วย
   onSelect?: (id: number | null) => void;
 };
@@ -37,7 +38,7 @@ export function ChatPanel({ side, titles, initialId = null, initialNew = null, o
   const report = useRef(onSelect);
   report.current = onSelect;
   useEffect(() => report.current?.(chat.selectedId), [chat.selectedId]);
-  const [composing, setComposing] = useState<ThreadKind | null>(initialNew);
+  const [composing, setComposing] = useState<InternThreadKind | null>(initialNew);
   const [filter, setFilter] = useState<Filter>("all");
 
   const rows = chat.threads.filter((t) => filter === "all" || (filter === "unread" ? t.unread : t.kind === filter));

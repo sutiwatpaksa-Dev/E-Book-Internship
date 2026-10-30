@@ -1,38 +1,38 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 352" role="img" aria-label="ลำดับอัปเดตเวอร์ชันใหม่" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
 <title>ลำดับอัปเดตเวอร์ชันใหม่</title><desc>git pull, build, db:migrate, up -d แล้วตรวจผลและล้าง image เก่า</desc>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="350" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="18" text-anchor="middle" fill="#0b3c91" font-weight="bold">อัปเดตเวอร์ชันใหม่: ลำดับสำคัญ</text>
+<text x="400" y="30" font-size="18" text-anchor="middle" fill="#00767f" font-weight="bold">อัปเดตเวอร์ชันใหม่: ลำดับสำคัญ</text>
 <rect x="20" y="50" width="468" height="30" rx="6" fill="#dcfce7" stroke="#16a34a"/>
 <text x="254" y="71" font-size="14" text-anchor="middle" fill="#15803d" font-weight="bold">ลูกค้ายังใช้เว็บเวอร์ชันเดิมได้ปกติ</text>
 <rect x="496" y="50" width="136" height="30" rx="6" fill="#fef3c7" stroke="#f59e0b"/>
 <text x="564" y="71" font-size="14" text-anchor="middle" fill="#92400e" font-weight="bold">สลับ</text>
 <rect x="644" y="50" width="136" height="30" rx="6" fill="#f1f5f9" stroke="#94a3b8"/>
 <text x="712" y="71" font-size="14" text-anchor="middle" fill="#475569" font-weight="bold">เช็คผล</text>
-<rect x="20" y="94" width="136" height="142" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="20" y="94" width="136" height="142" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="88.0" y="137.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">1</text>
 <text x="88.0" y="159.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">git pull</text>
 <text x="88.0" y="181.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">ดึงโค้ดใหม่</text>
 <text x="88.0" y="203.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">จาก GitHub/GitLab</text>
-<line x1="158" y1="165" x2="174" y2="165" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
-<rect x="176" y="94" width="136" height="142" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<line x1="158" y1="165" x2="174" y2="165" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
+<rect x="176" y="94" width="136" height="142" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="244.0" y="137.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">2</text>
 <text x="244.0" y="159.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">build</text>
 <text x="244.0" y="181.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">สร้างกล่องใหม่</text>
 <text x="244.0" y="203.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">กล่องเก่ายังทำงาน</text>
-<line x1="314" y1="165" x2="330" y2="165" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="314" y1="165" x2="330" y2="165" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <rect x="332" y="94" width="136" height="142" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
 <text x="400.0" y="137.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">3</text>
 <text x="400.0" y="159.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">db:migrate</text>
 <text x="400.0" y="181.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">อัปเดตตาราง</text>
 <text x="400.0" y="203.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">เพิ่มอย่างเดียว</text>
-<line x1="470" y1="165" x2="486" y2="165" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="470" y1="165" x2="486" y2="165" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <rect x="488" y="94" width="136" height="142" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
 <text x="556.0" y="137.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">4</text>
 <text x="556.0" y="159.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">up -d</text>
 <text x="556.0" y="181.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">สลับเป็นกล่องใหม่</text>
 <text x="556.0" y="203.0" font-size="14" text-anchor="middle" fill="#475569" font-weight="normal">ลูกค้าเห็นโค้ดใหม่</text>
-<line x1="626" y1="165" x2="642" y2="165" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="626" y1="165" x2="642" y2="165" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <rect x="644" y="94" width="136" height="142" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
 <text x="712.0" y="137.0" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">5</text>
 <text x="712.0" y="159.0" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">ตรวจ + ล้าง</text>

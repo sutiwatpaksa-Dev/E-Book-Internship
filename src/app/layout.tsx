@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Sans_Thai } from "next/font/google";
 import { RootProvider } from "fumadocs-ui/provider/next";
+import { CookieConsent } from "@/components/cookie-consent";
 import { Toaster } from "@/components/toaster";
 import { translationsTh } from "@/lib/translations-th";
 import "./global.css";
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <RootProvider i18n={{ locale: "th", translations: translationsTh }}>
           {children}
           <Toaster />
+          <CookieConsent />
         </RootProvider>
       </body>
     </html>

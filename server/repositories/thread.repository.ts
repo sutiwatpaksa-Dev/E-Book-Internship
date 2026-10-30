@@ -83,6 +83,23 @@ export const threadRepository = {
       return t.id;
     }),
 
+  // พี่เลี้ยงเริ่มเรื่องหาน้องหลายคนในครั้งเดียว: น้องเป็นเจ้าของเรื่อง ข้อความแรกเป็นของพี่เลี้ยง
+  // น้องเห็นเป็น "ยังไม่อ่าน" ส่วนฝั่งพี่เลี้ยงถือว่าอ่านแล้ว · ทั้งหมดสำเร็จหรือล้มพร้อมกัน
+  createFromMentor: (devId: number, internIds: number[], subject: string, body: string) =>
+    db.transaction(async (tx) => {
+      const now = new Date();
+      const ids: { userId: number; threadId: number }[] = [];
+      for (const userId of internIds) {
+        const [t] = await tx
+          .insert(threads)
+          .values({ createdBy: userId, kind: "mentor_message", subject, status: "answered", lastAuthorRole: "dev", lastMessageAt: now, devReadAt: now, createdAt: now })
+          .returning({ id: threads.id });
+        await tx.insert(threadMessages).values({ threadId: t.id, authorId: devId, body, createdAt: now });
+        ids.push({ userId, threadId: t.id });
+      }
+      return ids;
+    }),
+
   // เพิ่มข้อความ (ข้อความธรรมดาหรือบรรทัดของระบบ) แล้วอัปเดตหัวเรื่องในครั้งเดียว
   // คนพิมพ์ถือว่าอ่านถึงข้อความนี้แล้ว อีกฝั่งจะเห็นเป็น "ยังไม่อ่าน"
   addMessages: (threadId: number, authorId: number, side: Role, items: { body: string; isSystem?: boolean }[], status?: ThreadStatus) =>

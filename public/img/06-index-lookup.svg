@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-label="เปรียบเทียบการค้นหาแบบไม่มี index (ไล่อ่านทุกแถว) กับมี index (B-tree)">
 <title>เปรียบเทียบการค้นหาแบบไม่มี index (ไล่อ่านทุกแถว) กับมี index (B-tree)</title>
-<defs><marker id="arn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="aro" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="ars" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a4fb0"/></marker></defs>
+<defs><marker id="arn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="aro" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="ars" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker><marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0e8a94"/></marker></defs>
 <rect x="1" y="1" width="798" height="448" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
 <text x="205" y="34" font-size="18" fill="#dc2626" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ไม่มี index: Seq Scan</text>
 <text x="205" y="58" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ไล่อ่านทีละแถวจนกว่าจะเจอ</text>
@@ -61,24 +61,24 @@
 <text x="600" y="58" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">กระโดดตามป้ายบอกทาง ไม่กี่ก้าวก็ถึง</text>
 <rect x="540" y="80" width="120" height="38" rx="6" fill="#fed7aa" stroke="#f59e0b" stroke-width="2"/>
 <text x="600.0" y="105" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">อยู่ช่วงไหน?</text>
-<rect x="440" y="160" width="90" height="38" rx="6" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="440" y="160" width="90" height="38" rx="6" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="485.0" y="185" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">A – H</text>
 <rect x="555" y="160" width="90" height="38" rx="6" fill="#fed7aa" stroke="#f59e0b" stroke-width="2"/>
 <text x="600.0" y="185" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">I – R</text>
-<rect x="670" y="160" width="90" height="38" rx="6" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="670" y="160" width="90" height="38" rx="6" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="715.0" y="185" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">S – Z</text>
-<rect x="500" y="240" width="70" height="38" rx="6" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="500" y="240" width="70" height="38" rx="6" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="535.0" y="265" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">I–L</text>
 <rect x="585" y="240" width="70" height="38" rx="6" fill="#fed7aa" stroke="#f59e0b" stroke-width="2"/>
 <text x="620.0" y="265" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">M–P</text>
-<rect x="670" y="240" width="70" height="38" rx="6" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
+<rect x="670" y="240" width="70" height="38" rx="6" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
 <text x="705.0" y="265" font-size="15" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">Q–R</text>
-<line x1="600" y1="118" x2="490" y2="160" stroke="#1a4fb0" stroke-width="2" marker-end="url(#arb)"/>
+<line x1="600" y1="118" x2="490" y2="160" stroke="#0e8a94" stroke-width="2" marker-end="url(#arb)"/>
 <line x1="600" y1="118" x2="600" y2="160" stroke="#f59e0b" stroke-width="3" marker-end="url(#aro)"/>
-<line x1="600" y1="118" x2="715" y2="160" stroke="#1a4fb0" stroke-width="2" marker-end="url(#arb)"/>
-<line x1="600" y1="198" x2="535" y2="240" stroke="#1a4fb0" stroke-width="2" marker-end="url(#arb)"/>
+<line x1="600" y1="118" x2="715" y2="160" stroke="#0e8a94" stroke-width="2" marker-end="url(#arb)"/>
+<line x1="600" y1="198" x2="535" y2="240" stroke="#0e8a94" stroke-width="2" marker-end="url(#arb)"/>
 <line x1="600" y1="198" x2="620" y2="240" stroke="#f59e0b" stroke-width="3" marker-end="url(#aro)"/>
-<line x1="600" y1="198" x2="705" y2="240" stroke="#1a4fb0" stroke-width="2" marker-end="url(#arb)"/>
+<line x1="600" y1="198" x2="705" y2="240" stroke="#0e8a94" stroke-width="2" marker-end="url(#arb)"/>
 <text x="620" y="300" font-size="15" fill="#16a34a" text-anchor="middle" font-weight="700" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">เจอแถวที่ต้องการ</text>
 <rect x="30" y="350" width="350" height="76" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
 <text x="205" y="378" font-size="16" fill="#0f172a" text-anchor="middle" font-weight="400" font-family="IBM Plex Sans Thai, Sarabun, sans-serif">ตาราง 200,000 แถว</text>

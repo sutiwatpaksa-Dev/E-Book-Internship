@@ -1,20 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 410" role="img" aria-label="ชนิดข้อมูลพื้นฐานของ TypeScript" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
 <title>ชนิดข้อมูลพื้นฐานของ TypeScript</title><desc>การ์ดแสดง string number boolean array object และ union พร้อมตัวอย่างค่า</desc>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="408" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="34" font-size="19" text-anchor="middle" fill="#0b3c91" font-weight="bold">ตัวแปรคือกล่องที่มีป้ายบอกว่าใส่อะไรได้</text>
-<rect x="20" y="60" width="245" height="150" rx="10" fill="#ffffff" stroke="#1a4fb0" stroke-width="2"/>
-<text x="142" y="88" font-size="16" text-anchor="middle" fill="#1a4fb0" font-weight="bold">string (ข้อความ)</text>
+<text x="400" y="34" font-size="19" text-anchor="middle" fill="#00767f" font-weight="bold">ตัวแปรคือกล่องที่มีป้ายบอกว่าใส่อะไรได้</text>
+<rect x="20" y="60" width="245" height="150" rx="10" fill="#ffffff" stroke="#0e8a94" stroke-width="2"/>
+<text x="142" y="88" font-size="16" text-anchor="middle" fill="#0e8a94" font-weight="bold">string (ข้อความ)</text>
 <text x="142" y="118" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">let name: string</text>
 <rect x="38" y="138" width="209" height="52" rx="8" fill="#e2e8f0" stroke="#94a3b8"/>
 <text x="142" y="170" font-size="17" text-anchor="middle" fill="#0f172a" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">"บิต"</text>
-<rect x="280" y="60" width="245" height="150" rx="10" fill="#ffffff" stroke="#1a4fb0" stroke-width="2"/>
-<text x="402" y="88" font-size="16" text-anchor="middle" fill="#1a4fb0" font-weight="bold">number (ตัวเลข)</text>
+<rect x="280" y="60" width="245" height="150" rx="10" fill="#ffffff" stroke="#0e8a94" stroke-width="2"/>
+<text x="402" y="88" font-size="16" text-anchor="middle" fill="#0e8a94" font-weight="bold">number (ตัวเลข)</text>
 <text x="402" y="118" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">let age: number</text>
 <rect x="298" y="138" width="209" height="52" rx="8" fill="#e2e8f0" stroke="#94a3b8"/>
 <text x="402" y="170" font-size="17" text-anchor="middle" fill="#0f172a" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">21</text>
-<rect x="540" y="60" width="245" height="150" rx="10" fill="#ffffff" stroke="#1a4fb0" stroke-width="2"/>
-<text x="662" y="88" font-size="16" text-anchor="middle" fill="#1a4fb0" font-weight="bold">boolean (จริง/เท็จ)</text>
+<rect x="540" y="60" width="245" height="150" rx="10" fill="#ffffff" stroke="#0e8a94" stroke-width="2"/>
+<text x="662" y="88" font-size="16" text-anchor="middle" fill="#0e8a94" font-weight="bold">boolean (จริง/เท็จ)</text>
 <text x="662" y="118" font-size="14" text-anchor="middle" fill="#0f172a" font-weight="normal" font-family="ui-monospace, Menlo, Consolas, monospace">let isActive: boolean</text>
 <rect x="558" y="138" width="209" height="52" rx="8" fill="#e2e8f0" stroke="#94a3b8"/>
 <text x="662" y="170" font-size="17" text-anchor="middle" fill="#0f172a" font-weight="bold" font-family="ui-monospace, Menlo, Consolas, monospace">true</text>

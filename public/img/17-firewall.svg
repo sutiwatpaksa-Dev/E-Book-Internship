@@ -1,15 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 384" role="img" aria-label="Firewall: ยามหน้าตึก" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
 <title>Firewall: ยามหน้าตึก</title><desc>ยามเปิดเฉพาะ port 22, 80, 443 และปิด 3000, 5432 จากคนนอก</desc>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
 <rect x="1" y="1" width="798" height="382" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="19" text-anchor="middle" fill="#0b3c91" font-weight="bold">Firewall: ยามหน้าตึก</text>
+<text x="400" y="30" font-size="19" text-anchor="middle" fill="#00767f" font-weight="bold">Firewall: ยามหน้าตึก</text>
 <rect x="20" y="150" width="150" height="80" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
 <text x="95.0" y="184.8" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">อินเทอร์เน็ต</text>
 <text x="95.0" y="205.8" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">(ทุกคน)</text>
 <rect x="230" y="60" width="80" height="260" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
 <text x="270.0" y="195.6" font-size="16" text-anchor="middle" fill="#0f172a" font-weight="normal">ยาม</text>
 <rect x="430" y="40" width="350" height="300" rx="14" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
-<text x="605" y="66" font-size="15" text-anchor="middle" fill="#0b3c91" font-weight="bold">เครื่องเช่า</text>
+<text x="605" y="66" font-size="15" text-anchor="middle" fill="#00767f" font-weight="bold">เครื่องเช่า</text>
 <rect x="445" y="84" width="320" height="40" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
 <text x="605.0" y="109.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">22  SSH สำหรับเรา</text>
 <line x1="312" y1="104" x2="443" y2="104" stroke="#16a34a" stroke-width="2.5" marker-end="url(#ag)"/>
@@ -27,6 +27,6 @@
 <text x="605.0" y="309.2" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">5432  ฐานข้อมูล ห้ามเปิด!</text>
 <line x1="312" y1="304" x2="370" y2="304" stroke="#dc2626" stroke-width="1.5"/>
 <text x="385" y="314" font-size="26" text-anchor="middle" fill="#dc2626" font-weight="bold">✕</text>
-<line x1="170" y1="190" x2="228" y2="190" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
-<text x="400" y="368" font-size="15" text-anchor="middle" fill="#0b3c91" font-weight="bold">ปิดไว้ก่อนทุกประตู แล้วเปิดเฉพาะที่จำเป็น</text>
+<line x1="170" y1="190" x2="228" y2="190" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
+<text x="400" y="368" font-size="15" text-anchor="middle" fill="#00767f" font-weight="bold">ปิดไว้ก่อนทุกประตู แล้วเปิดเฉพาะที่จำเป็น</text>
 </svg>

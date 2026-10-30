@@ -1,27 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 340" role="img" aria-label="ใช้หลายเครื่องมือร่วมกัน" font-family="'IBM Plex Sans Thai', Sarabun, sans-serif" font-size="16">
 <title>ใช้หลายเครื่องมือร่วมกัน</title><desc>ใช้แชทเพื่อเข้าใจแนวคิด agent เพื่อลงมือ เราอ่าน diff และเทียบกับเอกสารทางการหรือ AI ตัวที่สอง</desc>
-<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b3c91"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker></defs>
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00767f"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker></defs>
 <rect x="1" y="1" width="798" height="338" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
-<text x="400" y="30" font-size="19" text-anchor="middle" fill="#0b3c91" font-weight="bold">ใช้หลายเครื่องมือ: แต่ละตัวทำหน้าที่ต่างกัน</text>
-<rect x="20" y="56" width="168" height="110" rx="10" fill="#dbeafe" stroke="#1a4fb0" stroke-width="2"/>
-<text x="104.0" y="80" font-size="16" text-anchor="middle" fill="#0b3c91" font-weight="bold">แชท</text>
+<text x="400" y="30" font-size="19" text-anchor="middle" fill="#00767f" font-weight="bold">ใช้หลายเครื่องมือ: แต่ละตัวทำหน้าที่ต่างกัน</text>
+<rect x="20" y="56" width="168" height="110" rx="10" fill="#d5f2f3" stroke="#0e8a94" stroke-width="2"/>
+<text x="104.0" y="80" font-size="16" text-anchor="middle" fill="#00767f" font-weight="bold">แชท</text>
 <text x="104.0" y="104" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ถามให้สอน</text>
 <text x="104.0" y="126" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">แนวคิด/ตัวเลือก</text>
 <rect x="222" y="56" width="168" height="110" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
-<text x="306.0" y="80" font-size="16" text-anchor="middle" fill="#0b3c91" font-weight="bold">Agent</text>
+<text x="306.0" y="80" font-size="16" text-anchor="middle" fill="#00767f" font-weight="bold">Agent</text>
 <text x="306.0" y="104" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">ลงมือทีละ task</text>
 <text x="306.0" y="126" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">รันเทสต์</text>
 <rect x="424" y="56" width="168" height="110" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
-<text x="508.0" y="80" font-size="16" text-anchor="middle" fill="#0b3c91" font-weight="bold">เรา: git diff</text>
+<text x="508.0" y="80" font-size="16" text-anchor="middle" fill="#00767f" font-weight="bold">เรา: git diff</text>
 <text x="508.0" y="104" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">อ่านทุกบรรทัด</text>
 <text x="508.0" y="126" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">รันเอง</text>
 <rect x="626" y="56" width="154" height="110" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
-<text x="703.0" y="80" font-size="16" text-anchor="middle" fill="#0b3c91" font-weight="bold">ตรวจไขว้</text>
+<text x="703.0" y="80" font-size="16" text-anchor="middle" fill="#00767f" font-weight="bold">ตรวจไขว้</text>
 <text x="703.0" y="104" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">เอกสารทางการ</text>
 <text x="703.0" y="126" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">/ AI ตัวที่สอง</text>
-<line x1="190" y1="111" x2="220" y2="111" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
-<line x1="392" y1="111" x2="422" y2="111" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
-<line x1="594" y1="111" x2="624" y2="111" stroke="#0b3c91" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="190" y1="111" x2="220" y2="111" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="392" y1="111" x2="422" y2="111" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
+<line x1="594" y1="111" x2="624" y2="111" stroke="#00767f" stroke-width="2.5" marker-end="url(#an)"/>
 <rect x="20" y="200" width="760" height="56" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
 <text x="400" y="224" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="bold">ตอบไม่ตรงกัน = อย่าเลือกข้างเอง ไปดูเอกสารทางการหรือรันทดลอง</text>
 <text x="400" y="246" font-size="15" text-anchor="middle" fill="#0f172a" font-weight="normal">AI สองตัวเห็นตรงกัน ไม่ได้แปลว่าถูก</text>

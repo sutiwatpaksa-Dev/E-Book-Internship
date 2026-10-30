@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { CookieSettingsLink } from "./cookie-settings-link";
 import { FooterChapters } from "./footer-chapters";
 
 // ส่วนท้ายทุกหน้า: ซ้าย = ชื่อคู่มือ + ลิงก์ · ขวา = บทเรียนฉบับเต็ม (ทางเข้าบทยาวแบบเดิม ไม่แย่งที่การ์ด)
@@ -20,6 +21,10 @@ export function SiteFooter({ version }: { version: string }) {
             <Link href="/changelog" className="flex min-h-11 items-center hover:text-white hover:underline md:min-h-7">
               มีอะไรใหม่ (v{version})
             </Link>
+            <Link href="/cookies" className="flex min-h-11 items-center hover:text-white hover:underline md:min-h-7">
+              นโยบายคุกกี้
+            </Link>
+            <CookieSettingsLink />
             <a href="https://roadmap.sh/full-stack" target="_blank" rel="noopener" className="flex min-h-11 items-center hover:text-white hover:underline md:min-h-7">
               ลำดับหัวข้ออ้างอิงจาก roadmap.sh
             </a>
