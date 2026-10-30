@@ -1,11 +1,11 @@
 "use client";
 
-import { ExternalLink, FolderGit2 } from "lucide-react";
+import { ExternalLink, FolderGit2, GitCommitHorizontal } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { submissionsApi } from "@/api/submissions.api";
 import type { AdminState } from "@/hooks/use-admin";
 import { toast } from "@/hooks/use-toast";
-import { latestOnly, roundLabel, treeUrl, VERDICT_LABEL, waitingOf, type Verdict } from "@/lib/submission";
+import { commitsUrl, isReviewable, latestOnly, repoOf, roundLabel, treeUrl, VERDICT_LABEL, waitingOf, type Verdict } from "@/lib/submission";
 import type { AdminSubmission } from "@/types";
 import { Button } from "./button";
 import { EmptyState } from "./empty-state";
@@ -38,7 +38,7 @@ export function AdminSubmissions({ admin, onChange }: { admin: AdminState; onCha
   if (error) return <ErrorText>{error}</ErrorText>;
   if (!items) return <p className="text-sm text-fd-muted-foreground">กำลังโหลด…</p>;
   const cohortName = (id: number | null) => admin.cohorts.find((c) => c.id === id)?.name ?? "ไม่มีรุ่น";
-  const list = show === "waiting" ? waitingOf(items) : latestOnly(items);
+  const list = show === "waiting" ? waitingOf(items) : latestOnly(items).filter((s) => isReviewable(s.round));
   const after = () => {
     reload();
     onChange();
@@ -46,7 +46,9 @@ export function AdminSubmissions({ admin, onChange }: { admin: AdminState; onCha
 
   return (
     <div className="flex max-w-3xl flex-col gap-4">
-      <p className="text-sm text-fd-muted-foreground">น้องส่งลิงก์ repo + tag บน GitHub กดลิงก์เพื่อดูโค้ด ณ จุดที่ส่ง · ส่งซ้ำรอบเดิม = ตรวจแค่ครั้งล่าสุด</p>
+      <RepoList admin={admin} items={items} />
+      <h2 className="text-base font-semibold">งานที่ส่งตรวจ</h2>
+      <p className="text-sm text-fd-muted-foreground">น้องส่ง tag บน GitHub กดลิงก์เพื่อดูโค้ด ณ จุดที่ส่ง · ส่งซ้ำรอบเดิม = ตรวจแค่ครั้งล่าสุด</p>
       <div role="group" aria-label="แสดง" className="flex gap-2">
         {(["waiting", "latest"] as const).map((k) => (
           <Button key={k} variant={show === k ? "primary" : "ghost"} aria-pressed={show === k} onClick={() => setShow(k)} className="min-h-11">
@@ -67,18 +69,64 @@ export function AdminSubmissions({ admin, onChange }: { admin: AdminState; onCha
   );
 }
 
-// งานของน้องคนเดียว (หน้าน้องรายคน): ครั้งล่าสุดของแต่ละรอบ
+// repo ของน้องทุกคนในรุ่นที่ยังไม่จบ: ตามดูโค้ดได้ตั้งแต่วันที่ 1 ไม่ต้องรอวันตรวจ · คนที่ยังไม่ส่งลิงก์ขึ้นให้เห็นจะได้ทัก
+function RepoList({ admin, items }: { admin: AdminState; items: AdminSubmission[] }) {
+  const running = new Set(admin.cohorts.filter((c) => !c.endedAt).map((c) => c.id));
+  const interns = admin.users.filter((u) => u.role === "intern" && !u.disabled && u.cohortId !== null && running.has(u.cohortId));
+  if (interns.length === 0) return null;
+  const missing = interns.filter((u) => !repoOf(items, u.id)).length;
+  return (
+    <section aria-labelledby="repo-list" className={card}>
+      <h2 id="repo-list" className="text-base font-semibold">
+        repo ของน้อง (รุ่นที่กำลังฝึก){missing > 0 && <span className="font-normal text-fd-muted-foreground"> · ยังไม่ส่งลิงก์ {missing} คน</span>}
+      </h2>
+      <ul className="flex flex-col">
+        {interns.map((u) => {
+          const repo = repoOf(items, u.id);
+          return (
+            <li key={u.id} className="flex flex-wrap items-center justify-between gap-x-3 border-t border-fd-border py-1 first:border-t-0">
+              <span className="font-medium">
+                {u.username}
+                {u.nickname ? ` (${u.nickname})` : ""}
+              </span>
+              {repo ? <RepoLinks repo={repo} /> : <span className="py-3 text-fd-muted-foreground">ยังไม่ส่งลิงก์ repo</span>}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+function RepoLinks({ repo }: { repo: string }) {
+  const link = "inline-flex min-h-11 items-center gap-1 text-fd-primary underline";
+  return (
+    <span className="flex flex-wrap items-center gap-x-3">
+      <a className={`${link} break-all font-mono`} href={repo} target="_blank" rel="noopener noreferrer">
+        {repo.replace("https://github.com/", "")}
+        <ExternalLink className="size-3 shrink-0" />
+      </a>
+      <a className={link} href={commitsUrl(repo)} target="_blank" rel="noopener noreferrer">
+        <GitCommitHorizontal className="size-4" /> commit
+      </a>
+    </span>
+  );
+}
+
+// งานของน้องคนเดียว (หน้าน้องรายคน): repo + ครั้งล่าสุดของแต่ละรอบ
 export function InternSubmissions({ userId }: { userId: number }) {
   const { items, error, reload } = useSubmissions();
   if (error) return <ErrorText>{error}</ErrorText>;
   if (!items) return null;
-  const mine = latestOnly(items.filter((s) => s.userId === userId));
+  const repo = repoOf(items, userId);
+  const mine = latestOnly(items.filter((s) => s.userId === userId && isReviewable(s.round)));
   return (
     <section aria-labelledby="intern-subs" className="flex flex-col gap-2">
       <h2 id="intern-subs" className="text-base font-semibold">
         งานที่ส่ง
       </h2>
-      {mine.length === 0 ? <p className="text-sm text-fd-muted-foreground">ยังไม่ได้ส่งงาน</p> : mine.map((s) => <SubmissionCard key={s.id} s={s} onReviewed={reload} />)}
+      {repo ? <RepoLinks repo={repo} /> : <p className="text-sm text-fd-muted-foreground">ยังไม่ส่งลิงก์ repo</p>}
+      {mine.length === 0 ? <p className="text-sm text-fd-muted-foreground">ยังไม่ได้ส่งตรวจ</p> : mine.map((s) => <SubmissionCard key={s.id} s={s} onReviewed={reload} />)}
     </section>
   );
 }

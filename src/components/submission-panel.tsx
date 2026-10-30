@@ -1,12 +1,12 @@
 "use client";
 
-import { ExternalLink, Send } from "lucide-react";
+import { ExternalLink, GitCommitHorizontal, Send } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 import { submissionsApi } from "@/api/submissions.api";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "@/hooks/use-toast";
-import { latestOnly, refProblem, repoProblem, SUBMISSION_ROUNDS, treeUrl } from "@/lib/submission";
+import { commitsUrl, isReviewable, latestOnly, refProblem, repoProblem, roundLabel, START_ROUND, SUBMISSION_ROUNDS, treeUrl } from "@/lib/submission";
 import type { MySubmissions, Submission } from "@/types";
 import { Button } from "./button";
 import { ErrorText } from "./error-text";
@@ -56,6 +56,8 @@ function SubmissionView({ data, reload }: { data: MySubmissions; reload: () => v
   const items = data.items.filter((s) => s.assignment === assignment);
   const latest = latestOnly(items.map((s) => ({ ...s, userId: 0 })));
   const ofRound = (id: string) => latest.find((s) => s.round === id);
+  // ลิงก์ repo ล่าสุดของโจทย์นี้ (จากการส่งครั้งไหนก็ได้) · ยังไม่มี = ยังไม่ได้ลงทะเบียน
+  const repo = items[0]?.repoUrl ?? null;
 
   return (
     <div className="not-prose flex flex-col gap-4">
@@ -70,6 +72,8 @@ function SubmissionView({ data, reload }: { data: MySubmissions; reload: () => v
           </select>
         </Field>
       )}
+
+      <RepoBox assignment={assignment} repo={repo} locked={data.locked} onSent={reload} />
 
       <ol className="flex flex-col gap-2">
         {SUBMISSION_ROUNDS.map((r) => {
@@ -90,13 +94,15 @@ function SubmissionView({ data, reload }: { data: MySubmissions; reload: () => v
 
       {data.locked ? (
         <p className={box}>รุ่นของคุณจบแล้ว ส่งงานเพิ่มไม่ได้ ประวัติการส่งด้านบนยังดูได้ตามเดิม</p>
+      ) : !repo ? (
+        <p className={box}>ส่งลิงก์ repo ด้านบนก่อน แล้วฟอร์มส่งงานตรวจจะขึ้นตรงนี้</p>
       ) : (
         <SubmitForm
           assignment={assignment}
           // รอบที่ควรส่งต่อ: รอบแรกที่ยังไม่ผ่าน
           defaultRound={SUBMISSION_ROUNDS.find((r) => ofRound(r.id)?.verdict !== "pass")?.id ?? "final"}
           // ใส่ลิงก์ repo ครั้งเดียว ครั้งต่อไปเติมให้จากที่ส่งล่าสุด
-          lastRepo={data.items[0]?.repoUrl ?? ""}
+          lastRepo={repo ?? data.items[0]?.repoUrl ?? ""}
           onSent={reload}
         />
       )}
@@ -108,7 +114,7 @@ function SubmissionView({ data, reload }: { data: MySubmissions; reload: () => v
             {items.map((s) => (
               <li key={s.id} className="flex flex-col gap-1 border-t border-fd-border pt-2">
                 <span className="flex flex-wrap items-center gap-2">
-                  {SUBMISSION_ROUNDS.find((r) => r.id === s.round)?.label} <VerdictBadge verdict={s.verdict} />
+                  {roundLabel(s.round)} {isReviewable(s.round) && <VerdictBadge verdict={s.verdict} />}
                 </span>
                 <SentLine s={s} />
               </li>
@@ -120,8 +126,95 @@ function SubmissionView({ data, reload }: { data: MySubmissions; reload: () => v
   );
 }
 
+// วันที่ 1: ส่งลิงก์ repo ครั้งเดียว พี่เลี้ยงตามดูโค้ดได้ทุกวันโดยไม่ต้องรอวันตรวจ · เปลี่ยน repo ได้ (ส่งใหม่ = แถวใหม่)
+function RepoBox({ assignment, repo, locked, onSent }: { assignment: string; repo: string | null; locked: boolean; onSent: () => void }) {
+  const [editing, setEditing] = useState(false);
+  const [repoUrl, setRepoUrl] = useState(repo ?? "");
+  const [touched, setTouched] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const err = touched || repoUrl ? repoProblem(repoUrl) : null;
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    setTouched(true);
+    if (repoProblem(repoUrl)) return;
+    setSending(true);
+    setError(null);
+    try {
+      await submissionsApi.submit({ assignment, round: START_ROUND, repoUrl, ref: "", note: "" });
+      toast.success("ส่งลิงก์ repo แล้ว พี่เลี้ยงตามดูโค้ดได้เลย");
+      setEditing(false);
+      onSent();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  if (repo && !editing)
+    return (
+      <div className={box}>
+        <span className="font-semibold">repo ของฉันบน GitHub</span>
+        <a className="inline-flex items-center gap-1 break-all font-mono text-fd-primary underline" href={repo} target="_blank" rel="noopener noreferrer">
+          {repo.replace("https://", "")}
+          <ExternalLink className="size-3 shrink-0" />
+        </a>
+        <p className="text-fd-muted-foreground">พี่เลี้ยงเปิดดูโค้ดได้ตลอด push ทุกวันแม้งานยังไม่เสร็จ</p>
+        <div className="flex flex-wrap gap-2">
+          <a className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-fd-border px-4 font-semibold hover:bg-fd-accent" href={commitsUrl(repo)} target="_blank" rel="noopener noreferrer">
+            <GitCommitHorizontal className="size-4" /> ดู commit ล่าสุด
+          </a>
+          {!locked && (
+            <Button variant="ghost" className="min-h-11" onClick={() => setEditing(true)}>
+              เปลี่ยน repo
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  if (locked) return null;
+  return (
+    <form onSubmit={submit} aria-label="ส่งลิงก์ repo" className={`${box} border-2 border-fd-primary/40`}>
+      <h3 className="text-base font-semibold">{repo ? "เปลี่ยน repo" : "ขั้นแรก: ส่งลิงก์ repo (วันที่ 1)"}</h3>
+      <p className="text-fd-muted-foreground">ส่งครั้งเดียวหลัง push ครั้งแรก พี่เลี้ยงจะตามดูโค้ดได้ทุกวัน ไม่ต้องรอวันตรวจ ยังไม่ต้องติด tag</p>
+      <Field label="ลิงก์ repo บน GitHub" hint="repo แบบ private ต้องเชิญพี่เลี้ยงเป็น collaborator ก่อน">
+        <Input
+          value={repoUrl}
+          onChange={(e) => setRepoUrl(e.target.value)}
+          placeholder="https://github.com/somchai/starter"
+          inputMode="url"
+          autoCapitalize="none"
+          spellCheck={false}
+          maxLength={300}
+          aria-invalid={!!err}
+        />
+      </Field>
+      {err && <p role="alert" className="-mt-2 text-sm text-red-700 dark:text-red-400">{err}</p>}
+      {error && <ErrorText>{error}</ErrorText>}
+      <div className="flex flex-wrap gap-2">
+        {repo && (
+          <Button type="button" variant="ghost" className="min-h-11" onClick={() => (setEditing(false), setRepoUrl(repo))}>
+            ยกเลิก
+          </Button>
+        )}
+        <Button type="submit" disabled={sending} className="min-h-11 w-fit">
+          <Send className="size-4" /> {sending ? "กำลังส่ง…" : "ส่งลิงก์ repo"}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 // ส่งอะไรไป เมื่อไร + ผลตรวจของพี่เลี้ยง
 function SentLine({ s }: { s: Submission }) {
+  if (s.round === START_ROUND)
+    return (
+      <span className="break-all text-fd-muted-foreground">
+        {s.repoUrl.replace("https://", "")} · {fmt(s.createdAt)}
+      </span>
+    );
   return (
     <div className="flex flex-col gap-1">
       <span className="text-fd-muted-foreground">

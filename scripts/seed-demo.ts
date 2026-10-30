@@ -156,7 +156,7 @@ await thread(id("ploy"), "content_request", "อธิบาย CORS เป็�
 await thread(id("golf"), "content_request", "สรุปคำสั่ง Git ที่ใช้บ่อย 1 หน้า", "done", null, [[id("golf"), "อยากได้ cheat sheet", 24 * 50], [boss, "เพิ่มไว้ท้ายบทที่ 1 แล้ว", 24 * 45]]);
 await thread(id("arm"), "content_request", "สอน Next.js แทน React Router", "declined", null, [[id("arm"), "อยากใช้ Next.js ทำงานครับ", 100], [boss, "โจทย์กำหนด Vite + React Router ไว้ เพื่อให้เห็นแยกหน้าเว็บกับ API ชัด รอบนี้ยังไม่ทำ", 98]]);
 
-// งานที่ส่ง: ครบทุกสถานะ (รอตรวจ, ให้แก้, ผ่าน, ส่งซ้ำ, ส่งเป็น commit)
+// งานที่ส่ง: ลิงก์ repo วันที่ 1 + ครบทุกสถานะ (รอตรวจ, ให้แก้, ผ่าน, ส่งซ้ำ, ส่งเป็น commit) · fah ยังไม่ส่งลิงก์ (ขึ้นในรายการ "ยังไม่ส่ง")
 const sub = (u: string, round: string, ref: string, note: string, h: number, verdict?: "pass" | "revise", review?: string, by = boss) => ({
   userId: id(u),
   assignmentId: starter.id,
@@ -171,6 +171,8 @@ const sub = (u: string, round: string, ref: string, note: string, h: number, ver
   reviewedAt: verdict ? ago(h - 2) : null,
 });
 await db.insert(submissions).values([
+  ...["mint", "ton", "ploy", "arm", "golf"].map((u) => sub(u, "start", "HEAD", "", u === "golf" ? 24 * 68 : 24 * 9)),
+  sub("bank", "start", "HEAD", "", 20),
   sub("mint", "review-1", "review-1", "ตาราง 6 ตาราง + API หน้าบ้านครบ", 24 * 7, "pass", "ตารางดีมาก foreign key ครบ"),
   sub("mint", "review-2", "review-2", "ทั้งระบบเสร็จ ขอให้ดูหน้า admin/services บนมือถือเป็นพิเศษ", 3),
   sub("ton", "review-1", "review-1", "", 24 * 6, "revise", "POST /api/contact ยังไม่ตรวจด้วย Zod (ส่งเบอร์ 20 หลักแล้วผ่าน) และ README ขาดวิธีรัน seed"),

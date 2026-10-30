@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { normalizeRepo, refProblem, repoProblem, treeUrl, waitingOf } from "./submission";
+import { submitSchema } from "../../server/validators/submission.validator";
+import { normalizeRepo, refProblem, repoOf, repoProblem, treeUrl, waitingOf } from "./submission";
 
 describe("ลิงก์ repo", () => {
   test("แบบที่คนคัดลอกมาจริง จัดเป็นแบบเดียว", () => {
@@ -48,5 +49,28 @@ describe("รอตรวจ", () => {
   });
   test("คนละรอบ นับแยกกัน", () => {
     expect(waitingOf([r(2, 1, "review-2"), r(1, 1, "review-1")]).length).toBe(2);
+  });
+});
+
+describe("ลงทะเบียน repo วันที่ 1", () => {
+  const base = { assignment: "starter", repoUrl: "github.com/ton/starter.git" };
+  test("ไม่ต้องมี tag · เก็บ ref เป็น HEAD (branch หลักของ repo)", () => {
+    const v = submitSchema.parse({ ...base, round: "start" });
+    expect(v.ref).toBe("HEAD");
+    expect(v.repoUrl).toBe("https://github.com/ton/starter");
+  });
+  test("รอบตรวจยังต้องมี tag", () => {
+    expect(submitSchema.safeParse({ ...base, round: "review-1" }).success).toBe(false);
+  });
+  test("ลงทะเบียน repo ไม่นับเป็นรอตรวจ", () => {
+    expect(waitingOf([{ id: 1, userId: 1, assignment: "starter", round: "start", reviewedAt: null }])).toEqual([]);
+  });
+  test("repo ล่าสุดของแต่ละคน", () => {
+    const rows = [
+      { userId: 1, repoUrl: "https://github.com/a/new" },
+      { userId: 1, repoUrl: "https://github.com/a/old" },
+    ];
+    expect(repoOf(rows, 1)).toBe("https://github.com/a/new");
+    expect(repoOf(rows, 2)).toBeNull();
   });
 });

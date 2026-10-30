@@ -7,9 +7,15 @@ export const SUBMISSION_ROUNDS = [
   { id: "review-2", label: "ตรวจรอบ 2", day: 9, what: "ทั้งระบบ" },
   { id: "final", label: "ส่งงานจริง", day: 10, what: "งานครบ + README" },
 ] as const;
-export type SubmissionRound = (typeof SUBMISSION_ROUNDS)[number]["id"];
-export const ROUND_IDS = SUBMISSION_ROUNDS.map((r) => r.id) as [SubmissionRound, ...SubmissionRound[]];
-export const roundLabel = (id: string) => SUBMISSION_ROUNDS.find((r) => r.id === id)?.label ?? id;
+
+// วันที่ 1: ส่งแค่ลิงก์ repo ให้พี่เลี้ยงตามดูโค้ดได้ทุกวัน · ไม่มีผลตรวจ (ไม่นับเป็นรอตรวจ)
+// เก็บเป็นแถวในตารางเดียวกัน ref = HEAD (GitHub พาไป branch หลักของ repo เอง ไม่ต้องรู้ว่าชื่อ main หรือ master)
+export const START_ROUND = "start";
+export const START_REF = "HEAD";
+export const isReviewable = (round: string) => round !== START_ROUND;
+export type SubmissionRound = (typeof SUBMISSION_ROUNDS)[number]["id"] | typeof START_ROUND;
+export const ROUND_IDS = [START_ROUND, ...SUBMISSION_ROUNDS.map((r) => r.id)] as [SubmissionRound, ...SubmissionRound[]];
+export const roundLabel = (id: string) => (id === START_ROUND ? "ลงทะเบียน repo" : (SUBMISSION_ROUNDS.find((r) => r.id === id)?.label ?? id));
 
 // ผลตรวจของพี่เลี้ยง: ผ่านรอบนี้ หรือ แก้แล้วส่งใหม่
 export const VERDICTS = ["pass", "revise"] as const;
@@ -41,6 +47,8 @@ export function refProblem(v: string) {
 }
 
 // ลิงก์ไปหน้าโค้ด ณ จุดที่ส่ง · encode ทุกส่วน (ชื่อ tag มี / ได้ จึง encode ทีละท่อน)
+// หน้ารายการ commit: พี่เลี้ยงดูว่าน้อง push ล่าสุดเมื่อไร ทำอะไรไปบ้าง
+export const commitsUrl = (repo: string) => `${repo}/commits`;
 export const treeUrl = (repo: string, ref: string) => `${repo}/tree/${ref.trim().split("/").map(encodeURIComponent).join("/")}`;
 
 // แถวล่าสุดของแต่ละ (คน, โจทย์, รอบ) · รายการต้องเรียงใหม่สุดก่อนอยู่แล้ว (แบบที่ API ส่งมา)
@@ -55,4 +63,9 @@ export function latestOnly<T extends Row>(rows: T[]): T[] {
     return true;
   });
 }
-export const waitingOf = <T extends Row>(rows: T[]) => latestOnly(rows).filter((r) => !r.reviewedAt);
+export const waitingOf = <T extends Row>(rows: T[]) => latestOnly(rows).filter((r) => isReviewable(r.round) && !r.reviewedAt);
+
+// repo ล่าสุดของน้องแต่ละคน (จากแถวใหม่สุด ไม่ว่ารอบไหน) · ใช้ทั้งกล่อง repo ของน้องและรายชื่อในหลังบ้าน
+export function repoOf<T extends { userId: number; repoUrl: string }>(rows: T[], userId: number) {
+  return rows.find((r) => r.userId === userId)?.repoUrl ?? null;
+}

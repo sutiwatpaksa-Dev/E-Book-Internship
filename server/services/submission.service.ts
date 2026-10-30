@@ -1,5 +1,5 @@
 import type { Role } from "../db/schema";
-import { roundLabel, VERDICT_LABEL, waitingOf } from "../../src/lib/submission";
+import { isReviewable, roundLabel, START_ROUND, VERDICT_LABEL, waitingOf } from "../../src/lib/submission";
 import { assignmentRepository } from "../repositories/assignment.repository";
 import { submissionRepository } from "../repositories/submission.repository";
 import { userRepository } from "../repositories/user.repository";
@@ -33,7 +33,8 @@ export const submissionService = {
     const a = (await assignmentRepository.findBySlug(input.assignment))!;
     const s = await submissionRepository.create({ userId: user.id, assignmentId: a.id, round: input.round, repoUrl: input.repoUrl, ref: input.ref, note: input.note });
     const who = (await userRepository.findById(user.id))?.username ?? "น้อง";
-    await notificationService.toRoles(["dev"], { kind: "submission", title: `${who} ส่งงาน ${roundLabel(input.round)} (${input.ref})`, link: DEV_LINK }, user.id);
+    const title = input.round === START_ROUND ? `${who} ส่งลิงก์ repo แล้ว ตามดูโค้ดได้` : `${who} ส่งงาน ${roundLabel(input.round)} (${input.ref})`;
+    await notificationService.toRoles(["dev"], { kind: "submission", title, link: DEV_LINK }, user.id);
     return s;
   },
 
@@ -47,6 +48,7 @@ export const submissionService = {
   async review(devId: number, id: number, input: ReviewInput) {
     const s = await submissionRepository.find(id);
     if (!s) throw new Error("SUBMISSION_NOT_FOUND");
+    if (!isReviewable(s.round)) throw new Error("SUBMISSION_NOT_REVIEWABLE");
     await submissionRepository.review(id, { verdict: input.verdict, review: input.review || null, reviewedBy: devId, reviewedAt: new Date() });
     const who = (await userRepository.findById(s.userId))?.username ?? `#${s.userId}`;
     await auditService.log(devId, "submission.review", who, `${roundLabel(s.round)} ${s.ref} · ${VERDICT_LABEL[input.verdict]}`);

@@ -1,14 +1,18 @@
 "use client";
 
-import { ArrowRight, Check, FileText, LifeBuoy, LogIn } from "lucide-react";
+import { ArrowRight, Check, FileText, FolderGit2, LifeBuoy, LogIn } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { authApi } from "@/api/auth.api";
+import { submissionsApi } from "@/api/submissions.api";
 import { cardUrl, cardsOf, nextUp, steps, stepUrl, type LearnCard, type LearnStep } from "@/data/learn";
 import { useCatalog } from "@/hooks/use-catalog";
 import { useProgress } from "@/hooks/use-progress";
 import { useSession } from "@/hooks/use-session";
+import { latestOnly, roundLabel, SUBMISSION_ROUNDS } from "@/lib/submission";
+import type { MySubmissions } from "@/types";
 import { AnnouncementBanner } from "./announcement-banner";
+import { VerdictBadge } from "./status-badge";
 
 // หน้าแรกหลัง login (/today): น้องต้องรู้ภายใน 5 วินาทีว่าวันนี้ทำอะไรต่อ
 // จัดเป็น bento: กล่องใหญ่ = สิ่งเดียวที่ควรทำต่อ · กล่องเล็กรอบๆ = ภาพรวม, โจทย์ของขั้น, ทางออกตอนติด
@@ -37,6 +41,8 @@ export function Today() {
         {/* จอกว้าง: 2 กล่องนี้ซ้อนกันข้างกล่องใหญ่ (กล่องใหญ่สูง 2 แถว) */}
         <Overview count={count} total={cards.length} role={role} />
         <Stuck role={role} />
+        {/* งานบน GitHub อยู่ใต้กล่องทำต่อ ไม่ต้องเลื่อนหา */}
+        {role === "intern" && <MyWork />}
         <StepStrip done={done} current={up.step} cards={cards} />
         <StarterTask step={up.step} />
         <UpNext done={done} skip={up.card} cards={cards} />
@@ -268,6 +274,54 @@ function UpNext({ done, skip, cards }: { done: ReadonlySet<string>; skip: LearnC
           ))}
         </ul>
       )}
+    </section>
+  );
+}
+
+const SUBMIT_LINK = "/starter/submission#-ส่งงานของคุณ";
+
+// งานของน้องบน GitHub: repo ที่ส่งแล้ว + ผลตรวจล่าสุด + รอบที่ต้องส่งต่อ · ตัวเต็มอยู่ในหน้าการส่งงาน
+function MyWork() {
+  const [data, setData] = useState<MySubmissions | null>(null);
+  useEffect(() => {
+    submissionsApi
+      .mine()
+      .then(setData)
+      .catch(() => setData(null));
+  }, []);
+  if (!data || data.assignments.length === 0) return null;
+  const items = data.items.filter((s) => s.assignment === data.assignments[0].slug);
+  const repo = items[0]?.repoUrl ?? null;
+  const latest = latestOnly(items.map((s) => ({ ...s, userId: 0 })));
+  const reviewed = latest.find((s) => s.round !== "start");
+  const next = SUBMISSION_ROUNDS.find((r) => latest.find((s) => s.round === r.id)?.verdict !== "pass");
+
+  return (
+    <section aria-labelledby="work-title" className={`${box} flex flex-col gap-3 lg:col-span-12`}>
+      <h2 id="work-title" className="flex items-center gap-2 font-semibold">
+        <FolderGit2 className="size-5 text-fd-primary" /> งานของฉันบน GitHub
+      </h2>
+      {repo ? (
+        <a className="break-all font-mono text-sm text-fd-primary underline" href={repo} target="_blank" rel="noopener noreferrer">
+          {repo.replace("https://", "")}
+        </a>
+      ) : (
+        <p>ยังไม่ได้ส่งลิงก์ repo · สร้าง repo แล้ว push ครั้งแรก จากนั้นส่งลิงก์ให้พี่เลี้ยงตามดูโค้ดได้ทุกวัน</p>
+      )}
+      {reviewed && (
+        <p className="flex flex-wrap items-center gap-2 text-sm">
+          ล่าสุด: {roundLabel(reviewed.round)} <span className="font-mono">{reviewed.ref}</span> <VerdictBadge verdict={reviewed.verdict} />
+        </p>
+      )}
+      {reviewed?.verdict === "revise" && reviewed.review && <p className="line-clamp-2 rounded-lg bg-fd-muted px-3 py-2 text-sm">พี่เลี้ยง: {reviewed.review}</p>}
+      {!data.locked && repo && next && (
+        <p className="text-sm text-fd-muted-foreground">
+          ต่อไป: {next.label} · วันที่ {next.day} ({next.what})
+        </p>
+      )}
+      <Link href={SUBMIT_LINK} className="inline-flex min-h-11 w-fit items-center gap-1.5 rounded-xl bg-fd-primary px-4 text-sm font-semibold text-fd-primary-foreground hover:opacity-90">
+        {repo ? "ส่งงาน / ดูผลตรวจ" : "ส่งลิงก์ repo"} <ArrowRight className="size-4" />
+      </Link>
     </section>
   );
 }
