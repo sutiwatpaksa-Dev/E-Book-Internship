@@ -118,6 +118,33 @@ export const cohortAssignments = pgTable(
   (t) => [primaryKey({ columns: [t.cohortId, t.assignmentId] })],
 );
 
+// การส่งงาน: โค้ดอยู่บน GitHub ของน้อง ที่นี่เก็บแค่ลิงก์ repo + tag/commit ที่ส่ง (ไม่เก็บไฟล์)
+// ส่งซ้ำ = แถวใหม่ (ประวัติไม่หาย พี่เลี้ยงเทียบรอบก่อนได้) · หน้าเว็บโชว์แถวล่าสุดของแต่ละรอบ
+// round = review-1 | review-2 | final · verdict = pass | revise (กฎอยู่ใน src/lib/submission.ts)
+export const submissions = pgTable(
+  "submissions",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    assignmentId: integer("assignment_id")
+      .notNull()
+      .references(() => assignments.id, { onDelete: "restrict" }),
+    round: text("round").notNull(),
+    repoUrl: text("repo_url").notNull(),
+    ref: text("ref").notNull(),
+    note: text("note").notNull().default(""),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    // ผลตรวจ: ว่าง = รอพี่เลี้ยงตรวจ
+    verdict: text("verdict"),
+    review: text("review"),
+    reviewedBy: integer("reviewed_by").references(() => users.id, { onDelete: "set null" }),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  },
+  (t) => [index("submissions_user_idx").on(t.userId, t.createdAt), index("submissions_waiting_idx").on(t.reviewedAt)],
+);
+
 // นับครั้งที่ login ผิดต่อ IP เก็บใน DB เพราะบน Vercel แต่ละคำขออาจวิ่งไปคนละเครื่อง ตัวนับในหน่วยความจำจึงใช้ไม่ได้
 export const ipFailures = pgTable("ip_failures", {
   ip: text("ip").primaryKey(),

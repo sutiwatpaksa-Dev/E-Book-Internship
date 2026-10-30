@@ -161,3 +161,22 @@ export type AnnouncementInput = { body: string; audience: Audience; startsAt?: s
 export type CardOverride = { slug: string; hidden: boolean; title: string | null; minutes: number | null; topic: string | null };
 
 export type Notification = { id: number; kind: string; title: string; link: string | null; readAt: string | null; createdAt: string };
+
+// งานที่น้องส่ง (ลิงก์ repo + tag/commit บน GitHub) · verdict ว่าง = รอพี่เลี้ยงตรวจ
+export type Submission = {
+  id: number;
+  assignment: string;
+  assignmentName: string;
+  round: string;
+  repoUrl: string;
+  ref: string;
+  note: string;
+  createdAt: string;
+  verdict: "pass" | "revise" | null;
+  review: string | null;
+  reviewedAt: string | null;
+  reviewer: string | null;
+};
+export type MySubmissions = { assignments: { slug: string; name: string }[]; items: Submission[]; locked: boolean };
+export type AdminSubmission = Submission & { userId: number; username: string; nickname: string | null; cohortId: number | null };
+export type SubmitInput = { assignment: string; round: string; repoUrl: string; ref: string; note: string };

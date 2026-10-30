@@ -10,6 +10,7 @@ import { socialOf } from "@/lib/contact";
 import { eduSummary, SCHOOL_TYPE_LABEL } from "@/lib/education";
 import { KIND_LABEL, timeAgo } from "@/lib/thread-labels";
 import type { AdminNav } from "./admin-panel";
+import { InternSubmissions } from "./admin-submissions";
 import { Button } from "./button";
 import { ConfirmBox } from "./confirm-box";
 import { StatusBadge } from "./status-badge";
@@ -168,6 +169,8 @@ export function AdminInternDetail({ admin, nav, userId }: { admin: AdminState; n
           })}
         </div>
       </section>
+
+      <InternSubmissions userId={u.id} />
 
       <section aria-labelledby="threads-title" className="flex flex-col gap-2">
         <h2 id="threads-title" className="text-base font-semibold">

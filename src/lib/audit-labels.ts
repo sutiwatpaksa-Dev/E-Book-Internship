@@ -12,6 +12,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "assignment.update": "แก้โจทย์",
   "assignment.pdf": "อัปโหลด PDF โจทย์",
   "cohort.assignments": "ตั้งโจทย์ของรุ่น",
+  "submission.review": "ตรวจงานที่ส่ง",
   "thread.status": "เปลี่ยนสถานะเรื่อง",
   "card.create": "สร้างการ์ด",
   "card.update": "แก้การ์ด",
@@ -40,7 +41,7 @@ export const AUDIT_LABEL: Record<string, string> = {
 export const AUDIT_GROUPS = [
   { id: "user", label: "บัญชี", prefixes: ["user", "cohort"] },
   { id: "content", label: "เนื้อหา", prefixes: ["card", "note", "announcement"] },
-  { id: "thread", label: "แชท", prefixes: ["thread"] },
+  { id: "thread", label: "แชทและงานที่ส่ง", prefixes: ["thread", "submission"] },
   { id: "file", label: "ไฟล์", prefixes: ["file", "assignment"] },
 ] as const;
 

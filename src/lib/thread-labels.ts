@@ -17,9 +17,9 @@ export const STATUS_LABEL: Record<ThreadStatus, string> = {
   declined: "ไม่ทำ",
 };
 
-const ORANGE = "bg-orange-500/15 text-orange-800 dark:text-orange-300";
-const GREEN = "bg-green-600/15 text-green-800 dark:text-green-300";
-const BLUE = "bg-fd-primary/10 text-fd-primary";
+export const ORANGE = "bg-orange-500/15 text-orange-800 dark:text-orange-300";
+export const GREEN = "bg-green-600/15 text-green-800 dark:text-green-300";
+export const BLUE = "bg-fd-primary/10 text-fd-primary";
 const GRAY = "bg-fd-muted text-fd-muted-foreground";
 export const STATUS_TONE: Record<ThreadStatus, string> = {
   waiting: ORANGE,

@@ -3,6 +3,7 @@ import { requireRole, type AuthVars } from "../middleware/require-role";
 import { adminCohortRoutes } from "./admin-cohort.routes";
 import { adminAssignmentRoutes } from "./admin-assignment.routes";
 import { adminContentRoutes } from "./admin-content.routes";
+import { adminSubmissionRoutes } from "./admin-submission.routes";
 import { auditService } from "../services/audit.service";
 import { progressService } from "../services/progress.service";
 import { threadService } from "../services/thread.service";
@@ -17,6 +18,7 @@ adminRoutes.use("*", requireRole("dev"));
 adminRoutes.route("/content", adminContentRoutes);
 adminRoutes.route("/cohorts", adminCohortRoutes);
 adminRoutes.route("/assignments", adminAssignmentRoutes);
+adminRoutes.route("/submissions", adminSubmissionRoutes);
 
 adminRoutes.get("/users", async (c) => c.json(await userService.list()));
 // หน้า admin ใช้ซ่อนปุ่มที่ทำไม่ได้ (server ตรวจซ้ำทุกคำสั่งอยู่แล้ว ซ่อนปุ่มไม่ใช่ตัวกันสิทธิ์)

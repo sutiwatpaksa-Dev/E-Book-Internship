@@ -1,6 +1,6 @@
 "use client";
 
-import { FilePlus2, FileText, GraduationCap, History, Inbox, Layers, LayoutDashboard, Megaphone, MessageCircle, NotebookPen, Users, type LucideIcon } from "lucide-react";
+import { FilePlus2, FileText, FolderGit2, GraduationCap, History, Inbox, Layers, LayoutDashboard, Megaphone, MessageCircle, NotebookPen, Users, type LucideIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { useAdmin } from "@/hooks/use-admin";
@@ -15,13 +15,15 @@ import { AdminCohorts } from "./admin-cohorts";
 import { AdminInternDetail } from "./admin-intern-detail";
 import { AdminOverview } from "./admin-overview";
 import { AdminRequests } from "./admin-requests";
+import { AdminSubmissions } from "./admin-submissions";
+import { submissionsApi } from "@/api/submissions.api";
 import { AdminUsers } from "./admin-users";
 import { Button } from "./button";
 import { ChatPanel } from "./chat-panel";
 import { ErrorText } from "./error-text";
 import { MobileDrawer } from "./mobile-drawer";
 
-type TabId = "overview" | "questions" | "requests" | "cards" | "notes" | "builtin" | "announcements" | "cohorts" | "users" | "files" | "audit";
+type TabId = "overview" | "questions" | "submissions" | "requests" | "cards" | "notes" | "builtin" | "announcements" | "cohorts" | "users" | "files" | "audit";
 type Tab = { id: TabId; label: string; icon: LucideIcon };
 // เมนูแบ่ง 3 กลุ่มตามความถี่ที่ใช้: งานประจำวัน (เปิดทุกวัน) → เนื้อหา (เขียน/ปรับคู่มือ) → ระบบ (นานๆ ครั้ง)
 const GROUPS: { label: string; tabs: Tab[] }[] = [
@@ -30,6 +32,7 @@ const GROUPS: { label: string; tabs: Tab[] }[] = [
     tabs: [
       { id: "overview", label: "ภาพรวม", icon: LayoutDashboard },
       { id: "questions", label: "ข้อความจากน้อง", icon: MessageCircle },
+      { id: "submissions", label: "งานที่ส่ง", icon: FolderGit2 },
       { id: "requests", label: "คำขอเนื้อหา", icon: Inbox },
     ],
   },
@@ -103,6 +106,16 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
   const go = (v: View, replace = false) => window.history[replace ? "replaceState" : "pushState"](null, "", viewHref(v));
   const active = TABS.find((t) => t.id === tab)!;
   const waiting = useUnread();
+  // จำนวนงานรอตรวจบนเมนู · โหลดใหม่หลังบันทึกผลตรวจ
+  const [waitingSubs, setWaitingSubs] = useState(0);
+  const countSubs = () =>
+    submissionsApi
+      .all()
+      .then((r) => setWaitingSubs(r.waiting))
+      .catch(() => {});
+  useEffect(() => {
+    countSubs();
+  }, []);
   const intern = view.intern ? admin.users.find((u) => u.id === view.intern) : undefined;
 
   // แชทเลือกเรื่องเอง: จด id ลง URL แบบ replace (รีเฟรช/แชร์ลิงก์แล้วเปิดเรื่องเดิม แต่ไม่เพิ่มประวัติทุกคลิก)
@@ -140,7 +153,7 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
     nav.goTab(id);
   };
   const newRequests = admin.threads.filter((t) => t.kind === "content_request" && t.status === "new").length;
-  const badge = (id: TabId) => (id === "questions" ? waiting : id === "requests" ? newRequests : 0);
+  const badge = (id: TabId) => (id === "questions" ? waiting : id === "submissions" ? waitingSubs : id === "requests" ? newRequests : 0);
   // เมนูชุดเดียว วางได้ 2 ที่: คอลัมน์ซ้ายบนจอกว้าง และลิ้นชักบนมือถือ
   const menuGroups = (
     <>
@@ -206,6 +219,7 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
           (view.intern ? <AdminInternDetail admin={admin} nav={nav} userId={view.intern} /> : <AdminOverview admin={admin} content={content} nav={nav} titles={titles} />)}
         {/* key: สั่งเปิดเรื่องใหม่จากข้างนอก ให้แชทเริ่มใหม่ที่เรื่องนั้น (ดู chatKey ข้างบน) */}
         {tab === "questions" && <ChatPanel key={chatKey} side="dev" titles={titles} initialId={view.thread ?? null} onSelect={onSelectThread} />}
+        {tab === "submissions" && <AdminSubmissions admin={admin} onChange={countSubs} />}
         {tab === "requests" && <AdminRequests admin={admin} nav={nav} />}
         {CONTENT_TABS.includes(tab) && content.loading ? (
           <p className="text-sm text-fd-muted-foreground">กำลังโหลด…</p>
