@@ -6,7 +6,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { submissionsApi } from "@/api/submissions.api";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "@/hooks/use-toast";
-import { commitsUrl, isReviewable, latestOnly, refProblem, repoProblem, roundLabel, START_ROUND, SUBMISSION_ROUNDS, treeUrl } from "@/lib/submission";
+import { commitsUrl, deployProblem, isReviewable, latestOnly, refProblem, repoProblem, roundLabel, START_ROUND, SUBMISSION_ROUNDS, takesDeploy, treeUrl } from "@/lib/submission";
 import type { MySubmissions, Submission } from "@/types";
 import { Button } from "./button";
 import { ErrorText } from "./error-text";
@@ -225,6 +225,12 @@ function SentLine({ s }: { s: Submission }) {
         </a>{" "}
         เมื่อ {fmt(s.createdAt)}
       </span>
+      {s.deployUrl && (
+        <a className="inline-flex items-center gap-1 break-all text-fd-primary underline" href={s.deployUrl} target="_blank" rel="noopener noreferrer">
+          เว็บที่ deploy: {s.deployUrl.replace("https://", "")}
+          <ExternalLink className="size-3 shrink-0" />
+        </a>
+      )}
       {s.note && <p className="whitespace-pre-wrap">ถึงพี่เลี้ยง: {s.note}</p>}
       {s.reviewedAt && (
         <p className="whitespace-pre-wrap rounded-lg bg-fd-muted px-3 py-2">
@@ -239,6 +245,7 @@ function SubmitForm({ assignment, defaultRound, lastRepo, onSent }: { assignment
   const [round, setRound] = useState(defaultRound);
   const [repoUrl, setRepoUrl] = useState(lastRepo);
   const [ref, setRef] = useState("");
+  const [deployUrl, setDeployUrl] = useState("");
   const [note, setNote] = useState("");
   const [touched, setTouched] = useState(false);
   const [sending, setSending] = useState(false);
@@ -248,17 +255,20 @@ function SubmitForm({ assignment, defaultRound, lastRepo, onSent }: { assignment
   // บอกผิดใต้ช่องเมื่อพิมพ์แล้ว (ช่องว่างตอนเพิ่งเปิดหน้ายังไม่ขึ้นแดง)
   const repoErr = touched || repoUrl ? repoProblem(repoUrl) : null;
   const refErr = touched || ref ? refProblem(ref) : null;
+  const showDeploy = takesDeploy(round);
+  const deployErr = showDeploy && deployUrl ? deployProblem(deployUrl) : null;
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setTouched(true);
-    if (repoProblem(repoUrl) || refProblem(ref)) return;
+    if (repoProblem(repoUrl) || refProblem(ref) || (showDeploy && deployProblem(deployUrl))) return;
     setSending(true);
     setError(null);
     try {
-      await submissionsApi.submit({ assignment, round, repoUrl, ref, note });
+      await submissionsApi.submit({ assignment, round, repoUrl, ref, deployUrl: showDeploy ? deployUrl : "", note });
       toast.success("ส่งงานแล้ว พี่เลี้ยงได้รับแจ้งเตือน");
       setRef("");
+      setDeployUrl("");
       setNote("");
       setTouched(false);
       onSent();
@@ -298,6 +308,14 @@ function SubmitForm({ assignment, defaultRound, lastRepo, onSent }: { assignment
         <Input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="review-1" autoCapitalize="none" spellCheck={false} maxLength={100} aria-invalid={!!refErr} />
       </Field>
       {refErr && <p role="alert" className="-mt-2 text-sm text-red-700 dark:text-red-400">{refErr}</p>}
+      {showDeploy && (
+        <>
+          <Field label="ลิงก์เว็บที่ deploy แล้ว (ไม่บังคับ)" hint="เว็บที่เปิดใช้ได้จริงบน Vercel หรือที่อื่น เช่น https://starter-somchai.vercel.app · ต้องเปิดได้โดยไม่ต้อง login">
+            <Input value={deployUrl} onChange={(e) => setDeployUrl(e.target.value)} placeholder="https://starter-somchai.vercel.app" inputMode="url" autoCapitalize="none" spellCheck={false} maxLength={300} aria-invalid={!!deployErr} />
+          </Field>
+          {deployErr && <p role="alert" className="-mt-2 text-sm text-red-700 dark:text-red-400">{deployErr}</p>}
+        </>
+      )}
       <Field label="ข้อความถึงพี่เลี้ยง (ไม่บังคับ)" hint="รอบนี้ทำอะไรเสร็จ ยังค้างอะไร หรืออยากให้ดูตรงไหนเป็นพิเศษ">
         <textarea className={`${inputClass} min-h-20`} value={note} onChange={(e) => setNote(e.target.value)} maxLength={1000} />
       </Field>

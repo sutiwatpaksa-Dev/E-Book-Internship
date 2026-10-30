@@ -152,6 +152,12 @@ function SubmissionCard({ s, who, history = 1, onReviewed }: { s: AdminSubmissio
         {history > 1 && ` · ส่งรอบนี้ ${history} ครั้ง`}
       </span>
       <span className="break-all text-xs text-fd-muted-foreground">{s.repoUrl}</span>
+      {s.deployUrl && (
+        <a className="inline-flex items-center gap-1 break-all text-fd-primary underline" href={s.deployUrl} target="_blank" rel="noopener noreferrer">
+          เว็บที่ deploy: {s.deployUrl.replace("https://", "")}
+          <ExternalLink className="size-3 shrink-0" />
+        </a>
+      )}
       {s.note && <p className="whitespace-pre-wrap">น้อง: {s.note}</p>}
       {s.reviewedAt && (
         <p className="whitespace-pre-wrap rounded-lg bg-fd-muted px-3 py-2">

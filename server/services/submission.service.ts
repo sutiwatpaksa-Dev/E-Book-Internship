@@ -31,7 +31,7 @@ export const submissionService = {
     const allowed = await assignmentService.listFor(user);
     if (!allowed.some((a) => a.slug === input.assignment)) throw new Error("ASSIGNMENT_NOT_FOUND");
     const a = (await assignmentRepository.findBySlug(input.assignment))!;
-    const s = await submissionRepository.create({ userId: user.id, assignmentId: a.id, round: input.round, repoUrl: input.repoUrl, ref: input.ref, note: input.note });
+    const s = await submissionRepository.create({ userId: user.id, assignmentId: a.id, round: input.round, repoUrl: input.repoUrl, ref: input.ref, deployUrl: input.deployUrl, note: input.note });
     const who = (await userRepository.findById(user.id))?.username ?? "น้อง";
     const title = input.round === START_ROUND ? `${who} ส่งลิงก์ repo แล้ว ตามดูโค้ดได้` : `${who} ส่งงาน ${roundLabel(input.round)} (${input.ref})`;
     await notificationService.toRoles(["dev"], { kind: "submission", title, link: DEV_LINK }, user.id);

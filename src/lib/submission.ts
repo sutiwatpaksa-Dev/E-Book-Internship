@@ -35,6 +35,28 @@ export function repoProblem(v: string) {
   return normalizeRepo(v) ? null : "ลิงก์ต้องเป็น repo บน GitHub เช่น https://github.com/somchai/starter (เปิด repo แล้วคัดลอกจากแถบที่อยู่)";
 }
 
+// ลิงก์เว็บที่ deploy แล้ว (Vercel หรือที่อื่น) ไม่บังคับ ส่งได้เฉพาะรอบที่ 2 กับส่งงานจริง
+// ต้องเป็น https และชื่อเว็บจริง (ไม่รับ localhost หรือเลข IP เพราะพี่เลี้ยงเปิดจากเครื่องตัวเองไม่ได้) · เก็บแบบไม่มี / ท้าย
+export const DEPLOY_ROUNDS: readonly string[] = ["review-2", "final"];
+export const takesDeploy = (round: string) => DEPLOY_ROUNDS.includes(round);
+export function normalizeDeploy(v: string): string | null {
+  const s = v.trim();
+  if (!/^https:\/\//i.test(s) || /\s/.test(s)) return null;
+  try {
+    const u = new URL(s);
+    const host = u.hostname;
+    if (!host.includes(".") || host === "localhost" || host.endsWith(".local") || /^[\d.]+$/.test(host) || host.includes(":") || u.username || u.password) return null;
+    return `${u.origin}${u.pathname}${u.search}`.replace(/\/$/, "");
+  } catch {
+    return null;
+  }
+}
+export function deployProblem(v: string) {
+  if (!v.trim()) return null;
+  if (v.trim().length > 300) return "ลิงก์ยาวเกินไป";
+  return normalizeDeploy(v) ? null : "ลิงก์เว็บต้องขึ้นต้นด้วย https:// และเป็นเว็บจริง เช่น https://starter-somchai.vercel.app (ไม่ใช่ localhost)";
+}
+
 // จุดที่ส่ง: ชื่อ tag (เช่น review-1, review-1-fix1) หรือ commit SHA 7–40 ตัว
 // ตัวอังกฤษ ตัวเลข . _ - / เท่านั้น ห้ามขึ้นต้นด้วย - หรือ . ห้ามมี .. (กติกาชื่อ ref ของ Git) ยาวไม่เกิน 100
 export function refProblem(v: string) {

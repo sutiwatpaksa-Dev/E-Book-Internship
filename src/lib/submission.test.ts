@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { submitSchema } from "../../server/validators/submission.validator";
-import { normalizeRepo, refProblem, repoOf, repoProblem, treeUrl, waitingOf } from "./submission";
+import { deployProblem, normalizeDeploy, normalizeRepo, refProblem, repoOf, repoProblem, takesDeploy, treeUrl, waitingOf } from "./submission";
 
 describe("ลิงก์ repo", () => {
   test("แบบที่คนคัดลอกมาจริง จัดเป็นแบบเดียว", () => {
@@ -72,5 +72,27 @@ describe("ลงทะเบียน repo วันที่ 1", () => {
     ];
     expect(repoOf(rows, 1)).toBe("https://github.com/a/new");
     expect(repoOf(rows, 2)).toBeNull();
+  });
+});
+
+describe("ลิงก์เว็บที่ deploy แล้ว", () => {
+  test("https เว็บจริงผ่าน และเก็บแบบไม่มี / ท้าย", () => {
+    expect(normalizeDeploy("https://starter-somchai.vercel.app/")).toBe("https://starter-somchai.vercel.app");
+    expect(normalizeDeploy(" https://shop.example.co.th/menu ")).toBe("https://shop.example.co.th/menu");
+  });
+  test("http, localhost, IP, มีช่องว่าง = ผิด", () => {
+    for (const v of ["http://a.vercel.app", "https://localhost:3000", "https://127.0.0.1", "https://a.vercel.app/x y", "https://user:pw@a.vercel.app", "a.vercel.app", "javascript:alert(1)"]) {
+      expect(normalizeDeploy(v)).toBeNull();
+    }
+  });
+  test("ว่างได้ (ไม่บังคับ) · ส่งได้เฉพาะรอบ 2 กับ final", () => {
+    expect(deployProblem("")).toBeNull();
+    expect(takesDeploy("review-2")).toBe(true);
+    expect(takesDeploy("review-1")).toBe(false);
+    const base = { assignment: "starter", repoUrl: "https://github.com/a/b", ref: "review-1", note: "" };
+    expect(submitSchema.safeParse({ ...base, round: "review-1", deployUrl: "https://a.vercel.app" }).success).toBe(false);
+    const ok = submitSchema.parse({ ...base, round: "final", ref: "final", deployUrl: "https://a.vercel.app/" });
+    expect(ok.deployUrl).toBe("https://a.vercel.app");
+    expect(submitSchema.parse({ ...base, round: "final", ref: "final" }).deployUrl).toBeNull();
   });
 });

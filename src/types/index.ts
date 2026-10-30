@@ -170,6 +170,7 @@ export type Submission = {
   round: string;
   repoUrl: string;
   ref: string;
+  deployUrl: string | null;
   note: string;
   createdAt: string;
   verdict: "pass" | "revise" | null;
@@ -179,4 +180,4 @@ export type Submission = {
 };
 export type MySubmissions = { assignments: { slug: string; name: string }[]; items: Submission[]; locked: boolean };
 export type AdminSubmission = Submission & { userId: number; username: string; nickname: string | null; cohortId: number | null };
-export type SubmitInput = { assignment: string; round: string; repoUrl: string; ref: string; note: string };
+export type SubmitInput = { assignment: string; round: string; repoUrl: string; ref: string; deployUrl?: string; note: string };

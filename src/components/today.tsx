@@ -313,6 +313,11 @@ function MyWork() {
           ล่าสุด: {roundLabel(reviewed.round)} <span className="font-mono">{reviewed.ref}</span> <VerdictBadge verdict={reviewed.verdict} />
         </p>
       )}
+      {items.find((s) => s.deployUrl)?.deployUrl && (
+        <a className="break-all text-sm text-fd-primary underline" href={items.find((s) => s.deployUrl)!.deployUrl!} target="_blank" rel="noopener noreferrer">
+          เว็บที่ deploy: {items.find((s) => s.deployUrl)!.deployUrl!.replace("https://", "")}
+        </a>
+      )}
       {reviewed?.verdict === "revise" && reviewed.review && <p className="line-clamp-2 rounded-lg bg-fd-muted px-3 py-2 text-sm">พี่เลี้ยง: {reviewed.review}</p>}
       {!data.locked && repo && next && (
         <p className="text-sm text-fd-muted-foreground">

@@ -134,6 +134,7 @@ export const submissions = pgTable(
     round: text("round").notNull(),
     repoUrl: text("repo_url").notNull(),
     ref: text("ref").notNull(),
+    deployUrl: text("deploy_url"),
     note: text("note").notNull().default(""),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     // ผลตรวจ: ว่าง = รอพี่เลี้ยงตรวจ

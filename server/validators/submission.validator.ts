@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { normalizeRepo, refProblem, repoProblem, ROUND_IDS, START_REF, START_ROUND, VERDICTS } from "../../src/lib/submission";
+import { deployProblem, normalizeDeploy, normalizeRepo, refProblem, repoProblem, ROUND_IDS, START_REF, takesDeploy, START_ROUND, VERDICTS } from "../../src/lib/submission";
 
 // กฎของช่องอยู่ใน src/lib/submission.ts ใช้ร่วมกับฟอร์มของน้อง · ที่นี่คือด่านจริง (ยิง API ตรงก็ต้องผ่านกฎเดียวกัน)
 const check = (ctx: z.RefinementCtx, path: string, problem: string | null) => {
@@ -13,14 +13,17 @@ export const submitSchema = z
     repoUrl: z.string({ error: "ใส่ลิงก์ repo บน GitHub" }).max(300, { error: "ลิงก์ยาวเกินไป" }),
     // ลงทะเบียน repo (วันที่ 1) ไม่ต้องมี tag
     ref: z.string({ error: "ใส่ชื่อ tag หรือ commit ที่ส่ง" }).default(""),
+    // ลิงก์เว็บที่ deploy แล้ว ไม่บังคับ
+    deployUrl: z.string().default(""),
     note: z.string().trim().max(1000, { error: "ข้อความถึงพี่เลี้ยงไม่เกิน 1,000 ตัว" }).default(""),
   })
   .superRefine((v, ctx) => {
     check(ctx, "repoUrl", repoProblem(v.repoUrl));
     if (v.round !== START_ROUND) check(ctx, "ref", refProblem(v.ref));
+    check(ctx, "deployUrl", v.deployUrl.trim() && !takesDeploy(v.round) ? "ส่งลิงก์เว็บได้ตั้งแต่รอบตรวจที่ 2" : deployProblem(v.deployUrl));
   })
   // เก็บลิงก์แบบเดียวกันเสมอ (ไม่มี .git, www, / ท้าย) หน้าเว็บจะได้เทียบว่า "repo เดิม" ได้ และพี่เลี้ยงกดเปิดได้ทุกแถว
-  .transform((v) => ({ ...v, repoUrl: normalizeRepo(v.repoUrl)!, ref: v.round === START_ROUND ? START_REF : v.ref.trim() }));
+  .transform((v) => ({ ...v, repoUrl: normalizeRepo(v.repoUrl)!, ref: v.round === START_ROUND ? START_REF : v.ref.trim(), deployUrl: normalizeDeploy(v.deployUrl) }));
 
 export const reviewSchema = z
   .object({

@@ -15,6 +15,7 @@ const row = {
   round: submissions.round,
   repoUrl: submissions.repoUrl,
   ref: submissions.ref,
+  deployUrl: submissions.deployUrl,
   note: submissions.note,
   createdAt: submissions.createdAt,
   verdict: submissions.verdict,
