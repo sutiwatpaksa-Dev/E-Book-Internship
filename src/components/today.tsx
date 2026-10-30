@@ -223,7 +223,7 @@ function StarterTask({ step }: { step: LearnStep }) {
     <section aria-labelledby="task-title" className={`${box} flex flex-col gap-3 lg:col-span-7`}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 id="task-title" className="font-semibold">
-          โจทย์ STARTER ของขั้น {step.name}
+          โจทย์ฝึกงานของขั้น {step.name}
         </h2>
         <span className="text-xs text-fd-muted-foreground">ไม่มีเฉลย มีคำใบ้ทีละระดับ</span>
       </div>
@@ -234,7 +234,7 @@ function StarterTask({ step }: { step: LearnStep }) {
         </Link>
         <Link href="/starter" className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-fd-border px-4 text-sm font-semibold hover:bg-fd-accent">
           <FileText className="size-4" />
-          Requirement STARTER
+          Requirement ของโจทย์
         </Link>
       </div>
     </section>

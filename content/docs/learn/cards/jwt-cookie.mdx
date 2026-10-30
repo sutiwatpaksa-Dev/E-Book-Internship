@@ -227,7 +227,7 @@ bun -e "console.log(atob('eyJzdWIiOiIxIiwiZXhwIjoxNzkzMDAwMTkzfQ'))"
 
 ## ปรับไปใช้จริง
 
-**ในงาน STARTER:** วันที่ 4 ทำ `POST /api/admin/login` และ `POST /api/admin/logout` Requirement กำหนดว่า JWT อยู่ใน cookie httpOnly + `sameSite=lax` **ห้ามเก็บใน localStorage**, session หมดอายุใน 1 วัน (`maxAge` ข้างบน) และรหัสผิดต้องขึ้น "อีเมลหรือรหัสผ่านไม่ถูกต้อง" ห้ามบอกว่าผิดช่องไหน
+**ในโจทย์ฝึกงาน** (ตัวอย่างจาก STARTER)**:** วันที่ 4 ทำ `POST /api/admin/login` และ `POST /api/admin/logout` Requirement กำหนดว่า JWT อยู่ใน cookie httpOnly + `sameSite=lax` **ห้ามเก็บใน localStorage**, session หมดอายุใน 1 วัน (`maxAge` ข้างบน) และรหัสผิดต้องขึ้น "อีเมลหรือรหัสผ่านไม่ถูกต้อง" ห้ามบอกว่าผิดช่องไหน
 
 **เว็บคู่มือนี้:** ใช้วิธีเดียวกัน ดู [server/lib/session.ts](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/server/lib/session.ts) (บัตรอายุ 12 ชั่วโมง) และ [server/routes/auth.routes.ts](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/server/routes/auth.routes.ts) เว็บนี้มี cookie ตัวที่สอง `bt_role` ที่ JavaScript อ่านได้ ไว้บอกหน้าเว็บแค่ว่าจะโชว์ปุ่มไหน ไม่ได้ใช้ตัดสินสิทธิ์ (เว็บนี้ตอบ error แบบสั้น `{ error: "..." }` เพราะทำก่อนมี Requirement)
 

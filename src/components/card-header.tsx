@@ -32,7 +32,7 @@ export function CardHeader({ card }: { card: LearnCard }) {
       </p>
       {card.starter && (
         <p className="inline-flex items-center gap-1">
-          <FolderKanban className="size-3.5" aria-hidden /> ใช้ในงาน STARTER: {card.starter}
+          <FolderKanban className="size-3.5" aria-hidden /> ใช้ในโจทย์ฝึกงาน: {card.starter}
         </p>
       )}
       {card.needs && (

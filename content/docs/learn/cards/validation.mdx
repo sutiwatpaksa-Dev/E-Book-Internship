@@ -102,7 +102,7 @@ curl -i --json '{"title":" ฮอบบิท 2 "}' http://localhost:3000/api/bo
 
 ## ปรับไปใช้จริง
 
-**ในงาน STARTER:** Requirement บอกว่า "ทุก request body/query ผ่าน Zod ที่ backend เสมอ (validate frontend อย่างเดียวไม่นับ)" และ Zod ได้ 25 คะแนนในหมวด Backend/API เก็บ schema ไว้ใน `server/src/validators/` ตามโครงโฟลเดอร์ และ `pages.content` ที่เป็น [jsonb](/glossary#jsonb) ก็ต้องมี schema คุมหน้าตาทุกครั้งที่บันทึก
+**ในโจทย์ฝึกงาน** (ตัวอย่างจาก STARTER)**:** Requirement บอกว่า "ทุก request body/query ผ่าน Zod ที่ backend เสมอ (validate frontend อย่างเดียวไม่นับ)" และ Zod ได้ 25 คะแนนในหมวด Backend/API เก็บ schema ไว้ใน `server/src/validators/` ตามโครงโฟลเดอร์ และ `pages.content` ที่เป็น [jsonb](/glossary#jsonb) ก็ต้องมี schema คุมหน้าตาทุกครั้งที่บันทึก
 
 **เว็บคู่มือนี้:** ดู [server/validators/progress.validator.ts บน GitHub](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/server/validators/progress.validator.ts) link ถูกบังคับด้วย regex ให้หน้าตาเป็น `/ชื่อ-บท` เท่านั้น ส่วน "มีบทนี้จริงไหม" ไปเช็กต่อใน service ตรงกับทริคข้อ 3
 

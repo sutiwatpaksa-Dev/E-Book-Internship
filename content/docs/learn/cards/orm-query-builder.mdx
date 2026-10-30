@@ -12,7 +12,7 @@ title: "ORM กับ Query Builder"
 | [Query Builder](/glossary#query-builder) | เรียกฟังก์ชันหน้าตาคล้าย SQL แล้วมันประกอบ SQL ให้ | กรอกแบบฟอร์มที่มีช่องให้เติม |
 | [ORM](/glossary#orm) | มองตารางเป็น object เรียกต่อกันได้ | บอกเลขาว่าอยากได้อะไร เลขาไปจัดการเอง |
 
-ในงาน Todo ที่ผ่านมา **Prisma คือ ORM** ส่วนงาน STARTER ใช้ **Drizzle** ซึ่งอยู่ระหว่าง Query Builder กับ ORM
+ในงาน Todo ที่ผ่านมา **Prisma คือ ORM** ส่วนโจทย์ฝึกงานใช้ **Drizzle** ซึ่งอยู่ระหว่าง Query Builder กับ ORM
 
 ไม่ว่าเขียนระดับไหน สุดท้ายสิ่งที่วิ่งไปถึงฐานข้อมูลคือข้อความ SQL เสมอ ส่วนที่ต่างคือ **ใครเป็นคนเขียน SQL นั้น**:
 
@@ -53,7 +53,7 @@ await prisma.book.findUnique({ where: { id: 5 } });
 
 ทั้งสามแบบสุดท้ายส่ง SQL หน้าตาเดียวกันไปที่ฐานข้อมูล: `SELECT ... FROM books WHERE id = 5`
 
-| เทียบ | Prisma (งาน Todo) | Drizzle (งาน STARTER) |
+| เทียบ | Prisma (งาน Todo) | Drizzle (โจทย์ฝึกงาน) |
 |---|---|---|
 | ประกาศตาราง | ไฟล์ `schema.prisma` ภาษาของ Prisma เอง | ไฟล์ `schema.ts` เป็น TypeScript ธรรมดา |
 | ก่อนใช้งาน | ต้องรัน `prisma generate` สร้างโค้ด | ไม่ต้องสร้างโค้ด type มาจาก schema ทันที |
@@ -67,7 +67,7 @@ await prisma.book.findUnique({ where: { id: 5 } });
 
 ## ปรับไปใช้จริง
 
-**ในงาน STARTER:** Requirement เขียนไว้ว่า "จาก Prisma → Drizzle ORM (ได้เห็นว่า ORM คนละตัวคิดต่างกันยังไง)" ตอน review วันที่ 5 ให้เตรียมตอบได้ว่า schema ของ Drizzle ต่างจาก Prisma ตรงไหน (ใช้ตารางเทียบข้างบนเป็นจุดเริ่ม)
+**ในโจทย์ฝึกงาน** (ตัวอย่างจาก STARTER)**:** Requirement เขียนไว้ว่า "จาก Prisma → Drizzle ORM (ได้เห็นว่า ORM คนละตัวคิดต่างกันยังไง)" ตอน review วันที่ 5 ให้เตรียมตอบได้ว่า schema ของ Drizzle ต่างจาก Prisma ตรงไหน (ใช้ตารางเทียบข้างบนเป็นจุดเริ่ม)
 
 ลองคิด: ถ้าทีมหนึ่งใช้ Prisma อีกทีมใช้ Drizzle คนที่ "รู้ SQL" ย้ายทีมได้ง่ายกว่าคนที่ "รู้แค่เครื่องมือ" เพราะอะไร
 

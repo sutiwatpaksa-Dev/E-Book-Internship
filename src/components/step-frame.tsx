@@ -63,7 +63,7 @@ export function StepPager({ step }: { step: LearnStep }) {
   );
 }
 
-// กล่องโจทย์ STARTER ในหน้าขั้น: เด่นกว่าเนื้อหาอื่น เพราะเป็นงานที่ต้องลงมือจริง
+// กล่องโจทย์ฝึกงานในหน้าขั้น: เด่นกว่าเนื้อหาอื่น เพราะเป็นงานที่ต้องลงมือจริง
 export function Task({ children }: { children: ReactNode }) {
   return (
     <div className="my-4 rounded-2xl border-2 border-fd-primary/40 bg-fd-primary/5 px-5 py-1">

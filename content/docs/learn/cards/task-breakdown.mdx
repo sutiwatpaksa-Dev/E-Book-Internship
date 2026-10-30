@@ -60,7 +60,7 @@ API (repository → service → route)
 
 ## ปรับไปใช้จริง
 
-**ในงาน STARTER:** Timeline ([Requirement หน้า 11](/api/files/requirement.pdf?sec=timeline), ต้อง login) บอกงานรายวัน คอลัมน์ "งานต้องเสร็จ" ของมันคือบรรทัด "เสร็จเมื่อ" ระดับวัน เช่น วันที่ 4 "เรียก admin API โดยไม่ login แล้วได้ 401" และบอกลำดับไว้ว่า ฐานข้อมูล → API → หน้าบ้าน → หลังบ้าน **เพราะน้องถนัด backend จาก Todo มาแล้ว** Checklist (หน้า 14–15) แตกแต่ละวันเป็นข้อย่อยให้แล้ว งานของเราคือแตกข้อย่อยที่ยังใหญ่เกินครึ่งวันต่อ เช่น "Admin API ครบ: dashboard/settings/pages/services/categories/messages" เป็นชิ้นละกลุ่ม Timeline กับ Checklist วางวันที่ 5–6 ไม่ตรงกัน ให้ถามพี่เลี้ยงก่อนลงวัน (การ์ด [อ่าน Requirement](/learn/cards/reading-requirements)) ส่วนโบนัส (หน้า 13) วางไว้หลังของบังคับเสร็จหมดแล้วเท่านั้น
+**ในโจทย์ฝึกงาน** (ตัวอย่างจาก STARTER)**:** Timeline ([Requirement หน้า 11](/api/files/requirement.pdf?sec=timeline), ต้อง login) บอกงานรายวัน คอลัมน์ "งานต้องเสร็จ" ของมันคือบรรทัด "เสร็จเมื่อ" ระดับวัน เช่น วันที่ 4 "เรียก admin API โดยไม่ login แล้วได้ 401" และบอกลำดับไว้ว่า ฐานข้อมูล → API → หน้าบ้าน → หลังบ้าน **เพราะน้องถนัด backend จาก Todo มาแล้ว** Checklist (หน้า 14–15) แตกแต่ละวันเป็นข้อย่อยให้แล้ว งานของเราคือแตกข้อย่อยที่ยังใหญ่เกินครึ่งวันต่อ เช่น "Admin API ครบ: dashboard/settings/pages/services/categories/messages" เป็นชิ้นละกลุ่ม Timeline กับ Checklist วางวันที่ 5–6 ไม่ตรงกัน ให้ถามพี่เลี้ยงก่อนลงวัน (การ์ด [อ่าน Requirement](/learn/cards/reading-requirements)) ส่วนโบนัส (หน้า 13) วางไว้หลังของบังคับเสร็จหมดแล้วเท่านั้น
 
 **เว็บคู่มือนี้:** การเพิ่มการ์ดขั้น Problem และ Design ไม่ได้ออกเป็นงานก้อนเดียว แต่แตกเป็นเวอร์ชันละชิ้นที่ใช้ได้ในตัว: v2.0.23 การ์ดขั้น Problem 4 ใบ, v2.0.24 การ์ด Design 3 ใบแรก, v2.0.25 อีก 3 ใบ ทุกชิ้นตรวจและขึ้นเว็บทดลองได้ก่อนเริ่มชิ้นถัดไป ดูได้ใน [ประวัติการอัปเดต](/changelog)
 
@@ -77,7 +77,7 @@ API (repository → service → route)
 
 ## ลองเอง
 
-**โจทย์:** แตกวันที่ 3 ของงาน STARTER (Public API) เป็นงานชิ้นละไม่เกินครึ่งวัน พร้อมบรรทัด "เสร็จเมื่อ" ทุกชิ้น แล้วเรียงลำดับ
+**โจทย์:** แตกวันที่ 3 ของโจทย์ฝึกงาน (Public API) เป็นงานชิ้นละไม่เกินครึ่งวัน พร้อมบรรทัด "เสร็จเมื่อ" ทุกชิ้น แล้วเรียงลำดับ
 
 <Hint level={1}>เริ่มจาก Checklist วันที่ 3 (หน้า 14): endpoint 5 ทาง, Zod ทุก endpoint, รูปแบบคำตอบตาม spec และทดสอบด้วย Postman/Httpie ลองถามว่าข้อไหนต้องมีก่อนข้ออื่น</Hint>
 <Hint level={2}>ตัวช่วยตอบ `ok` / `fail` (การ์ด [Hono](/learn/cards/hono)) และตัวจับ error กลาง (การ์ด [จัดการ error](/learn/cards/error-handling)) ใช้กับทุก endpoint จึงควรเป็นงานชิ้นแรก ส่วน 5 endpoint แบ่งตามที่ซับซ้อน: `GET /api/settings` อ่านแถวเดียว เร็ว แต่ `GET /api/services?category=&featured=` มีเงื่อนไขกรอง</Hint>

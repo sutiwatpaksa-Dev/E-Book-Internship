@@ -14,9 +14,9 @@ export type LearnStep = {
   th: string;
   // ผลงานที่ได้เมื่อจบขั้น (บรรทัดเดียว)
   output: string;
-  // ช่วงย่อยในขั้น เรียงตามลำดับทำ (ขั้น Coding เรียงตามวันในงาน STARTER: เตรียมเครื่อง → DB → API → Login → Frontend → หลังบ้าน)
+  // ช่วงย่อยในขั้น เรียงตามลำดับทำ (ขั้น Coding เรียงตามวันในโจทย์ฝึกงาน: เตรียมเครื่อง → DB → API → Login → Frontend → หลังบ้าน)
   parts?: string[];
-  // โจทย์ STARTER ของขั้นนี้แบบย่อ (หน้าวันนี้แสดง ตัวเต็มอยู่ในหน้าขั้น ส่วน "ลงมือกับโปรเจกต์ของเรา")
+  // งานโจทย์ฝึกงานของขั้นนี้แบบย่อ (หน้าวันนี้แสดง ตัวเต็มอยู่ในหน้าขั้น ส่วน "ลงมือกับโปรเจกต์ของเรา")
   task: string;
 };
 
@@ -48,7 +48,7 @@ export type LearnCard = {
   alsoIn?: StepSlug[];
   // การ์ดที่ควรอ่านก่อน (slug) · แสดงเป็นลิงก์บนหัวการ์ด · ต้องอยู่ก่อนการ์ดนี้ในรายการเสมอ (มีเทสต์ตรวจ)
   needs?: string[];
-  // ใช้ในงาน STARTER วันไหน ตามหัวข้อ "ควรศึกษาก่อน" ใน Requirement (หน้า 15–16)
+  // ใช้ในโจทย์ฝึกงานวันไหน ตามหัวข้อ "ควรศึกษาก่อน" ใน Requirement · ทุกโจทย์ใช้แผน 10 วันเดียวกัน
   starter?: string;
 };
 
@@ -56,12 +56,12 @@ export type LearnCard = {
 export type LegacyLink = { step: StepSlug; part?: string; title: string; link: string };
 
 export const steps: LearnStep[] = [
-  { slug: "problem", num: 1, name: "Problem", th: "เข้าใจปัญหา", output: "รายการความต้องการ (user story) และขอบเขตงาน", task: "เขียน user story ของ STARTER อย่างน้อย 8 ข้อ จัดลำดับ ต้องมี / ควรมี / ไว้ทีหลัง" },
+  { slug: "problem", num: 1, name: "Problem", th: "เข้าใจปัญหา", output: "รายการความต้องการ (user story) และขอบเขตงาน", task: "เขียน user story ของโจทย์ฝึกงานอย่างน้อย 8 ข้อ จัดลำดับ ต้องมี / ควรมี / ไว้ทีหลัง" },
   { slug: "design", num: 2, name: "Design", th: "ออกแบบ", output: "ภาพร่างหน้าจอ แบบตาราง และรายการ API", task: "วาดหน้าจอหลักทุกหน้า แล้วไล่ทีละช่องว่าต้องเก็บข้อมูลอะไร จดเป็นตารางและรายการ API" },
   { slug: "coding", num: 3, name: "Coding", th: "เขียนโค้ด", output: "ระบบที่รันได้ในเครื่อง", parts: ["เตรียมเครื่อง", "DB", "API", "Login", "Frontend", "หลังบ้าน"], task: "เปลี่ยนแบบตารางเป็น schema แล้วสร้างด้วย migration จากนั้นทำ Backend ทีละ story ที่ต้องมี" },
   { slug: "testing", num: 4, name: "Testing", th: "ทดสอบ", output: "เทสต์ที่รันซ้ำได้ และเช็กลิสต์ทดสอบด้วยมือ", task: "เขียนเช็กลิสต์ทดสอบจาก story ที่ต้องมี แล้วให้เพื่อนทำตามเช็กลิสต์ของเรา" },
   { slug: "documentation", num: 5, name: "Documentation", th: "เขียนเอกสาร", output: "README, .env.example และเอกสาร API", task: "เขียน README แล้วให้เพื่อน clone ไปรันโดยดูแค่ README จดทุกจุดที่เพื่อนติด" },
-  { slug: "deploy", num: 6, name: "Deploy", th: "ขึ้นระบบจริง", output: "เว็บที่เปิดได้จาก URL จริง", task: "ขึ้น STARTER ด้วย Docker Compose บน VPS หรือ Vercel + Neon (เลือกทางเดียว) แล้วไล่เช็กลิสต์จากขั้น 4 บนเว็บจริงทุกข้อ" },
+  { slug: "deploy", num: 6, name: "Deploy", th: "ขึ้นระบบจริง", output: "เว็บที่เปิดได้จาก URL จริง", task: "ขึ้นงานของเราด้วย Docker Compose บน VPS หรือ Vercel + Neon (เลือกทางเดียว) แล้วไล่เช็กลิสต์จากขั้น 4 บนเว็บจริงทุกข้อ" },
   { slug: "maintenance", num: 7, name: "Maintenance", th: "ดูแลระบบ", output: "แผนดูแล: log, backup, อัปเดต และ feedback", task: "ตั้ง backup ฐานข้อมูล แล้วลองกู้คืนลงฐานใหม่จริง 1 ครั้ง" },
 ];
 
@@ -108,7 +108,7 @@ export const cards: LearnCard[] = [
 ];
 
 export const legacy: LegacyLink[] = [
-  { step: "problem", title: "Requirement งาน STARTER (ต้อง login)", link: "/starter" },
+  { step: "problem", title: "Requirement ของโจทย์ฝึกงาน (ต้อง login)", link: "/starter" },
   { step: "design", title: "ประเภทฐานข้อมูลและการออกแบบตาราง", link: "/06-sql-nosql" },
   { step: "coding", part: "เตรียมเครื่อง", title: "ก่อนเริ่ม: ติดตั้งเครื่องมือ + Terminal", link: "/00-start" },
   { step: "coding", part: "เตรียมเครื่อง", title: "Git", link: "/01-git" },

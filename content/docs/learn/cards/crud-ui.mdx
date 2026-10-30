@@ -353,7 +353,7 @@ export function AdminBooksPage() {
 
 ## ปรับไปใช้จริง
 
-**ในงาน STARTER:** วันที่ 8 ทำหน้า `/admin/services` ตาม Requirement ข้อ 5.5: ตารางค้นหาด้วยชื่อ, กรองตามหมวด, **แบ่งหน้า 10 รายการ**, เพิ่ม/แก้/ลบ และ **ลบต้องถามยืนยันก่อน** API คือ `GET /api/admin/services?q=&category=&page=` ที่ตอบ `meta` แบบในการ์ดนี้ ส่วนหัวข้อ Responsive ให้ "ตาราง admin บนมือถือต้อง scroll ในกรอบได้ ไม่ล้นจอ" ตรงกับ `overflow-x-auto` ข้างบน หน้า categories และ messages ใช้โครงเดียวกัน
+**ในโจทย์ฝึกงาน** (ตัวอย่างจาก STARTER)**:** วันที่ 8 ทำหน้า `/admin/services` ตาม Requirement ข้อ 5.5: ตารางค้นหาด้วยชื่อ, กรองตามหมวด, **แบ่งหน้า 10 รายการ**, เพิ่ม/แก้/ลบ และ **ลบต้องถามยืนยันก่อน** API คือ `GET /api/admin/services?q=&category=&page=` ที่ตอบ `meta` แบบในการ์ดนี้ ส่วนหัวข้อ Responsive ให้ "ตาราง admin บนมือถือต้อง scroll ในกรอบได้ ไม่ล้นจอ" ตรงกับ `overflow-x-auto` ข้างบน หน้า categories และ messages ใช้โครงเดียวกัน
 
 **เว็บคู่มือนี้:** หน้าจัดการบัญชีน้องในหลังบ้าน ([src/components/admin-users.tsx บน GitHub](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/src/components/admin-users.tsx)) ใช้หลักเดียวกัน: เปลี่ยนแล้วโหลดใหม่ และการกระทำที่ย้อนไม่ได้ต้องยืนยันก่อน แต่ใช้กล่องยืนยันที่ทำเองแทน `confirm()` เพื่อให้หน้าตาเข้ากับเว็บ
 
@@ -363,7 +363,7 @@ export function AdminBooksPage() {
 
 | วิธี | เหมาะกับ | ระดับ |
 |---|---|---|
-| **ตาราง HTML + Tailwind + state เอง (การ์ดนี้)** | ตารางไม่เกินราว 5 คอลัมน์ เห็นทุกขั้น | ใช้กับงาน STARTER |
+| **ตาราง HTML + Tailwind + state เอง (การ์ดนี้)** | ตารางไม่เกินราว 5 คอลัมน์ เห็นทุกขั้น | ใช้กับโจทย์ฝึกงาน |
 | TanStack Table | ตารางที่เรียง กรอง ซ่อนคอลัมน์ได้หลายแบบ ([เอกสาร](https://tanstack.com/table/latest)) | ควรรู้จัก |
 | กล่องยืนยันที่ทำเอง หรือ `<dialog>` ของ HTML | ยืนยันที่หน้าตาเข้ากับเว็บ ใส่รายละเอียดได้ | ควรทำเมื่องานหลักครบ |
 | แบ่งหน้าแบบ cursor (`?after=id`) | ข้อมูลเป็นแสน หรือเลื่อนลงเรื่อยๆ แบบฟีด | รู้ว่ามี |

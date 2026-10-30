@@ -87,7 +87,7 @@ app.onError(errorHandler);
 
 ## ปรับไปใช้จริง
 
-**ในงาน STARTER:** Requirement ให้มีรหัส error เป็นคำภาษาอังกฤษตัวใหญ่ (เช่น `VALIDATION_ERROR`) และหัวข้อ Security บอกว่า "error 500 ห้ามส่ง stack trace กลับไป" ซึ่งตรวจในวันที่ 9 วิธีข้างบนผ่านทั้งสองข้อ ส่วนโฟลเดอร์ `middleware/` มีอยู่แล้วในโครงที่ Requirement กำหนด
+**ในโจทย์ฝึกงาน** (ตัวอย่างจาก STARTER)**:** Requirement ให้มีรหัส error เป็นคำภาษาอังกฤษตัวใหญ่ (เช่น `VALIDATION_ERROR`) และหัวข้อ Security บอกว่า "error 500 ห้ามส่ง stack trace กลับไป" ซึ่งตรวจในวันที่ 9 วิธีข้างบนผ่านทั้งสองข้อ ส่วนโฟลเดอร์ `middleware/` มีอยู่แล้วในโครงที่ Requirement กำหนด
 
 **เว็บคู่มือนี้:** ใช้หลักเดียวกัน ดู `app.onError` ใน [server/app.ts บน GitHub](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/server/app.ts) (เว็บนี้ตอบ error แบบสั้น `{ error: "..." }` เพราะทำก่อนมี Requirement หลักการเหมือนกัน)
 

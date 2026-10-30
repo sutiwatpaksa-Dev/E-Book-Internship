@@ -30,7 +30,7 @@ Postman / curl ──► API ──► ฐานข้อมูล
 
 เปิด server ไว้ก่อน (`bun run dev` ในโฟลเดอร์ `server/` จากการ์ด [Hono](/learn/cards/hono))
 
-### ทางที่ 1: Postman (งาน STARTER ต้องส่งไฟล์นี้)
+### ทางที่ 1: Postman (โจทย์ฝึกงานต้องส่งไฟล์นี้)
 
 1. ติดตั้ง Postman จาก [postman.com/downloads](https://www.postman.com/downloads/) แล้วกด **New → Collection** ตั้งชื่อ `Library API`
 2. ที่ collection แท็บ **Variables** เพิ่ม `base` = `http://localhost:3000/api`
@@ -83,7 +83,7 @@ curl -i --json @book.json http://localhost:3000/api/books
 
 ## ปรับไปใช้จริง
 
-**ในงาน STARTER:** "Postman collection ที่ test ได้ทุก endpoint" อยู่ในรายการส่งมอบ และวันที่ 3 ตรวจผ่านเมื่อ "ยิง Postman ได้ครบ" ทำ collection ไปพร้อมกับเขียน API ทีละตัว อย่ารอทำวันสุดท้าย ส่วนวันที่ 4 ให้เพิ่มคำขอ "เรียก API หลังบ้านโดยไม่ login (ควรได้ 401)" ถ้าได้ `200` คือเกณฑ์ไม่ผ่านทันที
+**ในโจทย์ฝึกงาน** (ตัวอย่างจาก STARTER)**:** "Postman collection ที่ test ได้ทุก endpoint" อยู่ในรายการส่งมอบ และวันที่ 3 ตรวจผ่านเมื่อ "ยิง Postman ได้ครบ" ทำ collection ไปพร้อมกับเขียน API ทีละตัว อย่ารอทำวันสุดท้าย ส่วนวันที่ 4 ให้เพิ่มคำขอ "เรียก API หลังบ้านโดยไม่ login (ควรได้ 401)" ถ้าได้ `200` คือเกณฑ์ไม่ผ่านทันที
 
 **ตอนเจอบั๊กบนเว็บ:** เปิด DevTools แท็บ Network คลิกขวาที่คำขอที่พัง เลือก **Copy as cURL** จะได้คำสั่งที่ส่งคำขอเดิมทุกตัวอักษร (ระวัง: คำสั่งที่ copy มามี cookie ของเราติดมาด้วย ห้ามแปะลงแชทหรือส่งให้ AI)
 

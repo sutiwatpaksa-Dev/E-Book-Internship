@@ -226,7 +226,7 @@ import { LoginPage } from "./pages/admin/login-page";
 
 ## ปรับไปใช้จริง
 
-**ในงาน STARTER:** วันที่ 8 ทำหน้าหลังบ้านที่ `/admin` Requirement ข้อ 5.1 ให้มีหน้า `/admin/login` (อีเมล + รหัสผ่าน), **เข้า `/admin/*` โดยไม่ login ต้องเด้งกลับหน้า login** และมีปุ่ม logout ส่วนหน้า dashboard, settings, pages, services, messages เป็นหน้าลูกใต้ `AdminLayout` แบบเดียวกับ `AdminHomePage` และหน้าหนังสือในการ์ดถัดไป
+**ในโจทย์ฝึกงาน** (ตัวอย่างจาก STARTER)**:** วันที่ 8 ทำหน้าหลังบ้านที่ `/admin` Requirement ข้อ 5.1 ให้มีหน้า `/admin/login` (อีเมล + รหัสผ่าน), **เข้า `/admin/*` โดยไม่ login ต้องเด้งกลับหน้า login** และมีปุ่ม logout ส่วนหน้า dashboard, settings, pages, services, messages เป็นหน้าลูกใต้ `AdminLayout` แบบเดียวกับ `AdminHomePage` และหน้าหนังสือในการ์ดถัดไป
 
 **เว็บคู่มือนี้:** ใช้ Next.js จึงกันหน้าได้ตั้งแต่ฝั่ง server ก่อนส่งหน้าเว็บ ดูรายการหน้าที่ต้อง login และบทบาทที่เข้าได้ใน [src/lib/page-access.ts บน GitHub](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/src/lib/page-access.ts) แต่หลักเหมือนกัน: หน้าเว็บกันเพื่อประสบการณ์ใช้งาน API กันจริง (route หลังบ้านทุกตัวผ่าน `requireRole`)
 

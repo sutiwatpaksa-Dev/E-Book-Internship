@@ -147,11 +147,11 @@ HTTP/1.1 200 OK
 
 1. **ติดตั้งด่านด้วย path ไม่ใช่ใส่ทีละ route:** `app.use("/admin/*", ...)` ครอบ route ที่ยังไม่ได้เขียนด้วย ส่วนการใส่ middleware ทีละ route (`get("/x", requireLibrarian, handler)`) มีวันลืม
 2. **ด่านส่งต่อ "ใคร" ไม่ใช่แค่ "ผ่าน":** route ข้างหลังใช้ `c.get("librarianId")` ได้ทันที ห้ามเชื่อ id ที่หน้าเว็บส่งมาใน body เพราะใครก็แก้ได้
-3. **[401 กับ 403](/glossary#401) ต่างกัน:** 401 = ยังไม่รู้ว่าเป็นใคร (ไม่มีบัตร) 403 = รู้แล้วว่าเป็นใคร แต่ไม่มีสิทธิ์ทำสิ่งนี้ งาน STARTER มี admin ระดับเดียวจึงใช้แค่ 401 ระบบที่มีหลายบทบาทจะได้ใช้ 403
+3. **[401 กับ 403](/glossary#401) ต่างกัน:** 401 = ยังไม่รู้ว่าเป็นใคร (ไม่มีบัตร) 403 = รู้แล้วว่าเป็นใคร แต่ไม่มีสิทธิ์ทำสิ่งนี้ โจทย์ฝึกงานมี admin ระดับเดียวจึงใช้แค่ 401 ระบบที่มีหลายบทบาทจะได้ใช้ 403
 
 ## ปรับไปใช้จริง
 
-**ในงาน STARTER:** วันที่ 4 ทุก `/api/admin/*` (ยกเว้น login/logout) ต้องผ่าน middleware เช็ก token ตรวจเสร็จเมื่อ **เรียก admin API โดยไม่ login แล้วได้ 401** ข้อนี้เป็นเกณฑ์ "ไม่ผ่านทันที" ถ้า admin API เรียกได้โดยไม่ login Requirement ให้วาง middleware ไว้ในโฟลเดอร์ `server/src/middleware/` ตรงกับการ์ดนี้ และมี `GET /api/admin/me` ไว้ให้หน้าเว็บถาม
+**ในโจทย์ฝึกงาน** (ตัวอย่างจาก STARTER)**:** วันที่ 4 ทุก `/api/admin/*` (ยกเว้น login/logout) ต้องผ่าน middleware เช็ก token ตรวจเสร็จเมื่อ **เรียก admin API โดยไม่ login แล้วได้ 401** ข้อนี้เป็นเกณฑ์ "ไม่ผ่านทันที" ถ้า admin API เรียกได้โดยไม่ login Requirement ให้วาง middleware ไว้ในโฟลเดอร์ `server/src/middleware/` ตรงกับการ์ดนี้ และมี `GET /api/admin/me` ไว้ให้หน้าเว็บถาม
 
 **เว็บคู่มือนี้:** ด่าน [server/middleware/require-role.ts](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/server/middleware/require-role.ts) รับบทบาทที่อนุญาต (`requireRole("dev")`) จึงตอบได้ทั้ง 401 และ 403 และถามฐานข้อมูลทุกครั้งว่าบัญชียังเปิดอยู่ไหม ปิดบัญชีแล้วเรียก API ไม่ได้ทันที แม้บัตรยังไม่หมดอายุ
 
@@ -161,7 +161,7 @@ HTTP/1.1 200 OK
 
 | วิธี | ใช้ตอนไหน |
 |---|---|
-| **`createMiddleware` + `app.use(path)` (การ์ดนี้)** | ด่านที่เขียนเอง เห็นทุกบรรทัด เหมาะกับงาน STARTER |
+| **`createMiddleware` + `app.use(path)` (การ์ดนี้)** | ด่านที่เขียนเอง เห็นทุกบรรทัด เหมาะกับโจทย์ฝึกงาน |
 | `jwt()` middleware สำเร็จรูปของ Hono (`hono/jwt`) | อ่านบัตรจาก header หรือ cookie ให้ ([เอกสาร](https://hono.dev/docs/middleware/builtin/jwt)) แต่ตอบ error ในรูปแบบของ Hono ไม่ใช่ของ Requirement ต้องจับแปลงเอง |
 | ใส่ middleware ทีละ route | route เดียวที่ต้องการด่านพิเศษ เช่น จำกัดจำนวนครั้ง (rate limit) เฉพาะฟอร์มติดต่อ |
 | เช็กใน handler เอง | ไม่ควรใช้กับเรื่อง login เพราะลืมได้ |
