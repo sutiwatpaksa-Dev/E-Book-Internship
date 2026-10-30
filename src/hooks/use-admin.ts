@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "@/api/admin.api";
 import { filesApi } from "@/api/files.api";
-import type { Cohort, CohortInput, FileInfo, ProgressEntry, Role, SignupSettings, ThreadSummary, User } from "@/types";
+import type { AdminAssignment, AssignmentInput, Cohort, CohortInput, ProgressEntry, Role, SignupSettings, ThreadSummary, User } from "@/types";
 import { toast } from "./use-toast";
 
 // ข้อมูลและคำสั่งทั้งหมดของหลังบ้าน แยกจากหน้าตา: component แค่เรียกใช้ ไม่เรียก API เอง
 export function useAdmin() {
   const [users, setUsers] = useState<User[]>([]);
-  const [pdf, setPdf] = useState<FileInfo | null>(null);
+  // โจทย์ใช้ 2 ที่ (แท็บโจทย์ และหน้ารุ่น) จึงโหลดพร้อมรายชื่อ
+  const [assignments, setAssignments] = useState<AdminAssignment[]>([]);
   // ใช้ในภาพรวม หน้าน้องรายคน และบอร์ดคำขอ: โหลดพร้อมรายชื่อ ทุกแท็บเห็นชุดเดียวกัน
   const [progress, setProgress] = useState<Record<number, ProgressEntry[]>>({});
   const [threads, setThreads] = useState<ThreadSummary[]>([]);
@@ -35,10 +36,10 @@ export function useAdmin() {
 
   const reload = () =>
     run(async () => {
-      const [u, p, pr, t, c] = await Promise.all([adminApi.listUsers(), adminApi.getRequirementInfo(), adminApi.progress(), adminApi.listThreads(), adminApi.listCohorts()]);
+      const [u, p, pr, t, c] = await Promise.all([adminApi.listUsers(), adminApi.listAssignments(), adminApi.progress(), adminApi.listThreads(), adminApi.listCohorts()]);
       setCohorts(c);
       setUsers(u);
-      setPdf(p);
+      setAssignments(p);
       setProgress(pr);
       setThreads(t);
     });
@@ -57,7 +58,7 @@ export function useAdmin() {
 
   return {
     users,
-    pdf,
+    assignments,
     progress,
     threads,
     cohorts,
@@ -154,11 +155,34 @@ export function useAdmin() {
       });
       return ok;
     },
-    uploadRequirement: (file: File) =>
+    // คืน true เมื่อสำเร็จ ให้ฟอร์มปิดตัวเองได้
+    saveAssignment: async (id: number | null, slug: string, input: AssignmentInput) => {
+      let ok = false;
+      await run(async () => {
+        if (id) await adminApi.updateAssignment(id, input);
+        else await adminApi.createAssignment(slug, input);
+        await reload();
+        toast.success(id ? "บันทึกโจทย์แล้ว" : `สร้างโจทย์ ${input.name} แล้ว อัปโหลด PDF ต่อได้เลย`);
+        ok = true;
+      });
+      return ok;
+    },
+    uploadAssignmentPdf: (a: AdminAssignment, file: File) =>
       run(async () => {
-        setPdf(await adminApi.uploadRequirement(file));
-        toast.success("อัปโหลด Requirement PDF แล้ว น้องเปิดดูฉบับใหม่ได้ทันที");
+        await adminApi.uploadAssignmentPdf(a.id, file);
+        await reload();
+        toast.success(`อัปโหลด PDF ของ ${a.name} แล้ว น้องเปิดฉบับใหม่ได้ทันที`);
       }),
+    setCohortAssignments: async (c: Cohort, ids: number[]) => {
+      let ok = false;
+      await run(async () => {
+        await adminApi.setCohortAssignments(c.id, ids);
+        await reload();
+        toast.success(`บันทึกโจทย์ของ ${c.name} แล้ว`);
+        ok = true;
+      });
+      return ok;
+    },
   };
 }
 

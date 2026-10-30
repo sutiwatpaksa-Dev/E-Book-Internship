@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import type { AuthVars } from "../middleware/require-role";
+import { assignmentService } from "../services/assignment.service";
 import { cohortService } from "../services/cohort.service";
+import { cohortAssignmentsSchema } from "../validators/assignment.validator";
 import { cohortEndedSchema, cohortMentorsSchema, cohortSchema, cohortSignupSchema } from "../validators/cohort.validator";
 
 // หลังบ้าน: รุ่นฝึกงาน · ต่ออยู่ใต้ admin.routes.ts จึงผ่านด่าน requireRole("dev") ของที่นั่นแล้ว
@@ -52,5 +54,13 @@ adminCohortRoutes.put("/:id/mentors", async (c) => {
   const parsed = cohortMentorsSchema.safeParse(await json(c));
   if (!parsed.success) return c.json({ error: "รายชื่อพี่เลี้ยงไม่ถูกต้อง" }, 400);
   await cohortService.setMentors(c.get("user").id, id(c), parsed.data.userIds);
+  return c.body(null, 204);
+});
+
+// โจทย์ของรุ่น = ชุดของโจทย์ทั้งชุด (ส่งรายการที่ต้องการ server เพิ่ม/เอาออกให้ตรง) · รุ่นที่จบแล้วแก้ไม่ได้
+adminCohortRoutes.put("/:id/assignments", async (c) => {
+  const parsed = cohortAssignmentsSchema.safeParse(await json(c));
+  if (!parsed.success) return c.json({ error: "รายการโจทย์ไม่ถูกต้อง" }, 400);
+  await assignmentService.setForCohort(c.get("user").id, id(c), parsed.data.assignmentIds);
   return c.body(null, 204);
 });

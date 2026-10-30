@@ -4,29 +4,13 @@
 // ถ้าจอแคบจนเหลือที่ให้เนื้อหาไม่พอ (วางคู่กันไม่ได้) จะเปิด PDF ในแท็บใหม่แทน
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { REQUIREMENT_PDF_URL as PDF } from "@/api/files.api";
+import { filesApi, REQUIREMENT_PDF_URL as PDF, requirementUrl } from "@/api/files.api";
+import type { Assignment } from "@/types";
 
 // ความกว้างที่ต้องเหลือให้เนื้อหาคู่มือ และความกว้างต่ำสุดของแผง
 const CONTENT_MIN = 608;
 const PANEL_MIN = 360;
 const WIDTH_KEY = "req-viewer-width";
-
-// หัวข้อในต้นฉบับกับหน้าของ PDF (ตรงกับตารางใน starter/compare.mdx)
-const SECTIONS = [
-  { page: 1, label: "1. ภาพรวมโปรเจกต์" },
-  { page: 2, label: "2. ขอบเขตงาน + เลือกธุรกิจ" },
-  { page: 3, label: "3. Tech stack + โฟลเดอร์" },
-  { page: 4, label: "4. หน้าบ้าน (Public)" },
-  { page: 5, label: "5. หลังบ้าน (Admin)" },
-  { page: 7, label: "6. ฐานข้อมูล" },
-  { page: 8, label: "7. API Spec" },
-  { page: 10, label: "8. Non-functional" },
-  { page: 11, label: "9. Timeline 10 วัน" },
-  { page: 12, label: "10. สิ่งที่ต้องส่ง + เกณฑ์" },
-  { page: 13, label: "11. Bonus" },
-  { page: 14, label: "Checklist รายวัน" },
-  { page: 16, label: "ควรศึกษาก่อน (รายวัน)" },
-];
 
 // แผงกว้างได้สูงสุดเท่าที่เหลือหลังหักแถบเมนูซ้ายและที่ของเนื้อหา
 function maxWidth() {
@@ -45,17 +29,33 @@ export function RequirementViewer() {
   const [width, setWidth] = useState(560);
   const [dockable, setDockable] = useState(false);
   const [dragging, setDragging] = useState(false);
+  // โจทย์ที่น้องดูได้ (ของรุ่นตัวเอง ชิ้นแรก = ชิ้นที่ควรเปิด) และชิ้นที่เปิดอยู่ · หัวข้อและเลขหน้ามาจากโจทย์นั้น
+  const [list, setList] = useState<Assignment[]>([]);
+  const [slug, setSlug] = useState<string>();
+  const current = list.find((a) => a.slug === slug) ?? list[0];
   const visible = open && onStarter;
+
+  useEffect(() => {
+    if (!onStarter || list.length) return;
+    filesApi
+      .assignments()
+      .then(setList)
+      .catch(() => {});
+  }, [onStarter, list.length]);
 
   // ใช้ ref ให้ตัวดักคลิกที่ผูกครั้งเดียวเห็นค่าล่าสุดเสมอ
   const dockableRef = useRef(dockable);
-  dockableRef.current = dockable;
+  dockableRef.current = dockable && onStarter;
+  const currentRef = useRef(current);
+  currentRef.current = current;
 
-  const show = useCallback((p = 1) => {
+  const show = useCallback((p = 1, a?: string) => {
+    const target = a ?? currentRef.current?.slug;
     if (!dockableRef.current) {
-      window.open(`${PDF}#page=${p}`, "_blank", "noopener");
+      window.open(`${requirementUrl(target)}#page=${p}`, "_blank", "noopener");
       return;
     }
+    if (a) setSlug(a);
     setPage(p);
     setFrameKey((k) => k + 1);
     setOpen(true);
@@ -73,7 +73,8 @@ export function RequirementViewer() {
       if (!ok) setOpen(false);
       setWidth((w) => clampWidth(w));
     };
-    // ลิงก์ PDF ในเนื้อหา (มี #page=N) ให้เปิดในแผงแทนแท็บใหม่ (ดักตอน capture ก่อนลิงก์ทำงาน)
+    // ลิงก์ PDF ในเนื้อหาให้เปิดในแผงแทนแท็บใหม่ (ดักตอน capture ก่อนลิงก์ทำงาน) เฉพาะหน้าโจทย์ที่มีแผง
+    // ?sec=api = หัวข้อ แปลงเป็นเลขหน้าของโจทย์ที่เปิดอยู่ · #page=N = หน้าตรงๆ · ?a=slug = โจทย์ชิ้นนั้น
     const onClick = (e: MouseEvent) => {
       if (!dockableRef.current || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return;
       const a = (e.target as HTMLElement).closest?.("a");
@@ -81,7 +82,9 @@ export function RequirementViewer() {
       const url = new URL(a.href, location.href);
       if (url.origin !== location.origin || url.pathname !== PDF) return;
       e.preventDefault();
-      show(Number(url.hash.match(/page=(\d+)/)?.[1] ?? 1));
+      const sec = url.searchParams.get("sec");
+      const page = sec ? (currentRef.current?.sections.find((s) => s.key === sec)?.page ?? 1) : Number(url.hash.match(/page=(\d+)/)?.[1] ?? 1);
+      show(page, url.searchParams.get("a") ?? undefined);
     };
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
 
@@ -144,7 +147,21 @@ export function RequirementViewer() {
         }}
       />
       <header className="flex items-center gap-2 border-b border-fd-border px-3 py-2 text-sm">
-        <strong className="whitespace-nowrap">📄 Requirement ต้นฉบับ</strong>
+        <strong className="whitespace-nowrap">📄 Requirement</strong>
+        {list.length > 1 && (
+          <select
+            aria-label="เลือกโจทย์"
+            value={current?.slug}
+            onChange={(e) => show(1, e.target.value)}
+            className="min-h-9 max-w-40 min-w-0 rounded-md border border-fd-border bg-fd-background px-2 py-1"
+          >
+            {list.map((a) => (
+              <option key={a.slug} value={a.slug}>
+                {a.name}
+              </option>
+            ))}
+          </select>
+        )}
         <select
           aria-label="ไปที่หัวข้อ"
           value=""
@@ -154,13 +171,13 @@ export function RequirementViewer() {
           <option value="" disabled>
             ไปที่หัวข้อ…
           </option>
-          {SECTIONS.map((s) => (
-            <option key={s.page} value={s.page}>
+          {(current?.sections ?? []).map((s) => (
+            <option key={s.key} value={s.page}>
               {s.label} (หน้า {s.page})
             </option>
           ))}
         </select>
-        <a href={`${PDF}#page=${page}`} target="_blank" rel="noopener" title="เปิดในแท็บใหม่" className="rounded-md px-2 py-1 hover:bg-fd-accent">
+        <a href={`${requirementUrl(current?.slug)}#page=${page}`} target="_blank" rel="noopener" title="เปิดในแท็บใหม่" className="rounded-md px-2 py-1 hover:bg-fd-accent">
           ↗
         </a>
         <button type="button" title="ปิด (Esc)" aria-label="ปิดเอกสาร" onClick={() => setOpen(false)} className="rounded-md px-2 py-1 hover:bg-fd-accent">
@@ -169,8 +186,8 @@ export function RequirementViewer() {
       </header>
       <iframe
         key={frameKey}
-        src={`${PDF}#page=${page}&navpanes=0&view=FitH`}
-        title="เอกสาร Requirement โปรเจกต์ฝึกงาน เว็บไซต์ STARTER (PDF)"
+        src={`${requirementUrl(current?.slug)}#page=${page}&navpanes=0&view=FitH`}
+        title={`เอกสาร Requirement โจทย์ฝึกงาน ${current?.name ?? ""} (PDF)`}
         className={`flex-1 border-0 ${dragging ? "pointer-events-none" : ""}`}
       />
     </aside>

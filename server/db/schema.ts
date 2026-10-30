@@ -1,4 +1,4 @@
-import { type AnyPgColumn, boolean, customType, date, index, integer, pgTable, primaryKey, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { type AnyPgColumn, boolean, customType, date, index, integer, jsonb, pgTable, primaryKey, serial, text, timestamp } from "drizzle-orm/pg-core";
 
 const bytea = customType<{ data: Buffer }>({ dataType: () => "bytea" });
 
@@ -85,6 +85,37 @@ export const cohortMentors = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
   },
   (t) => [primaryKey({ columns: [t.cohortId, t.userId] })],
+);
+
+// หัวข้อในเอกสารโจทย์กับเลขหน้า PDF · key ใช้ในลิงก์ของคู่มือ (?sec=api) โจทย์แต่ละชิ้นจึงเรียงหน้าต่างกันได้
+export type AssignmentSection = { key: string; label: string; page: number };
+
+// โจทย์ฝึกงาน (เช่น STARTER) · โครงงาน 10 วัน เกณฑ์ และ stack เหมือนกันทุกโจทย์ ต่างกันที่ระบบทำให้ใคร
+// เก็บใน DB ไม่ใช่ MDX เพราะ repo นี้เปิดสาธารณะ โจทย์ของรุ่นถัดไปต้องไม่หลุดก่อนรุ่นเริ่ม
+export const assignments = pgTable("assignments", {
+  id: serial("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  name: text("name").notNull(),
+  brief: text("brief").notNull().default(""),
+  // แถวในตาราง files ที่เก็บ PDF ของโจทย์นี้ (STARTER ใช้ key เดิม "starter-requirement" ไฟล์บนเว็บจริงจึงไม่ต้องย้าย)
+  pdfKey: text("pdf_key").notNull().unique(),
+  sections: jsonb("sections").$type<AssignmentSection[]>().notNull().default([]),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// โจทย์ของแต่ละรุ่น: รุ่นหนึ่งเพิ่มได้หลายชิ้นจนกว่าจะจบรุ่น · ลบโจทย์ที่ยังมีรุ่นใช้อยู่ไม่ได้ (restrict)
+export const cohortAssignments = pgTable(
+  "cohort_assignments",
+  {
+    cohortId: integer("cohort_id")
+      .notNull()
+      .references(() => cohorts.id, { onDelete: "cascade" }),
+    assignmentId: integer("assignment_id")
+      .notNull()
+      .references(() => assignments.id, { onDelete: "restrict" }),
+    addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.cohortId, t.assignmentId] })],
 );
 
 // นับครั้งที่ login ผิดต่อ IP เก็บใน DB เพราะบน Vercel แต่ละคำขออาจวิ่งไปคนละเครื่อง ตัวนับในหน่วยความจำจึงใช้ไม่ได้

@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import { requireRole, type AuthVars } from "../middleware/require-role";
 import { adminCohortRoutes } from "./admin-cohort.routes";
+import { adminAssignmentRoutes } from "./admin-assignment.routes";
 import { adminContentRoutes } from "./admin-content.routes";
 import { auditService } from "../services/audit.service";
-import { fileService } from "../services/file.service";
 import { progressService } from "../services/progress.service";
 import { threadService } from "../services/thread.service";
 import { cohortService } from "../services/cohort.service";
@@ -16,6 +16,7 @@ export const adminRoutes = new Hono<AuthVars>();
 adminRoutes.use("*", requireRole("dev"));
 adminRoutes.route("/content", adminContentRoutes);
 adminRoutes.route("/cohorts", adminCohortRoutes);
+adminRoutes.route("/assignments", adminAssignmentRoutes);
 
 adminRoutes.get("/users", async (c) => c.json(await userService.list()));
 // หน้า admin ใช้ซ่อนปุ่มที่ทำไม่ได้ (server ตรวจซ้ำทุกคำสั่งอยู่แล้ว ซ่อนปุ่มไม่ใช่ตัวกันสิทธิ์)
@@ -57,12 +58,6 @@ adminRoutes.patch("/users/:id", async (c) => {
 adminRoutes.get("/progress", async (c) => c.json(await progressService.byUser()));
 adminRoutes.get("/audit", async (c) => c.json(await auditService.latest()));
 
-adminRoutes.get("/requirement", async (c) => c.json(await fileService.getRequirementInfo()));
-
-adminRoutes.put("/requirement", async (c) => {
-  if (c.req.header("content-type") !== "application/pdf") return c.json({ error: "ต้องเป็นไฟล์ PDF" }, 415);
-  return c.json(await fileService.saveRequirement(Buffer.from(await c.req.arrayBuffer()), c.get("user").id));
-});
 
 adminRoutes.get("/threads", async (c) => c.json(await threadService.listAll()));
 adminRoutes.get("/threads/unread-count", async (c) => c.json({ count: await threadService.unreadForDevs() }));

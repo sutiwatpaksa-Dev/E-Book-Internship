@@ -70,7 +70,9 @@ export function AdminOverview({ admin, content, nav, titles }: Props) {
     { show: locked.length > 0, text: `บัญชีถูกล็อก ${locked.length} บัญชี (ใส่รหัสผิด 5 ครั้ง ล็อก 15 นาที)`, go: () => nav.goTab("users") },
     { show: neverIn.length > 0, text: `น้องยังไม่เคย login ${neverIn.length} คน ส่ง PIN ให้แล้วหรือยัง`, go: toInterns },
     { show: stale.length > 0, text: `น้องไม่ได้เข้ามาเกิน ${STALE_DAYS} วัน ${stale.length} คน ลองทักไปถาม`, go: toInterns },
-    { show: !admin.pdf && !admin.loading, text: "ยังไม่มีไฟล์ Requirement PDF ให้น้องเปิด", go: () => nav.goTab("files") },
+    ...admin.assignments
+      .filter((a) => !a.pdf && a.cohortIds.length > 0)
+      .map((a) => ({ show: true, text: `โจทย์ ${a.name} มีรุ่นใช้อยู่แต่ยังไม่มี PDF ให้น้องเปิด`, go: () => nav.goTab("files") })),
   ].filter((t) => t.show);
 
   const kpis = [

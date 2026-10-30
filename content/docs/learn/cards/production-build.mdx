@@ -149,7 +149,7 @@ git status
 
 ## ปรับไปใช้จริง
 
-**ในงาน STARTER:** [Requirement หน้า 13](/api/files/requirement.pdf#page=13) (ต้อง login) มี Bonus "Deploy ขึ้น server จริงพร้อมโดเมนย่อย" และ "Docker Compose รัน Postgres + server + client ได้ในคำสั่งเดียว" ทั้งสองข้อเริ่มจากการ์ดนี้ จำไว้ว่า bonus นับเมื่องานหลักครบแล้ว (วันที่ 10 ส่ง README และ demo ก่อน) แต่ข้อ 4 ของการ์ดนี้ (`git status` ไม่มีค่าลับ) ใช้ได้ทันทีตั้งแต่วันแรก เพราะ Requirement หน้า 3 ห้าม commit `.env`
+**ในงาน STARTER:** [Requirement หน้า 13](/api/files/requirement.pdf?sec=bonus) (ต้อง login) มี Bonus "Deploy ขึ้น server จริงพร้อมโดเมนย่อย" และ "Docker Compose รัน Postgres + server + client ได้ในคำสั่งเดียว" ทั้งสองข้อเริ่มจากการ์ดนี้ จำไว้ว่า bonus นับเมื่องานหลักครบแล้ว (วันที่ 10 ส่ง README และ demo ก่อน) แต่ข้อ 4 ของการ์ดนี้ (`git status` ไม่มีค่าลับ) ใช้ได้ทันทีตั้งแต่วันแรก เพราะ Requirement หน้า 3 ห้าม commit `.env`
 
 **เว็บคู่มือนี้:** ใช้ Next.js ซึ่งมีหน้าเว็บกับ API อยู่ในโปรเจกต์เดียวกันอยู่แล้ว (API อยู่ใน [src/app/api/[[...route]]/route.ts บน GitHub](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/src/app/api/%5B%5B...route%5D%5D/route.ts) ส่งต่อให้ Hono) จึงได้ "บ้านเดียวกัน" แบบการ์ดนี้โดยไม่ต้องเขียน `serveStatic` เอง และ `next build` คือขั้น build แบบเดียวกับ `vite build`
 

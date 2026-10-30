@@ -47,7 +47,7 @@ const GROUPS: { label: string; tabs: Tab[] }[] = [
     tabs: [
       { id: "cohorts", label: "รุ่นฝึกงาน", icon: GraduationCap },
       { id: "users", label: "บัญชีผู้ใช้", icon: Users },
-      { id: "files", label: "ไฟล์และตั้งค่า", icon: FileText },
+      { id: "files", label: "โจทย์และตั้งค่า", icon: FileText },
       { id: "audit", label: "บันทึกการกระทำ", icon: History },
     ],
   },

@@ -1,4 +1,6 @@
+import { DEFAULT_ASSIGNMENT } from "../lib/assignment-access";
 import { hashInvite, newInviteCode } from "../lib/invite";
+import { assignmentRepository } from "../repositories/assignment.repository";
 import { cohortRepository, type CohortFields, type SignupFields } from "../repositories/cohort.repository";
 import { userRepository } from "../repositories/user.repository";
 import { auditService } from "./audit.service";
@@ -20,6 +22,9 @@ export const cohortService = {
   async create(devId: number, f: CohortFields) {
     checkPeriod(f);
     const c = await cohortRepository.create(f);
+    // รุ่นใหม่ได้ STARTER ไว้ก่อน (เปลี่ยนหรือเพิ่มโจทย์ได้ในหน้ารุ่น) น้องที่สมัครเข้ามาจะได้ไม่เจอหน้าโจทย์ว่าง
+    const starter = await assignmentRepository.findBySlug(DEFAULT_ASSIGNMENT);
+    if (starter) await assignmentRepository.setForCohort(c.id, [starter.id]);
     await auditService.log(devId, "cohort.create", f.name, `${f.startsOn} – ${f.endsOn}`);
     return c;
   },

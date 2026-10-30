@@ -27,4 +27,15 @@ describe("ไฟล์เนื้อหา", () => {
     );
     expect(bad).toEqual([]);
   });
+
+  // แต่ละรุ่นได้โจทย์คนละชิ้น หัวข้อเดียวกันอยู่คนละหน้าในแต่ละ PDF · ลิงก์จึงชี้ด้วยชื่อหัวข้อ (?sec=api)
+  // แล้ว server หรือแผงเอกสารแปลงเป็นเลขหน้าของโจทย์ที่น้องได้ (#page=N ตรงๆ จะพาโจทย์อื่นไปผิดหน้า)
+  test("ลิงก์ PDF โจทย์ใช้ ?sec= ไม่ใช้ #page=", () => {
+    const bad = mdxFiles(ROOT).flatMap((f) =>
+      readFileSync(f, "utf8")
+        .split("\n")
+        .flatMap((l, i) => (/requirement\.pdf#page=/.test(l) ? [`${f.slice(ROOT.length + 1)}:${i + 1}`] : [])),
+    );
+    expect(bad).toEqual([]);
+  });
 });

@@ -229,6 +229,8 @@ function CohortDetail({ admin, nav, cohort: c }: { admin: AdminState; nav: Admin
         </ConfirmBox>
       )}
 
+      <Assignments key={admin.assignments.map((a) => `${a.id}:${a.cohortIds.join(".")}`).join(",")} admin={admin} nav={nav} cohort={c} />
+
       <section aria-labelledby="members-title" className="flex flex-col gap-2">
         <h2 id="members-title" className="text-base font-semibold">
           น้องในรุ่น ({members.length})
@@ -281,6 +283,62 @@ function CohortDetail({ admin, nav, cohort: c }: { admin: AdminState; nav: Admin
       <AddMembers admin={admin} cohort={c} name={name} />
       <Mentors key={c.mentorIds.join(",")} admin={admin} cohort={c} />
     </div>
+  );
+}
+
+// โจทย์ของรุ่น: เพิ่มได้หลายชิ้นจนกว่าจะจบรุ่น · น้องเห็นทุกชิ้นในแผงเอกสาร ชิ้นที่เพิ่มล่าสุดเปิดก่อน
+// เอาโจทย์ออกจากรุ่นที่เริ่มฝึกแล้วต้องกดยืนยัน (น้องที่ทำโจทย์นั้นอยู่จะเปิด PDF ไม่ได้ทันที) · server ล็อกรุ่นที่จบแล้วซ้ำอีกชั้น
+function Assignments({ admin, nav, cohort: c }: { admin: AdminState; nav: AdminNav; cohort: Cohort }) {
+  const current = admin.assignments.filter((a) => a.cohortIds.includes(c.id)).map((a) => a.id);
+  const [picked, setPicked] = useState<Set<number>>(new Set(current));
+  const [confirm, setConfirm] = useState(false);
+  const removed = admin.assignments.filter((a) => current.includes(a.id) && !picked.has(a.id));
+  const changed = picked.size !== current.length || current.some((id) => !picked.has(id));
+  const started = cohortStatus(c) !== "upcoming";
+  const toggle = (id: number) => setPicked((p) => (p.has(id) ? new Set([...p].filter((x) => x !== id)) : new Set([...p, id])));
+  const save = () => (setConfirm(false), admin.setCohortAssignments(c, [...picked]));
+
+  return (
+    <section aria-labelledby="asg-title" className="flex flex-col gap-2 rounded-xl border border-fd-border p-4">
+      <h2 id="asg-title" className="text-base font-semibold">
+        โจทย์ของรุ่น
+      </h2>
+      {c.endedAt ? (
+        <p className="text-sm text-fd-muted-foreground">รุ่นจบแล้ว เพิ่มหรือเอาโจทย์ออกไม่ได้ (ถ้าจำเป็นกด &quot;เปิดรุ่นกลับ&quot; ก่อน)</p>
+      ) : (
+        <p className="text-sm text-fd-muted-foreground">เลือกได้หลายโจทย์ น้องเห็นทุกโจทย์ที่เลือก โจทย์ที่เพิ่มล่าสุดเปิดเป็นชิ้นแรก · สร้างโจทย์ใหม่ได้ที่เมนู &quot;โจทย์และตั้งค่า&quot;</p>
+      )}
+      {admin.assignments.length === 0 ? (
+        <p className="text-sm text-fd-muted-foreground">ยังไม่มีโจทย์ในระบบ</p>
+      ) : (
+        <ul className="flex flex-col gap-1">
+          {admin.assignments.map((a) => (
+            <li key={a.id}>
+              <label className={`flex min-h-11 items-center gap-2.5 rounded-lg px-2 ${c.endedAt ? "opacity-70" : "cursor-pointer hover:bg-fd-accent"}`}>
+                <input type="checkbox" className="size-5" checked={picked.has(a.id)} disabled={!!c.endedAt} onChange={() => toggle(a.id)} />
+                <span className="font-medium">{a.name}</span>
+                {!a.pdf && <span className="text-xs text-orange-800 dark:text-orange-300">ยังไม่มี PDF</span>}
+              </label>
+            </li>
+          ))}
+        </ul>
+      )}
+      {confirm && (
+        <ConfirmBox title={`เอาโจทย์ออกจาก ${c.name}?`} confirmLabel="เอาออก" danger onCancel={() => setConfirm(false)} onConfirm={save}>
+          {removed.map((a) => a.name).join(", ")} จะหายจากแผงเอกสารของน้องทันที (งานที่น้องทำไปแล้วไม่หาย) · บันทึกลงประวัติการแก้ไข
+        </ConfirmBox>
+      )}
+      {!c.endedAt && (
+        <div className="flex flex-wrap gap-2">
+          <Button variant={changed ? "primary" : "ghost"} disabled={!changed} onClick={() => (removed.length && started ? setConfirm(true) : save())} className="min-h-11">
+            บันทึกโจทย์
+          </Button>
+          <Button variant="ghost" onClick={() => nav.goTab("files")} className="min-h-11">
+            จัดการโจทย์
+          </Button>
+        </div>
+      )}
+    </section>
   );
 }
 

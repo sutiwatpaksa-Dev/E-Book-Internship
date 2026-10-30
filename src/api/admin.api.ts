@@ -1,4 +1,4 @@
-import type { AuditEntry, BulkResult, Cohort, CohortInput, SignupSettings, FileInfo, IssuedPin, ProgressEntry, Role, ThreadDetail, ThreadStatus, ThreadSummary, User } from "@/types";
+import type { AdminAssignment, AssignmentInput, AuditEntry, BulkResult, Cohort, CohortInput, SignupSettings, FileInfo, IssuedPin, ProgressEntry, Role, ThreadDetail, ThreadStatus, ThreadSummary, User } from "@/types";
 import { jsonBody, request } from "./client";
 
 export const adminApi = {
@@ -12,9 +12,12 @@ export const adminApi = {
   resetPin: (id: number) => request<IssuedPin>(`/admin/users/${id}/pins`, { method: "POST" }),
   updateUser: (id: number, changes: { role?: Role; disabled?: boolean; unlock?: true }) =>
     request<User>(`/admin/users/${id}`, jsonBody("PATCH", changes)),
-  getRequirementInfo: () => request<FileInfo | null>("/admin/requirement"),
-  uploadRequirement: (file: File) =>
-    request<FileInfo>("/admin/requirement", { method: "PUT", headers: { "Content-Type": "application/pdf" }, body: file }),
+  listAssignments: () => request<AdminAssignment[]>("/admin/assignments"),
+  createAssignment: (slug: string, input: AssignmentInput) => request<{ id: number }>("/admin/assignments", jsonBody("POST", { slug, ...input })),
+  updateAssignment: (id: number, input: AssignmentInput) => request<null>(`/admin/assignments/${id}`, jsonBody("PUT", input)),
+  uploadAssignmentPdf: (id: number, file: File) =>
+    request<FileInfo>(`/admin/assignments/${id}/pdf`, { method: "PUT", headers: { "Content-Type": "application/pdf" }, body: file }),
+  setCohortAssignments: (id: number, assignmentIds: number[]) => request<null>(`/admin/cohorts/${id}/assignments`, jsonBody("PUT", { assignmentIds })),
   listThreads: () => request<ThreadSummary[]>("/admin/threads"),
   unreadThreads: () => request<{ count: number }>("/admin/threads/unread-count"),
   getThread: (id: number) => request<ThreadDetail>(`/admin/threads/${id}`),

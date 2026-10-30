@@ -9,7 +9,7 @@ description: เขียนหรือแก้การ์ดความร�
 
 ## ก่อนเขียน: อ่าน 3 อย่าง
 
-1. **Requirement STARTER:** `Requirement โปรเจกต์ฝึกงาน เว็บไซต์ STARTER (Fullstack) (2).pdf` ที่ root ของ repo (17 หน้า) **เลขหน้าในการ์ดใช้ตามโปรแกรมเปิด PDF** ให้ตรงกับลิงก์ `/api/files/requirement.pdf#page=N` (เลขที่พิมพ์ท้ายหน้าน้อยกว่า 1) ส่วนที่ต้องเปิดดูทุกครั้ง:
+1. **Requirement STARTER:** `Requirement โปรเจกต์ฝึกงาน เว็บไซต์ STARTER (Fullstack) (2).pdf` ที่ root ของ repo (17 หน้า) **ลิงก์ไป PDF ใช้ชื่อหัวข้อ** `/api/files/requirement.pdf?sec=<key>` (เช่น `?sec=api`, `?sec=timeline` · รายการ key ดูที่หลังบ้าน "โจทย์และตั้งค่า") ห้ามใช้ `#page=N` เพราะแต่ละรุ่นได้โจทย์คนละชิ้น หัวข้อเดียวกันอยู่คนละหน้า (มีเทสต์ตรวจ) · เลขหน้าที่เขียนเป็นตัวหนังสือใช้ตามโปรแกรมเปิด PDF ของ STARTER ส่วนที่ต้องเปิดดูทุกครั้ง:
    - stack: React+TS (Vite), Tailwind, React Router, Bun+Hono, Drizzle, Zod, PostgreSQL+pgAdmin, JWT ใน httpOnly cookie, `Bun.password`
    - โครงโฟลเดอร์ `client/src/{pages,components,api,types}` และ `server/src/{routes,db,validators,middleware}`
    - รายการ API (หน้า 8–9) รูปแบบคำตอบ (หน้า 9) และ status ที่ใช้: 200 201 400 401 404 409 500

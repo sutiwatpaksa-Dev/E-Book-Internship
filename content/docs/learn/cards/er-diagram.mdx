@@ -75,7 +75,7 @@ books (หนังสือ)
 
 ## ปรับไปใช้จริง
 
-**ในงาน STARTER:** วันที่ 2 ต้องส่ง "รูป ER Diagram (export จาก pgAdmin หรือวาดเองก็ได้)" ([Requirement หน้า 7](/api/files/requirement.pdf#page=7), ต้อง login) ตาราง 6 ตารางมีเส้นที่ต้องเห็นอย่างน้อย 1 เส้น: `categories` 1 ต่อหลาย `services` (foreign key `services.category_id`) และหน้า 7 บอกว่า **ห้ามลบหมวดที่ยังมีบริการอยู่** ซึ่งเป็นกติกาของเส้นนี้ ส่วน `admins`, `site_settings`, `pages`, `contact_messages` ไม่มีเส้นเชื่อม ภาพจะช่วยตอบตอน Review รอบที่ 1 (วันที่ 5) ว่าทำไมเป็นแบบนั้น
+**ในงาน STARTER:** วันที่ 2 ต้องส่ง "รูป ER Diagram (export จาก pgAdmin หรือวาดเองก็ได้)" ([Requirement หน้า 7](/api/files/requirement.pdf?sec=database), ต้อง login) ตาราง 6 ตารางมีเส้นที่ต้องเห็นอย่างน้อย 1 เส้น: `categories` 1 ต่อหลาย `services` (foreign key `services.category_id`) และหน้า 7 บอกว่า **ห้ามลบหมวดที่ยังมีบริการอยู่** ซึ่งเป็นกติกาของเส้นนี้ ส่วน `admins`, `site_settings`, `pages`, `contact_messages` ไม่มีเส้นเชื่อม ภาพจะช่วยตอบตอน Review รอบที่ 1 (วันที่ 5) ว่าทำไมเป็นแบบนั้น
 
 **เว็บคู่มือนี้:** ตาราง `thread_messages` ชี้ไปที่ `threads` (1 เรื่องมีหลายข้อความ) ด้วย `onDelete: "cascade"` แปลว่าลบเรื่องแล้วข้อความหายตาม ต่างจากห้องสมุดที่ไม่ใส่ จึงลบหนังสือที่มีประวัติยืมไม่ได้ (รหัส `23503` ในการ์ด [หน้าจัดการข้อมูล](/learn/cards/crud-ui)) ดูได้ที่ [server/db/schema.ts บน GitHub](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/server/db/schema.ts)
 

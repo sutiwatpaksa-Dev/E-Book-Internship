@@ -269,7 +269,7 @@ docker compose exec -T db psql -q -U postgres restore_check < backup-2026-10-28.
 
 ## ปรับไปใช้จริง
 
-**ในงาน STARTER:** [Requirement หน้า 13](/api/files/requirement.pdf#page=13) (ต้อง login) Bonus "Deploy ขึ้น server จริงพร้อมโดเมนย่อย" คือการ์ดนี้ทั้งใบ ทำหลังงานหลักครบ และ**ต้องคุยกับพี่เลี้ยงก่อน** เรื่อง VPS และ DNS ของบริษัท ใส่ URL จริงไว้บนสุดของ README และเขียนใน README ว่าบัญชีทดสอบบนเว็บจริงขอได้จากใคร (ห้ามเขียนรหัสจริงลง README เพราะ repo อาจเป็น public) ระวังเกณฑ์ "ไม่ผ่าน" หน้า 12 ทุกข้อใช้กับเว็บจริงด้วย
+**ในงาน STARTER:** [Requirement หน้า 13](/api/files/requirement.pdf?sec=bonus) (ต้อง login) Bonus "Deploy ขึ้น server จริงพร้อมโดเมนย่อย" คือการ์ดนี้ทั้งใบ ทำหลังงานหลักครบ และ**ต้องคุยกับพี่เลี้ยงก่อน** เรื่อง VPS และ DNS ของบริษัท ใส่ URL จริงไว้บนสุดของ README และเขียนใน README ว่าบัญชีทดสอบบนเว็บจริงขอได้จากใคร (ห้ามเขียนรหัสจริงลง README เพราะ repo อาจเป็น public) ระวังเกณฑ์ "ไม่ผ่าน" หน้า 12 ทุกข้อใช้กับเว็บจริงด้วย
 
 **เว็บคู่มือนี้:** ไม่ได้ใช้ VPS แต่ใช้ Vercel (บริการสำเร็จรูป) ซึ่งทำงาน 3 อย่างของการ์ดนี้ให้เอง: เครื่อง, https และ rollback (ปุ่ม **Instant Rollback**) โดยตั้ง region ให้ใกล้ฐานข้อมูลใน [vercel.json บน GitHub](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/vercel.json) และรัน migration ก่อน build ทุกครั้ง แบบเดียวกับ `CMD` ใน Dockerfile ของเรา
 

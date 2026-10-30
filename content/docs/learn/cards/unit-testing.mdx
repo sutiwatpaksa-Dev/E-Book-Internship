@@ -138,7 +138,7 @@ Received: true
 
 ## ปรับไปใช้จริง
 
-**ในงาน STARTER:** Bonus ข้อสุดท้าย ([Requirement หน้า 13](/api/files/requirement.pdf#page=13), ต้อง login) คือ "เขียน test อย่างน้อยให้ครอบคลุม validator และ auth middleware" ส่วน validator ทำได้ด้วยการ์ดนี้ เริ่มจาก schema ที่มีกฎเยอะที่สุด คือฟอร์มติดต่อ (เบอร์โทร 9–10 หลัก, ข้อความไม่เกิน 1,000 ตัวอักษร ตามหน้า 10) ส่วน auth middleware ใช้ `app.request()` จากการ์ด [Hono](/learn/cards/hono) ยิงเข้าแอปตรงๆ ไม่ต้องเปิด server ทดสอบแค่ทางที่ไม่ต้องต่อฐานข้อมูล คือไม่มีบัตรกับบัตรปลอม (ตัวอย่างของห้องสมุดบิต ไฟล์ `server/src/auth.test.ts`)
+**ในงาน STARTER:** Bonus ข้อสุดท้าย ([Requirement หน้า 13](/api/files/requirement.pdf?sec=bonus), ต้อง login) คือ "เขียน test อย่างน้อยให้ครอบคลุม validator และ auth middleware" ส่วน validator ทำได้ด้วยการ์ดนี้ เริ่มจาก schema ที่มีกฎเยอะที่สุด คือฟอร์มติดต่อ (เบอร์โทร 9–10 หลัก, ข้อความไม่เกิน 1,000 ตัวอักษร ตามหน้า 10) ส่วน auth middleware ใช้ `app.request()` จากการ์ด [Hono](/learn/cards/hono) ยิงเข้าแอปตรงๆ ไม่ต้องเปิด server ทดสอบแค่ทางที่ไม่ต้องต่อฐานข้อมูล คือไม่มีบัตรกับบัตรปลอม (ตัวอย่างของห้องสมุดบิต ไฟล์ `server/src/auth.test.ts`)
 
 ```ts
 import { describe, expect, test } from "bun:test";

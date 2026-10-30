@@ -195,7 +195,7 @@ docker compose exec -T app bun run seed
 
 ## ปรับไปใช้จริง
 
-**ในงาน STARTER:** [Requirement หน้า 13](/api/files/requirement.pdf#page=13) (ต้อง login) Bonus ข้อ "Docker Compose รัน Postgres + server + client ได้ในคำสั่งเดียว" ทำได้ด้วยการ์ดนี้ครบ (client ถูก build ใส่กล่องเดียวกับ server) ถ้าทำ ให้เพิ่มทาง "รันด้วย Docker" ใน README (การ์ด [README](/learn/cards/readme)) เป็นอีกทางนอกจากทางปกติ ไม่ใช่แทน เพราะพี่เลี้ยงบางคนอาจอยากรันแบบไม่มี Docker เกณฑ์ "โปรเจกต์รันตาม README ไม่ขึ้น" (หน้า 12) ใช้กับทั้งสองทาง
+**ในงาน STARTER:** [Requirement หน้า 13](/api/files/requirement.pdf?sec=bonus) (ต้อง login) Bonus ข้อ "Docker Compose รัน Postgres + server + client ได้ในคำสั่งเดียว" ทำได้ด้วยการ์ดนี้ครบ (client ถูก build ใส่กล่องเดียวกับ server) ถ้าทำ ให้เพิ่มทาง "รันด้วย Docker" ใน README (การ์ด [README](/learn/cards/readme)) เป็นอีกทางนอกจากทางปกติ ไม่ใช่แทน เพราะพี่เลี้ยงบางคนอาจอยากรันแบบไม่มี Docker เกณฑ์ "โปรเจกต์รันตาม README ไม่ขึ้น" (หน้า 12) ใช้กับทั้งสองทาง
 
 **เว็บคู่มือนี้:** ไม่ใช้ Compose ตอนขึ้นระบบ (ขึ้น Vercel ซึ่ง build ให้เอง ดู [vercel.json บน GitHub](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/vercel.json)) แต่ใช้ Postgres ในกล่อง Docker ตอนพัฒนาแบบเดียวกับ service `db` ข้างบน (`MAINTAINING.md` ขั้นเปิดฐานในเครื่อง)
 

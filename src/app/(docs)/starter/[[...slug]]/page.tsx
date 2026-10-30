@@ -1,3 +1,6 @@
+import { DEFAULT_ASSIGNMENT } from "@server/lib/assignment-access";
+import { assignmentService } from "@server/services/assignment.service";
+import { AssignmentNotice } from "@/components/assignment-notice";
 import { DocPage, docMetadata } from "@/components/doc-page";
 import { requirePageAccess } from "@/lib/require-page-access";
 
@@ -9,7 +12,12 @@ export const dynamic = "force-dynamic";
 
 export default async function Page({ params }: Props) {
   const slugs = ["starter", ...((await params).slug ?? [])];
-  await requirePageAccess(`/${slugs.join("/")}`);
+  const session = await requirePageAccess(`/${slugs.join("/")}`);
+  // น้องรุ่นที่ไม่ได้ทำ STARTER เห็นโจทย์ของรุ่นตัวเองแทน (พี่เลี้ยงเห็นหน้า STARTER ตามเดิม)
+  if (session?.role === "intern") {
+    const list = await assignmentService.listFor({ id: session.userId, role: "intern" });
+    if (!list.some((a) => a.slug === DEFAULT_ASSIGNMENT)) return <AssignmentNotice list={list} />;
+  }
   return <DocPage slugs={slugs} />;
 }
 
