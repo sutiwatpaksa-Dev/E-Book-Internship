@@ -1,11 +1,11 @@
 ---
 navTitle: "07 · ระบบจัดการฐานข้อมูล SQL"
-title: "บทที่ 7: ระบบจัดการฐานข้อมูล (DBMS) 🐘🐬"
+title: "บทที่ 7: ระบบจัดการฐานข้อมูล (DBMS)"
 ---
 
-> ⏱ ประมาณ 4 ชั่วโมง · 🧩 ต้องผ่านก่อน: บทที่ 2 และ 6 · 🛠 ใช้: Docker Compose, psql, DBeaver หรือ pgAdmin
+> ประมาณ 4 ชั่วโมง · ต้องผ่านก่อน: บทที่ 2 และ 6 · ใช้: Docker Compose, psql, DBeaver หรือ pgAdmin
 
-> **⚡ สรุป 30 วินาที**
+> **สรุป 30 วินาที**
 > - ก่อนแอปจะเก็บข้อมูลได้ ต้องตอบ 3 คำถาม จึงมีเครื่องมือ 3 กลุ่ม: **Engine** (โปรแกรมเก็บข้อมูลและรัน SQL) · **ที่ที่มันรัน** (ดูแลเองด้วย Docker หรือใช้บริการสำเร็จรูปอย่าง Neon) · **Client** (โปรแกรมที่เราใช้ต่อเข้าไปดู เช่น psql, DBeaver)
 > - Engine ทุกตัวใช้ **ตาราง + SQL** เหมือนกัน เรียนครั้งเดียวใช้ได้ทุกตัว ต่างกันที่ "สำเนียง" และนิสัย
 > - MySQL กับ PostgreSQL เป็นสมาชิกกลุ่มเดียวกัน ความต่างที่เจอจริง: การแปลงชนิดข้อมูล, ตัวพิมพ์เล็กใหญ่, `RETURNING`, rollback การแก้ตาราง
@@ -15,15 +15,15 @@ title: "บทที่ 7: ระบบจัดการฐานข้อม�
 
 ---
 
-## 📖 เรื่องเล่า
+## เรื่องเล่า
 
 บิตเขียนในรายงานประจำวันว่า *"วันนี้ย้ายจาก PostgreSQL ไปใช้ Neon แล้ว และลง DBeaver แทน MySQL เรียบร้อยครับ"*
 พี่ไบต์ตอบกลับมา 3 คำถาม: *"ข้อมูลเก็บด้วยโปรแกรมอะไร โปรแกรมนั้นรันอยู่บนเครื่องไหน แล้วบิตเปิดดูข้อมูลด้วยอะไร?"*
-บิตตอบไม่ได้สักข้อ 🤔
+บิตตอบไม่ได้สักข้อ
 
 เพราะบิตเอาเครื่องมือ **คนละกลุ่ม** มาเทียบกัน Neon ไม่ได้มาแทน PostgreSQL (Neon คือ "ที่ที่ PostgreSQL รัน") และ DBeaver ไม่ได้มาแทน MySQL (DBeaver คือ "โปรแกรมเปิดดู" ที่ใช้ได้กับทั้งคู่) อ่านจบบทนี้จะตอบ 3 คำถามของพี่ไบต์ได้ และไม่ว่าวันหน้าเจอชื่อใหม่อะไร ก็จัดกลุ่มเองได้
 
-> 🧭 **บทนี้เรียนแบบ "เข้าใจกลุ่มก่อน แล้วค่อยจับเครื่องมือ"** ข้อ 1–6 อธิบายว่าแต่ละกลุ่มแก้ปัญหาอะไร มีใครบ้าง เลือกยังไง (รวมการเทียบ MySQL กับ PostgreSQL ในข้อ 3) ข้อ 7 เป็นต้นไปคือลงมือ ชื่อเครื่องมือเปลี่ยนได้ทุกปี แต่ปัญหาที่มันแก้ยังเหมือนเดิม
+> **บทนี้เรียนแบบ "เข้าใจกลุ่มก่อน แล้วค่อยจับเครื่องมือ"** ข้อ 1–6 อธิบายว่าแต่ละกลุ่มแก้ปัญหาอะไร มีใครบ้าง เลือกยังไง (รวมการเทียบ MySQL กับ PostgreSQL ในข้อ 3) ข้อ 7 เป็นต้นไปคือลงมือ ชื่อเครื่องมือเปลี่ยนได้ทุกปี แต่ปัญหาที่มันแก้ยังเหมือนเดิม
 
 ---
 
@@ -53,7 +53,7 @@ title: "บทที่ 7: ระบบจัดการฐานข้อม�
 ## 2. กลุ่มที่ 1: Database Engine (DBMS)
 
 **คืออะไร:** โปรแกรมที่ดูแลข้อมูลแทนเรา (DBMS = Database Management System) รับคำสั่ง SQL แล้วไปเก็บ ค้น แก้ ลบข้อมูลให้ ถ้าเก็บเป็นตารางที่โยงกันด้วย key จะเรียกว่า **RDBMS** (Relational) ทุกตัวในบทนี้เป็นแบบนี้ ส่วนฐานข้อมูลแบบไม่ใช่ตาราง (NoSQL) อยู่ในบทที่ 6
-💡 เหมือนรถ **Toyota กับ Honda** 🚗 ขับเหมือนกัน พวงมาลัย คันเร่ง เบรกอยู่ที่เดิม เปลี่ยนคันไม่ยาก แต่แต่ละยี่ห้อมีจุดเด่นและรายละเอียดต่างกัน
+ เหมือนรถ **Toyota กับ Honda** ขับเหมือนกัน พวงมาลัย คันเร่ง เบรกอยู่ที่เดิม เปลี่ยนคันไม่ยาก แต่แต่ละยี่ห้อมีจุดเด่นและรายละเอียดต่างกัน
 
 **ข้างใน engine มีอะไร** (ทุกตัวมีส่วนเหล่านี้ ต่างกันแค่วิธีทำ)
 1. **ตัวรับการเชื่อมต่อ:** ฟังอยู่ที่ port (Postgres `5432`, MySQL `3306`) ตรวจชื่อผู้ใช้และรหัสผ่านก่อนให้เข้า
@@ -62,25 +62,25 @@ title: "บทที่ 7: ระบบจัดการฐานข้อม�
 4. **ตัวคุม transaction และ lock:** ทำให้ ACID เป็นจริง สองคนแก้แถวเดียวกันพร้อมกันแล้วข้อมูลไม่เพี้ยน (บทที่ 6 ข้อ 8)
 5. **ระบบผู้ใช้และสิทธิ์:** ใครอ่านได้ ใครแก้ได้ (ข้อ 10)
 
-> 💡 **ทบทวนคำ:** engine แบบนี้คือ **database server** (โปรแกรมที่รันค้างอยู่) ส่วน `psql`, `mysql`, DBeaver และโค้ดของเรา คือ **client** ที่ต่อเข้าไปส่งคำสั่ง (กลุ่มที่ 3)
+> **ทบทวนคำ:** engine แบบนี้คือ **database server** (โปรแกรมที่รันค้างอยู่) ส่วน `psql`, `mysql`, DBeaver และโค้ดของเรา คือ **client** ที่ต่อเข้าไปส่งคำสั่ง (กลุ่มที่ 3)
 >
-> 🤔 **SQLite ไม่มีข้อ 1** มันไม่มี server ฟัง port แอปเปิดไฟล์ฐานข้อมูลเองโดยตรง (ทั้งฐานข้อมูลคือไฟล์เดียว) จึงไม่ต้องติดตั้งอะไรเลย แต่ถ้าหลายเครื่องต้องต่อเข้ามาเขียนพร้อมกันผ่านเครือข่าย เอกสารของ SQLite เองแนะนำให้ใช้ engine แบบมี server
+> **SQLite ไม่มีข้อ 1** มันไม่มี server ฟัง port แอปเปิดไฟล์ฐานข้อมูลเองโดยตรง (ทั้งฐานข้อมูลคือไฟล์เดียว) จึงไม่ต้องติดตั้งอะไรเลย แต่ถ้าหลายเครื่องต้องต่อเข้ามาเขียนพร้อมกันผ่านเครือข่าย เอกสารของ SQLite เองแนะนำให้ใช้ engine แบบมี server
 
 **ในกลุ่มนี้มีใครบ้าง**
 
 <ToolTable group="dbms-engine" />
 
-ตารางนี้ไม่ได้ให้จำทุกตัว ดูแค่ช่อง **ระดับ**: 🟢 ทีมใช้ (ลงมือในบทนี้) · 🔵 ควรรู้จัก (เจอบ่อยในงานจริง) · ⚪ รู้ว่ามี (เจอแล้วบอกได้ว่าอยู่กลุ่มไหนก็พอ)
+ตารางนี้ไม่ได้ให้จำทุกตัว ดูแค่ช่อง **ระดับ**: 🟢 ทีมใช้ (ลงมือในบทนี้) · ควรรู้จัก (เจอบ่อยในงานจริง) · ⚪ รู้ว่ามี (เจอแล้วบอกได้ว่าอยู่กลุ่มไหนก็พอ)
 
 **ตัวในกลุ่มเหมือนกันตรงไหน ต่างกันตรงไหน**
 
 | หัวข้อ | เหมือนกัน / ต่างกัน |
 |---|---|
 | แนวคิด | ✅ เหมือนกัน: ตาราง แถว คอลัมน์ primary key / foreign key และ transaction แบบที่เรียนในบทที่ 6 |
-| ภาษา SQL | ✅ ส่วนหลักตามมาตรฐาน SQL เหมือนกัน (`SELECT`, `INSERT`, `UPDATE`, `DELETE`, `JOIN`, `GROUP BY`) ⚠️ แต่แต่ละตัวมี **สำเนียง (dialect)** ของตัวเอง เช่น เลขรันอัตโนมัติ การต่อข้อความ การจำกัดจำนวนแถว (`LIMIT 10` ใช้ได้ใน Postgres/MySQL/SQLite แต่ SQL Server ใช้ `TOP 10`) |
-| ความเคร่งครัด | ⚠️ ต่างกัน: Postgres ปฏิเสธข้อมูลผิดชนิดทันที MySQL พยายามแปลงให้ในบางกรณี (ข้อ 3) |
-| รูปแบบการทำงาน | ⚠️ ส่วนใหญ่เป็น server ที่ client ต่อเข้ามา · SQLite ฝังอยู่ในแอป ไม่มี server |
-| ฟีเจอร์เฉพาะตัว | ⚠️ ต่างกัน: เช่น Postgres มี `JSONB`, array, ช่วงเวลา และ extension (ข้อ 3) |
+| ภาษา SQL | ✅ ส่วนหลักตามมาตรฐาน SQL เหมือนกัน (`SELECT`, `INSERT`, `UPDATE`, `DELETE`, `JOIN`, `GROUP BY`) แต่แต่ละตัวมี **สำเนียง (dialect)** ของตัวเอง เช่น เลขรันอัตโนมัติ การต่อข้อความ การจำกัดจำนวนแถว (`LIMIT 10` ใช้ได้ใน Postgres/MySQL/SQLite แต่ SQL Server ใช้ `TOP 10`) |
+| ความเคร่งครัด | ต่างกัน: Postgres ปฏิเสธข้อมูลผิดชนิดทันที MySQL พยายามแปลงให้ในบางกรณี (ข้อ 3) |
+| รูปแบบการทำงาน | ส่วนใหญ่เป็น server ที่ client ต่อเข้ามา · SQLite ฝังอยู่ในแอป ไม่มี server |
+| ฟีเจอร์เฉพาะตัว | ต่างกัน: เช่น Postgres มี `JSONB`, array, ช่วงเวลา และ extension (ข้อ 3) |
 | ราคา / สัญญาอนุญาต | open source ใช้ฟรี (PostgreSQL, MySQL Community, MariaDB, SQLite) · เชิงพาณิชย์ มีรุ่นฟรีที่จำกัดขนาด (SQL Server, Oracle) |
 | เครื่องมือประจำตัว | ต่างกัน: CLI, port และโปรแกรมสำรองข้อมูลเป็นของใครของมัน (ตารางในข้อ 3) |
 
@@ -92,7 +92,7 @@ title: "บทที่ 7: ระบบจัดการฐานข้อม�
 
 ทำไมเทียบสองตัวนี้: ทั้งคู่เป็น open source ใช้ฟรี เป็นแบบ server และใช้กับเว็บมากที่สุด ทีมเราใช้ Postgres แต่ระบบเดิมของลูกค้าจำนวนมากใช้ MySQL จึงต้องรู้ทั้งสองตัว
 
-| | 🐬 MySQL | 🐘 PostgreSQL ("Postgres") |
+| | MySQL | PostgreSQL ("Postgres") |
 |---|---|---|
 | เจ้าของ | Oracle (มี MariaDB เป็น fork ที่ชุมชนดูแล) | ชุมชน open source ไม่มีบริษัทเจ้าของ |
 | บุคลิก | ใช้ง่าย เร็ว แพร่หลาย | ครบเครื่อง เคร่งครัด ต่อยอดได้ |
@@ -101,12 +101,12 @@ title: "บทที่ 7: ระบบจัดการฐานข้อม�
 | โปรแกรมพิมพ์คำสั่ง (CLI) | `mysql` | `psql` |
 | โปรแกรมสำรองข้อมูล | `mysqldump` | `pg_dump` |
 
-> 🤓 **เกร็ด:** MySQL ตั้งชื่อตาม **My** ลูกสาวของผู้สร้าง และต่อมาผู้สร้างคนเดิมแยกมาทำ **MariaDB** ตั้งชื่อตาม Maria ลูกสาวอีกคน 👧👧
+> **เกร็ด:** MySQL ตั้งชื่อตาม **My** ลูกสาวของผู้สร้าง และต่อมาผู้สร้างคนเดิมแยกมาทำ **MariaDB** ตั้งชื่อตาม Maria ลูกสาวอีกคน
 >
-> 💡 **MariaDB** ใช้งานเหมือน MySQL เกือบทั้งหมด แต่บางฟีเจอร์ต่างกัน เช่น MariaDB มี `RETURNING` (ดู ③)
+> **MariaDB** ใช้งานเหมือน MySQL เกือบทั้งหมด แต่บางฟีเจอร์ต่างกัน เช่น MariaDB มี `RETURNING` (ดู ③)
 
 **เรื่องจริงที่เกิดได้เมื่อย้ายค่าย:** ทีมย้ายระบบเก่าของลูกค้าจาก MySQL มา PostgreSQL ทุกอย่างดูปกติ...
-จนลูกค้าโทรมา *"พนักงานพิมพ์อีเมล `Somchai@mail.com` แล้ว login ไม่ได้ ทั้งที่เมื่อวานยังได้"* 🤔 ทั้งที่โค้ดไม่ได้เปลี่ยนสักบรรทัด ลองเดาก่อน แล้วดูเฉลยใน ②
+จนลูกค้าโทรมา *"พนักงานพิมพ์อีเมล `Somchai@mail.com` แล้ว login ไม่ได้ ทั้งที่เมื่อวานยังได้"* ทั้งที่โค้ดไม่ได้เปลี่ยนสักบรรทัด ลองเดาก่อน แล้วดูเฉลยใน ②
 
 ตัวอย่าง ①–④ ด้านล่าง ข้อ 7 จะให้พิมพ์ลองจริงทั้งสองฝั่ง
 
@@ -116,7 +116,7 @@ SELECT 'abc' = 0;
 -- 🐬 MySQL:      1 (true!) แปลง 'abc' เป็นตัวเลข 0 แล้วแค่แจ้ง "1 warning"
 -- 🐘 PostgreSQL: ERROR: invalid input syntax for type integer: "abc"
 ```
-💡 Postgres = ครูที่ไม่รับงานผิด format / MySQL = ครูที่พยายาม "เข้าใจที่จะสื่อ" ซึ่งบางทีก็เข้าใจผิด
+ Postgres = ครูที่ไม่รับงานผิด format / MySQL = ครูที่พยายาม "เข้าใจที่จะสื่อ" ซึ่งบางทีก็เข้าใจผิด
 
 ตัวอย่างที่อันตรายกว่า: เทียบ **คอลัมน์ข้อความ** กับตัวเลขโดยพลาด
 ```sql
@@ -126,7 +126,7 @@ SELECT * FROM customers WHERE name = 0;
 ```
 Postgres ที่ฟ้องทันทีช่วยจับบั๊กได้ตั้งแต่ตอนพัฒนา (ตัวอย่างนี้ต้องมีข้อมูลในตารางก่อนถึงจะเห็นความต่าง บนตารางว่าง MySQL จะได้ `Empty set` ซึ่งดูเหมือนไม่มีอะไรผิด ข้อ 7 ขั้นที่ 5 จะให้ลองหลังใส่แถวแรกแล้ว)
 
-> 🔍 **MySQL ไม่ได้เงียบสนิท** สังเกตคำว่า `1 warning` ท้ายผลลัพธ์ พิมพ์ `SHOW WARNINGS;` ต่อทันทีจะเห็นสาเหตุ (`Truncated incorrect DOUBLE value: 'abc'`) และตอน **บันทึก** ข้อมูล MySQL รุ่นใหม่เปิดโหมดเคร่งครัด (strict mode) เป็นค่าเริ่มต้น `INSERT` ค่า `'abc'` ลงคอลัมน์ `INT` จะ error ทันที ความยืดหยุ่นที่เหลือคือตอน **เทียบค่า** แบบตัวอย่างข้างบน
+> **MySQL ไม่ได้เงียบสนิท** สังเกตคำว่า `1 warning` ท้ายผลลัพธ์ พิมพ์ `SHOW WARNINGS;` ต่อทันทีจะเห็นสาเหตุ (`Truncated incorrect DOUBLE value: 'abc'`) และตอน **บันทึก** ข้อมูล MySQL รุ่นใหม่เปิดโหมดเคร่งครัด (strict mode) เป็นค่าเริ่มต้น `INSERT` ค่า `'abc'` ลงคอลัมน์ `INT` จะ error ทันที ความยืดหยุ่นที่เหลือคือตอน **เทียบค่า** แบบตัวอย่างข้างบน
 
 ### ② ตัวพิมพ์เล็กใหญ่ในการเทียบข้อความ
 ```sql
@@ -134,7 +134,7 @@ SELECT 'Somchai' = 'somchai';
 -- 🐬 MySQL:      1 (ค่าตั้งต้นไม่สนตัวพิมพ์เล็กใหญ่)
 -- 🐘 PostgreSQL: false (ต้องตรงทุกตัว ถ้าไม่สนให้ใช้ ILIKE หรือ lower())
 ```
-🔍 **เฉลยเรื่องจริง:** MySQL เทียบอีเมลแบบไม่สนตัวพิมพ์เล็กใหญ่ แต่ Postgres สน → วิธีแก้คือเก็บอีเมลเป็นตัวพิมพ์เล็กเสมอ และแปลงเป็นตัวเล็กก่อนค้นหา
+ **เฉลยเรื่องจริง:** MySQL เทียบอีเมลแบบไม่สนตัวพิมพ์เล็กใหญ่ แต่ Postgres สน → วิธีแก้คือเก็บอีเมลเป็นตัวพิมพ์เล็กเสมอ และแปลงเป็นตัวเล็กก่อนค้นหา
 
 ```sql
 -- 🐘 PostgreSQL: ไม่สนตัวพิมพ์ใหญ่เล็ก 2 วิธี
@@ -152,7 +152,7 @@ INSERT INTO customers (name) VALUES ('ปิติ') RETURNING id;
 -- 🐘 PostgreSQL: ได้ id ใหม่กลับมาเลย
 -- 🐬 MySQL:      ไม่รองรับ (ERROR 1064 ที่คำว่า RETURNING) ต้องถามแยกด้วย SELECT LAST_INSERT_ID()
 ```
-💡 ORM (บทที่ 8) ใช้ `RETURNING` ให้เมื่อต่อ Postgres ส่วน MySQL มันต้องหา id กลับมาด้วยวิธีอื่น
+ ORM (บทที่ 8) ใช้ `RETURNING` ให้เมื่อต่อ Postgres ส่วน MySQL มันต้องหา id กลับมาด้วยวิธีอื่น
 
 ### ④ ยกเลิกการแก้โครงสร้างตารางได้ไหม
 ```sql
@@ -162,10 +162,10 @@ ROLLBACK;
 -- 🐘 PostgreSQL: ไม่มีคอลัมน์ email (ยกเลิกได้)
 -- 🐬 MySQL:      มีคอลัมน์ email แล้ว (ALTER TABLE commit อัตโนมัติ)
 ```
-💡 สำคัญตอน migration (บทที่ 8): ถ้าพังกลางทาง Postgres ย้อนกลับได้สะอาดกว่า
+ สำคัญตอน migration (บทที่ 8): ถ้าพังกลางทาง Postgres ย้อนกลับได้สะอาดกว่า
 
 ### ⑤ ชนิดข้อมูลพิเศษ
-| | 🐬 MySQL | 🐘 PostgreSQL |
+| | MySQL | PostgreSQL |
 |---|---|---|
 | JSON | `JSON` | `JSON` และ `JSONB` (binary ค้นเร็ว ทำ index ได้) |
 | Array | ❌ | `TEXT[]`, `INT[]` |
@@ -173,7 +173,7 @@ ROLLBACK;
 | ช่วงเวลา | ❌ | `daterange`, `tstzrange` (เหมาะกับระบบจอง) |
 
 ### ⑥ Extension
-Postgres เพิ่มความสามารถได้ เช่น **PostGIS** (แผนที่/พิกัด) 🗺️ และ **pgvector** (ค้นหาสำหรับงาน AI) 🤖
+Postgres เพิ่มความสามารถได้ เช่น **PostGIS** (แผนที่/พิกัด) และ **pgvector** (ค้นหาสำหรับงาน AI)
 
 ### ⑦ Syntax เล็กๆ ที่ต่างกัน
 ```sql
@@ -184,18 +184,18 @@ CREATE TABLE t (id SERIAL PRIMARY KEY);   -- หรือ INT GENERATED ALWAYS A
 ```
 ที่เจอบ่อยอีกสามอย่าง:
 
-| | 🐬 MySQL | 🐘 PostgreSQL |
+| | MySQL | PostgreSQL |
 |---|---|---|
 | ต่อข้อความ | `CONCAT('a', 'b')` (`'a' \|\| 'b'` ได้ `0` เพราะ `\|\|` คือ OR และ MySQL เตือนว่าความหมายนี้จะถูกเลิกใช้) | `'a' \|\| 'b'` |
 | ครอบชื่อตาราง/คอลัมน์ | `` `name` `` (backtick) | `"name"` (เครื่องหมายคำพูดคู่) |
 | `"abc"` คืออะไร | ข้อความ (ยอมให้) | **ชื่อคอลัมน์** ถ้าไม่มี → error |
 
-> ⚠️ ใน SQL ข้อความต้องครอบด้วย `'...'` (single quote) เสมอ เป็นนิสัยที่ใช้ได้ทั้งสองค่าย
+> **ระวัง:** ใน SQL ข้อความต้องครอบด้วย `'...'` (single quote) เสมอ เป็นนิสัยที่ใช้ได้ทั้งสองค่าย
 > Postgres ยังแปลงชื่อที่ไม่ครอบเป็นตัวพิมพ์เล็กให้ (`MyTable` → `mytable`) ถ้าสร้างตารางด้วย `"MyTable"` แล้วค้นด้วย `MyTable` จะหาไม่เจอ **แนะนำตั้งชื่อเป็น `snake_case` ตัวเล็กทั้งหมด**
 
 ### ตารางสรุป
 
-| หัวข้อ | 🐬 MySQL | 🐘 PostgreSQL |
+| หัวข้อ | MySQL | PostgreSQL |
 |---|---|---|
 | เริ่มต้น | ง่ายมาก | ง่าย |
 | ความเคร่งครัด | ยืดหยุ่น (โดยเฉพาะตอนเทียบค่า) | เคร่งครัด |
@@ -214,7 +214,7 @@ CREATE TABLE t (id SERIAL PRIMARY KEY);   -- หรือ INT GENERATED ALWAYS A
 - **ดูแลเอง (self-hosted):** รันบนเครื่องเรา ในคอนเทนเนอร์ Docker หรือบนเครื่องเช่า (VPS) เราติดตั้งและดูแลเองทั้งหมด
 - **บริการสำเร็จรูป (managed database):** ผู้ให้บริการรันและดูแลเครื่องให้ เราสมัครแล้วได้ **connection string** มาใช้ทันที
 
-💡 เหมือน **ทำอาหารในครัวที่บ้าน** กับ **เช่าครัวพร้อมพ่อครัว** 🍳 อาหาร (SQL) เหมือนกัน ต่างกันที่ใครล้างจาน ใครซ่อมเตา
+ เหมือน **ทำอาหารในครัวที่บ้าน** กับ **เช่าครัวพร้อมพ่อครัว** อาหาร (SQL) เหมือนกัน ต่างกันที่ใครล้างจาน ใครซ่อมเตา
 
 **ข้างในมีอะไร: งานที่ต้องมีคนทำเสมอ**
 
@@ -226,7 +226,7 @@ CREATE TABLE t (id SERIAL PRIMARY KEY);   -- หรือ INT GENERATED ALWAYS A
 | เปิด port ให้ปลอดภัย, เข้ารหัส (SSL) | เรา | ส่วนใหญ่เตรียมไว้ให้ เราแค่ใช้ SSL ตอนต่อ |
 | ออกแบบตาราง, เขียน SQL ให้เร็ว, ตั้งสิทธิ์ user | **เราเสมอ** | **เราเสมอ** |
 
-> 🤔 **บริการสำเร็จรูปไม่ได้ทำให้เราไม่ต้องรู้ฐานข้อมูล** แม้แต่ AWS ก็เขียนในเอกสารว่าการปรับ query ให้เร็วเป็นหน้าที่ของลูกค้า แถวสุดท้ายของตารางจึงเป็นของเราไม่ว่าเลือกแบบไหน
+> **บริการสำเร็จรูปไม่ได้ทำให้เราไม่ต้องรู้ฐานข้อมูล** แม้แต่ AWS ก็เขียนในเอกสารว่าการปรับ query ให้เร็วเป็นหน้าที่ของลูกค้า แถวสุดท้ายของตารางจึงเป็นของเราไม่ว่าเลือกแบบไหน
 
 **ในกลุ่มนี้มีใครบ้าง**
 
@@ -240,20 +240,20 @@ CREATE TABLE t (id SERIAL PRIMARY KEY);   -- หรือ INT GENERATED ALWAYS A
 |---|---|
 | engine และ SQL | ✅ เหมือนกัน: Neon และ Supabase ข้างในคือ PostgreSQL จริง SQL ในบทนี้ใช้ได้ทันที |
 | วิธีต่อ | ✅ connection string แบบเดียวกัน (ข้อ 9) เปลี่ยนแค่ host, user, password |
-| SSL | ⚠️ ต่างกัน: ในเครื่องเราไม่ต้องใช้ · บน cloud มักต้องใส่ `?sslmode=require` |
-| หยุดเองเมื่อว่าง | ⚠️ ต่างกัน: Neon หยุดเครื่องเมื่อไม่มีคนใช้ 5 นาที ส่วนแผนฟรีของ Supabase หยุดโปรเจกต์ถ้าแทบไม่มีคนใช้ 7 วัน คำขอแรกหลังหยุดจึงช้ากว่าปกติ ไม่ใช่บั๊กของเรา |
-| จำนวนการเชื่อมต่อ | ⚠️ มีเพดาน ถ้าแอปเปิดหลายตัวพร้อมกัน ให้ต่อผ่านตัวรวมการเชื่อมต่อ (pooler) ของบริการ เช่น Neon ใช้ host ที่มีคำว่า `-pooler` (บทที่ 8) |
-| ที่ตั้ง (region) | ⚠️ เลือกให้ใกล้ server ของแอป (เช่น Singapore) ยิ่งไกล ทุก query ยิ่งช้า |
+| SSL | ต่างกัน: ในเครื่องเราไม่ต้องใช้ · บน cloud มักต้องใส่ `?sslmode=require` |
+| หยุดเองเมื่อว่าง | ต่างกัน: Neon หยุดเครื่องเมื่อไม่มีคนใช้ 5 นาที ส่วนแผนฟรีของ Supabase หยุดโปรเจกต์ถ้าแทบไม่มีคนใช้ 7 วัน คำขอแรกหลังหยุดจึงช้ากว่าปกติ ไม่ใช่บั๊กของเรา |
+| จำนวนการเชื่อมต่อ | มีเพดาน ถ้าแอปเปิดหลายตัวพร้อมกัน ให้ต่อผ่านตัวรวมการเชื่อมต่อ (pooler) ของบริการ เช่น Neon ใช้ host ที่มีคำว่า `-pooler` (บทที่ 8) |
+| ที่ตั้ง (region) | เลือกให้ใกล้ server ของแอป (เช่น Singapore) ยิ่งไกล ทุก query ยิ่งช้า |
 | ค่าใช้จ่าย | ดูแลเอง: ค่าเครื่อง + เวลาคนดูแล · สำเร็จรูป: แผนฟรีจำกัดขนาด เกินแล้วจ่ายตามที่ใช้ |
 
-> 🎯 **กลับไปที่เรื่องเล่า:** "ย้ายจาก PostgreSQL ไปใช้ Neon" ไม่ถูก เพราะ Neon ก็คือ PostgreSQL ที่ถูกต้องคือ *"ย้าย PostgreSQL จาก Docker ในเครื่อง ไปรันบน Neon"* engine และ SQL เหมือนเดิมทุกอย่าง เปลี่ยนแค่ connection string
+> **กลับไปที่เรื่องเล่า:** "ย้ายจาก PostgreSQL ไปใช้ Neon" ไม่ถูก เพราะ Neon ก็คือ PostgreSQL ที่ถูกต้องคือ *"ย้าย PostgreSQL จาก Docker ในเครื่อง ไปรันบน Neon"* engine และ SQL เหมือนเดิมทุกอย่าง เปลี่ยนแค่ connection string
 
 ---
 
 ## 5. กลุ่มที่ 3: เครื่องมือต่อฐานข้อมูล (DB Client)
 
 **คืออะไร:** โปรแกรมที่ต่อเข้า engine ส่ง SQL ไปให้ แล้วแสดงผลกลับมา โค้ดแอปของเรา (ผ่าน library อย่าง `pg` หรือ ORM ในบทที่ 8) ก็เป็น client ตัวหนึ่ง แค่ไม่มีหน้าจอ
-💡 เหมือน **รีโมตทีวี** 📺 รีโมตคนละยี่ห้อสั่งทีวีเครื่องเดียวกันได้ และทิ้งรีโมตไป รายการในทีวีก็ไม่หาย (ลบ DBeaver ทิ้ง ข้อมูลยังอยู่ใน engine ครบ)
+ เหมือน **รีโมตทีวี** รีโมตคนละยี่ห้อสั่งทีวีเครื่องเดียวกันได้ และทิ้งรีโมตไป รายการในทีวีก็ไม่หาย (ลบ DBeaver ทิ้ง ข้อมูลยังอยู่ใน engine ครบ)
 
 **ข้างใน client มีอะไร**
 1. **Driver:** ตัวที่ "พูดภาษา" ของ engine แต่ละตัว (Postgres กับ MySQL คุยกันคนละแบบ) นี่คือเหตุที่ DBeaver ขอโหลด driver ตอนต่อครั้งแรก
@@ -271,11 +271,11 @@ CREATE TABLE t (id SERIAL PRIMARY KEY);   -- หรือ INT GENERATED ALWAYS A
 |---|---|
 | ข้อมูลที่ต้องกรอก | ✅ เหมือนกัน: 5 ช่องเดิมทุกตัว รู้ connection string ก็ต่อได้ทุกโปรแกรม |
 | SQL ที่ส่ง | ✅ เหมือนกัน: engine เป็นคนทำงาน client แค่ส่งคำสั่งไปและรับผลกลับ |
-| หน้าตา | ⚠️ ต่างกัน: พิมพ์คำสั่ง (psql, mysql) · แอปบนเครื่อง (pgAdmin, DBeaver, TablePlus) · หน้าเว็บ (Adminer, Drizzle Studio, SQL Editor ของ Neon) |
-| ต่อได้กี่ค่าย | ⚠️ ต่างกัน: ค่ายเดียว (psql, pgAdmin) · หลายค่าย (DBeaver, Adminer, TablePlus) |
-| คำสั่งพิเศษ | ⚠️ `\dt`, `\d` เป็นคำสั่งของ **psql** ไม่ใช่ SQL เอาไปพิมพ์ใน DBeaver จะ error |
+| หน้าตา | ต่างกัน: พิมพ์คำสั่ง (psql, mysql) · แอปบนเครื่อง (pgAdmin, DBeaver, TablePlus) · หน้าเว็บ (Adminer, Drizzle Studio, SQL Editor ของ Neon) |
+| ต่อได้กี่ค่าย | ต่างกัน: ค่ายเดียว (psql, pgAdmin) · หลายค่าย (DBeaver, Adminer, TablePlus) |
+| คำสั่งพิเศษ | `\dt`, `\d` เป็นคำสั่งของ **psql** ไม่ใช่ SQL เอาไปพิมพ์ใน DBeaver จะ error |
 
-> ⚠️ **client มีสิทธิ์เท่ากับ user ที่ใช้ต่อ** GUI ที่แก้ข้อมูลได้ในคลิกเดียวจึงอันตรายมากกับฐานข้อมูลจริงของลูกค้า (production) ถ้าต้องเปิดดู ควรต่อด้วย user ที่อ่านได้อย่างเดียว และถามพี่เลี้ยงก่อนแก้อะไร
+> **client มีสิทธิ์เท่ากับ user ที่ใช้ต่อ** GUI ที่แก้ข้อมูลได้ในคลิกเดียวจึงอันตรายมากกับฐานข้อมูลจริงของลูกค้า (production) ถ้าต้องเปิดดู ควรต่อด้วย user ที่อ่านได้อย่างเดียว และถามพี่เลี้ยงก่อนแก้อะไร
 
 ---
 
@@ -299,13 +299,13 @@ CREATE TABLE t (id SERIAL PRIMARY KEY);   -- หรือ INT GENERATED ALWAYS A
 
 | สถานการณ์ | เลือก | เหตุผล |
 |---|---|---|
-| โปรเจกต์ใหม่ของทีม ไม่มีข้อจำกัด | 🐘 **PostgreSQL** | เคร่งครัดจับบั๊กได้เร็ว ฟีเจอร์ครบ (JSONB, range, extension) |
-| ระบบจอง/ห้องประชุม กันเวลาทับ | 🐘 PostgreSQL | มีชนิด range + constraint กันทับ |
-| งานค้นหาเวกเตอร์/AI, แผนที่ | 🐘 PostgreSQL | pgvector, PostGIS |
-| ลูกค้ามี MySQL/MariaDB อยู่แล้ว (WordPress, ระบบเก่า) | 🐬 MySQL | ไม่ต้องย้าย ทำงานได้ดี |
-| โฮสติ้งราคาถูกที่ให้แต่ MySQL | 🐬 MySQL | ใช้ของที่มี |
-| แอปเดียวเครื่องเดียว (แอปมือถือ, เครื่องมือเล็กๆ) | 🪶 SQLite | ไม่ต้องมี server ฐานข้อมูลเป็นไฟล์เดียว |
-| ไม่แน่ใจ | 🐘 PostgreSQL | บริการยุคใหม่ (Supabase, Neon) ล้วนใช้ Postgres |
+| โปรเจกต์ใหม่ของทีม ไม่มีข้อจำกัด | **PostgreSQL** | เคร่งครัดจับบั๊กได้เร็ว ฟีเจอร์ครบ (JSONB, range, extension) |
+| ระบบจอง/ห้องประชุม กันเวลาทับ | PostgreSQL | มีชนิด range + constraint กันทับ |
+| งานค้นหาเวกเตอร์/AI, แผนที่ | PostgreSQL | pgvector, PostGIS |
+| ลูกค้ามี MySQL/MariaDB อยู่แล้ว (WordPress, ระบบเก่า) | MySQL | ไม่ต้องย้าย ทำงานได้ดี |
+| โฮสติ้งราคาถูกที่ให้แต่ MySQL | MySQL | ใช้ของที่มี |
+| แอปเดียวเครื่องเดียว (แอปมือถือ, เครื่องมือเล็กๆ) | SQLite | ไม่ต้องมี server ฐานข้อมูลเป็นไฟล์เดียว |
+| ไม่แน่ใจ | PostgreSQL | บริการยุคใหม่ (Supabase, Neon) ล้วนใช้ Postgres |
 
 > **แนวทางของทีม Blicktech**
 > - **Engine:** งานใหม่ใช้ **PostgreSQL** คู่กับ **Drizzle** (บทที่ 8) · ลูกค้ามี MySQL/MariaDB อยู่แล้ว ใช้ตามนั้น
@@ -316,9 +316,9 @@ CREATE TABLE t (id SERIAL PRIMARY KEY);   -- หรือ INT GENERATED ALWAYS A
 
 ---
 
-> 🔧 **จากนี้คือการลงมือ** เปิด engine 2 ตัว (กลุ่ม 1) ในเครื่องเราด้วย Docker (กลุ่ม 2 แบบดูแลเอง) แล้วต่อด้วย `psql`/`mysql` และ GUI (กลุ่ม 3) ได้จับครบทั้งสามกลุ่มในชุดเดียว
+> **จากนี้คือการลงมือ** เปิด engine 2 ตัว (กลุ่ม 1) ในเครื่องเราด้วย Docker (กลุ่ม 2 แบบดูแลเอง) แล้วต่อด้วย `psql`/`mysql` และ GUI (กลุ่ม 3) ได้จับครบทั้งสามกลุ่มในชุดเดียว
 
-## 7. 🔧 ลงมือ: เปิดทั้งสองตัวแล้วเทียบ
+## 7. ลงมือ: เปิดทั้งสองตัวแล้วเทียบ
 
 ### ขั้นที่ 1: สร้างโฟลเดอร์และไฟล์ `compose.yaml`
 ```bash
@@ -360,7 +360,7 @@ volumes:
 | `ports: "5432:5432"` | เปิดทางจากเครื่องเรา (ซ้าย) เข้าไปที่ port ในคอนเทนเนอร์ (ขวา) |
 | `volumes:` | ที่เก็บข้อมูลถาวร ลบคอนเทนเนอร์แล้วข้อมูลยังอยู่ (ไม่ใส่ = ข้อมูลหายเมื่อลบคอนเทนเนอร์) |
 
-> ⚠️ **ถ้าวันหนึ่งเปลี่ยนเป็น `postgres:18` ขึ้นไป** ต้องเปลี่ยนที่เสียบ volume เป็น `/var/lib/postgresql` (ไม่มี `/data`) ตามที่หน้า image บน Docker Hub แจ้งไว้ ส่วนรุ่น 17 ลงไปใช้ `/var/lib/postgresql/data` แบบในไฟล์นี้ และข้อมูลใน volume ของรุ่นเก่าเอามาเปิดด้วยรุ่นใหม่ตรงๆ ไม่ได้ ต้อง backup แล้ว restore (ข้อ 12)
+> **ถ้าวันหนึ่งเปลี่ยนเป็น `postgres:18` ขึ้นไป** ต้องเปลี่ยนที่เสียบ volume เป็น `/var/lib/postgresql` (ไม่มี `/data`) ตามที่หน้า image บน Docker Hub แจ้งไว้ ส่วนรุ่น 17 ลงไปใช้ `/var/lib/postgresql/data` แบบในไฟล์นี้ และข้อมูลใน volume ของรุ่นเก่าเอามาเปิดด้วยรุ่นใหม่ตรงๆ ไม่ได้ ต้อง backup แล้ว restore (ข้อ 12)
 
 ![แผนภาพ port mapping: port 5432 และ 3306 ของเครื่องเราโยงไปยัง port ในคอนเทนเนอร์ และทางเลือก 5433:5432](/img/07-docker-port.svg)
 *`"5432:5432"` = port เครื่องเรา : port ในคอนเทนเนอร์ · ถ้า 5432 ถูกใช้อยู่ เปลี่ยนเลขซ้ายเป็น 5433 ได้*
@@ -399,7 +399,7 @@ docker compose exec postgres psql -U postgres shop                              
 mysql>            (ฝั่ง MySQL)
 shop=#            (ฝั่ง Postgres)
 ```
-> ⚠️ **`--default-character-set=utf8mb4` สำคัญมากถ้าจะพิมพ์ภาษาไทย** ไม่ใส่ client ของ MySQL ในคอนเทนเนอร์อาจใช้ `latin1` ทำให้ไทยกลายเป็นตัวอักษรเพี้ยนตอนเก็บ (ดูข้อ 13 ❺)
+> **`--default-character-set=utf8mb4` สำคัญมากถ้าจะพิมพ์ภาษาไทย** ไม่ใส่ client ของ MySQL ในคอนเทนเนอร์อาจใช้ `latin1` ทำให้ไทยกลายเป็นตัวอักษรเพี้ยนตอนเก็บ (ดูข้อ 13 ❺)
 > และ MySQL แสดงคำเตือนเรื่อง "password on the command line" นั่นเป็นแค่คำเตือน ใช้ต่อได้
 
 ### ขั้นที่ 4: สร้างตาราง `customers` ทั้งสองฝั่ง
@@ -416,7 +416,7 @@ CREATE TABLE                       (PostgreSQL)
 ```
 
 ### ขั้นที่ 5: ทดลอง ①–④ ทีละข้อ
-พิมพ์ตัวอย่าง ①–④ จากข้อ 3 ทีละข้อ ดูผลเทียบกันสดๆ 🍿 สิ่งที่ควรเห็นจริง:
+พิมพ์ตัวอย่าง ①–④ จากข้อ 3 ทีละข้อ ดูผลเทียบกันสดๆ สิ่งที่ควรเห็นจริง:
 
 **① ชนิดข้อมูล**
 ```text
@@ -471,11 +471,11 @@ docker compose down -v       # ลบ volume ด้วย = ข้อมูล�
 ทำไมสองคำสั่งนี้ต่างกัน: คอนเทนเนอร์คือ "โปรแกรมที่กำลังรัน" ลบแล้วสร้างใหม่ได้ ส่วนข้อมูลจริงของฐานข้อมูลเก็บอยู่ใน **volume** แยกออกมา (ดูบทที่ 2) `down` ลบแค่คอนเทนเนอร์ `down -v` ลบ volume ไปด้วย
 
 ถ้าเผลอ `down` ไปแล้ว ให้ `docker compose up -d` อีกครั้งก่อนทำข้อถัดไป คอนเทนเนอร์ใหม่จะต่อกับ volume เดิม ข้อมูลกลับมาครบ แต่ถ้าใช้ `down -v` ไปแล้ว ข้อมูลหายจริง ต้องกลับไปทำขั้นที่ 4–5 ใหม่
-> ⚠️ `down -v` คือลบข้อมูลทิ้งถาวร ห้ามใช้กับฐานข้อมูลที่มีข้อมูลสำคัญ
+> **ระวัง:** `down -v` คือลบข้อมูลทิ้งถาวร ห้ามใช้กับฐานข้อมูลที่มีข้อมูลสำคัญ
 
 ---
 
-## 8. 🔧 ต่อเข้าฐานข้อมูลด้วย Client
+## 8. ต่อเข้าฐานข้อมูลด้วย Client
 
 นี่คือกลุ่มที่ 3 (ข้อ 5) ของจริง มี 3 วิธีหลัก เลือกตามความถนัด
 
@@ -485,7 +485,7 @@ docker compose down -v       # ลบ volume ด้วย = ข้อมูล�
 ### วิธีที่ 2: CLI จากเครื่องเราเอง
 ติดตั้ง client (macOS: `brew install libpq` ได้แค่ client หรือ `brew install postgresql@17` ได้ทั้ง server และ client · Linux (Debian/Ubuntu): `sudo apt install postgresql-client` · Windows: โหลดตัวติดตั้งจาก postgresql.org/download/windows ตอนเลือก component ให้ติ๊กแค่ **Command Line Tools** (ไม่ต้องเอา server) แล้วเพิ่มโฟลเดอร์ `C:\Program Files\PostgreSQL\<เลขรุ่น>\bin` ลงใน PATH (Start → พิมพ์ "environment variables" → Path → New) ปิดเปิด Terminal ใหม่แล้วเช็ค `psql --version`) ควรใช้ client รุ่นเท่ากับหรือใหม่กว่า server แล้วต่อผ่าน port ที่เปิดไว้
 
-> 💡 บน Mac ถ้าติด `libpq` แล้วพิมพ์ `psql` ขึ้น `command not found` เป็นเพราะ Homebrew ติดตั้ง `libpq` แบบ keg-only (ไม่เอาคำสั่งไปไว้ใน PATH ให้ เพื่อไม่ชนกับ PostgreSQL ตัวเต็ม) แก้ด้วย `brew link --force libpq` หรือทำตามคำแนะนำที่ `brew info libpq` แสดง
+> **เคล็ดลับ:** บน Mac ถ้าติด `libpq` แล้วพิมพ์ `psql` ขึ้น `command not found` เป็นเพราะ Homebrew ติดตั้ง `libpq` แบบ keg-only (ไม่เอาคำสั่งไปไว้ใน PATH ให้ เพื่อไม่ชนกับ PostgreSQL ตัวเต็ม) แก้ด้วย `brew link --force libpq` หรือทำตามคำแนะนำที่ `brew info libpq` แสดง
 ```bash
 psql "postgres://postgres:secret@localhost:5432/shop"
 ```
@@ -541,7 +541,7 @@ GUI ช่วยดูตารางและข้อมูลเป็นห�
 6. ดูตารางที่ `shop → Schemas → public → Tables` (Postgres) หรือ `shop → Tables` (MySQL) ดับเบิลคลิกตารางแล้วเปิดแท็บ **Data**
 7. เปิด SQL Editor (DBeaver: `Ctrl/Cmd + ]`) พิมพ์ SQL แล้วกดรัน (`Ctrl/Cmd + Enter`)
 
-> 💡 สำหรับ MySQL 8 บางเครื่อง DBeaver แจ้ง `Public Key Retrieval is not allowed` ให้เข้า **Driver properties** แล้วตั้ง `allowPublicKeyRetrieval=true` (ใช้เฉพาะตอน dev ในเครื่องเรา)
+> **เคล็ดลับ:** สำหรับ MySQL 8 บางเครื่อง DBeaver แจ้ง `Public Key Retrieval is not allowed` ให้เข้า **Driver properties** แล้วตั้ง `allowPublicKeyRetrieval=true` (ใช้เฉพาะตอน dev ในเครื่องเรา)
 
 ---
 
@@ -595,10 +595,10 @@ DATABASE_URL=postgres://postgres:secret@localhost:5432/shop
 - **Role / User** = บัญชีผู้ใช้ฐานข้อมูล (Postgres เรียก role MySQL เรียก user) แยกจากผู้ใช้ในแอปของเรา
 - **Schema** (Postgres) = โฟลเดอร์ในโฟลเดอร์ ค่าตั้งต้นคือ `public` ตารางที่เราสร้างอยู่ในนั้น
 
-> ⚠️ **หลักการ:** `postgres` / `root` เป็น **superuser** ทำได้ทุกอย่างรวมถึงลบทิ้งทุก database ให้ใช้เฉพาะตอนจัดการเอง
+> **หลักการ:** `postgres` / `root` เป็น **superuser** ทำได้ทุกอย่างรวมถึงลบทิ้งทุก database ให้ใช้เฉพาะตอนจัดการเอง
 > **แอปต้องมี user ของตัวเอง** ที่มีสิทธิ์เท่าที่จำเป็น (หลักสิทธิ์ขั้นต่ำ) ถ้ารหัสหลุด ความเสียหายจะจำกัดอยู่แค่ database นั้น
 
-### 🔧 สร้าง database + user สำหรับแอป (PostgreSQL)
+### สร้าง database + user สำหรับแอป (PostgreSQL)
 ```bash
 docker compose exec postgres psql -U postgres
 ```
@@ -640,13 +640,13 @@ INSERT 0 1
 ```text
 psql: error: connection to server at "postgres" (172.x.x.x), port 5432 failed: FATAL:  password authentication failed for user "app_user"
 ```
-> ⚠️ **กับดัก PostgreSQL 15 ขึ้นไป:** `GRANT ALL ON DATABASE` อย่างเดียว **ไม่พอ** ถ้าไม่ได้ `GRANT ALL ON SCHEMA public` (ในขณะที่เชื่อมต่อ database นั้น) user จะสร้างตารางไม่ได้ และเจอ
+> **กับดัก PostgreSQL 15 ขึ้นไป:** `GRANT ALL ON DATABASE` อย่างเดียว **ไม่พอ** ถ้าไม่ได้ `GRANT ALL ON SCHEMA public` (ในขณะที่เชื่อมต่อ database นั้น) user จะสร้างตารางไม่ได้ และเจอ
 > ```text
 > ERROR:  permission denied for schema public
 > ```
 > ทางลัดที่สะอาดอีกแบบ: สร้าง database โดยให้ user เป็นเจ้าของเลย `CREATE DATABASE bitcafe OWNER app_user;`
 
-### 🔧 สร้าง database + user สำหรับแอป (MySQL)
+### สร้าง database + user สำหรับแอป (MySQL)
 ```bash
 docker compose exec mysql mysql -uroot -psecret --default-character-set=utf8mb4
 ```
@@ -669,7 +669,7 @@ GRANT ALL PRIVILEGES ON `bitcafe`.* TO `app`@`%`
 
 ## 11. ชนิดข้อมูลที่ต่างกัน: เวลาเขียนตารางสำหรับทั้งสองค่าย
 
-| งาน | 🐘 PostgreSQL | 🐬 MySQL | หมายเหตุ |
+| งาน | PostgreSQL | MySQL | หมายเหตุ |
 |---|---|---|---|
 | เลขรันอัตโนมัติ | `SERIAL` หรือ `GENERATED ALWAYS AS IDENTITY` | `AUTO_INCREMENT` | |
 | ข้อความสั้น | `TEXT` หรือ `VARCHAR(n)` | `VARCHAR(n)` (ต้องระบุ n) | Postgres `TEXT` ไม่จำกัดความยาวและไม่ช้ากว่า VARCHAR |
@@ -680,7 +680,7 @@ GRANT ALL PRIVILEGES ON `bitcafe`.* TO `app`@`%`
 | JSON | `JSONB` | `JSON` | |
 | UUID | `UUID` (ใช้ `gen_random_uuid()` สร้าง) | `CHAR(36)` / `BINARY(16)` (+ `UUID()`) | |
 
-> 💡 ถ้าใช้ ORM (บทที่ 8) มันแปลงชนิดให้เองตามค่ายที่ต่อ แต่ต้องเลือก dialect ให้ถูก (`pgTable` กับ `mysqlTable` ใน Drizzle)
+> **เคล็ดลับ:** ถ้าใช้ ORM (บทที่ 8) มันแปลงชนิดให้เองตามค่ายที่ต่อ แต่ต้องเลือก dialect ให้ถูก (`pgTable` กับ `mysqlTable` ใน Drizzle)
 
 ตัวอย่างที่ใช้ได้ทั้งสองค่ายโดยไม่ต้องแก้ (เขียนแบบกลางๆ):
 ```sql
@@ -693,15 +693,15 @@ CREATE TABLE products (
 
 ---
 
-## 12. 🔧 สำรองข้อมูล (Backup) และกู้คืน (Restore)
+## 12. สำรองข้อมูล (Backup) และกู้คืน (Restore)
 
-ฐานข้อมูลจริงต้องมี backup เสมอ เพราะ: ลบผิด (ลืม `WHERE`), ย้ายเครื่อง, อัปเกรดเวอร์ชัน, หรือเครื่องเสีย 😱
-> 💡 Docker volume **ไม่ใช่ backup** (ถ้าเครื่องเสีย volume หายไปด้วย) backup ต้องเป็นไฟล์ที่เก็บ **นอกเครื่อง** อีกที่
+ฐานข้อมูลจริงต้องมี backup เสมอ เพราะ: ลบผิด (ลืม `WHERE`), ย้ายเครื่อง, อัปเกรดเวอร์ชัน, หรือเครื่องเสีย
+> **เคล็ดลับ:** Docker volume **ไม่ใช่ backup** (ถ้าเครื่องเสีย volume หายไปด้วย) backup ต้องเป็นไฟล์ที่เก็บ **นอกเครื่อง** อีกที่
 
 ![ผัง backup: dump จาก database เป็นไฟล์ shop.sql แล้ว restore เข้า database ใหม่ พร้อมคำสั่งของ PostgreSQL และ MySQL](/img/07-backup-flow.svg)
 *backup = dump ออกเป็นไฟล์ · restore = อ่านไฟล์นั้นเข้า database ปลายทาง · ไฟล์ที่ยังไม่เคยลอง restore ถือว่ายังไม่ใช่ backup*
 
-### 🐘 PostgreSQL: `pg_dump`
+### PostgreSQL: `pg_dump`
 ```bash
 # 1) dump ออกเป็นไฟล์ SQL ธรรมดา (บนเครื่องเรา)
 docker compose exec -T postgres pg_dump -U postgres --no-owner shop > shop.sql
@@ -748,7 +748,7 @@ docker compose exec -T postgres pg_restore -U postgres -d shop_copy --clean --if
 ```
 (ไฟล์ `.dump` แบบ custom อ่านด้วยตาไม่ได้ ต้อง restore ด้วย `pg_restore` ส่วนไฟล์ `.sql` ใช้ `psql`)
 
-### 🐬 MySQL: `mysqldump`
+### MySQL: `mysqldump`
 ```bash
 docker compose exec -T mysql mysqldump -uroot -psecret --default-character-set=utf8mb4 shop > shop.sql
 ```
@@ -764,7 +764,7 @@ COUNT(*)
 ```
 (จะเห็นคำเตือน `Using a password on the command line` ได้ ไม่ใช่ error)
 
-### ✅ เช็คลิสต์ backup
+### เช็คลิสต์ backup
 - [ ] ตั้งเวลา backup อัตโนมัติ (เช่น cron ทุกคืน) และเก็บหลายชุด ไม่ทับกันหมด
 - [ ] เก็บไฟล์ไว้ **นอกเครื่อง** (cloud storage/อีกเซิร์ฟเวอร์) และเข้ารหัสถ้ามีข้อมูลลูกค้า
 - [ ] **ลอง restore จริงเป็นระยะ** ว่าไฟล์ใช้ได้
@@ -773,12 +773,12 @@ COUNT(*)
 
 ---
 
-## 13. 🛠 แก้ปัญหาที่เจอบ่อย (Troubleshooting)
+## 13. แก้ปัญหาที่เจอบ่อย (Troubleshooting)
 
 ![แผนผังสาเหตุและวิธีแก้ของ error 4 แบบ ได้แก่ Connection refused, password authentication failed, database does not exist, port is already allocated](/img/07-troubleshoot.svg)
 *อ่านข้อความ error ให้ครบก่อนเสมอ ส่วนใหญ่บอกสาเหตุไว้แล้ว*
 
-### ❶ `Connection refused` / `ECONNREFUSED`
+### `Connection refused` / `ECONNREFUSED`
 ```text
 psql: error: connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused
 Is the server running on that host and accepting TCP/IP connections?
@@ -790,7 +790,7 @@ Is the server running on that host and accepting TCP/IP connections?
 4. ในโค้ดที่รันใน Docker เดียวกัน ให้ใช้ชื่อ service ไม่ใช่ `localhost` (ดูข้อ 9)
 5. บางเครื่อง `localhost` ถูกแปลงเป็น `::1` (IPv6) แต่ server ฟังแค่ IPv4 ลองใช้ `127.0.0.1` แทน (ถ้า `-p` ผูกไว้แค่ `127.0.0.1:5432:5432` จะเจอกรณีนี้)
 
-### ❷ `password authentication failed for user "postgres"`
+### `password authentication failed for user "postgres"`
 ```text
 FATAL:  password authentication failed for user "postgres"
 ```
@@ -798,11 +798,11 @@ MySQL: `ERROR 1045 (28000): Access denied for user 'root'@'localhost' (using pas
 
 **สาเหตุ:** ชื่อผู้ใช้หรือรหัสผ่านไม่ตรง (Postgres บอกข้อความเดียวกันแม้ชื่อผู้ใช้ไม่มีอยู่จริง เพื่อความปลอดภัย)
 1. เทียบกับ `POSTGRES_PASSWORD` / `MYSQL_ROOT_PASSWORD` ใน `compose.yaml` และ `.env`
-2. ⚠️ **ตัวแปรเหล่านี้มีผลเฉพาะตอนสร้าง volume ครั้งแรก** ถ้าเปลี่ยนรหัสใน compose ทีหลังแต่ volume เดิมยังอยู่ รหัสไม่เปลี่ยน ต้อง `docker compose down -v` (ลบข้อมูล) หรือเปลี่ยนด้วย `ALTER USER postgres PASSWORD '...'`
+2. **ตัวแปรเหล่านี้มีผลเฉพาะตอนสร้าง volume ครั้งแรก** ถ้าเปลี่ยนรหัสใน compose ทีหลังแต่ volume เดิมยังอยู่ รหัสไม่เปลี่ยน ต้อง `docker compose down -v` (ลบข้อมูล) หรือเปลี่ยนด้วย `ALTER USER postgres PASSWORD '...'`
 3. รหัสผ่านมีอักขระพิเศษ? ต้อง URL-encode ใน connection string
 4. มีฐานข้อมูลอื่น (เช่น Postgres ที่ติดตั้งในเครื่อง) ใช้ port เดียวกัน จนเราต่อผิดตัว
 
-### ❸ `database "xxx" does not exist`
+### `database "xxx" does not exist`
 ```text
 FATAL:  database "nodb" does not exist
 ```
@@ -814,7 +814,7 @@ MySQL: `ERROR 1049 (42000): Unknown database 'nodb'`
 3. ใน compose ตั้ง `POSTGRES_DB` ได้ แต่ก็มีผลแค่ตอนสร้าง volume ครั้งแรกเช่นกัน
 4. ถ้ายังไม่แน่ใจ ต่อด้วย database `postgres` (ที่มีให้เสมอ) แล้วค่อยสร้างตัวใหม่
 
-### ❹ `port is already allocated` / `address already in use`
+### `port is already allocated` / `address already in use`
 ```text
 docker: Error response from daemon: ... Bind for 0.0.0.0:5432 failed: port is already allocated
 ```
@@ -823,7 +823,7 @@ docker: Error response from daemon: ... Bind for 0.0.0.0:5432 failed: port is al
 2. ปิดตัวเก่า (`docker stop ชื่อ`) **หรือ**
 3. เปลี่ยนเลขฝั่งซ้ายเป็น port อื่น: `"5433:5432"` แล้วแก้ connection string เป็น `...@localhost:5433/...`
 
-### ❺ ภาษาไทยเพี้ยน (Encoding)
+### ภาษาไทยเพี้ยน (Encoding)
 อาการ: เก็บ "ปิติ" แล้วเห็นเป็น `à¸›à¸´à¸•à¸´` หรือ `???` · `CHAR_LENGTH` ของตัวไทย 1 ตัวได้ 3
 
 **สาเหตุ:** ตัวอักษรไทย 1 ตัวใช้ 3 byte ใน UTF-8 ถ้าฝั่ง client บอกฐานข้อมูลว่าเป็น `latin1` ฐานข้อมูลจะนับเป็น 3 ตัวอักษรเดี่ยว
@@ -840,16 +840,16 @@ utf8mb4 → chars = 1   (ถูก)
 1. **ตัวเก็บ:** database/ตารางต้องเป็น UTF-8 (MySQL 8 ใช้ `utf8mb4` เป็นค่าตั้งต้นแล้ว · Postgres ใช้ `UTF8` ตรวจด้วย `\l` ดูคอลัมน์ Encoding)
 2. **ตัวต่อ:** client ต้องใช้ UTF-8 ด้วย: ใส่ `--default-character-set=utf8mb4` ใน CLI, หรือ `?charset=utf8mb4` ใน connection string ของบาง driver ส่วนไดรเวอร์ในโค้ด (ORM) ปกติใช้ UTF-8 ให้เอง
 3. ใน Postgres ตรวจ `SHOW client_encoding;` ต้องได้ `UTF8`
-4. ⚠️ **ข้อมูลที่เก็บเพี้ยนไปแล้วแก้ไม่ได้ด้วยการเปลี่ยน setting** ต้องลบแล้วใส่ใหม่
-5. MySQL: ใช้ `utf8mb4` ไม่ใช่ `utf8` (ซึ่งเป็นชื่อเก่าที่เก็บได้แค่ 3 byte ต่ออักขระ ทำให้ emoji 😀 เก็บไม่ได้)
+4. **ข้อมูลที่เก็บเพี้ยนไปแล้วแก้ไม่ได้ด้วยการเปลี่ยน setting** ต้องลบแล้วใส่ใหม่
+5. MySQL: ใช้ `utf8mb4` ไม่ใช่ `utf8` (ซึ่งเป็นชื่อเก่าที่เก็บได้แค่ 3 byte ต่ออักขระ ทำให้ emoji เก็บไม่ได้)
 
-### ❻ `permission denied for schema public`
+### `permission denied for schema public`
 เจอตอน user ใหม่สร้างตารางไม่ได้ใน Postgres 15 ขึ้นไป แก้ตามข้อ 10: `GRANT ALL ON SCHEMA public TO ชื่อ_user;` (ต่อเข้า database นั้นก่อน)
 
-### ❼ `role "xxx" does not exist`
+### `role "xxx" does not exist`
 ชื่อ user ที่ใช้ใน connection string หรือใน `GRANT` ไม่มีอยู่ ดูรายชื่อด้วย `\du` แล้วสร้างด้วย `CREATE ROLE ...`
 
-### ❽ `ERROR 2002 ... mysqld.sock` (MySQL ยังไม่พร้อม)
+### `ERROR 2002 ... mysqld.sock` (MySQL ยังไม่พร้อม)
 ```text
 ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/var/run/mysqld/mysqld.sock' (2)
 ```
@@ -857,12 +857,12 @@ ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/var/run
 1. รอสักครู่แล้วสั่งใหม่
 2. ดู `docker compose logs mysql` จนเห็น `ready for connections` (บรรทัดที่มี `port: 3306`) แปลว่าพร้อมแล้ว
 
-### ❾ `no configuration file provided: not found`
+### `no configuration file provided: not found`
 **สาเหตุ:** สั่ง `docker compose ...` จากโฟลเดอร์ที่ไม่มี `compose.yaml` (มักเป็นหน้าต่าง Terminal ที่เพิ่งเปิดใหม่ ซึ่งเริ่มที่โฟลเดอร์ home) แก้ด้วย `cd db-compare` ก่อน แล้วเช็คด้วย `ls` ว่าเห็น `compose.yaml`
 
 ---
 
-## 🧠 เช็คความเข้าใจ
+## เช็คความเข้าใจ
 
 <details>
 <summary>1. บิตบอกว่า "ย้ายจาก PostgreSQL ไปใช้ Neon แล้ว" ผิดตรงไหน และต้องแก้ SQL ในโค้ดไหม?</summary>
@@ -943,7 +943,7 @@ PostgreSQL มีชนิดข้อมูลช่วงเวลา (range) 
 
 ---
 
-## ✏️ แบบฝึกหัด
+## แบบฝึกหัด
 
 1. ทำข้อ 7 ให้ครบ ①–④ สรุปผลเป็นตารางใน README พร้อม screenshot
 2. ต่อด้วย DBeaver (หรือ pgAdmin) เข้าทั้ง Postgres และ MySQL ถ่าย screenshot ตารางที่สร้าง
@@ -952,7 +952,7 @@ PostgreSQL มีชนิดข้อมูลช่วงเวลา (range) 
 5. ลองทำให้เกิด error ❶ ❷ ❸ ❹ ในข้อ 13 ด้วยตัวเอง (ปิดคอนเทนเนอร์, ใส่รหัสผิด, ใส่ชื่อ database ผิด, เปิด container ที่ port ซ้ำ) แล้วแก้ให้หาย
 6. จัดกลุ่มชื่อเหล่านี้ว่าอยู่กลุ่มไหน (Engine / ที่ที่รัน / Client) พร้อมเหตุผลสั้นๆ: MariaDB, Supabase, pgAdmin, SQLite, Amazon RDS, Adminer, SQL Server, Drizzle Studio แล้วส่งให้พี่ไบต์ดู
 
-## ✅ ผ่านด่าน
+## ผ่านด่าน
 
 - [ ] อธิบายได้ว่า Engine, ที่ที่ฐานข้อมูลรัน และ Client แก้ปัญหาอะไร และยกตัวอย่างสมาชิกของแต่ละกลุ่มได้
 - [ ] จัดกลุ่มเครื่องมือที่ไม่เคยเห็นได้ด้วยคำถาม 3 ข้อ
@@ -968,4 +968,4 @@ PostgreSQL มีชนิดข้อมูลช่วงเวลา (range) 
 
 ---
 
-[← บทที่ 6: ประเภทฐานข้อมูล](/06-sql-nosql) · [🏠 สารบัญ](/) · [บทที่ 8: ORM, Query Builder & Migration →](/08-orm)
+[← บทที่ 6: ประเภทฐานข้อมูล](/06-sql-nosql) · [ สารบัญ](/) · [บทที่ 8: ORM, Query Builder & Migration →](/08-orm)

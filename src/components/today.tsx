@@ -278,7 +278,7 @@ function UpNext({ done, skip, cards }: { done: ReadonlySet<string>; skip: LearnC
   );
 }
 
-const SUBMIT_LINK = "/starter/submission#-ส่งงานของคุณ";
+const SUBMIT_LINK = "/starter/submission#ส่งงานของคุณ";
 
 // งานของน้องบน GitHub: repo ที่ส่งแล้ว + ผลตรวจล่าสุด + รอบที่ต้องส่งต่อ · ตัวเต็มอยู่ในหน้าการส่งงาน
 function MyWork() {

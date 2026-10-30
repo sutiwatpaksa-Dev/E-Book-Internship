@@ -12,7 +12,7 @@ import { notificationService } from "./notification.service";
 
 type Viewer = { id: number; role: Role };
 
-const INTERN_LINK = "/starter/submission#-ส่งงานของคุณ";
+const INTERN_LINK = "/starter/submission#ส่งงานของคุณ";
 const DEV_LINK = "/dev/admin?tab=submissions";
 
 // น้องเห็นแค่แถวของตัวเอง: ทุกคำขอใช้ id จากบัตรผ่าน ไม่รับ userId จาก body

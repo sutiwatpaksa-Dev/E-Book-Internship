@@ -1,18 +1,18 @@
 ---
 navTitle: "บทเสริม · JavaScript พื้นฐาน"
-title: "บทเสริม: JavaScript พื้นฐานใน 30–60 นาที 🟨"
+title: "บทเสริม: JavaScript พื้นฐานใน 30–60 นาที"
 ---
 
-> ⏱ 30–60 นาที (ถ้าไม่เคยเขียนโปรแกรมเลย เผื่อ 90 นาที) · 🧩 ต้องผ่านก่อน: บทที่ 3 (มี Node หรือ Bun ในเครื่อง) · 🛠 ใช้: Node.js หรือ Bun, VS Code, Terminal
+> 30–60 นาที (ถ้าไม่เคยเขียนโปรแกรมเลย เผื่อ 90 นาที) · ต้องผ่านก่อน: บทที่ 3 (มี Node หรือ Bun ในเครื่อง) · ใช้: Node.js หรือ Bun, VS Code, Terminal
 > อ่านก่อน [บทที่ 4](/04-typescript) ถ้ายังไม่เคยเขียน JavaScript หรือเขียนแล้วอ่านโค้ดอย่าง `laptops.map((l) => l.brand)` ไม่ออก
 
-> **⚡ สรุป 30 วินาที**
+> **สรุป 30 วินาที**
 > - TypeScript = JavaScript + type ดังนั้น **ทุกบรรทัดในบทนี้ใช้ใน TypeScript ได้เหมือนเดิม** บทที่ 4 แค่เติม type เข้าไป
 > - 9 เรื่องที่ต้องอ่านออก: **ค่าและตัวแปร, เงื่อนไข, loop, ฟังก์ชัน (รวม arrow และ callback), object/array, destructuring/spread, `map`/`filter`/`reduce`, `import`/`export`, Promise กับ `async`/`await`**
 > - ใช้ `const` เป็นค่าเริ่มต้น เทียบด้วย `===` เสมอ และจำว่า **ฟังก์ชันเป็น "ค่า" ส่งต่อได้** (หัวใจของ `map`, `filter`, React และ Hono)
 > - ทุกตัวอย่าง **รันจริงแล้ว** ด้วย Node 26 (ผล "ควรเห็น" มาจากการรันนั้น) รันด้วย Bun ได้ผลเดียวกัน ต่างแค่หน้าตาตอนพิมพ์ object
 
-> **📖 คำใหม่ในบทนี้**
+> **คำใหม่ในบทนี้**
 > [Variable](/glossary#variable) · [Function](/glossary#function) · [Array](/glossary#array) · [Object](/glossary#object) · [Arrow function](/glossary#arrow-function) · [Callback](/glossary#callback) · [Template literal](/glossary#template-literal) · [Destructuring](/glossary#destructuring) · [Spread](/glossary#spread) · [Module](/glossary#module) · [async / Promise](/glossary#async)
 
 ---
@@ -24,9 +24,9 @@ mkdir js-basics && cd js-basics
 ```
 สร้างไฟล์ตามชื่อในแต่ละข้อ แล้วรันด้วย `node ชื่อไฟล์.mjs` (หรือ `bun ชื่อไฟล์.mjs`)
 
-> 🤔 **ทำไมนามสกุล `.mjs`?** Node มีระบบ `import`/`export` 2 แบบ (ESM กับ CommonJS บทที่ 3) `.mjs` บอก Node ว่า "ไฟล์นี้ใช้ ESM แบบใหม่" โดยไม่ต้องสร้าง `package.json` ในโปรเจกต์จริงเราตั้ง `"type": "module"` ใน `package.json` แทน (บทที่ 4 ข้อ 9) แล้วใช้ `.ts` ได้เลย
+> **ทำไมนามสกุล `.mjs`?** Node มีระบบ `import`/`export` 2 แบบ (ESM กับ CommonJS บทที่ 3) `.mjs` บอก Node ว่า "ไฟล์นี้ใช้ ESM แบบใหม่" โดยไม่ต้องสร้าง `package.json` ในโปรเจกต์จริงเราตั้ง `"type": "module"` ใน `package.json` แทน (บทที่ 4 ข้อ 9) แล้วใช้ `.ts` ได้เลย
 
-> 💡 **วิธีเรียนที่ได้ผล:** อย่าแค่ copy แล้วรัน ก่อนรันให้ **เดาผลก่อน** แล้วค่อยเทียบกับ "ควรเห็น" ตรงไหนเดาผิด คือตรงที่เพิ่งได้เรียนรู้ จากนั้นแก้ค่าในโค้ดเล่นแล้วรันใหม่
+> **วิธีเรียนที่ได้ผล:** อย่าแค่ copy แล้วรัน ก่อนรันให้ **เดาผลก่อน** แล้วค่อยเทียบกับ "ควรเห็น" ตรงไหนเดาผิด คือตรงที่เพิ่งได้เรียนรู้ จากนั้นแก้ค่าในโค้ดเล่นแล้วรันใหม่
 
 ---
 
@@ -61,7 +61,7 @@ string number boolean undefined object
 2. บรรทัดสุดท้ายใช้ **template literal**: ข้อความในเครื่องหมาย `` ` `` (backtick ปุ่มซ้ายของเลข 1) แทรกค่าด้วย `${...}` และข้างใน `${}` คำนวณได้ (`price * 2`)
 3. `undefined` = ยังไม่มีใครใส่ค่า / `null` = มีคนตั้งใจใส่ว่า "ว่าง" ทั้งคู่เป็นต้นเหตุของ error ยอดฮิต `Cannot read properties of undefined` (บทที่ 9)
 
-> 💡 **ใช้ `const` ก่อนเสมอ** เปลี่ยนเป็น `let` เมื่อจำเป็นต้องเปลี่ยนค่าจริงๆ เหตุผล: คนอ่านโค้ดเห็น `const` แล้วรู้ทันทีว่าค่านี้ไม่เปลี่ยนตลอดทาง ไม่ต้องไล่หา ส่วน `var` เป็นแบบเก่าที่มีกฎแปลกๆ ไม่ใช้แล้ว
+> **ใช้ `const` ก่อนเสมอ** เปลี่ยนเป็น `let` เมื่อจำเป็นต้องเปลี่ยนค่าจริงๆ เหตุผล: คนอ่านโค้ดเห็น `const` แล้วรู้ทันทีว่าค่านี้ไม่เปลี่ยนตลอดทาง ไม่ต้องไล่หา ส่วน `var` เป็นแบบเก่าที่มีกฎแปลกๆ ไม่ใช้แล้ว
 
 ---
 
@@ -184,7 +184,7 @@ Asus 16GB (แรง)
 2. arrow แบบบรรทัดเดียว **คืนค่าให้เอง** แต่พอใส่ `{ }` แล้ว **ต้องเขียน `return` เอง** ถ้าลืมจะได้ `undefined` (บั๊กที่เจอบ่อยมาก)
 3. **บรรทัดสุดท้ายสำคัญที่สุดของบทนี้:** เราส่ง `(n) => console.log(...)` ซึ่งเป็น "ฟังก์ชัน" เข้าไปเป็น argument ให้ `repeat` เป็นคนเรียก นี่คือ **callback** ถ้าเข้าใจบรรทัดนี้ จะอ่าน `laptops.map((l) => l.brand)`, `onClick={() => setOpen(true)}` (React) และ `app.get("/", (c) => c.json(...))` (Hono) ออกทั้งหมด เพราะเป็นท่าเดียวกัน
 
-> 💡 อ่าน `(n) => console.log(n)` ว่า "รับ `n` แล้วทำ `console.log(n)`" ลูกศร `=>` คือ "แล้วได้"
+> **เคล็ดลับ:** อ่าน `(n) => console.log(n)` ว่า "รับ `n` แล้วทำ `console.log(n)`" ลูกศร `=>` คือ "แล้วได้"
 
 ---
 
@@ -321,7 +321,7 @@ true false
 | `some` / `every` | `true`/`false` | `true`/`false` ค่าเดียว |
 | `reduce` | ค่าสะสมรอบถัดไป | **ค่าเดียว** (ผลรวม, object สรุป ฯลฯ) |
 
-> ⚠️ **`reduce` ลืมค่าเริ่มต้น `0`** จะเริ่มจากสมาชิกตัวแรก (ที่เป็น object) แล้วได้ผลแปลกๆ อย่าง `[object Object]12001300` ใส่ค่าเริ่มต้นเสมอ
+> **`reduce` ลืมค่าเริ่มต้น `0`** จะเริ่มจากสมาชิกตัวแรก (ที่เป็น object) แล้วได้ผลแปลกๆ อย่าง `[object Object]12001300` ใส่ค่าเริ่มต้นเสมอ
 
 ---
 
@@ -360,8 +360,8 @@ node 8-modules.mjs
 1,605.00 บาท
 ```
 - `./` = โฟลเดอร์เดียวกับไฟล์นี้ ต้องมีเสมอสำหรับไฟล์ของเรา (ถ้าไม่มี Node จะไปหาใน `node_modules` แทน)
-- ถ้าสลับแบบ เช่น `import { formatBaht } from "./money.mjs"` จะได้ `SyntaxError: The requested module './money.mjs' does not provide an export named 'formatBaht'` (ลองดูในข้อ 💥)
-- เงินคิดเป็น **สตางค์** (จำนวนเต็ม) แล้ว `Math.round` ทุกครั้งที่คูณหาร เหตุผลอยู่ใน [บทที่ 4](/04-typescript) หัวข้อ 💰
+- ถ้าสลับแบบ เช่น `import { formatBaht } from "./money.mjs"` จะได้ `SyntaxError: The requested module './money.mjs' does not provide an export named 'formatBaht'` (ลองดูในข้อ)
+- เงินคิดเป็น **สตางค์** (จำนวนเต็ม) แล้ว `Math.round` ทุกครั้งที่คูณหาร เหตุผลอยู่ใน [บทที่ 4](/04-typescript) หัวข้อ
 
 ---
 
@@ -424,15 +424,15 @@ console.log("0. บรรทัดนี้ขึ้นก่อน เพรา
 สิ่งที่ต้องสังเกต
 1. **ลำดับ 1 → 0 → 2** `main()` ทำงานจนถึง `await` แรกแล้ว "พักไว้" โปรแกรมจึงไปพิมพ์บรรทัด 0 ก่อน พอครบ 200 ms ค่อยกลับมาทำต่อ นี่คือความหมายของ "ไม่ค้าง"
 2. **`await` ใช้ได้ใน `async function`** (หรือระดับบนสุดของไฟล์ `.mjs`/module) และ `async function` คืน Promise เสมอ
-3. **`reject` → `catch`** งานที่รอแล้วพัง จับได้ด้วย `try/catch` ธรรมดา ถ้าไม่จับ โปรแกรมจะล้ม (unhandled rejection [บทที่ 9 ข้อ 9](/09-debugging#9--debug-โค้ด-async-promise--async-await))
+3. **`reject` → `catch`** งานที่รอแล้วพัง จับได้ด้วย `try/catch` ธรรมดา ถ้าไม่จับ โปรแกรมจะล้ม (unhandled rejection [บทที่ 9 ข้อ 9](/09-debugging#9-debug-โค้ด-async-promise--async-await))
 4. **ลืม `await` ได้ `Promise { <pending> }`** แทนข้อมูลจริง บั๊กคลาสสิกที่สุดของงาน async ถ้าเห็นคำนี้ในจอ ให้หาว่าลืม `await` ตรงไหน
 5. `Promise.all` รอหลายงาน **พร้อมกัน** ใช้เวลารวม ~100 ms ไม่ใช่ 200 ms
 
-> 🤓 ในงานจริงเราแทบไม่เขียน `new Promise` เอง เพราะ `fetch`, Drizzle, `Bun.file` คืน Promise มาให้แล้ว แค่ `await` ให้เป็น แต่เขียนเองครั้งหนึ่งจะเข้าใจว่าข้างในมันคือ "ปุ่มเสร็จ/ปุ่มพัง" แค่นั้น
+> ในงานจริงเราแทบไม่เขียน `new Promise` เอง เพราะ `fetch`, Drizzle, `Bun.file` คืน Promise มาให้แล้ว แค่ `await` ให้เป็น แต่เขียนเองครั้งหนึ่งจะเข้าใจว่าข้างในมันคือ "ปุ่มเสร็จ/ปุ่มพัง" แค่นั้น
 
 ---
 
-## ⚠️ ปัญหาที่เจอบ่อย
+## ปัญหาที่เจอบ่อย
 
 | อาการ / ข้อความ | สาเหตุ | วิธีแก้ | ทำไม |
 |---|---|---|---|
@@ -449,7 +449,7 @@ console.log("0. บรรทัดนี้ขึ้นก่อน เพรา
 
 ---
 
-## 💥 ลองพังมันดู
+## ลองพังมันดู
 
 ทำทีละข้อ อ่าน error ให้จบ แล้วเทียบกับตารางด้านบน (ถ้าตารางไม่มี ใช้วิธีใน [เรียนรู้ด้วยตัวเอง](/self-learning) ข้อ 2)
 
@@ -461,7 +461,7 @@ console.log("0. บรรทัดนี้ขึ้นก่อน เพรา
 
 ---
 
-## 🧠 เช็คความเข้าใจ
+## เช็คความเข้าใจ
 
 <details>
 <summary>1. `const list = []; list.push(1);` ทำได้ไหม ทั้งที่เป็น `const`?</summary>
@@ -507,7 +507,7 @@ console.log("0. บรรทัดนี้ขึ้นก่อน เพรา
 
 ---
 
-## ✏️ แบบฝึกหัด: ใบเสนอราคาเช่าเครื่อง
+## แบบฝึกหัด: ใบเสนอราคาเช่าเครื่อง
 
 สร้าง `quote.mjs` ที่มีฟังก์ชัน `quote` แบบ arrow function รับ object `{ pricePerMonth, months }` (ใช้ destructuring ในวงเล็บ) แล้วคืน object `{ months, total, discount }` โดย
 - ราคาเต็ม = `pricePerMonth * months`
@@ -532,7 +532,7 @@ console.log(quote({ pricePerMonth: 1333, months: 7 }));
 (ชุดที่ 3: 1333 × 7 = 9331 ลด 10% = 933.1 ปัดเป็น 933 เหลือ 8398)
 
 <details>
-<summary>🔑 เฉลย (ลองเองก่อนค่อยเปิด)</summary>
+<summary> เฉลย (ลองเองก่อนค่อยเปิด)</summary>
 
 ```js
 const quote = ({ pricePerMonth, months }) => {
@@ -550,7 +550,7 @@ console.log(`ว่าง ${free.length} เครื่อง: ${free.map((l) =
 
 ---
 
-## ✅ ผ่านด่าน
+## ผ่านด่าน
 
 - [ ] เลือก `const`/`let` ได้ถูก และอธิบายได้ว่า `typeof null` ทำไมได้ `"object"`
 - [ ] ใช้ `===` และอธิบายความต่างของ `||` กับ `??` เมื่อค่าเป็น `0` ได้
@@ -562,8 +562,8 @@ console.log(`ว่าง ${free.length} เครื่อง: ${free.map((l) =
 - [ ] อธิบายลำดับการพิมพ์ในข้อ 9 ได้ และรู้ว่า `Promise { <pending> }` แปลว่าลืม `await`
 - [ ] ทำแบบฝึกหัดใบเสนอราคาได้ผลตรงทั้ง 4 บรรทัด
 
-📚 **อ่านต่อ (เอกสารทางการ):** [MDN JavaScript Guide](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide) (บท Grammar and types, Control flow, Functions, Indexed collections, Using promises) · สำหรับมือใหม่จริงๆ [MDN: Dynamic scripting with JavaScript](https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Scripting)
+ **อ่านต่อ (เอกสารทางการ):** [MDN JavaScript Guide](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide) (บท Grammar and types, Control flow, Functions, Indexed collections, Using promises) · สำหรับมือใหม่จริงๆ [MDN: Dynamic scripting with JavaScript](https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Scripting)
 
 ---
 
-[← บทที่ 3: Runtime & Package Manager](/03-node-yarn-bun) · [🏠 สารบัญ](/) · [บทที่ 4: ภาษาและระบบ Type →](/04-typescript)
+[← บทที่ 3: Runtime & Package Manager](/03-node-yarn-bun) · [ สารบัญ](/) · [บทที่ 4: ภาษาและระบบ Type →](/04-typescript)

@@ -1,18 +1,18 @@
 ---
 navTitle: "บทเสริม · ภาษาและคำสั่งที่ใช้เขียน React"
-title: "บทเสริม: ภาษาและคำสั่งที่ใช้เขียน React 🧰"
+title: "บทเสริม: ภาษาและคำสั่งที่ใช้เขียน React"
 ---
 
-> ⏱ ประมาณ 3 ชั่วโมง · 🧩 ต้องผ่านก่อน: บทที่ 4 และ 11 · 🛠 ใช้: Bun, TypeScript, VS Code, DevTools ของเบราว์เซอร์
+> ประมาณ 3 ชั่วโมง · ต้องผ่านก่อน: บทที่ 4 และ 11 · ใช้: Bun, TypeScript, VS Code, DevTools ของเบราว์เซอร์
 
-> **⚡ สรุป 30 วินาที**
+> **สรุป 30 วินาที**
 > - ไฟล์ React ทุกไฟล์คือ **JavaScript/TypeScript + JSX** ถ้าอ่านสัญลักษณ์ไม่ออก (`=>`, `...`, `?.`, `??`, `{ a, b }`) ก็อ่านโค้ดไม่ออก บทนี้รวมสัญลักษณ์เหล่านั้นไว้ทีละตัว
 > - **JSX** = เขียนหน้าตาเว็บในไฟล์ `.tsx` มีกฎไม่กี่ข้อ: ห่อก้อนเดียว, `className`, `{}` ใส่ค่า, แท็กต้องปิด, `map` ต้องมี `key`
 > - **Hook** = ฟังก์ชันที่ชื่อขึ้นต้นด้วย `use` ให้ component ทำสิ่งพิเศษ (จำค่า, ทำงานหลังวาด, อ่าน URL) ที่ต้องใช้จริงมี 5-6 ตัว และ **ต้องเรียกที่ระดับบนสุดของ component เท่านั้น**
 > - เจอ error แดงให้เปิด **หัวข้อ 6** (ตารางข้อความ error จริง → สาเหตุ → วิธีแก้) ก่อนถามใคร
 > - คำสั่ง terminal (git, bun, npm, docker) อยู่ในบทอื่นแล้ว บทนี้ไม่พูดถึง
 
-> **📖 คำใหม่ในบทนี้**
+> **คำใหม่ในบทนี้**
 > [React](/glossary#react) · [Component](/glossary#component) · [Props](/glossary#props) · [State](/glossary#state)
 
 ---
@@ -68,7 +68,7 @@ console.log(shop, count);
 
 **ควรเห็น:** `Bit Rental 1`
 
-> ⚠️ **เจอบ่อย:** `const` ห้ามกำหนดค่าใหม่ (`shop = "x"` ขึ้น error) แต่ **แก้ข้างในกล่องได้** ถ้าเป็น array/object (`arr.push(...)` ไม่ error แต่ใน React ห้ามทำกับ state ดูหัวข้อ 4.1) ไม่ต้องใช้ `var` เลย
+> **เจอบ่อย:** `const` ห้ามกำหนดค่าใหม่ (`shop = "x"` ขึ้น error) แต่ **แก้ข้างในกล่องได้** ถ้าเป็น array/object (`arr.push(...)` ไม่ error แต่ใน React ห้ามทำกับ state ดูหัวข้อ 4.1) ไม่ต้องใช้ `var` เลย
 
 ### 1.2 Arrow function `=>`
 
@@ -84,7 +84,7 @@ console.log(double(4), hello("บิต"));
 
 **ควรเห็น:** `8 สวัสดี บิต`
 
-> ⚠️ **เจอบ่อย:** `map(x => { x * 2 })` ได้ array ของ `undefined` เพราะมี `{}` แต่ลืม `return` ถ้าจะ return object ทันทีต้องห่อด้วยวงเล็บ: `x => ({ id: x })`
+> **เจอบ่อย:** `map(x => { x * 2 })` ได้ array ของ `undefined` เพราะมี `{}` แต่ลืม `return` ถ้าจะ return object ทันทีต้องห่อด้วยวงเล็บ: `x => ({ id: x })`
 
 ### 1.3 Template literal (เครื่องหมาย `` ` ``)
 
@@ -99,7 +99,7 @@ console.log(`${l.model} ราคา ${l.price.toLocaleString("en-US")} บา�
 
 **ควรเห็น:** `ThinkPad X1 ราคา 45,000 บาท`
 
-> ⚠️ **เจอบ่อย:** ใช้ `'` หรือ `"` แล้วเขียน `${...}` จะได้ข้อความตัวอักษร `${...}` ออกมาตรงๆ ต้องใช้แบ็กทิก (ปุ่มซ้ายของเลข 1)
+> **เจอบ่อย:** ใช้ `'` หรือ `"` แล้วเขียน `${...}` จะได้ข้อความตัวอักษร `${...}` ออกมาตรงๆ ต้องใช้แบ็กทิก (ปุ่มซ้ายของเลข 1)
 
 ### 1.4 Destructuring: แกะของออกจากกล่อง
 
@@ -147,7 +147,7 @@ function LaptopCard({ laptop, onRent }: Props) { ... }   // แกะ props ต�
 const [open, setOpen] = useState(false);                  // useState คืน array 2 ช่อง
 ```
 
-> ⚠️ **เจอบ่อย:** object แกะ **ด้วยชื่อ** สะกดผิด 1 ตัวก็ได้ `undefined` เงียบๆ ส่วน array แกะ **ด้วยลำดับ** สลับที่ไม่ได้ ค่าเริ่มต้น (`= ...`) ใช้เฉพาะเมื่อค่าเป็น `undefined` ถ้าเป็น `null` จะไม่ใช้ค่าเริ่มต้น
+> **เจอบ่อย:** object แกะ **ด้วยชื่อ** สะกดผิด 1 ตัวก็ได้ `undefined` เงียบๆ ส่วน array แกะ **ด้วยลำดับ** สลับที่ไม่ได้ ค่าเริ่มต้น (`= ...`) ใช้เฉพาะเมื่อค่าเป็น `undefined` ถ้าเป็น `null` จะไม่ใช้ค่าเริ่มต้น
 
 ### 1.5 Spread `...`: กางของออกมาวางใหม่
 
@@ -176,7 +176,7 @@ const props = { laptop: l, onRent: handleRent };
 <LaptopCard {...props} />      // เหมือนเขียน laptop={l} onRent={handleRent}
 ```
 
-> ⚠️ **เจอบ่อย:** ลำดับสำคัญ: `{ ...l, price: 1 }` ราคาใหม่ชนะ แต่ `{ price: 1, ...l }` ค่าเดิมของ `l` ทับ นอกจากนี้ spread คัดลอกแค่ชั้นแรก object ที่ซ้อนข้างในยังเป็นตัวเดิม (`spec` ยังชี้ที่เดียวกัน)
+> **เจอบ่อย:** ลำดับสำคัญ: `{ ...l, price: 1 }` ราคาใหม่ชนะ แต่ `{ price: 1, ...l }` ค่าเดิมของ `l` ทับ นอกจากนี้ spread คัดลอกแค่ชั้นแรก object ที่ซ้อนข้างในยังเป็นตัวเดิม (`spec` ยังชี้ที่เดียวกัน)
 
 ### 1.6 `map`: แปลงทุกตัว ได้ array ใหม่
 
@@ -200,7 +200,7 @@ console.log(laptops.map((x) => x.model));
 ```
 **ควรเห็นบนหน้าเว็บ:** รายการจุด 3 บรรทัด ThinkPad X1, MacBook Air, Dell XPS
 
-> ⚠️ **เจอบ่อย:** ลืม `key` → Console เตือน `Each child in a list should have a unique "key" prop.` / ใช้ `key={index}` แล้วรายการเรียงใหม่หรือลบกลางรายการ ข้อมูลในช่องกรอกจะสลับผิดตัว ใช้ `id` จากข้อมูลเสมอ / `map` ใช้ได้กับ array เท่านั้น ถ้าตัวแปรเป็น `undefined` จะเจอ `Cannot read properties of undefined (reading 'map')` (หัวข้อ 6)
+> **เจอบ่อย:** ลืม `key` → Console เตือน `Each child in a list should have a unique "key" prop.` / ใช้ `key={index}` แล้วรายการเรียงใหม่หรือลบกลางรายการ ข้อมูลในช่องกรอกจะสลับผิดตัว ใช้ `id` จากข้อมูลเสมอ / `map` ใช้ได้กับ array เท่านั้น ถ้าตัวแปรเป็น `undefined` จะเจอ `Cannot read properties of undefined (reading 'map')` (หัวข้อ 6)
 
 ### 1.7 `filter`: คัดเฉพาะตัวที่ผ่านเงื่อนไข
 
@@ -219,7 +219,7 @@ console.log(laptops.filter((x) => x.id !== 1).length);
 2
 ```
 
-> ⚠️ **เจอบ่อย:** ลืม `return` ถ้าเขียนปีกกา (`x => { x.id !== 1 }`) ได้ array ว่างเสมอ / ผลของ `filter` ยังเป็น array (แม้เหลือ 1 ตัว) ถ้าต้องการ "ตัวเดียว" ใช้ `find`
+> **เจอบ่อย:** ลืม `return` ถ้าเขียนปีกกา (`x => { x.id !== 1 }`) ได้ array ว่างเสมอ / ผลของ `filter` ยังเป็น array (แม้เหลือ 1 ตัว) ถ้าต้องการ "ตัวเดียว" ใช้ `find`
 
 ### 1.8 `find`, `some`, `every`
 
@@ -235,7 +235,7 @@ MacBook Air undefined
 true false
 ```
 
-> ⚠️ **เจอบ่อย:** `find` อาจได้ `undefined` เสมอ ต้องเช็คก่อนใช้ ไม่งั้น TypeScript ขึ้น `'x' is possibly 'undefined'` และตอนรันจะเจอ `Cannot read properties of undefined` (ใช้ `?.` ดูข้อ 1.10)
+> **เจอบ่อย:** `find` อาจได้ `undefined` เสมอ ต้องเช็คก่อนใช้ ไม่งั้น TypeScript ขึ้น `'x' is possibly 'undefined'` และตอนรันจะเจอ `Cannot read properties of undefined` (ใช้ `?.` ดูข้อ 1.10)
 
 ### 1.9 `reduce`: รวมทั้ง array เป็นค่าเดียว (สั้นๆ)
 
@@ -249,7 +249,7 @@ console.log(total);
 ```
 **ควรเห็น:** `133000`
 
-> ⚠️ **เจอบ่อย:** ลืมใส่ค่าเริ่มต้น (`0`) หรือ return ยอดสะสมไม่ครบ จะได้ค่าเพี้ยน (`NaN`) ถ้าอ่านไม่ออก ใช้ `for ... of` ธรรมดาก็ได้ผลเหมือนกัน
+> **เจอบ่อย:** ลืมใส่ค่าเริ่มต้น (`0`) หรือ return ยอดสะสมไม่ครบ จะได้ค่าเพี้ยน (`NaN`) ถ้าอ่านไม่ออก ใช้ `for ... of` ธรรมดาก็ได้ผลเหมือนกัน
 
 ### 1.10 `?.` Optional chaining: ถามก่อนเปิดกล่อง
 
@@ -264,7 +264,7 @@ console.log(laptops[0].spec?.ram, laptops[1].spec?.ram);
 
 ใน React ใช้กับข้อมูลที่ยังโหลดไม่เสร็จ: `{data?.map(...)}` (เจอในบทที่ 11)
 
-> ⚠️ **เจอบ่อย:** ใส่ `?.` ทุกที่เพื่อกัน error ทำให้ซ่อนบั๊กจริง (ข้อมูลที่ควรจะมีแต่ไม่มี) ใช้เมื่อค่า "อาจไม่มี" จริงๆ เท่านั้น
+> **เจอบ่อย:** ใส่ `?.` ทุกที่เพื่อกัน error ทำให้ซ่อนบั๊กจริง (ข้อมูลที่ควรจะมีแต่ไม่มี) ใช้เมื่อค่า "อาจไม่มี" จริงๆ เท่านั้น
 
 ### 1.11 `??` กับ `||` (ค่าสำรอง)
 
@@ -291,7 +291,7 @@ console.log(laptops[1].spec?.ram ?? "ไม่ระบุ");
 ไม่ระบุ
 ```
 
-> ⚠️ **เจอบ่อย:** ใช้ `||` กับตัวเลข เช่น `quantity || 1` พอผู้ใช้ตั้งค่า 0 กลับกลายเป็น 1 ใช้ `quantity ?? 1`
+> **เจอบ่อย:** ใช้ `||` กับตัวเลข เช่น `quantity || 1` พอผู้ใช้ตั้งค่า 0 กลับกลายเป็น 1 ใช้ `quantity ?? 1`
 
 ### 1.12 Ternary และ `&&` ใน JSX
 
@@ -316,7 +316,7 @@ const items: Laptop[] = [];
 ```
 **ควรเห็น:** แบบ ❌ ได้ `<div>0</div>` (เลข 0 โผล่บนหน้าจอ) เพราะ `0 && ...` ได้ค่า `0` และ React วาดเลข `0` ให้ (ต่างจาก `false`/`null` ที่ไม่วาด)
 
-> ⚠️ **เจอบ่อย:** เอา `&&` กับตัวเลขหรือ `length` ตรงๆ ให้เขียนเป็นการเปรียบเทียบ (`> 0`) หรือ `Boolean(x)` เสมอ
+> **เจอบ่อย:** เอา `&&` กับตัวเลขหรือ `length` ตรงๆ ให้เขียนเป็นการเปรียบเทียบ (`> 0`) หรือ `Boolean(x)` เสมอ
 
 ### 1.13 `async` / `await`, `try` / `catch` / `finally`
 
@@ -381,7 +381,7 @@ then
 ```
 สังเกต: `หลัง` มาก่อน `then` เพราะโค้ดไม่รอ ถ้าไม่ `await`
 
-> ⚠️ **เจอบ่อย:** 
+> **เจอบ่อย:**
 > - ลืม `await` แล้วได้ `Promise` แทนข้อมูลจริง (พิมพ์ออกมาเห็น `Promise {...}`) จากนั้น `.map` พัง
 > - `await` ใน function ที่ไม่ได้ประกาศ `async` → error
 > - `fetch` **ไม่ error ตอนได้ 404/500** ต้องเช็ค `if (!res.ok) throw ...` เอง (ดูตัวอย่างใน [บทที่ 11](/11-react))
@@ -406,7 +406,7 @@ import LaptopCard from "./components/laptop-card";
 import { useState } from "react";                 // named จากแพ็กเกจ
 ```
 
-> ⚠️ **เจอบ่อย: สลับ default กับ named** เจอ 2 ด่าน
+> **เจอบ่อย: สลับ default กับ named** เจอ 2 ด่าน
 > 1. **ด่าน `tsc` / เส้นแดงใน VS Code (เห็นก่อน)** · `import { LaptopCard }` ทั้งที่ไฟล์ `export default` → `TS2614: Module '"./components/laptop-card"' has no exported member 'LaptopCard'. Did you mean to use 'import LaptopCard from "./components/laptop-card"' instead?` · กลับกัน `import useFetch from` ทั้งที่ไฟล์ `export function useFetch` → `TS2613: Module '...' has no default export. Did you mean to use 'import { useFetch } from ...' instead?` ข้อความบอกวิธีแก้มาให้แล้ว
 > 2. **ด่านเบราว์เซอร์ (ถ้าไม่สนเส้นแดงแล้วเปิดเว็บ)** · Vite ไม่ได้ตรวจ type (ลบทิ้งอย่างเดียว บทที่ 4 ข้อ 4) โค้ดจึงไปพังที่เบราว์เซอร์ หน้าขาว และ Console ขึ้น `Uncaught SyntaxError: The requested module '/src/components/laptop-card.tsx' does not provide an export named 'LaptopCard'` (ข้อความนี้มาจาก V8 ตัวเดียวกับที่อยู่ใน Chrome และ Node เราทดลองกับ Node แล้วได้ประโยคเดียวกัน)
 >
@@ -459,7 +459,7 @@ console.log(s, statuses);
 | `useState([])` แล้ว `setList([{ id: 1 }])` | `Type '{ id: number; }' is not assignable to type 'never'.` (แก้: `useState<Laptop[]>([])`) |
 | `u.length` เมื่อ `u: string \| undefined` | `'u' is possibly 'undefined'.` |
 
-> ⚠️ **เจอบ่อย:** ลืมใส่ generic ตอน `useState([])` แล้วเจอ `never` (ตัวอย่างข้างบน) / ใช้ `any` ให้ error หายไป ซึ่งเท่ากับปิดไฟเตือนทั้งหมด ถามพี่ก่อน
+> **เจอบ่อย:** ลืมใส่ generic ตอน `useState([])` แล้วเจอ `never` (ตัวอย่างข้างบน) / ใช้ `any` ให้ error หายไป ซึ่งเท่ากับปิดไฟเตือนทั้งหมด ถามพี่ก่อน
 
 ---
 
@@ -512,7 +512,7 @@ export default function LaptopCard({ laptop }: Props) {
 ```
 **ควรเห็น:** ถ้า array ว่าง เห็นข้อความ "ยังไม่มีเครื่องให้เช่า" ถ้าไม่ว่าง เห็นการ์ดเฉพาะเครื่องที่ว่าง
 
-> ⚠️ **เจอบ่อย (JSX)**
+> **เจอบ่อย (JSX)**
 > - ใช้ `class="..."` → React เตือน `` Invalid DOM property `class`. Did you mean `className`? ``
 > - `style="color:red"` → error `` The `style` prop expects a mapping from style properties to values, not a string. ``
 > - วาง `{ name: "x" }` ลงในแท็กตรงๆ → `Objects are not valid as a React child` (ข้อ 6)
@@ -621,7 +621,7 @@ setCount((prev) => prev + 1);                                  // ค่าใ�
 **ใช้เมื่อ:** ข้อมูลที่ผู้ใช้เปลี่ยนได้และมีผลต่อหน้าตา (ข้อความในช่องกรอก, เปิด/ปิดเมนู, ผลจาก API)
 **ไม่ใช้เมื่อ:** ค่าที่คำนวณจาก state/props อื่นได้ (เขียนเป็นตัวแปรธรรมดาเลย เช่น `const total = items.length`) และค่าที่ไม่กระทบหน้าจอ (ใช้ `useRef`)
 
-> ⚠️ **เจอบ่อย:**
+> **เจอบ่อย:**
 > - แก้ตรงๆ (`laptops.push(x)`) หน้าจอไม่เปลี่ยน → สร้างค่าใหม่เสมอ
 > - เรียก `setX` ตอนวาด (ไม่ใช่ในตัวจัดการ event) → `Too many re-renders. React limits the number of renders to prevent an infinite loop.` (เรารันจริง)
 > - เขียน `onClick={setOpen(!open)}` แทน `onClick={() => setOpen(!open)}` → ฟังก์ชันถูกเรียกทันทีตอนวาด → error ข้างบนเหมือนกัน
@@ -651,7 +651,7 @@ useEffect(() => {
 **ใช้เมื่อ:** ดึง API, ตั้ง timer, ผูก event ของ `window`, เปลี่ยนชื่อแท็บ (ของที่อยู่ "นอก React")
 **ไม่ใช้เมื่อ:** แค่คำนวณค่าจาก state (เขียนตัวแปรตรงๆ) หรือจัดการการคลิก (ใส่ใน `onClick`) หลายคนใช้ `useEffect` เกินจำเป็น
 
-> ⚠️ **เจอบ่อย:**
+> **เจอบ่อย:**
 > - ใน effect เรียก `setX` โดยไม่ใส่ dependency หรือ dependency เปลี่ยนทุกรอบ → วนไม่จบ React เตือน `Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render.` (เรารันจริง)
 > - ตอนพัฒนา (React StrictMode) effect รัน 2 รอบเพื่อจับบั๊ก ไม่ใช่บั๊กของเรา
 > - ลืม cleanup (`return () => ...`) ใน timer / การดึงข้อมูล → ทำงานต่อหลังออกจากหน้า
@@ -673,7 +673,7 @@ useEffect(() => { inputRef.current?.focus(); }, []);
 **ใช้เมื่อ:** สั่ง DOM ตรงๆ (`focus`, เลื่อนจอ) หรือเก็บค่าชั่วคราว (เลข timer) ที่ไม่ต้องแสดงผล
 **ไม่ใช้เมื่อ:** ค่านั้นต้องแสดงบนหน้าจอ ให้ใช้ `useState`
 
-> ⚠️ **เจอบ่อย:** อ่านค่าผ่าน `ref.current` ลืมใส่ `?.` ในตอนที่ยังเป็น `null` (ก่อนวาดเสร็จ) / เปลี่ยน `ref.current` แล้วหวังให้หน้าจอเปลี่ยนจะไม่เปลี่ยน
+> **เจอบ่อย:** อ่านค่าผ่าน `ref.current` ลืมใส่ `?.` ในตอนที่ยังเป็น `null` (ก่อนวาดเสร็จ) / เปลี่ยน `ref.current` แล้วหวังให้หน้าจอเปลี่ยนจะไม่เปลี่ยน
 
 ### 4.4 `useMemo`: จำผลคำนวณ
 
@@ -733,7 +733,7 @@ navigate(-1);                               // ย้อนกลับ 1 หน
 ```
 **ควรเห็น** (ผลจริงจากการรัน): `id` = `"7"`, `brand` = `"dell"`, `sp.get("x")` = `null`, `pathname` = `/laptops/7`, `search` = `?brand=dell&page=2`
 
-> ⚠️ **เจอบ่อย:**
+> **เจอบ่อย:**
 > - `useParams` คืน **string** เสมอ ต้องแปลงเองถ้าต้องการเลข: `Number(id)` (และ `id` อาจเป็น `undefined`)
 > - ใช้ hook ของ router นอก router → `useNavigate() may be used only in the context of a <Router> component.` (เรารันจริง)
 > - ลิงก์ธรรมดาใช้ `<Link to="/x">` ไม่ต้อง `useNavigate` (ใช้ `navigate` เมื่อต้องเปลี่ยนหน้าหลังทำอย่างอื่นเสร็จ เช่น ส่งฟอร์มสำเร็จ)
@@ -760,7 +760,7 @@ const { data, error, loading } = useFetch<Laptop[]>("/mock/laptops.json");
 | `onChange` | ค่าในช่องกรอกเปลี่ยน | `onChange={(e) => setKeyword(e.target.value)}` | `React.ChangeEvent<HTMLInputElement>` |
 | `onSubmit` | ส่งฟอร์ม | `onSubmit={handleSubmit}` | `React.SubmitEvent<HTMLFormElement>` |
 
-> 💡 บทความเก่าๆ มักเขียน `React.FormEvent` ให้ฟอร์ม ตอนนี้ `@types/react` ประกาศว่าเลิกใช้แล้ว (VS Code จะขีดฆ่าชื่อ) ให้ใช้ `SubmitEvent` แทน
+> **เคล็ดลับ:** บทความเก่าๆ มักเขียน `React.FormEvent` ให้ฟอร์ม ตอนนี้ `@types/react` ประกาศว่าเลิกใช้แล้ว (VS Code จะขีดฆ่าชื่อ) ให้ใช้ `SubmitEvent` แทน
 
 ```tsx
 const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -779,7 +779,7 @@ const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
 ```
 **ควรเห็น:** พิมพ์ในช่องแล้วตัวอักษรขึ้นตามทุกตัว / กดปุ่มแล้วหน้า **ไม่รีโหลด**
 
-> ⚠️ **เจอบ่อย:**
+> **เจอบ่อย:**
 > - ลืม `e.preventDefault()` → หน้าเว็บรีโหลดทุกครั้งที่ส่งฟอร์ม state หายหมด
 > - `onClick={handleRent(1)}` (มีวงเล็บเรียกเลย) ต้องเป็น `onClick={() => handleRent(1)}` ไม่งั้นเรียกตอนวาด
 > - `<input value={x} />` ไม่มี `onChange` → ช่องพิมพ์ไม่ได้ React เตือน `` You provided a `value` prop to a form field without an `onChange` handler. This will render a read-only field. If the field should be mutable use `defaultValue`. Otherwise, set either `onChange` or `readOnly`. `` (เรารันจริง)
@@ -790,7 +790,7 @@ const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
 
 ---
 
-## 6. ⚠️ ตารางแก้ error ที่เจอบ่อย
+## 6. ตารางแก้ error ที่เจอบ่อย
 
 ข้อความด้านล่างเป็นข้อความจริง ที่เรารันกับ React 19 (และ `tsc` ของ TypeScript) เองแล้ว เว้นแต่ที่ระบุว่า "ไม่ได้ทดลอง"
 
@@ -816,11 +816,11 @@ const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
 | `Type '{ id: number; }' is not assignable to type 'never'.` | `useState([])` ไม่ได้ใส่ type | `useState<Laptop[]>([])` |
 | หน้าขาวทั้งหน้า ไม่มีข้อความ | error ตอนวาดทำให้ทั้งแอปล้ม | เปิด Console (F12) อ่านบรรทัดแดงบนสุด ([บทที่ 9](/09-debugging)) |
 
-> 💡 **วิธีอ่าน:** อ่านบรรทัดแรกของ error → แล้วดูบรรทัด `at ...` ตัวแรกที่เป็นชื่อไฟล์ของเรา (เช่น `laptop-card.tsx:12`) แล้วไปดูบรรทัดนั้น ไม่ต้องอ่านทั้งก้อน
+> **วิธีอ่าน:** อ่านบรรทัดแรกของ error → แล้วดูบรรทัด `at ...` ตัวแรกที่เป็นชื่อไฟล์ของเรา (เช่น `laptop-card.tsx:12`) แล้วไปดูบรรทัดนั้น ไม่ต้องอ่านทั้งก้อน
 
 ---
 
-## 🧠 เช็คความเข้าใจ
+## เช็คความเข้าใจ
 
 <details>
 <summary>1. `const [a, setA] = useState(0)` เรียกว่าอะไร และทำไมตั้งชื่อ `a` เป็นอย่างอื่นได้?</summary>
@@ -873,16 +873,16 @@ React จำว่า hook ตัวไหนเป็นของ component จ
 
 ---
 
-## ✏️ แบบฝึกหัด
+## แบบฝึกหัด
 
 1. **ไวยากรณ์:** เขียนสคริปต์ `.ts` ที่ใช้ข้อมูล `laptops` ในบทนี้ แล้วหา (ก) รุ่นของเครื่องที่ว่างทั้งหมด (`filter` + `map`) (ข) เครื่องที่ราคาสูงสุด (`reduce`) (ค) สรุปเป็นข้อความด้วย template literal รันด้วย `bun file.ts` แล้วเทียบผลกับที่คิดไว้
 2. **ลองพังมันดู:** ในโปรเจกต์ React ของบทที่ 11 ลองทำให้เกิด error ต่อไปนี้ทีละตัวแล้วอ่านข้อความเทียบกับหัวข้อ 6: (ก) ลบ `key` ออกจาก `map` (ข) `onClick={setOpen(!open)}` (ค) เรียก `useState` ใน `if` แล้วสลับเงื่อนไข (ง) เปลี่ยน `export default` เป็น `export` แต่ยัง `import` แบบเดิม
 3. **หน้ารายการโน้ตบุ๊ก:** สร้างหน้าที่มีช่องค้นหา (`useState` + `onChange`) ตัวกรองสถานะ "ว่าง/ทั้งหมด" ที่เก็บใน URL ด้วย `useSearchParams` (`?status=available`) และปุ่ม "เช่า" ที่เปลี่ยนสถานะเครื่องด้วย `map` + spread ห้ามใช้ `useMemo`/`useCallback` ถ้ายังไม่เห็นว่าช้า
 4. **อ่านโค้ด AI:** ให้ AI เขียนหน้ารายการให้ แล้วไฮไลต์ทุกบรรทัดที่มี `?.`, `??`, `...`, `=>`, hook และอธิบายด้วยคำพูดตัวเองว่ามันทำอะไร ถ้าอธิบายไม่ได้ ให้กลับมาเปิดหัวข้อที่เกี่ยวข้องในบทนี้ (ดู [บทที่ 16](/16-ai-pairing))
 
-> 📌 คำสั่ง terminal (git, bun, npm, docker) ไม่ได้อยู่ในบทนี้ ดูที่ [บทที่ 1](/01-git), [2](/02-docker), [3](/03-node-yarn-bun) และ [Cheat Sheet](/cheat-sheet)
+> คำสั่ง terminal (git, bun, npm, docker) ไม่ได้อยู่ในบทนี้ ดูที่ [บทที่ 1](/01-git), [2](/02-docker), [3](/03-node-yarn-bun) และ [Cheat Sheet](/cheat-sheet)
 
-## ✅ ผ่านด่าน
+## ผ่านด่าน
 
 - [ ] อ่านออกว่า `const { a, b: c = 1 } = obj` และ `const [x, y] = arr` ได้ค่าอะไร
 - [ ] ใช้ `map` / `filter` / `find` กับ array ของ `Laptop` ได้ และไม่แก้ state ตรงๆ (ใช้ spread)
@@ -893,4 +893,4 @@ React จำว่า hook ตัวไหนเป็นของ component จ
 
 ---
 
-[← บทที่ 11: สร้างหน้าเว็บด้วย React](/11-react) · [🏠 สารบัญ](/) · [บทที่ 12: ตกแต่งเว็บทุกขนาดจอ →](/12-tailwind)
+[← บทที่ 11: สร้างหน้าเว็บด้วย React](/11-react) · [ สารบัญ](/) · [บทที่ 12: ตกแต่งเว็บทุกขนาดจอ →](/12-tailwind)
