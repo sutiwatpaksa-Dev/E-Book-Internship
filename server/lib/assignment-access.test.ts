@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { pickAssignment, visibleAssignments } from "./assignment-access";
+import { canReadStarterPage, pickAssignment, visibleAssignments } from "./assignment-access";
 
 const all = ["starter", "clinic", "rental"];
 
@@ -26,5 +26,18 @@ describe("โจทย์ที่แต่ละคนได้", () => {
   test("พี่เลี้ยงเปิดได้ทุกโจทย์ ไม่ระบุ = STARTER", () => {
     expect(pickAssignment("dev", null, all, "rental")).toBe("rental");
     expect(pickAssignment("dev", null, all)).toBe("starter");
+  });
+});
+
+describe("หน้าในหมวดโจทย์ฝึกงาน", () => {
+  test("รุ่น STARTER อ่านได้ทุกหน้า", () => {
+    expect(canReadStarterPage("", ["starter"])).toBe(true);
+    expect(canReadStarterPage("database-api", ["clinic", "starter"])).toBe(true);
+  });
+  test("รุ่นโจทย์อื่นอ่านได้แค่หน้าที่ใช้กับทุกโจทย์", () => {
+    expect(canReadStarterPage("timeline", ["clinic"])).toBe(true);
+    expect(canReadStarterPage("submission", [])).toBe(true);
+    expect(canReadStarterPage("", ["clinic"])).toBe(false);
+    expect(canReadStarterPage("requirements", ["clinic"])).toBe(false);
   });
 });

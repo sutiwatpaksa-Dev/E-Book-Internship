@@ -3,6 +3,12 @@ import type { Role } from "../db/schema";
 // โจทย์ที่ทุกคนได้ถ้ายังไม่มีรุ่น (บัญชีเก่าก่อนมีระบบรุ่น) · เป็นโจทย์แรกที่ migration 0015 ใส่ไว้
 export const DEFAULT_ASSIGNMENT = "starter";
 
+// หน้าในหมวด /starter ที่ใช้กับทุกโจทย์ (แผน 10 วัน คุณภาพ เกณฑ์) · หน้าอื่นเขียนจากโจทย์ร้านค้าของ STARTER
+export const SHARED_STARTER_PAGES = ["quality", "timeline", "submission"];
+
+// น้องรุ่นนี้ควรเห็นหน้า /starter/<page> ไหม · page = "" คือหน้าแรกของหมวด
+export const canReadStarterPage = (page: string, slugs: string[]) => slugs.includes(DEFAULT_ASSIGNMENT) || SHARED_STARTER_PAGES.includes(page);
+
 // cohortSlugs = โจทย์ของรุ่นที่บัญชีนี้อยู่ ใหม่สุดก่อน · null = ไม่มีรุ่น
 // พี่เลี้ยงเห็นทุกโจทย์ (ตรวจงานได้ทุกรุ่น) · น้องเห็นแค่ของรุ่นตัวเอง
 export function visibleAssignments(role: Role, cohortSlugs: string[] | null, allSlugs: string[]): string[] {
