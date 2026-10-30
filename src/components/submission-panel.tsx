@@ -40,7 +40,7 @@ function InternSubmission() {
     submissionsApi
       .mine()
       .then(setData)
-      .catch((e: Error) => setError(e.message));
+      .catch((e: Error) => (setError(e.message), toast.error(`โหลดข้อมูลการส่งงานไม่สำเร็จ: ${e.message}`)));
   useEffect(() => {
     load();
   }, []);
@@ -138,7 +138,7 @@ function RepoBox({ assignment, repo, locked, onSent }: { assignment: string; rep
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setTouched(true);
-    if (repoProblem(repoUrl)) return;
+    if (repoProblem(repoUrl)) return void toast.error("ลิงก์ repo ยังไม่ถูกต้อง ดูข้อความสีแดงใต้ช่อง");
     setSending(true);
     setError(null);
     try {
@@ -148,6 +148,7 @@ function RepoBox({ assignment, repo, locked, onSent }: { assignment: string; rep
       onSent();
     } catch (err) {
       setError((err as Error).message);
+      toast.error(`ส่งลิงก์ repo ไม่สำเร็จ: ${(err as Error).message}`);
     } finally {
       setSending(false);
     }
@@ -195,7 +196,7 @@ function RepoBox({ assignment, repo, locked, onSent }: { assignment: string; rep
       {error && <ErrorText>{error}</ErrorText>}
       <div className="flex flex-wrap gap-2">
         {repo && (
-          <Button type="button" variant="ghost" className="min-h-11" onClick={() => (setEditing(false), setRepoUrl(repo))}>
+          <Button type="button" variant="ghost" className="min-h-11" onClick={() => (setEditing(false), setRepoUrl(repo), setTouched(false), toast.info("ยกเลิกแล้ว ยังใช้ repo เดิม"))}>
             ยกเลิก
           </Button>
         )}
@@ -261,7 +262,7 @@ function SubmitForm({ assignment, defaultRound, lastRepo, onSent }: { assignment
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setTouched(true);
-    if (repoProblem(repoUrl) || refProblem(ref) || (showDeploy && deployProblem(deployUrl))) return;
+    if (repoProblem(repoUrl) || refProblem(ref) || (showDeploy && deployProblem(deployUrl))) return void toast.error("ส่งไม่ได้ ตรวจช่องที่ขึ้นข้อความสีแดงก่อน");
     setSending(true);
     setError(null);
     try {
@@ -274,6 +275,7 @@ function SubmitForm({ assignment, defaultRound, lastRepo, onSent }: { assignment
       onSent();
     } catch (err) {
       setError((err as Error).message);
+      toast.error(`ส่งงานไม่สำเร็จ: ${(err as Error).message}`);
     } finally {
       setSending(false);
     }

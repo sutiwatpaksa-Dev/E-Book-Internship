@@ -184,7 +184,7 @@ function ReviewForm({ s, onDone, onCancel }: { s: AdminSubmission; onDone: () =>
   const missing = verdict === "revise" && !review.trim();
   const save = async (e: FormEvent) => {
     e.preventDefault();
-    if (missing) return;
+    if (missing) return void toast.error("ถ้าให้แก้ เขียนบอกน้องด้วยว่าต้องแก้อะไร");
     setSaving(true);
     try {
       await submissionsApi.review(s.id, verdict, review.trim());
@@ -192,6 +192,7 @@ function ReviewForm({ s, onDone, onCancel }: { s: AdminSubmission; onDone: () =>
       onDone();
     } catch (err) {
       setError((err as Error).message);
+      toast.error(`บันทึกผลตรวจไม่สำเร็จ: ${(err as Error).message}`);
       setSaving(false);
     }
   };
@@ -213,10 +214,10 @@ function ReviewForm({ s, onDone, onCancel }: { s: AdminSubmission; onDone: () =>
       {missing && <p role="alert" className="text-sm text-red-700 dark:text-red-400">ถ้าให้แก้ เขียนบอกน้องด้วยว่าต้องแก้อะไร</p>}
       {error && <ErrorText>{error}</ErrorText>}
       <div className="flex gap-2">
-        <Button type="button" variant="ghost" onClick={onCancel} className="min-h-11">
+        <Button type="button" variant="ghost" onClick={() => (toast.info("ยกเลิกแล้ว ยังไม่ได้บันทึกผลตรวจ"), onCancel())} className="min-h-11">
           ยกเลิก
         </Button>
-        <Button type="submit" disabled={saving || missing} className="min-h-11">
+        <Button type="submit" disabled={saving} className="min-h-11">
           บันทึกผลตรวจ
         </Button>
       </div>
