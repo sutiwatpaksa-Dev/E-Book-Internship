@@ -46,7 +46,6 @@ export function ThreadView({ chat, detail, titles }: { chat: ChatState; detail: 
           <button type="button" onClick={() => chat.select(null)} aria-label="กลับไปรายการ" className="rounded-md p-1 hover:bg-fd-accent md:hidden">
             <ArrowLeft className="size-4" />
           </button>
-          <span aria-hidden>{KIND_LABEL[thread.kind].icon}</span>
           <h2 className="min-w-0 flex-1 truncate font-semibold">{thread.subject}</h2>
           <StatusBadge status={thread.status} />
         </div>

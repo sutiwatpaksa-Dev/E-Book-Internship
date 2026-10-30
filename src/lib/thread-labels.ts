@@ -1,9 +1,9 @@
 import type { ThreadKind, ThreadStatus } from "@/types";
 
 // ป้ายและสีของเรื่อง ใช้ร่วมกันทั้งหน้าน้องและหลังบ้าน
-export const KIND_LABEL: Record<ThreadKind, { icon: string; label: string }> = {
-  question: { icon: "❓", label: "ถามพี่เลี้ยง" },
-  content_request: { icon: "📚", label: "ขอเนื้อหาเพิ่ม" },
+export const KIND_LABEL: Record<ThreadKind, { label: string }> = {
+  question: { label: "ถามพี่เลี้ยง" },
+  content_request: { label: "ขอเนื้อหาเพิ่ม" },
 };
 
 export const STATUS_LABEL: Record<ThreadStatus, string> = {

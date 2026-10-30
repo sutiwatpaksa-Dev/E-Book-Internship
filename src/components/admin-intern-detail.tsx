@@ -183,7 +183,6 @@ export function AdminInternDetail({ admin, nav, userId }: { admin: AdminState; n
             {threads.map((t) => (
               <li key={t.id}>
                 <button type="button" onClick={() => nav.openThread(t.id)} className="flex w-full items-center gap-2 px-3 py-2.5 text-start text-sm hover:bg-fd-accent">
-                  <span aria-label={KIND_LABEL[t.kind].label}>{KIND_LABEL[t.kind].icon}</span>
                   <span className={`min-w-0 flex-1 truncate ${t.unread ? "font-bold" : ""}`}>{t.subject}</span>
                   <StatusBadge status={t.status} />
                   <span className="w-16 text-end text-xs text-fd-muted-foreground">{timeAgo(t.lastMessageAt)}</span>

@@ -57,7 +57,7 @@ export function NewThreadForm({ kinds = ["question", "content_request"], default
               onClick={() => setKind(k)}
               className={`rounded-lg border px-3 py-2 text-sm font-medium ${k === kind ? "border-fd-primary bg-fd-primary/10 text-fd-primary" : "border-fd-border hover:bg-fd-accent"}`}
             >
-              {KIND_LABEL[k].icon} {KIND_LABEL[k].label}
+              {KIND_LABEL[k].label}
             </button>
           ))}
         </div>

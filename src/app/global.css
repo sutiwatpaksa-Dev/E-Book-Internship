@@ -2,6 +2,14 @@
 @import "fumadocs-ui/css/neutral.css";
 @import "fumadocs-ui/css/preset.css";
 
+/* มุมโค้งชุดเดียวทั้งเว็บ: เล็กลงจากค่าเริ่มต้นของ Tailwind ให้ดูเป็นงานระบบ ไม่ใช่แอปของเล่น
+   (การ์ดใช้ rounded-xl, กล่องใหญ่ rounded-2xl, ปุ่มและช่องกรอก rounded-lg) */
+@theme {
+  --radius-lg: 0.375rem;
+  --radius-xl: 0.5rem;
+  --radius-2xl: 0.625rem;
+}
+
 /* โทนสีเดียวกับเอกสารบริษัท (navy 072A6B / 0B3C91) */
 :root {
   --color-fd-primary: #0b3c91;
@@ -158,4 +166,36 @@ html.req-open #nd-toc {
 }
 html.req-open #nd-docs-layout {
   --fd-toc-width: 0px !important;
+}
+
+/* โฟกัสจากคีย์บอร์ดเห็นชัดเท่ากันทุกจุด (เมาส์คลิกไม่ขึ้นกรอบ) */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-fd-primary);
+  outline-offset: 2px;
+}
+
+/* ตารางในคู่มือ: หัวตารางพื้นจาง เส้นบางๆ ตัวเลขตรงกัน อ่านเป็นแถวได้ง่ายขึ้น */
+.prose table {
+  font-size: 0.925em;
+}
+.prose thead th {
+  background: var(--color-fd-muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.prose tbody tr:hover {
+  background: color-mix(in oklab, var(--color-fd-muted) 55%, transparent);
+}
+
+/* ผู้ใช้ที่ตั้งค่าลดการเคลื่อนไหว: ปิดแอนิเมชันการเลื่อนและ transition */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

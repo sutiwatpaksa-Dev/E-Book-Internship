@@ -2,6 +2,7 @@
 
 // แผง Requirement ต้นฉบับ (PDF) เปิดข้างคู่มือ อ่านเทียบกันได้โดยไม่ต้องสลับแท็บ
 // ถ้าจอแคบจนเหลือที่ให้เนื้อหาไม่พอ (วางคู่กันไม่ได้) จะเปิด PDF ในแท็บใหม่แทน
+import { ExternalLink, FileText, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { filesApi, REQUIREMENT_PDF_URL as PDF, requirementUrl } from "@/api/files.api";
@@ -115,9 +116,9 @@ export function RequirementViewer() {
         type="button"
         onClick={() => show(1)}
         title="แสดงเอกสาร Requirement ต้นฉบับข้างคู่มือ"
-        className="fixed right-5 bottom-5 z-40 rounded-full bg-fd-primary px-4 py-3 text-sm font-semibold text-fd-primary-foreground shadow-lg transition hover:-translate-y-0.5"
+        className="fixed right-5 bottom-5 z-40 inline-flex min-h-11 items-center gap-2 rounded-lg bg-fd-primary px-4 text-sm font-semibold text-fd-primary-foreground shadow-md transition hover:brightness-110"
       >
-        📄 แสดงเอกสาร Requirement
+        <FileText className="size-4" /> แสดงเอกสาร Requirement
       </button>
     );
   }
@@ -147,7 +148,7 @@ export function RequirementViewer() {
         }}
       />
       <header className="flex items-center gap-2 border-b border-fd-border px-3 py-2 text-sm">
-        <strong className="whitespace-nowrap">📄 Requirement</strong>
+        <strong className="inline-flex items-center gap-1.5 whitespace-nowrap"><FileText className="size-4" /> Requirement</strong>
         {list.length > 1 && (
           <select
             aria-label="เลือกโจทย์"
@@ -178,10 +179,10 @@ export function RequirementViewer() {
           ))}
         </select>
         <a href={`${requirementUrl(current?.slug)}#page=${page}`} target="_blank" rel="noopener" title="เปิดในแท็บใหม่" className="rounded-md px-2 py-1 hover:bg-fd-accent">
-          ↗
+          <ExternalLink className="size-4" />
         </a>
         <button type="button" title="ปิด (Esc)" aria-label="ปิดเอกสาร" onClick={() => setOpen(false)} className="rounded-md px-2 py-1 hover:bg-fd-accent">
-          ✕
+          <X className="size-4" />
         </button>
       </header>
       <iframe

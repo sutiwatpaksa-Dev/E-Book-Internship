@@ -60,7 +60,7 @@ function ContinueBox({ next, finished }: { next: LearnCard | null; finished: boo
   return (
     <Link
       href={href}
-      className="flex min-h-14 items-center justify-between gap-3 rounded-xl bg-fd-primary px-5 py-3 font-semibold text-fd-primary-foreground hover:opacity-90"
+      className="flex min-h-14 items-center justify-between gap-3 rounded-xl bg-fd-primary px-5 py-3 font-semibold text-fd-primary-foreground hover:brightness-110"
     >
       {label}
       <ArrowRight className="size-5 shrink-0" />

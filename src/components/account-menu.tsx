@@ -64,7 +64,7 @@ export function AccountMenu() {
       <Link
         href="/login"
         aria-label="เข้าสู่ระบบ"
-        className="inline-flex h-11 shrink-0 items-center gap-2 rounded-lg bg-fd-primary px-3 text-sm font-medium text-fd-primary-foreground hover:opacity-90 sm:px-3.5"
+        className="inline-flex h-11 shrink-0 items-center gap-2 rounded-lg bg-fd-primary px-3 text-sm font-medium text-fd-primary-foreground hover:brightness-110 sm:px-3.5"
       >
         <LogIn className="size-4" />
         <span className="max-sm:hidden">เข้าสู่ระบบ</span>

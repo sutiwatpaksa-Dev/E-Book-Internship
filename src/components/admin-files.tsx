@@ -127,7 +127,7 @@ function Pdf({ admin, assignment: a }: { admin: AdminState; assignment: AdminAss
           <span className="text-orange-800 dark:text-orange-300">ยังไม่มี PDF น้องในรุ่นที่ใช้โจทย์นี้จะเปิดเอกสารไม่ได้</span>
         )}
       </span>
-      <label className="inline-flex min-h-11 w-fit cursor-pointer items-center gap-2 rounded-lg bg-fd-primary px-3 font-medium text-fd-primary-foreground focus-within:ring-2 focus-within:ring-fd-primary/40 hover:opacity-90">
+      <label className="inline-flex min-h-11 w-fit cursor-pointer items-center gap-2 rounded-lg bg-fd-primary px-3 font-medium text-fd-primary-foreground focus-within:ring-2 focus-within:ring-fd-primary/40 hover:brightness-110">
         <FileUp className="size-4" /> {a.pdf ? "อัปโหลดไฟล์ใหม่" : "อัปโหลด PDF"}
         <input
           type="file"

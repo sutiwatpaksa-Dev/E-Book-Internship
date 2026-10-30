@@ -38,7 +38,7 @@ export function MentorCardView({ slug }: { slug: string }) {
         <h1 className="text-2xl font-bold">การ์ดจากพี่เลี้ยง อ่านได้เมื่อ login</h1>
         <p className="text-fd-muted-foreground">การ์ดกลุ่มนี้พี่เลี้ยงเขียนให้น้องในบริษัท อาจพูดถึงงาน STARTER หรือระบบภายใน จึงเปิดให้เฉพาะคนที่มีบัญชี การ์ดอื่นในคลังยังอ่านได้ตามปกติ</p>
         <div className="flex flex-wrap gap-3">
-          <Link href={`/login?next=${encodeURIComponent(mentorCardUrl(slug))}`} className="inline-flex min-h-12 items-center rounded-xl bg-fd-primary px-5 font-semibold text-fd-primary-foreground hover:opacity-90">
+          <Link href={`/login?next=${encodeURIComponent(mentorCardUrl(slug))}`} className="inline-flex min-h-12 items-center rounded-xl bg-fd-primary px-5 font-semibold text-fd-primary-foreground hover:brightness-110">
             เข้าสู่ระบบ
           </Link>
           <Link href="/learn/cards" className="inline-flex min-h-12 items-center rounded-xl border border-fd-border px-5 font-semibold hover:bg-fd-accent">

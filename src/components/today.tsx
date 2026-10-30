@@ -120,7 +120,7 @@ function ContinueBox({ up, done, cards }: { up: ReturnType<typeof nextUp>; done:
 
       <Link
         href={href}
-        className="mt-auto inline-flex min-h-13 items-center justify-center gap-2 self-end rounded-xl bg-fd-primary px-7 text-lg font-semibold text-fd-primary-foreground hover:opacity-90 max-sm:self-stretch"
+        className="mt-auto inline-flex min-h-13 items-center justify-center gap-2 self-end rounded-xl bg-fd-primary px-7 text-lg font-semibold text-fd-primary-foreground hover:brightness-110 max-sm:self-stretch"
       >
         {reading ? "อ่านต่อ" : "เริ่มเลย"}
         <ArrowRight className="size-5" />
@@ -235,7 +235,7 @@ function StarterTask({ step }: { step: LearnStep }) {
       </div>
       <p>{step.task}</p>
       <div className="mt-auto flex flex-wrap gap-2">
-        <Link href={stepUrl(step.slug)} className="inline-flex min-h-11 items-center rounded-xl bg-fd-primary px-4 text-sm font-semibold text-fd-primary-foreground hover:opacity-90">
+        <Link href={stepUrl(step.slug)} className="inline-flex min-h-11 items-center rounded-xl bg-fd-primary px-4 text-sm font-semibold text-fd-primary-foreground hover:brightness-110">
           เปิดโจทย์เต็ม
         </Link>
         <Link href="/starter" className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-fd-border px-4 text-sm font-semibold hover:bg-fd-accent">
@@ -324,7 +324,7 @@ function MyWork() {
           ต่อไป: {next.label} · วันที่ {next.day} ({next.what})
         </p>
       )}
-      <Link href={SUBMIT_LINK} className="inline-flex min-h-11 w-fit items-center gap-1.5 rounded-xl bg-fd-primary px-4 text-sm font-semibold text-fd-primary-foreground hover:opacity-90">
+      <Link href={SUBMIT_LINK} className="inline-flex min-h-11 w-fit items-center gap-1.5 rounded-xl bg-fd-primary px-4 text-sm font-semibold text-fd-primary-foreground hover:brightness-110">
         {repo ? "ส่งงาน / ดูผลตรวจ" : "ส่งลิงก์ repo"} <ArrowRight className="size-4" />
       </Link>
     </section>

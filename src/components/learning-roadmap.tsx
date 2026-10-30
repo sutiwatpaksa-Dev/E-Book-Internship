@@ -1,5 +1,6 @@
 "use client";
 
+import { Lock } from "lucide-react";
 import Link from "next/link";
 import { requiredLinks, roadmap, type RoadmapItem } from "@/data/roadmap";
 import { useProgress } from "@/hooks/use-progress";
@@ -24,7 +25,7 @@ export function LearningRoadmap() {
         <span>{percent}%</span>
       </div>
 
-      <Pill>เริ่มที่นี่ 👇</Pill>
+      <Pill>เริ่มที่นี่</Pill>
 
       {roadmap.map((level, li) => (
         // เส้นแกนกลางร้อยทุกด่าน (จอแคบย้ายไปชิดซ้าย)
@@ -48,7 +49,7 @@ export function LearningRoadmap() {
               />
             ))}
           </ul>
-          {li === roadmap.length - 1 && <Pill>🎉 ส่งมอบเว็บที่ลูกค้าใช้งานจริง</Pill>}
+          {li === roadmap.length - 1 && <Pill>ส่งมอบเว็บที่ลูกค้าใช้งานจริง</Pill>}
         </section>
       ))}
 
@@ -59,7 +60,7 @@ export function LearningRoadmap() {
         <span>
           <i className="mr-1 inline-block h-3 w-4.5 rounded-sm border-2 border-dashed border-fd-muted-foreground bg-fd-card align-middle" /> บทเสริม อ่านเมื่ออยากรู้ลึก
         </span>
-        <span>🔒 ต้อง login</span>
+        <span>เครื่องหมายกุญแจ = ต้อง login</span>
         <span>✓ ติ๊กเองเมื่อผ่านบท (login อยู่: เก็บกับบัญชี · ไม่ได้ login: เก็บในเบราว์เซอร์นี้)</span>
       </div>
     </div>
@@ -100,10 +101,10 @@ function Topic({ item, side, done, locked, onToggle }: TopicProps) {
         <span className="flex flex-col gap-0.5">
           <span className={`leading-snug font-semibold ${done ? "line-through decoration-(--rm-done)" : ""}`}>
             {item.title}
-            {locked && <span title="ต้อง login"> 🔒</span>}
+            {locked && <Lock aria-label="ต้อง login" className="ml-1 inline size-3.5 align-[-2px] text-fd-muted-foreground" />}
           </span>
           <span className="text-[13px] leading-snug text-fd-muted-foreground">{item.outcome}</span>
-          <span className="text-xs text-fd-muted-foreground/80">⏱ {item.time}</span>
+          <span className="text-xs text-fd-muted-foreground/80">{item.time}</span>
         </span>
       </Link>
       {!item.extra && (
