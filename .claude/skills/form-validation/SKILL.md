@@ -12,12 +12,13 @@ description: ตรวจและเขียนกฎ validation ของท�
 1. **กฎเดียว ใช้สองที่:** เขียนเป็นฟังก์ชัน `xxxProblem(v): string | null` ใน `src/lib/` (ไม่มี import ของ server หรือ React) แล้ว
    - server: `server/validators/*.validator.ts` เรียกใน `.superRefine()` ส่งข้อความกลับเป็น issue `custom`
    - ฟอร์ม: เรียกฟังก์ชันเดียวกัน แสดงข้อความใต้ช่องทันทีที่พิมพ์ (`role="alert"`, `aria-invalid`)
-   - ตัวอย่างจริง: `src/lib/contact.ts` (เบอร์, LINE, IG, Facebook), `src/lib/username.ts` (`USERNAME_PATTERN` ใช้ทั้ง `user.validator` และ `register.validator`) และ `passwordProblem` ใน `server/validators/auth.validator.ts`
+   - ตัวอย่างจริง: `src/lib/contact.ts` (เบอร์, อีเมล, LINE, IG, Facebook รวมอยู่ใน `CONTACT_RULES`), `src/lib/username.ts` (`USERNAME_PATTERN` ใช้ทั้ง `user.validator` และ `register.validator`) และ `passwordProblem` ใน `server/validators/auth.validator.ts`
    - **เหตุผล:** ฟอร์มกันได้แค่คนที่ใช้หน้าเว็บ server คือด่านจริง (ยิง API ตรงก็ต้องโดน) ถ้าเขียนกฎสองชุดจะเพี้ยนกันในไม่ช้า
 2. **กฎมาจากของจริง ไม่ใช่เดา:** ใช้กติกาของระบบปลายทาง และเขียนที่มาไว้ใน comment
    | ช่อง | กฎ |
    |---|---|
    | เบอร์ไทย | ตัด `- ( ) ช่องว่าง` แล้วเหลือ `0` + 8–9 หลัก · สากล `+` + 10–15 หลัก |
+   | อีเมล | `name@domain.tld` อังกฤษเท่านั้น ไม่เกิน 254 ตัว (`emailProblem`) |
    | LINE ID | `a-z 0-9 . _ -` ยาว 4–20 |
    | Instagram | `a-z 0-9 . _` ไม่เกิน 30 (`@` นำหน้าได้) |
    | Facebook | ลิงก์ `facebook.com/...` หรือ username อังกฤษ |

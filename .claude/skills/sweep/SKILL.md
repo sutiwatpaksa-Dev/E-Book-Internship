@@ -17,8 +17,8 @@ sweep มีไว้**หาและรายงาน**เท่านั้�
 |---|---|---|
 | 1 | Build ผ่าน | `npm run build` (MDX ที่เขียนผิดทำให้ build ล้ม) · `npm run typecheck` · `npm test` |
 | 2 | ลิงก์ภายใน | ทุก `](/...)` ต้องมีไฟล์ใน `content/docs/` · anchor `#...` ต้องตรงกับ heading ที่แปลงแบบ github-slugger (ระวังขีด `--` ซ้อนกัน) · ห้าม URL-encode ภาษาไทยใน href |
-| 3 | ลำดับบท | ไฟล์ใหม่ต้องอยู่ใน `content/docs/meta.json` และ `src/data/roadmap.ts` |
-| 4 | Windows / Mac | คำสั่ง terminal ที่ใช้ได้แค่ Mac/Linux (`export`, `rm -rf`, `cp`, `&&` ใน PowerShell รุ่นเก่า, path `/`) ต้องมีแบบ Windows ด้วย |
+| 3 | ลำดับบท | บทเดิม: อยู่ใน `content/docs/meta.json` และ `src/data/roadmap.ts` · การ์ด: อยู่ใน `cards` ของ `src/data/learn.ts` และ `meta.json` ของ `content/docs/learn/cards/` (`bun test` ตรวจ `needs` / `part`) |
+| 4 | Windows / Mac | กฎบท 0: Windows ใช้ Git Bash เท่านั้น คำสั่งต้องรันได้ทั้ง Mac และ Git Bash · จับคำสั่งที่สอนทาง PowerShell / `cmd` / `curl.exe` · path ที่ขึ้นต้น `/` ซึ่ง Git Bash แปลงให้ (ต้องใช้ `MSYS_NO_PATHCONV=1`) · เครื่องมือที่ไม่มีใน Git Bash |
 | 5 | โค้ดตัวอย่าง | import ครบไหม, ชื่อไฟล์และ path ตรงกับที่บทอื่นใช้ไหม, ตัวอย่างร้าน (laptop / Bit Café) ไม่ปนกัน, Express กับ Hono ไม่ปนกันในบทเดียว |
 | 6 | MDX | `{` `}` `<` ในข้อความธรรมดาต้องอยู่ใน backtick หรือ escape · ก่อน `</details>` ต้องมีบรรทัดว่าง · หัวข้อ (`#`) ห้ามมีลิงก์ (Fumadocs ห่อหัวข้อด้วย `<a>` อยู่แล้ว ได้ `<a>` ซ้อน `<a>` = hydration error) ตรวจด้วย `bun test src/lib/content-rules.test.ts` |
 | 7 | ตารางเครื่องมือ | `src/data/tool-groups.ts`: `checkedAt` เก่ากว่า 12 เดือนไหม, `url` ชี้เว็บทางการไหม |
