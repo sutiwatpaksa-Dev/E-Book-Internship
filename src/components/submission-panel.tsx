@@ -6,7 +6,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { submissionsApi } from "@/api/submissions.api";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "@/hooks/use-toast";
-import { commitsUrl, deployProblem, isReviewable, latestOnly, refProblem, repoProblem, roundLabel, START_ROUND, SUBMISSION_ROUNDS, takesDeploy, treeUrl } from "@/lib/submission";
+import { commitsUrl, deployProblem, isReviewable, latestOnly, refProblem, repoProblem, START_ROUND, takesDeploy, treeUrl, type RoundDef } from "@/lib/submission";
 import type { MySubmissions, Submission } from "@/types";
 import { Button } from "./button";
 import { ErrorText } from "./error-text";
@@ -58,6 +58,7 @@ function SubmissionView({ data, reload }: { data: MySubmissions; reload: () => v
   const ofRound = (id: string) => latest.find((s) => s.round === id);
   // ลิงก์ repo ล่าสุดของโจทย์นี้ (จากการส่งครั้งไหนก็ได้) · ยังไม่มี = ยังไม่ได้ลงทะเบียน
   const repo = items[0]?.repoUrl ?? null;
+  const rounds = data.assignments.find((a) => a.slug === assignment)?.rounds ?? [];
 
   return (
     <div className="not-prose flex flex-col gap-4">
@@ -76,7 +77,7 @@ function SubmissionView({ data, reload }: { data: MySubmissions; reload: () => v
       <RepoBox assignment={assignment} repo={repo} locked={data.locked} onSent={reload} />
 
       <ol className="flex flex-col gap-2">
-        {SUBMISSION_ROUNDS.map((r) => {
+        {rounds.map((r) => {
           const s = ofRound(r.id);
           return (
             <li key={r.id} className={box}>
@@ -100,7 +101,8 @@ function SubmissionView({ data, reload }: { data: MySubmissions; reload: () => v
         <SubmitForm
           assignment={assignment}
           // รอบที่ควรส่งต่อ: รอบแรกที่ยังไม่ผ่าน
-          defaultRound={SUBMISSION_ROUNDS.find((r) => ofRound(r.id)?.verdict !== "pass")?.id ?? "final"}
+          rounds={rounds}
+          defaultRound={rounds.find((r) => ofRound(r.id)?.verdict !== "pass")?.id ?? rounds.at(-1)?.id ?? ""}
           // ใส่ลิงก์ repo ครั้งเดียว ครั้งต่อไปเติมให้จากที่ส่งล่าสุด
           lastRepo={repo ?? data.items[0]?.repoUrl ?? ""}
           onSent={reload}
@@ -114,7 +116,7 @@ function SubmissionView({ data, reload }: { data: MySubmissions; reload: () => v
             {items.map((s) => (
               <li key={s.id} className="flex flex-col gap-1 border-t border-fd-border pt-2">
                 <span className="flex flex-wrap items-center gap-2">
-                  {roundLabel(s.round)} {isReviewable(s.round) && <VerdictBadge verdict={s.verdict} />}
+                  {s.roundLabel} {isReviewable(s.round) && <VerdictBadge verdict={s.verdict} />}
                 </span>
                 <SentLine s={s} />
               </li>
@@ -242,7 +244,7 @@ function SentLine({ s }: { s: Submission }) {
   );
 }
 
-function SubmitForm({ assignment, defaultRound, lastRepo, onSent }: { assignment: string; defaultRound: string; lastRepo: string; onSent: () => void }) {
+function SubmitForm({ assignment, rounds, defaultRound, lastRepo, onSent }: { assignment: string; rounds: RoundDef[]; defaultRound: string; lastRepo: string; onSent: () => void }) {
   const [round, setRound] = useState(defaultRound);
   const [repoUrl, setRepoUrl] = useState(lastRepo);
   const [ref, setRef] = useState("");
@@ -256,7 +258,7 @@ function SubmitForm({ assignment, defaultRound, lastRepo, onSent }: { assignment
   // บอกผิดใต้ช่องเมื่อพิมพ์แล้ว (ช่องว่างตอนเพิ่งเปิดหน้ายังไม่ขึ้นแดง)
   const repoErr = touched || repoUrl ? repoProblem(repoUrl) : null;
   const refErr = touched || ref ? refProblem(ref) : null;
-  const showDeploy = takesDeploy(round);
+  const showDeploy = takesDeploy(rounds, round);
   const deployErr = showDeploy && deployUrl ? deployProblem(deployUrl) : null;
 
   const submit = async (e: FormEvent) => {
@@ -286,7 +288,7 @@ function SubmitForm({ assignment, defaultRound, lastRepo, onSent }: { assignment
       <h3 className="text-base font-semibold">ส่งงาน / ส่งงานที่แก้แล้ว</h3>
       <Field label="รอบ">
         <select className={inputClass} value={round} onChange={(e) => setRound(e.target.value)}>
-          {SUBMISSION_ROUNDS.map((r) => (
+          {rounds.map((r) => (
             <option key={r.id} value={r.id}>
               {r.label} (วันที่ {r.day})
             </option>

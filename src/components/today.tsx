@@ -9,7 +9,7 @@ import { cardUrl, cardsOf, nextUp, steps, stepUrl, type LearnCard, type LearnSte
 import { useCatalog } from "@/hooks/use-catalog";
 import { useProgress } from "@/hooks/use-progress";
 import { useSession } from "@/hooks/use-session";
-import { latestOnly, roundLabel, SUBMISSION_ROUNDS } from "@/lib/submission";
+import { latestOnly } from "@/lib/submission";
 import type { MySubmissions } from "@/types";
 import { AnnouncementBanner } from "./announcement-banner";
 import { VerdictBadge } from "./status-badge";
@@ -294,7 +294,7 @@ function MyWork() {
   const repo = items[0]?.repoUrl ?? null;
   const latest = latestOnly(items.map((s) => ({ ...s, userId: 0 })));
   const reviewed = latest.find((s) => s.round !== "start");
-  const next = SUBMISSION_ROUNDS.find((r) => latest.find((s) => s.round === r.id)?.verdict !== "pass");
+  const next = data.assignments[0].rounds.find((r) => latest.find((s) => s.round === r.id)?.verdict !== "pass");
 
   return (
     <section aria-labelledby="work-title" className={`${box} flex flex-col gap-3 lg:col-span-12`}>
@@ -310,7 +310,7 @@ function MyWork() {
       )}
       {reviewed && (
         <p className="flex flex-wrap items-center gap-2 text-sm">
-          ล่าสุด: {roundLabel(reviewed.round)} <span className="font-mono">{reviewed.ref}</span> <VerdictBadge verdict={reviewed.verdict} />
+          ล่าสุด: {reviewed.roundLabel} <span className="font-mono">{reviewed.ref}</span> <VerdictBadge verdict={reviewed.verdict} />
         </p>
       )}
       {items.find((s) => s.deployUrl)?.deployUrl && (

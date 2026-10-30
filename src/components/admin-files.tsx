@@ -1,9 +1,10 @@
 "use client";
 
-import { FileUp, Pencil, Plus } from "lucide-react";
+import { FileUp, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { requirementUrl } from "@/api/files.api";
 import type { AdminState } from "@/hooks/use-admin";
+import { DEFAULT_ROUNDS, roundsProblem, type RoundDef } from "@/lib/submission";
 import type { AdminAssignment, AssignmentInput, AssignmentSection } from "@/types";
 import { Button } from "./button";
 import { Field, Input, inputClass } from "./field";
@@ -35,6 +36,7 @@ export function AdminFiles({ admin }: { admin: AdminState }) {
   const cohortName = (id: number) => admin.cohorts.find((c) => c.id === id)?.name ?? `รุ่น ${id}`;
   // โจทย์ใหม่เริ่มจากหัวข้อของ STARTER: key เดียวกัน ลิงก์ในคู่มือจึงใช้ได้ทันที แก้แค่เลขหน้า
   const template = assignments.find((a) => a.slug === "starter")?.sections ?? [];
+  const roundsTemplate = assignments.find((a) => a.slug === "starter")?.rounds ?? DEFAULT_ROUNDS;
 
   return (
     <div className="flex max-w-3xl flex-col gap-4">
@@ -51,7 +53,7 @@ export function AdminFiles({ admin }: { admin: AdminState }) {
 
       {creating && (
         <AssignmentForm
-          initial={{ name: "", brief: "", sections: template }}
+          initial={{ name: "", brief: "", sections: template, rounds: roundsTemplate }}
           onCancel={() => setCreating(false)}
           onSave={async (slug, input) => {
             if (await admin.saveAssignment(null, slug, input)) setCreating(false);
@@ -67,7 +69,7 @@ export function AdminFiles({ admin }: { admin: AdminState }) {
                 {a.name}
               </h2>
               <span className="text-xs text-fd-muted-foreground">
-                {a.slug} · {a.sections.length} หัวข้อ · {a.cohortIds.length ? `ใช้ใน ${a.cohortIds.map(cohortName).join(", ")}` : "ยังไม่มีรุ่นใช้"}
+                {a.slug} · {a.sections.length} หัวข้อ · {a.rounds.length} รอบส่ง · {a.cohortIds.length ? `ใช้ใน ${a.cohortIds.map(cohortName).join(", ")}` : "ยังไม่มีรุ่นใช้"}
               </span>
             </div>
             <Button variant="ghost" onClick={() => setEditing(editing === a.id ? null : a.id)} aria-expanded={editing === a.id} className="min-h-11">
@@ -149,12 +151,14 @@ function AssignmentForm({ initial, slug: fixedSlug, onSave, onCancel }: { initia
   const [name, setName] = useState(initial.name);
   const [brief, setBrief] = useState(initial.brief);
   const [sections, setSections] = useState(toText(initial.sections));
+  const [rounds, setRounds] = useState<RoundDef[]>(initial.rounds);
   const parsed = parseSections(sections);
+  const roundsErr = roundsProblem(rounds.map((r) => ({ ...r, label: r.label.trim() })));
   const badSlug = !fixedSlug && slug !== "" && !/^[a-z0-9-]{2,40}$/.test(slug);
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    if (typeof parsed === "string" || badSlug) return;
-    onSave(slug, { name: name.trim(), brief: brief.trim(), sections: parsed });
+    if (typeof parsed === "string" || badSlug || roundsErr) return;
+    onSave(slug, { name: name.trim(), brief: brief.trim(), sections: parsed, rounds: rounds.map((r) => ({ ...r, label: r.label.trim(), what: r.what.trim() })) });
   };
   return (
     <form onSubmit={submit} aria-label={fixedSlug ? "แก้โจทย์" : "สร้างโจทย์ใหม่"} className="grid gap-3 rounded-xl border border-fd-primary/40 p-4 sm:grid-cols-2">
@@ -183,14 +187,55 @@ function AssignmentForm({ initial, slug: fixedSlug, onSave, onCancel }: { initia
         </Field>
         {typeof parsed === "string" && <p className="mt-1 text-sm text-red-700 dark:text-red-400">{parsed}</p>}
       </div>
+      <div className="sm:col-span-2">
+        <RoundsEditor rounds={rounds} onChange={setRounds} error={roundsErr} />
+      </div>
       <div className="flex gap-2 sm:col-span-2">
         <Button type="button" variant="ghost" onClick={onCancel} className="min-h-11">
           ยกเลิก
         </Button>
-        <Button type="submit" disabled={typeof parsed === "string" || badSlug} className="min-h-11">
+        <Button type="submit" disabled={typeof parsed === "string" || badSlug || !!roundsErr} className="min-h-11">
           {fixedSlug ? "บันทึก" : "สร้างโจทย์"}
         </Button>
       </div>
     </form>
+  );
+}
+
+// รอบส่งงานของโจทย์: น้องเลือกส่งได้ตามรายการนี้ · รอบที่มีคนส่งแล้วลบไม่ได้ (server กัน) · เรียงตามวันให้เองตอนบันทึก
+function RoundsEditor({ rounds, onChange, error }: { rounds: RoundDef[]; onChange: (r: RoundDef[]) => void; error: string | null }) {
+  const set = (i: number, patch: Partial<RoundDef>) => onChange(rounds.map((r, j) => (j === i ? { ...r, ...patch } : r)));
+  // รหัสรอบใช้ภายใน เปลี่ยนไม่ได้หลังสร้าง (ติดอยู่กับงานที่ส่งแล้ว) รอบใหม่สุ่มรหัสให้
+  const add = () => onChange([...rounds, { id: `r${Date.now().toString(36)}`, label: "", day: Math.min(60, (rounds.at(-1)?.day ?? 0) + 1), what: "", deploy: false }]);
+  return (
+    <fieldset className="flex flex-col gap-2">
+      <legend className="mb-1 text-sm font-medium">รอบส่งงาน</legend>
+      <p className="text-xs text-fd-muted-foreground">น้องส่งงานได้ตามรอบเหล่านี้ · ติ๊ก "รับลิงก์เว็บ" ถ้ารอบนั้นให้น้องแนบลิงก์เว็บที่ deploy แล้ว</p>
+      {rounds.map((r, i) => (
+        <div key={r.id} className="grid gap-2 rounded-lg border border-fd-border p-3 sm:grid-cols-[1fr_5rem_1fr_auto_auto] sm:items-end">
+          <Field label="ชื่อรอบ">
+            <Input value={r.label} onChange={(e) => set(i, { label: e.target.value })} placeholder="ตรวจรอบ 1" maxLength={40} required />
+          </Field>
+          <Field label="วันที่">
+            <Input type="number" inputMode="numeric" min={1} max={60} value={r.day} onChange={(e) => set(i, { day: Number(e.target.value) })} required />
+          </Field>
+          <Field label="ตรวจอะไร">
+            <Input value={r.what} onChange={(e) => set(i, { what: e.target.value })} placeholder="ตาราง + API" maxLength={60} />
+          </Field>
+          <label className="flex min-h-11 items-center gap-2 text-sm">
+            <input type="checkbox" checked={r.deploy} onChange={(e) => set(i, { deploy: e.target.checked })} /> รับลิงก์เว็บ
+          </label>
+          <Button type="button" variant="ghost" className="min-h-11" aria-label={`ลบ ${r.label || `รอบที่ ${i + 1}`}`} onClick={() => onChange(rounds.filter((_, j) => j !== i))}>
+            <Trash2 className="size-4" />
+          </Button>
+        </div>
+      ))}
+      <div>
+        <Button type="button" variant="ghost" className="min-h-11" onClick={add} disabled={rounds.length >= 10}>
+          <Plus className="size-4" /> เพิ่มรอบ
+        </Button>
+      </div>
+      {error && <p role="alert" className="text-sm text-red-700 dark:text-red-400">{error}</p>}
+    </fieldset>
   );
 }

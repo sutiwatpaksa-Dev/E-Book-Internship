@@ -127,6 +127,13 @@
       "when": 1793346635621,
       "tag": "0017_submission_deploy_url",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793347283200,
+      "tag": "0018_assignment_rubric",
+      "breakpoints": true
     }
   ]
 }

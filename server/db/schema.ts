@@ -1,4 +1,5 @@
 import { type AnyPgColumn, boolean, customType, date, index, integer, jsonb, pgTable, primaryKey, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { DEFAULT_ROUNDS, type RoundDef } from "../../src/lib/submission";
 
 const bytea = customType<{ data: Buffer }>({ dataType: () => "bytea" });
 
@@ -90,6 +91,9 @@ export const cohortMentors = pgTable(
 // หัวข้อในเอกสารโจทย์กับเลขหน้า PDF · key ใช้ในลิงก์ของคู่มือ (?sec=api) โจทย์แต่ละชิ้นจึงเรียงหน้าต่างกันได้
 export type AssignmentSection = { key: string; label: string; page: number };
 
+// ข้อมูลการตรวจของโจทย์ที่พี่เลี้ยงแก้เองจากหลังบ้าน (เฟส 1: รอบส่ง) · ค่าเริ่มต้นคือแผน 10 วันของ STARTER
+export type AssignmentRubric = { rounds: RoundDef[] };
+
 // โจทย์ฝึกงาน (เช่น STARTER) · โครงงาน 10 วัน เกณฑ์ และ stack เหมือนกันทุกโจทย์ ต่างกันที่ระบบทำให้ใคร
 // เก็บใน DB ไม่ใช่ MDX เพราะ repo นี้เปิดสาธารณะ โจทย์ของรุ่นถัดไปต้องไม่หลุดก่อนรุ่นเริ่ม
 export const assignments = pgTable("assignments", {
@@ -100,6 +104,7 @@ export const assignments = pgTable("assignments", {
   // แถวในตาราง files ที่เก็บ PDF ของโจทย์นี้ (STARTER ใช้ key เดิม "starter-requirement" ไฟล์บนเว็บจริงจึงไม่ต้องย้าย)
   pdfKey: text("pdf_key").notNull().unique(),
   sections: jsonb("sections").$type<AssignmentSection[]>().notNull().default([]),
+  rubric: jsonb("rubric").$type<AssignmentRubric>().notNull().default({ rounds: DEFAULT_ROUNDS }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

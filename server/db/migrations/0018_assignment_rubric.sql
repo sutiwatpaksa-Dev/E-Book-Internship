@@ -1,0 +1,1 @@
+ALTER TABLE "assignments" ADD COLUMN "rubric" jsonb DEFAULT '{"rounds":[{"id":"review-1","label":"ตรวจรอบ 1","day":5,"what":"ตาราง + API","deploy":false},{"id":"review-2","label":"ตรวจรอบ 2","day":9,"what":"ทั้งระบบ","deploy":true},{"id":"final","label":"ส่งงานจริง","day":10,"what":"งานครบ + README","deploy":true}]}'::jsonb NOT NULL;

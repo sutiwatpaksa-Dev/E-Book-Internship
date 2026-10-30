@@ -1,8 +1,10 @@
 import type { AssignmentSection, Role } from "../db/schema";
 import { pickAssignment, visibleAssignments } from "../lib/assignment-access";
-import { assignmentRepository, type AssignmentFields } from "../repositories/assignment.repository";
+import { assignmentRepository } from "../repositories/assignment.repository";
 import { cohortRepository } from "../repositories/cohort.repository";
 import { fileRepository } from "../repositories/file.repository";
+import { submissionRepository } from "../repositories/submission.repository";
+import type { AssignmentInput } from "../validators/assignment.validator";
 import { auditService } from "./audit.service";
 import { checkPdf } from "./file.service";
 
@@ -15,6 +17,9 @@ async function visibleSlugs(user: Viewer) {
   const cohortSlugs = cohortId === null ? null : await assignmentRepository.slugsOfCohort(cohortId);
   return { all, cohortSlugs };
 }
+
+// เรียงรอบตามวัน (วันเท่ากันคงลำดับที่กรอก)
+const byDay = <T extends { day: number }>(rounds: T[]) => [...rounds].sort((a, b) => a.day - b.day);
 
 // หน้าโจทย์ของ section key (เช่น "api") · ไม่มีในโจทย์นี้ = หน้า 1
 export const pageOf = (sections: AssignmentSection[], key: string) => sections.find((s) => s.key === key)?.page ?? 1;
@@ -29,7 +34,7 @@ export const assignmentService = {
     const rows = await assignmentRepository.findManyBySlug(sorted);
     return sorted.flatMap((slug) => {
       const a = rows.find((r) => r.slug === slug);
-      return a ? [{ slug: a.slug, name: a.name, brief: a.brief, sections: a.sections }] : [];
+      return a ? [{ slug: a.slug, name: a.name, brief: a.brief, sections: a.sections, rounds: a.rubric.rounds }] : [];
     });
   },
 
@@ -42,18 +47,24 @@ export const assignmentService = {
     return { assignment: a, file: await fileRepository.find(a.pdfKey) };
   },
 
-  list: () => assignmentRepository.list(),
+  // หลังบ้าน: รอบส่งออกเป็น rounds (ไม่ส่งโครง rubric ทั้งก้อน เฟสต่อไปจะเพิ่มเกณฑ์ที่นี่)
+  async list() {
+    return (await assignmentRepository.list()).map(({ rubric, ...a }) => ({ ...a, rounds: rubric.rounds }));
+  },
 
-  async create(devId: number, slug: string, f: AssignmentFields) {
+  async create(devId: number, slug: string, { rounds, ...f }: AssignmentInput) {
     if (await assignmentRepository.findBySlug(slug)) throw new Error("ASSIGNMENT_SLUG_TAKEN");
-    const a = await assignmentRepository.create({ ...f, slug, pdfKey: `requirement:${slug}` });
+    const a = await assignmentRepository.create({ ...f, rubric: { rounds: byDay(rounds) }, slug, pdfKey: `requirement:${slug}` });
     await auditService.log(devId, "assignment.create", f.name, slug);
     return a;
   },
-  async update(devId: number, id: number, f: AssignmentFields) {
+  async update(devId: number, id: number, { rounds, ...f }: AssignmentInput) {
     const a = await assignmentRepository.findById(id);
     if (!a) throw new Error("ASSIGNMENT_NOT_FOUND");
-    await assignmentRepository.update(id, f);
+    // รอบที่มีคนส่งแล้วลบไม่ได้ (ประวัติต้องยังบอกชื่อรอบได้) · แก้ชื่อ วัน คำอธิบายได้เสมอ
+    const used = await submissionRepository.roundsUsed(id);
+    if (used.some((r) => r !== "start" && !rounds.some((x) => x.id === r))) throw new Error("ROUND_IN_USE");
+    await assignmentRepository.update(id, { ...f, rubric: { ...a.rubric, rounds: byDay(rounds) } });
     await auditService.log(devId, "assignment.update", f.name, a.slug);
   },
   async savePdf(devId: number, id: number, data: Buffer) {

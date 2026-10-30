@@ -1,21 +1,38 @@
 // กฎของการส่งงาน ใช้ทั้งฟอร์มของน้อง (บอกผิดทันทีใต้ช่อง) และ server (ด่านจริง)
 // โค้ดของน้องอยู่บน GitHub ที่เดียว เว็บนี้เก็บแค่ "ลิงก์ repo + จุดที่ส่ง (tag หรือ commit)" ไม่เก็บไฟล์
 
-// 3 รอบตามแผน 10 วัน (ทุกโจทย์ใช้แผนเดียวกัน) · ส่งซ้ำรอบเดิมได้ เก็บทุกครั้งไว้เป็นประวัติ
-export const SUBMISSION_ROUNDS = [
-  { id: "review-1", label: "ตรวจรอบ 1", day: 5, what: "ตาราง + API" },
-  { id: "review-2", label: "ตรวจรอบ 2", day: 9, what: "ทั้งระบบ" },
-  { id: "final", label: "ส่งงานจริง", day: 10, what: "งานครบ + README" },
-] as const;
+// รอบส่งเป็นข้อมูลของโจทย์ (assignments.rubric.rounds) แก้ได้จากหลังบ้าน · นี่คือแม่แบบเริ่มต้น (แผน 10 วันของ STARTER)
+// ส่งซ้ำรอบเดิมได้ เก็บทุกครั้งไว้เป็นประวัติ · id ของรอบถูกเก็บไว้ในงานที่ส่งแล้ว จึงเปลี่ยนไม่ได้หลังสร้าง
+export type RoundDef = { id: string; label: string; day: number; what: string; deploy: boolean };
+export const DEFAULT_ROUNDS: RoundDef[] = [
+  { id: "review-1", label: "ตรวจรอบ 1", day: 5, what: "ตาราง + API", deploy: false },
+  { id: "review-2", label: "ตรวจรอบ 2", day: 9, what: "ทั้งระบบ", deploy: true },
+  { id: "final", label: "ส่งงานจริง", day: 10, what: "งานครบ + README", deploy: true },
+];
 
 // วันที่ 1: ส่งแค่ลิงก์ repo ให้พี่เลี้ยงตามดูโค้ดได้ทุกวัน · ไม่มีผลตรวจ (ไม่นับเป็นรอตรวจ)
 // เก็บเป็นแถวในตารางเดียวกัน ref = HEAD (GitHub พาไป branch หลักของ repo เอง ไม่ต้องรู้ว่าชื่อ main หรือ master)
 export const START_ROUND = "start";
 export const START_REF = "HEAD";
 export const isReviewable = (round: string) => round !== START_ROUND;
-export type SubmissionRound = (typeof SUBMISSION_ROUNDS)[number]["id"] | typeof START_ROUND;
-export const ROUND_IDS = [START_ROUND, ...SUBMISSION_ROUNDS.map((r) => r.id)] as [SubmissionRound, ...SubmissionRound[]];
-export const roundLabel = (id: string) => (id === START_ROUND ? "ลงทะเบียน repo" : (SUBMISSION_ROUNDS.find((r) => r.id === id)?.label ?? id));
+export const roundLabel = (id: string, rounds: RoundDef[]) => (id === START_ROUND ? "ลงทะเบียน repo" : (rounds.find((r) => r.id === id)?.label ?? id));
+export const hasRound = (rounds: RoundDef[], id: string) => id === START_ROUND || rounds.some((r) => r.id === id);
+
+// กฎของรายการรอบ ใช้ทั้งฟอร์มหลังบ้านและ server · คืนข้อความผิด หรือ null เมื่อผ่าน
+export const ROUND_ID = /^[a-z0-9-]{1,30}$/;
+export function roundsProblem(rounds: RoundDef[]): string | null {
+  if (rounds.length < 1 || rounds.length > 10) return "ต้องมี 1–10 รอบ";
+  const seen = new Set<string>();
+  for (const [i, r] of rounds.entries()) {
+    const at = `รอบที่ ${i + 1}`;
+    if (!ROUND_ID.test(r.id) || r.id === START_ROUND || seen.has(r.id)) return `${at}: รหัสรอบไม่ถูกต้องหรือซ้ำ`;
+    seen.add(r.id);
+    if (!r.label.trim() || r.label.trim().length > 40) return `${at}: ชื่อรอบ 1–40 ตัวอักษร`;
+    if (!Number.isInteger(r.day) || r.day < 1 || r.day > 60) return `${at}: วันที่ต้องเป็นเลข 1–60`;
+    if (r.what.length > 60) return `${at}: คำอธิบายไม่เกิน 60 ตัวอักษร`;
+  }
+  return null;
+}
 
 // ผลตรวจของพี่เลี้ยง: ผ่านรอบนี้ หรือ แก้แล้วส่งใหม่
 export const VERDICTS = ["pass", "revise"] as const;
@@ -35,10 +52,10 @@ export function repoProblem(v: string) {
   return normalizeRepo(v) ? null : "ลิงก์ต้องเป็น repo บน GitHub เช่น https://github.com/somchai/starter (เปิด repo แล้วคัดลอกจากแถบที่อยู่)";
 }
 
-// ลิงก์เว็บที่ deploy แล้ว (Vercel หรือที่อื่น) ไม่บังคับ ส่งได้เฉพาะรอบที่ 2 กับส่งงานจริง
+// ลิงก์เว็บที่ deploy แล้ว (Vercel หรือที่อื่น) ไม่บังคับ ส่งได้เฉพาะรอบที่ติ๊ก "รับลิงก์เว็บ"
 // ต้องเป็น https และชื่อเว็บจริง (ไม่รับ localhost หรือเลข IP เพราะพี่เลี้ยงเปิดจากเครื่องตัวเองไม่ได้) · เก็บแบบไม่มี / ท้าย
-export const DEPLOY_ROUNDS: readonly string[] = ["review-2", "final"];
-export const takesDeploy = (round: string) => DEPLOY_ROUNDS.includes(round);
+// รอบไหนรับลิงก์ได้ ตั้งที่รอบแต่ละรอบ (rounds[].deploy)
+export const takesDeploy = (rounds: RoundDef[], id: string) => rounds.find((r) => r.id === id)?.deploy ?? false;
 export function normalizeDeploy(v: string): string | null {
   const s = v.trim();
   if (!/^https:\/\//i.test(s) || /\s/.test(s)) return null;

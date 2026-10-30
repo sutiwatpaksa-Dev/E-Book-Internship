@@ -1,3 +1,4 @@
+import type { RoundDef } from "@/lib/submission";
 // type ที่หน้าเว็บใช้ร่วมกัน (รูปร่างตรงกับที่ API ใน server/ ตอบกลับ)
 export type Role = "intern" | "dev";
 
@@ -84,10 +85,10 @@ export type FileInfo = { size: number; updatedAt: string };
 
 // โจทย์ฝึกงาน (รูปร่างตรงกับ server/db/schema.ts) · sections = หัวข้อกับเลขหน้าใน PDF ของโจทย์นั้น
 export type AssignmentSection = { key: string; label: string; page: number };
-export type Assignment = { slug: string; name: string; brief: string; sections: AssignmentSection[] };
+export type Assignment = { slug: string; name: string; brief: string; sections: AssignmentSection[]; rounds: RoundDef[] };
 // หลังบ้าน: + PDF ปัจจุบัน และรุ่นที่ใช้โจทย์นี้
 export type AdminAssignment = Assignment & { id: number; pdf: FileInfo | null; cohortIds: number[] };
-export type AssignmentInput = Pick<Assignment, "name" | "brief" | "sections">;
+export type AssignmentInput = Pick<Assignment, "name" | "brief" | "sections" | "rounds">;
 
 // เรื่องที่น้องคุยกับพี่เลี้ยง (รูปร่างตรงกับ server/routes/thread.routes.ts)
 export type ThreadKind = "question" | "content_request";
@@ -168,6 +169,7 @@ export type Submission = {
   assignment: string;
   assignmentName: string;
   round: string;
+  roundLabel: string;
   repoUrl: string;
   ref: string;
   deployUrl: string | null;
@@ -178,6 +180,6 @@ export type Submission = {
   reviewedAt: string | null;
   reviewer: string | null;
 };
-export type MySubmissions = { assignments: { slug: string; name: string }[]; items: Submission[]; locked: boolean };
+export type MySubmissions = { assignments: { slug: string; name: string; rounds: RoundDef[] }[]; items: Submission[]; locked: boolean };
 export type AdminSubmission = Submission & { userId: number; username: string; nickname: string | null; cohortId: number | null };
 export type SubmitInput = { assignment: string; round: string; repoUrl: string; ref: string; deployUrl?: string; note: string };

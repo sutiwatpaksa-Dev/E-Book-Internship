@@ -5,7 +5,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { submissionsApi } from "@/api/submissions.api";
 import type { AdminState } from "@/hooks/use-admin";
 import { toast } from "@/hooks/use-toast";
-import { commitsUrl, isReviewable, latestOnly, repoOf, roundLabel, treeUrl, VERDICT_LABEL, waitingOf, type Verdict } from "@/lib/submission";
+import { commitsUrl, isReviewable, latestOnly, repoOf, treeUrl, VERDICT_LABEL, waitingOf, type Verdict } from "@/lib/submission";
 import type { AdminSubmission } from "@/types";
 import { Button } from "./button";
 import { EmptyState } from "./empty-state";
@@ -138,7 +138,7 @@ function SubmissionCard({ s, who, history = 1, onReviewed }: { s: AdminSubmissio
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="font-semibold">
           {who && <>{who} · </>}
-          {roundLabel(s.round)}
+          {s.roundLabel}
         </span>
         <VerdictBadge verdict={s.verdict} />
       </div>

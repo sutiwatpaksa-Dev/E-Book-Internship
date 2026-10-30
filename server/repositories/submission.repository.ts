@@ -12,6 +12,7 @@ const row = {
   userId: submissions.userId,
   assignment: assignments.slug,
   assignmentName: assignments.name,
+  rubric: assignments.rubric,
   round: submissions.round,
   repoUrl: submissions.repoUrl,
   ref: submissions.ref,
@@ -36,6 +37,11 @@ export const submissionRepository = {
   ofUser: (userId: number) => base().where(eq(submissions.userId, userId)).orderBy(desc(submissions.createdAt), desc(submissions.id)),
   // หลังบ้าน: ทุกแถว ใหม่สุดก่อน (รุ่นหนึ่งไม่กี่สิบคน × 3 รอบ ดึงทั้งหมดแล้วกรองในหน้าเว็บได้)
   all: (limit = 500) => base().orderBy(desc(submissions.createdAt), desc(submissions.id)).limit(limit),
+  // รหัสรอบที่มีคนส่งแล้วของโจทย์นี้ (ใช้กันไม่ให้ลบรอบที่มีประวัติ)
+  async roundsUsed(assignmentId: number) {
+    const rows = await db.selectDistinct({ round: submissions.round }).from(submissions).where(eq(submissions.assignmentId, assignmentId));
+    return rows.map((r) => r.round);
+  },
   async find(id: number) {
     const [s] = await db.select().from(submissions).where(eq(submissions.id, id));
     return s;
