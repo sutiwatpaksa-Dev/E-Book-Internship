@@ -15,7 +15,7 @@ const SECTIONS: { id: NavSection; label: string; short: string; href: string; ic
   { id: "today", label: "วันนี้", short: "วันนี้", href: TODAY_URL, icon: Sun },
   { id: "path", label: "เส้นทาง 7 ขั้น", short: "เส้นทาง", href: "/learn", icon: Route },
   { id: "cards", label: "คลังการ์ด", short: "การ์ด", href: CARDS_URL, icon: LayoutGrid },
-  { id: "project", label: "โปรเจกต์ STARTER", short: "โปรเจกต์", href: "/starter", icon: FolderKanban },
+  { id: "project", label: "โจทย์ฝึกงาน", short: "โจทย์", href: "/starter", icon: FolderKanban },
 ];
 
 function useSections() {
