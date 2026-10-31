@@ -157,27 +157,6 @@ export const submissions = pgTable(
   (t) => [index("submissions_user_idx").on(t.userId, t.createdAt), index("submissions_waiting_idx").on(t.reviewedAt)],
 );
 
-// โพสต์งานของพี่เลี้ยงที่ไม่ผูกรอบส่ง (งานเสริม ประกาศเฉพาะงาน) ต่อรุ่น · รอบส่งปกติมาจาก assignments.rubric ไม่ต้องมีแถวที่นี่
-export const taskPosts = pgTable(
-  "task_posts",
-  {
-    id: serial("id").primaryKey(),
-    cohortId: integer("cohort_id")
-      .notNull()
-      .references(() => cohorts.id, { onDelete: "cascade" }),
-    assignmentId: integer("assignment_id").references(() => assignments.id, { onDelete: "set null" }),
-    title: text("title").notNull(),
-    body: text("body").notNull().default(""),
-    dueOn: date("due_on"),
-    createdBy: integer("created_by")
-      .notNull()
-      .references(() => users.id),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    editedAt: timestamp("edited_at", { withTimezone: true }),
-  },
-  (t) => [index("task_posts_cohort_idx").on(t.cohortId, t.createdAt)],
-);
-
 // ความเห็นใต้งานของน้อง 1 คน: เห็นได้เฉพาะน้องคนนั้นกับพี่เลี้ยง (ไม่ใช่ทั้งรุ่น)
 // task = "<slug โจทย์>/<รหัสรอบ>" หรือ "post/<id>" · kind = ความเห็นงาน / commit / แนะนำการ์ด / เนื้อหาเพิ่มเติม · ref = tag หรือ commit ที่พูดถึง
 export const taskComments = pgTable(
