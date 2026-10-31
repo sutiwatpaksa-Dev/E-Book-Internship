@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Sans_Thai } from "next/font/google";
 import { RootProvider } from "fumadocs-ui/provider/next";
+import { OfflineBanner } from "@/components/offline-banner";
 import { SkipLink } from "@/components/skip-link";
 import { CookieConsent } from "@/components/cookie-consent";
 import { Toaster } from "@/components/toaster";
@@ -33,6 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="flex min-h-screen flex-col">
         <RootProvider i18n={{ locale: "th", translations: translationsTh }}>
           <SkipLink />
+          <OfflineBanner />
           {children}
           <Toaster />
           <CookieConsent />
