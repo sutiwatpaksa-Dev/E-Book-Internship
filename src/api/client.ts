@@ -12,7 +12,10 @@ export class ApiError extends Error {
 }
 
 export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const res = await fetch(`/api${path}`, { credentials: "same-origin", ...init });
+  // เน็ตหลุด/เปลี่ยนวง fetch จะโยน TypeError ภาษาอังกฤษของเบราว์เซอร์ แปลงเป็นข้อความไทย (status 0 = ถึงเซิร์ฟเวอร์ไม่ได้)
+  const res = await fetch(`/api${path}`, { credentials: "same-origin", ...init }).catch(() => {
+    throw new ApiError("เชื่อมต่ออินเทอร์เน็ตไม่ได้ ตรวจเน็ตแล้วลองใหม่อีกครั้ง", 0);
+  });
   const body = res.status === 204 ? null : await res.json().catch(() => null);
   // ยังถือ PIN ชั่วคราว (เช่นเปิดแท็บค้างไว้): ทุกคำขอพาไปตั้งรหัสผ่าน ไม่ต้องให้แต่ละหน้าจัดการเอง
   if (body?.code === "MUST_SET_PASSWORD" && location.pathname !== "/set-password") location.assign(`/set-password?next=${encodeURIComponent(location.pathname)}`);
