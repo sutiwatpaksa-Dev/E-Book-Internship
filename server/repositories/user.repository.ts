@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, like } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, like, lt, or, sql } from "drizzle-orm";
 import { db } from "../db/client";
 import { users, type Role } from "../db/schema";
 
@@ -14,6 +14,7 @@ const publicColumns = {
   disabled: users.disabled,
   lockedUntil: users.lockedUntil,
   lastLoginAt: users.lastLoginAt,
+  lastSeenAt: users.lastSeenAt,
   createdAt: users.createdAt,
   cohortId: users.cohortId,
   // pin = ยังไม่ได้ตั้งรหัสผ่านเอง (หลังบ้านแสดงว่า "รอตั้งรหัสผ่าน") · ไม่ใช่ค่าลับ บอกแค่ชนิด
@@ -70,6 +71,14 @@ export const userRepository = {
     const [u] = await db.insert(users).values(values).onConflictDoNothing().returning(publicColumns);
     return u;
   },
+  // จดว่าเห็นหน้าเว็บเปิดอยู่ตอนนี้ · เขียนไม่ถี่กว่า 30 วินาทีต่อบัญชี (เรียกซ้ำเร็วๆ ไม่ทำให้ DB ทำงานเพิ่ม)
+  async touchSeen(id: number) {
+    await db
+      .update(users)
+      .set({ lastSeenAt: new Date() })
+      .where(and(eq(users.id, id), or(isNull(users.lastSeenAt), lt(users.lastSeenAt, sql`now() - interval '30 seconds'`))));
+  },
+
   async update(id: number, changes: UserChanges): Promise<PublicUser | undefined> {
     const [u] = await db.update(users).set(changes).where(eq(users.id, id)).returning(publicColumns);
     return u;

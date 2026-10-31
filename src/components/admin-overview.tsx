@@ -15,6 +15,7 @@ import { RowLink } from "./row-link";
 import { useSubmissions } from "./admin-submissions";
 import { ChartCard, ColumnChart, Figure, ProgressRows, SegmentBar } from "./admin-charts";
 import type { AdminNav } from "./admin-panel";
+import { OnlineBadge } from "./online-badge";
 import { Skeleton, SkeletonList } from "./skeleton";
 
 const fmt = (d: string | null) => (d ? new Date(d).toLocaleString("th-TH") : "ยังไม่เคยเข้า");
@@ -234,6 +235,7 @@ export function AdminOverview({ admin, content, nav, titles }: Props) {
                             {u.username}
                           </RowLink>
                           {isLockedNow(u) && <span className="ms-2 text-xs text-orange-700 dark:text-orange-400">ล็อกอยู่</span>}
+                          <span className="block"><OnlineBadge lastSeenAt={u.lastSeenAt} quiet /></span>
                         </td>
                         <td className="px-3 py-2 whitespace-nowrap">{s.where}</td>
                         <td className="px-3 py-2">

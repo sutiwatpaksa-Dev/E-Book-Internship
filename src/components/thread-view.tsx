@@ -69,6 +69,10 @@ export function ThreadView({
   // ข้อความของฝั่งเรา = ชิดขวา
   const mine = (role: string) =>
     chat.side === "dev" ? role === "dev" : role !== "dev";
+  // ข้อความล่าสุดของฝั่งเรา: โชว์ว่าอีกฝั่งอ่านแล้วหรือยัง
+  const lastMine = [...messages].reverse().find((m) => !m.isSystem && mine(m.authorRole));
+  const readLabel = (m: { createdAt: string }) =>
+    detail.otherReadAt && new Date(detail.otherReadAt) >= new Date(m.createdAt) ? `อ่านแล้ว ${fmt(detail.otherReadAt)}` : "ส่งแล้ว ยังไม่ได้อ่าน";
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -131,6 +135,7 @@ export function ThreadView({
               >
                 {m.body}
               </p>
+              {m === lastMine && <span className="text-sm text-fd-muted-foreground">{readLabel(m)}</span>}
             </div>
           ),
         )}

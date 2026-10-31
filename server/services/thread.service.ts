@@ -46,8 +46,10 @@ async function anyThread(id: number) {
 // เปิดอ่าน = จดว่าฝั่งนี้อ่านถึงตอนนี้แล้ว ป้าย "ใหม่" จะหายไป
 async function detail(id: number, side: Role) {
   await threadRepository.markRead([id], side);
-  const { kind, subject, pageUrl, status, createdAt } = (await threadRepository.find(id))!;
-  return { thread: { id, kind, subject, pageUrl, status, createdAt }, messages: await threadRepository.messages(id) };
+  const { kind, subject, pageUrl, status, createdAt, internReadAt, devReadAt } = (await threadRepository.find(id))!;
+  // อีกฝั่งอ่านถึงเมื่อไร: ใช้โชว์ "อ่านแล้ว" ใต้ข้อความของเรา (ฝั่งพี่เลี้ยง = พี่เลี้ยงคนไหนเปิดอ่านก็นับ)
+  const otherReadAt = side === "intern" ? devReadAt : internReadAt;
+  return { thread: { id, kind, subject, pageUrl, status, createdAt }, messages: await threadRepository.messages(id), otherReadAt };
 }
 
 export const threadService = {

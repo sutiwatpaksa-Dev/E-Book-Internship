@@ -12,6 +12,7 @@ import { KIND_LABEL, timeAgo } from "@/lib/thread-labels";
 import type { AdminNav } from "./admin-panel";
 import { InternSubmissions } from "./admin-submissions";
 import { Button } from "./button";
+import { OnlineBadge } from "./online-badge";
 import { ConfirmBox } from "./confirm-box";
 import { StatusBadge } from "./status-badge";
 
@@ -66,7 +67,7 @@ export function AdminInternDetail({ admin, nav, userId }: { admin: AdminState; n
           <ArrowLeft className="size-4" /> กลับ
         </Button>
         <span className="text-sm text-fd-muted-foreground">
-          {u.disabled ? "ปิดบัญชีอยู่" : isLockedNow(u) ? "ล็อกชั่วคราว" : "ใช้งาน"} · เข้าล่าสุด {fmt(u.lastLoginAt)}
+          <OnlineBadge lastSeenAt={u.lastSeenAt} /> · {u.disabled ? "ปิดบัญชีอยู่" : isLockedNow(u) ? "ล็อกชั่วคราว" : "ใช้งาน"} · เข้าล่าสุด {fmt(u.lastLoginAt)}
           {days !== null && days > 7 && <span className="text-orange-700 dark:text-orange-400"> ({days} วันก่อน)</span>}
         </span>
       </div>

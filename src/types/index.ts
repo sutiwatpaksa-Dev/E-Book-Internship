@@ -12,6 +12,7 @@ export type User = {
   disabled: boolean;
   lockedUntil: string | null;
   lastLoginAt: string | null;
+  lastSeenAt: string | null;
   // รุ่นของน้อง · null = พี่เลี้ยง หรือบัญชีที่ยังไม่ได้อยู่รุ่นไหน
   cohortId: number | null;
   // pin = ยังไม่ได้ตั้งรหัสผ่านเอง
@@ -124,6 +125,8 @@ export type ThreadMessage = {
 export type ThreadDetail = {
   thread: Omit<ThreadSummary, "unread" | "owner" | "lastMessageAt">;
   messages: ThreadMessage[];
+  // เวลาที่อีกฝั่งเปิดอ่านล่าสุด (null = ยังไม่เคยเปิด)
+  otherReadAt: string | null;
 };
 
 export type NewThread = { kind: ThreadKind; subject: string; body: string; pageUrl?: string };

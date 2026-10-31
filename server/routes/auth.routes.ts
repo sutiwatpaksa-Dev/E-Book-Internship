@@ -76,6 +76,15 @@ authRoutes.get("/me", async (c) => {
   return c.json({ username: session.username, role: session.role, mustSetPassword: user.mustSetPassword });
 });
 
+// สัญญาณ "ยังเปิดหน้าเว็บอยู่" จากหน้าเว็บทุก ~1 นาที: พี่เลี้ยงใช้ดูว่าน้องออนไลน์ไหม
+authRoutes.post("/ping", async (c) => {
+  const session = await readSessionToken(getCookie(c, SESSION_COOKIE), env.SESSION_SECRET);
+  const user = session && (await authService.activeUser(session.userId, session.ver));
+  if (!session || !user) return c.json({ error: "ยังไม่ได้ login" }, 401);
+  await authService.ping(session.userId);
+  return c.body(null, 204);
+});
+
 // ปุ่มสลับบัญชีทดสอบ (เฉพาะในเครื่อง): นอกเงื่อนไข devSwitchAllowed ตอบเหมือนไม่มีหน้านี้
 const devOn = () => devSwitchAllowed({ NODE_ENV: process.env.NODE_ENV, DATABASE_URL: env.DATABASE_URL, APP_ORIGIN: env.APP_ORIGIN });
 authRoutes.get("/dev-accounts", async (c) => (devOn() ? c.json(await authService.devAccounts()) : c.json({ error: "ไม่พบ", path: c.req.path }, 404)));

@@ -51,6 +51,8 @@ export const users = pgTable("users", {
   failedCount: integer("failed_count").notNull().default(0),
   lockedUntil: timestamp("locked_until", { withTimezone: true }),
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
+  // หน้าเว็บที่เปิดอยู่ส่งสัญญาณมาทุก ~1 นาที: ใช้โชว์ "ออนไลน์" ให้พี่เลี้ยง (ไม่ใช่เวลา login)
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   // รุ่นที่น้องอยู่ · ว่าง = พี่เลี้ยง หรือบัญชีที่สร้างก่อนมีระบบรุ่น ("ไม่มีรุ่น") · ลบรุ่นแล้วบัญชียังอยู่
   cohortId: integer("cohort_id").references((): AnyPgColumn => cohorts.id, { onDelete: "set null" }),

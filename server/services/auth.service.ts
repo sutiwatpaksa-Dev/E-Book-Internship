@@ -70,6 +70,8 @@ export const authService = {
 
   // บัญชียังใช้ได้อยู่ไหม (API เช็กทุกครั้ง ปิดบัญชีแล้วใช้ API ไม่ได้ทันที)
   // ver ไม่ตรง = บัตรรุ่นเก่า (เปลี่ยนรหัสผ่านหรือออก PIN ใหม่ไปแล้ว) ถือว่าไม่ได้ login
+  ping: (userId: number) => userRepository.touchSeen(userId),
+
   async activeUser(id: number, ver?: number) {
     const u = await userRepository.findById(id);
     if (!u || u.disabled || (ver !== undefined && ver !== u.sessionVersion)) return null;

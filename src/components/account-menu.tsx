@@ -9,6 +9,7 @@ import { filesApi, REQUIREMENT_PDF_URL } from "@/api/files.api";
 import { useSession } from "@/hooks/use-session";
 import { useUnread } from "@/hooks/use-unread";
 import { DevSwitchMenu } from "./dev-switch-menu";
+import { PING_EVERY_MS } from "@/lib/presence";
 import { playChime, setSoundOn, soundOn, subscribeSound } from "@/lib/chime";
 
 export const ROLE_LABEL = { intern: "ฝึกงาน", dev: "พี่เลี้ยง" } as const;
@@ -46,6 +47,19 @@ export function AccountMenu() {
       .then((r) => setExampleRepo(r.exampleRepo))
       .catch(() => {});
   }, [role]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // บอก server ทุกนาทีว่ายังเปิดหน้าเว็บอยู่ (เฉพาะตอนแท็บมองเห็น) ให้พี่เลี้ยงเห็นสถานะออนไลน์
+  useEffect(() => {
+    if (!role) return;
+    const ping = () => document.visibilityState === "visible" && authApi.ping().catch(() => {});
+    ping();
+    const timer = setInterval(ping, PING_EVERY_MS);
+    document.addEventListener("visibilitychange", ping);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", ping);
+    };
+  }, [role]);
 
   // ปิดเมนูเมื่อเปลี่ยนหน้า, กด Esc หรือคลิกนอกเมนู
   useEffect(() => setOpen(false), [pathname]);

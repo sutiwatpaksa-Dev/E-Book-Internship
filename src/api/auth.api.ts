@@ -10,6 +10,7 @@ export const authApi = {
   devAccounts: () => request<{ username: string; role: Role }[]>("/auth/dev-accounts"),
   devSwitch: (username: string) => request<SessionInfo>("/auth/dev-switch", jsonBody("POST", { username })),
   logout: () => request<null>("/auth/logout", { method: "POST" }),
+  ping: () => request<null>("/auth/ping", { method: "POST" }),
   me: () => request<SessionInfo>("/auth/me"),
   // current ใส่เฉพาะตอนเปลี่ยนรหัสผ่านเดิม (ครั้งแรกจาก PIN ไม่ต้อง)
   // สมัครด้วยรหัสรุ่น: เช็กรหัสก่อน (ได้ชื่อรุ่นกลับมาโชว์) แล้วค่อยส่งฟอร์มเต็ม สำเร็จแล้ว login ให้เลย

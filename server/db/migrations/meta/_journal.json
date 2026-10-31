@@ -141,6 +141,13 @@
       "when": 1793426834817,
       "tag": "0019_task_board",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1793434857199,
+      "tag": "0020_user_presence",
+      "breakpoints": true
     }
   ]
 }

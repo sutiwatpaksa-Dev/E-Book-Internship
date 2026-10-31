@@ -13,6 +13,7 @@ import { AdminBulkCreate } from "./admin-bulk-create";
 import type { AdminNav } from "./admin-panel";
 import { CohortSelect, defaultCohortId } from "./admin-cohorts";
 import { Button } from "./button";
+import { OnlineBadge } from "./online-badge";
 import { ConfirmBox } from "./confirm-box";
 import { Field, Input, inputClass } from "./field";
 import { Skeleton, SkeletonList } from "./skeleton";
@@ -254,6 +255,7 @@ export function AdminUsers({ admin, nav }: { admin: AdminState; nav: AdminNav })
                 <td data-label="สถานะ" className={`px-3 py-2 whitespace-nowrap max-md:p-0 max-md:before:block max-md:before:text-xs max-md:before:text-fd-muted-foreground max-md:before:content-[attr(data-label)] ${u.disabled || isLockedNow(u) || u.resetRequestedAt ? "text-orange-700 dark:text-orange-400" : ""}`}>
                   {u.disabled ? "ปิดอยู่" : u.resetRequestedAt ? "ขอรีเซ็ตรหัสผ่าน" : isLockedNow(u) ? "ล็อกชั่วคราว" : u.secretKind === "pin" ? "รอตั้งรหัสผ่าน" : "ใช้งาน"}
                   {u.resetRequestedAt && !u.disabled && <span className="block text-xs text-fd-muted-foreground">{fmt(u.resetRequestedAt)}</span>}
+                  {!u.disabled && <span className="block"><OnlineBadge lastSeenAt={u.lastSeenAt} quiet /></span>}
                 </td>
                 <td data-label="เข้าล่าสุด" className="px-3 py-2 whitespace-nowrap max-md:p-0 max-md:before:block max-md:before:text-xs max-md:before:text-fd-muted-foreground max-md:before:content-[attr(data-label)]">{fmt(u.lastLoginAt)}</td>
                 <td className="px-3 py-2 md:sticky md:end-0 md:bg-fd-card md:shadow-[-8px_0_8px_-8px_rgb(0_0_0/0.25)] max-md:col-span-2 max-md:border-t max-md:border-fd-border max-md:p-0 max-md:pt-2">
