@@ -9,11 +9,11 @@ const tree: PageTree.Root = {
   name: "docs",
   children: [
     page("/", "🏠 หน้าแรก"),
-    { type: "separator", name: "ด่าน 2 · ภาษาและ API" },
+    { type: "separator", name: "ภาค 2 · ภาษาและ API" },
     page("/03-node-yarn-bun", "03 · Runtime & Package Manager"),
     page("/08b-db-to-backend", "08b · จากแบบฐานข้อมูลสู่ Backend"),
     page("/react-language", "บทเสริม · ภาษาและคำสั่งที่ใช้เขียน React"),
-    { type: "separator", name: "ด่าน 6 · Mini Project" },
+    { type: "separator", name: "ภาค 6 · Mini Project" },
     {
       type: "folder",
       name: "เว็บไซต์ STARTER 🔒",
@@ -30,8 +30,8 @@ const nav = buildNav(tree, ["/react-language"]);
 describe("buildNav", () => {
   test("ตัวคั่นกลายเป็นด่าน แยกเลขบทออกจากชื่อ", () => {
     expect(nav.stages.map((s) => [s.kicker, s.name])).toEqual([
-      ["ด่าน 2", "ภาษาและ API"],
-      ["ด่าน 6", "Mini Project"],
+      ["ภาค 2", "ภาษาและ API"],
+      ["ภาค 6", "Mini Project"],
     ]);
     expect(nav.stages[0].items).toEqual([
       { url: "/03-node-yarn-bun", num: "03", title: "Runtime & Package Manager" },
@@ -55,7 +55,7 @@ describe("buildNav", () => {
 
 describe("sectionOf / stageOf", () => {
   test("บอกหมวดของหน้าได้ถูก", () => {
-    expect(sectionOf(nav, "/today")).toBe("today");
+    expect(sectionOf(nav, "/dashboard")).toBe("dashboard");
     expect(sectionOf(nav, "/learn")).toBe("path");
     expect(sectionOf(nav, "/learn/coding")).toBe("path");
     expect(sectionOf(nav, "/learn/cards")).toBe("cards");
@@ -67,7 +67,7 @@ describe("sectionOf / stageOf", () => {
     expect(sectionOf(nav, "/login")).toBeNull();
   });
   test("หาด่านของหน้า", () => {
-    expect(stageOf(nav, "/starter/timeline")?.kicker).toBe("ด่าน 6");
+    expect(stageOf(nav, "/starter/timeline")?.kicker).toBe("ภาค 6");
     expect(stageOf(nav, "/glossary")).toBeNull();
   });
 });

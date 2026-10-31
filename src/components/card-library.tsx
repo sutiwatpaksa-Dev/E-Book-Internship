@@ -41,7 +41,7 @@ export function CardLibrary() {
   const shownTopics = topics.filter((t) => all.some((c) => c.topic === t.slug));
 
   return (
-    <div className="not-prose my-6 flex flex-col gap-5">
+    <div className="not-prose my-4 flex flex-col gap-3">
       <div className="flex flex-col gap-2">
         <label className="flex min-h-13 items-center gap-3 rounded-xl border-2 border-fd-primary bg-fd-background px-4 focus-within:ring-4 focus-within:ring-fd-primary/25">
           <Search className="size-5 text-fd-primary" aria-hidden />
@@ -64,7 +64,7 @@ export function CardLibrary() {
         ))}
       </FilterRow>
 
-      <FilterRow label="หมวด" wrap>
+      <FilterRow label="หมวด">
         <Chip on={topic === "all"} onClick={() => setTopic("all")}>
           ทั้งหมด
         </Chip>
@@ -119,10 +119,10 @@ export function CardLibrary() {
 function FilterRow({ label, wrap = false, children }: { label: string; wrap?: boolean; children: ReactNode }) {
   const row = wrap
     ? "flex flex-wrap gap-2"
-    : "no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 mask-r-from-85% sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:mask-none";
+    : "no-scrollbar -mx-4 flex min-w-0 flex-1 gap-2 overflow-x-auto px-4 pb-1 mask-r-from-90% sm:mx-0 sm:px-0";
   return (
-    <div role="group" aria-label={`กรองตาม${label}`} className="flex flex-col gap-2">
-      <span className="text-[13px] font-semibold text-fd-muted-foreground">{label}</span>
+    <div role="group" aria-label={`กรองตาม${label}`} className="flex items-center gap-3">
+      <span className="w-9 shrink-0 text-sm font-semibold text-fd-muted-foreground">{label}</span>
       <div className={row}>{children}</div>
     </div>
   );

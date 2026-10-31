@@ -39,7 +39,7 @@ export function FooterChapters() {
         </span>
         <ChevronDown aria-hidden className={`size-5 shrink-0 transition md:hidden ${open ? "rotate-180" : ""}`} />
       </button>
-      {/* เรียงแบบคอลัมน์หนังสือพิมพ์ (columns) ไม่ใช่ grid: ด่านยาวสั้นไม่เท่ากัน grid จะเว้นช่องว่างตามด่านที่ยาวสุดของแถว
+      {/* เรียงแบบคอลัมน์หนังสือพิมพ์ (columns) ไม่ใช่ grid: ภาคยาวสั้นไม่เท่ากัน grid จะเว้นช่องว่างตามด่านที่ยาวสุดของแถว
           columns เทต่อกันจนแต่ละคอลัมน์สูงพอๆ กัน footer จึงเตี้ยลงเกือบครึ่ง · break-inside-avoid กันหัวด่านแยกจากรายการ */}
       <div id="full-list" className={`mt-3 gap-x-6 md:block md:columns-3 lg:columns-4 ${open ? "block sm:columns-2" : "hidden"}`}>
         {nav.stages

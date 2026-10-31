@@ -1,3 +1,4 @@
+import type { CommentKind, CommentTemplate, Criterion, Scores } from "@/lib/rubric";
 import type { RoundDef } from "@/lib/submission";
 // type ที่หน้าเว็บใช้ร่วมกัน (รูปร่างตรงกับที่ API ใน server/ ตอบกลับ)
 export type Role = "intern" | "dev";
@@ -87,8 +88,8 @@ export type FileInfo = { size: number; updatedAt: string };
 export type AssignmentSection = { key: string; label: string; page: number };
 export type Assignment = { slug: string; name: string; brief: string; sections: AssignmentSection[]; rounds: RoundDef[] };
 // หลังบ้าน: + PDF ปัจจุบัน และรุ่นที่ใช้โจทย์นี้
-export type AdminAssignment = Assignment & { id: number; pdf: FileInfo | null; cohortIds: number[] };
-export type AssignmentInput = Pick<Assignment, "name" | "brief" | "sections" | "rounds">;
+export type AdminAssignment = Assignment & { id: number; pdf: FileInfo | null; cohortIds: number[]; criteria: Criterion[]; templates: CommentTemplate[] };
+export type AssignmentInput = Pick<Assignment, "name" | "brief" | "sections" | "rounds"> & { criteria?: Criterion[]; templates?: CommentTemplate[] };
 
 // เรื่องที่น้องคุยกับพี่เลี้ยง (รูปร่างตรงกับ server/routes/thread.routes.ts)
 export type ThreadKind = "question" | "content_request" | "mentor_message";
@@ -158,8 +159,8 @@ export type PageNote = { id: number; pageUrl: string; body: string; visible: boo
 export type PageNoteInput = Pick<PageNote, "pageUrl" | "body" | "visible">;
 
 export type Audience = "intern" | "dev" | "all";
-export type Announcement = { id: number; body: string; audience: Audience; startsAt: string; endsAt: string | null; author: string; createdAt: string };
-export type AnnouncementInput = { body: string; audience: Audience; startsAt?: string; endsAt?: string | null };
+export type Announcement = { id: number; body: string; audience: Audience; cohortId: number | null; startsAt: string; endsAt: string | null; author: string; createdAt: string };
+export type AnnouncementInput = { body: string; audience: Audience; cohortId?: number | null; startsAt?: string; endsAt?: string | null };
 
 export type CardOverride = { slug: string; hidden: boolean; title: string | null; minutes: number | null; topic: string | null };
 
@@ -181,7 +182,16 @@ export type Submission = {
   review: string | null;
   reviewedAt: string | null;
   reviewer: string | null;
+  // คะแนนรายข้อ ณ ตอนตรวจ · ว่าง = ตรวจแบบไม่ให้คะแนน
+  scores: Scores | null;
 };
 export type MySubmissions = { assignments: { slug: string; name: string; rounds: RoundDef[] }[]; items: Submission[]; locked: boolean };
 export type AdminSubmission = Submission & { userId: number; username: string; nickname: string | null; cohortId: number | null };
 export type SubmitInput = { assignment: string; round: string; repoUrl: string; ref: string; deployUrl?: string; note: string };
+
+// ความเห็นใต้งาน (เห็นเฉพาะน้องเจ้าของงานกับพี่เลี้ยง)
+export type TaskComment = { id: number; kind: CommentKind; ref: string | null; body: string; createdAt: string; author: string; authorRole: Role };
+export type CommentSend = { kind?: CommentKind; ref?: string; body: string };
+
+// โพสต์งาน (ฟอร์มของพี่เลี้ยง) · day = วันทำงานที่ N ของรุ่น
+export type PostSend = { label: string; what: string; day: number; deploy: boolean; body: string; links: { label: string; url: string }[] };

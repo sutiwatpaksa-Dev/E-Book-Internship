@@ -17,10 +17,10 @@ export function ThreadList({ threads, selectedId, titles, onSelect }: Props) {
             className={`flex w-full flex-col gap-1 border-b border-fd-border px-3 py-2.5 text-left text-sm hover:bg-fd-accent ${t.id === selectedId ? "bg-fd-primary/10" : ""}`}
           >
             <span className="flex items-center gap-2">
-              <span className={`min-w-0 flex-1 truncate ${t.unread ? "font-bold" : "font-medium"}`}>{t.subject}</span>
+              <span className={`min-w-0 flex-1 line-clamp-2 break-words ${t.unread ? "font-bold" : "font-medium"}`}>{t.subject}</span>
               {t.unread && <span aria-label="มีข้อความใหม่" className="size-2.5 shrink-0 rounded-full bg-orange-500" />}
             </span>
-            <span className="flex items-center gap-2 text-xs text-fd-muted-foreground">
+            <span className="flex items-center gap-2 text-sm text-fd-muted-foreground">
               <StatusBadge status={t.status} />
               <span className="min-w-0 truncate">
                 {t.owner && `${t.owner} · `}

@@ -22,6 +22,7 @@ const row = {
   verdict: submissions.verdict,
   review: submissions.review,
   reviewedAt: submissions.reviewedAt,
+  scores: submissions.scores,
   reviewer: reviewer.username,
 };
 const base = () =>
@@ -50,6 +51,6 @@ export const submissionRepository = {
     const [s] = await db.insert(submissions).values(values).returning({ id: submissions.id });
     return s;
   },
-  review: (id: number, changes: Pick<NewSubmission, "verdict" | "review" | "reviewedBy" | "reviewedAt">) =>
+  review: (id: number, changes: Pick<NewSubmission, "verdict" | "review" | "reviewedBy" | "reviewedAt" | "scores">) =>
     db.update(submissions).set(changes).where(eq(submissions.id, id)),
 };

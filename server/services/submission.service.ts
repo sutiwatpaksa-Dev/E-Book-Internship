@@ -1,10 +1,12 @@
 import type { Role } from "../db/schema";
 import type { RoundDef } from "../../src/lib/submission";
+import { buildScores } from "../../src/lib/rubric";
 import { hasRound, isReviewable, roundLabel, START_ROUND, takesDeploy, VERDICT_LABEL, waitingOf } from "../../src/lib/submission";
 import { assignmentRepository } from "../repositories/assignment.repository";
 import { submissionRepository } from "../repositories/submission.repository";
+import { taskCommentRepository } from "../repositories/task-comment.repository";
 import { userRepository } from "../repositories/user.repository";
-import type { ReviewInput, SubmitInput } from "../validators/submission.validator";
+import type { CommentInput, ReviewInput, SubmitInput } from "../validators/submission.validator";
 import { assignmentService } from "./assignment.service";
 import { auditService } from "./audit.service";
 import { cohortService } from "./cohort.service";
@@ -55,10 +57,60 @@ export const submissionService = {
     const s = await submissionRepository.find(id);
     if (!s) throw new Error("SUBMISSION_NOT_FOUND");
     if (!isReviewable(s.round)) throw new Error("SUBMISSION_NOT_REVIEWABLE");
-    await submissionRepository.review(id, { verdict: input.verdict, review: input.review || null, reviewedBy: devId, reviewedAt: new Date() });
+    const a = await assignmentRepository.findById(s.assignmentId);
+    // คะแนน: เทียบกับเกณฑ์ของโจทย์ ณ ตอนนี้ แล้วเก็บสำเนา (แก้เกณฑ์ทีหลังคะแนนที่ตรวจไปแล้วไม่เปลี่ยน)
+    let scores = null;
+    if (input.scores) {
+      const criteria = a?.rubric.criteria ?? [];
+      if (criteria.length === 0) throw new Error("SCORES_NO_CRITERIA");
+      scores = buildScores(criteria, input.scores);
+      if (!scores) throw new Error("SCORES_INVALID");
+    }
+    await submissionRepository.review(id, { verdict: input.verdict, review: input.review || null, reviewedBy: devId, reviewedAt: new Date(), scores });
     const who = (await userRepository.findById(s.userId))?.username ?? `#${s.userId}`;
-    const label = roundLabel(s.round, (await assignmentRepository.findById(s.assignmentId))?.rubric.rounds ?? []);
-    await auditService.log(devId, "submission.review", who, `${label} ${s.ref} · ${VERDICT_LABEL[input.verdict]}`);
+    const label = roundLabel(s.round, a?.rubric.rounds ?? []);
+    await auditService.log(devId, "submission.review", who, `${label} ${s.ref} · ${VERDICT_LABEL[input.verdict]}${scores ? ` · ${scores.total}/${scores.max}` : ""}`);
     await notificationService.toUser(s.userId, { kind: "submission_review", title: `ผล${label} (${s.ref}): ${VERDICT_LABEL[input.verdict]}`, link: INTERN_LINK });
   },
+
+  // ---- ความเห็นใต้งาน (เห็นเฉพาะน้องเจ้าของงานกับพี่เลี้ยง) ----
+  // งาน = รอบหนึ่งของโจทย์หนึ่ง · น้องเปิดได้เฉพาะโจทย์ของรุ่นตัวเอง · ที่เหลือตอบเหมือนไม่มี
+  async commentsMine(user: Viewer, assignment: string, round: string) {
+    await assertOwnTask(user, assignment, round);
+    return taskCommentRepository.forTask(user.id, taskKey(assignment, round));
+  },
+  async commentMine(user: Viewer, assignment: string, round: string, input: CommentInput) {
+    await assertOwnTask(user, assignment, round);
+    if (input.kind !== "review") throw new Error("COMMENT_KIND_FORBIDDEN");
+    const c = await taskCommentRepository.create({ userId: user.id, task: taskKey(assignment, round), authorId: user.id, kind: "review", ref: null, body: input.body });
+    const who = (await userRepository.findById(user.id))?.username ?? "น้อง";
+    await notificationService.toRoles(["dev"], { kind: "submission", title: `${who} เขียนความเห็นใต้งาน ${await labelOf(assignment, round)}`, link: DEV_LINK }, user.id);
+    return c;
+  },
+  async commentsOf(userId: number, assignment: string, round: string) {
+    await assertTask(userId, assignment, round);
+    return taskCommentRepository.forTask(userId, taskKey(assignment, round));
+  },
+  async commentTo(devId: number, userId: number, assignment: string, round: string, input: CommentInput) {
+    await assertTask(userId, assignment, round);
+    const c = await taskCommentRepository.create({ userId, task: taskKey(assignment, round), authorId: devId, kind: input.kind, ref: input.ref || null, body: input.body });
+    await notificationService.toUser(userId, { kind: "submission_review", title: `พี่เลี้ยงเขียนความเห็นใต้งาน ${await labelOf(assignment, round)}`, link: INTERN_LINK });
+    return c;
+  },
 };
+
+const taskKey = (assignment: string, round: string) => `${assignment}/${round}`;
+async function labelOf(assignment: string, round: string) {
+  const a = await assignmentRepository.findBySlug(assignment);
+  return `${a?.name ?? assignment} · ${roundLabel(round, a?.rubric.rounds ?? [])}`;
+}
+// งานต้องมีจริง: โจทย์มี และรอบอยู่ในโจทย์ (รอบ "start" ของลงทะเบียน repo ไม่ใช่งานให้คุยใต้)
+async function assertTask(userId: number, assignment: string, round: string) {
+  const a = await assignmentRepository.findBySlug(assignment);
+  if (!a || !isReviewable(round) || !hasRound(a.rubric.rounds, round) || !(await userRepository.findById(userId))) throw new Error("TASK_NOT_FOUND");
+}
+async function assertOwnTask(user: Viewer, assignment: string, round: string) {
+  const allowed = await assignmentService.listFor(user);
+  if (!allowed.some((a) => a.slug === assignment)) throw new Error("TASK_NOT_FOUND");
+  await assertTask(user.id, assignment, round);
+}

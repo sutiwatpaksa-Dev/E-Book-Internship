@@ -53,7 +53,7 @@ export function ProfilePanel({ initialTab }: { initialTab: Tab }) {
           <strong className="truncate text-lg">{profile.fullName ?? profile.username}</strong>
           <span className="flex flex-wrap items-center gap-2 text-sm text-fd-muted-foreground">
             {profile.username}
-            <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${ROLE_BADGE[profile.role]}`}>{ROLE_LABEL[profile.role]}</span>
+            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${ROLE_BADGE[profile.role]}`}>{ROLE_LABEL[profile.role]}</span>
           </span>
         </div>
       </div>

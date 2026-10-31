@@ -13,7 +13,7 @@ import { MentorBadge } from "./card-library";
 // เปิดมาที่ช่วงที่ยังมีการ์ดค้าง · บทเดิมที่ยังไม่ได้แปลงเป็นการ์ดต่อท้ายพร้อมป้าย "บทเดิม"
 // การ์ดที่พี่เลี้ยงซ่อนไม่แสดง · การ์ดของพี่เลี้ยงในขั้นนี้แยกเป็นกลุ่มท้ายสุด (ไม่มีช่วง เพราะเขียนเพิ่มทีหลัง)
 export function StepCards({ step }: { step: StepSlug }) {
-  const { done } = useProgress();
+  const { done, ready } = useProgress();
   const { cards, mentorCards } = useCatalog();
   const { role } = useSession();
   const mine = mentorCards.filter((m) => m.step === step);
@@ -42,9 +42,7 @@ export function StepCards({ step }: { step: StepSlug }) {
               >
                 {p}
                 {list.length > 0 && (
-                  <span className="text-xs font-normal tabular-nums">
-                    {count}/{list.length}
-                  </span>
+                  <span className="text-xs font-normal tabular-nums">{ready ? `${count}/${list.length}` : <span aria-label="กำลังโหลด" className="inline-block h-3.5 w-6 animate-pulse rounded bg-fd-muted" />}</span>
                 )}
               </button>
             );
@@ -116,7 +114,7 @@ function Part({ step, part, done, cards }: { step: StepSlug; part: string | unde
         {old.map((l) => (
           <li key={l.link}>
             <Link href={l.link} className="flex h-full min-h-16 items-center gap-3 rounded-xl border border-dashed border-fd-border px-4 py-3 hover:bg-fd-accent">
-              <span className="shrink-0 rounded-full bg-fd-muted px-2 py-0.5 text-[11px] text-fd-muted-foreground">บทเดิม</span>
+              <span className="shrink-0 rounded-full bg-fd-muted px-2 py-0.5 text-xs text-fd-muted-foreground">บทเดิม</span>
               <span className="flex-1 text-sm">{l.title}</span>
             </Link>
           </li>

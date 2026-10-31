@@ -8,6 +8,7 @@ const columns = {
   id: announcements.id,
   body: announcements.body,
   audience: announcements.audience,
+  cohortId: announcements.cohortId,
   startsAt: announcements.startsAt,
   endsAt: announcements.endsAt,
   author: users.username,
@@ -18,7 +19,8 @@ export const announcementRepository = {
   // หลังบ้านเห็นทั้งหมด รวมที่หมดเวลาแล้ว (ไว้ย้อนดูว่าเคยประกาศอะไร)
   listAll: () => db.select(columns).from(announcements).innerJoin(users, eq(users.id, announcements.authorId)).orderBy(desc(announcements.createdAt)).limit(100),
   // ที่กำลังแสดงอยู่ตอนนี้สำหรับกลุ่มนี้: เริ่มแล้ว และยังไม่จบ (หรือไม่มีวันจบ)
-  listActive: (audiences: Audience[], now: Date) =>
+  // cohortId: รุ่นของคนดู · ประกาศที่ผูกรุ่นเห็นเฉพาะคนในรุ่นนั้น (ไม่ส่ง = เห็นทุกรุ่น ใช้กับพี่เลี้ยง)
+  listActive: (audiences: Audience[], now: Date, viewer: { cohortId?: number | null } = {}) =>
     db
       .select(columns)
       .from(announcements)
@@ -26,6 +28,7 @@ export const announcementRepository = {
       .where(
         and(
           inArray(announcements.audience, audiences),
+          viewer.cohortId === undefined ? undefined : or(isNull(announcements.cohortId), viewer.cohortId === null ? undefined : eq(announcements.cohortId, viewer.cohortId)),
           lte(announcements.startsAt, now),
           or(isNull(announcements.endsAt), gt(announcements.endsAt, now)),
         ),

@@ -31,7 +31,7 @@ import { stageOf, type NavItem, type NavStage } from "@/lib/nav-tree";
 import { gate } from "@/lib/page-access";
 import { useSite } from "./nav-provider";
 
-// ไอคอนประจำด่าน (เรียงตามด่าน 1–7) และของหน้าเสริม/อ้างอิง ถ้าเพิ่มด่านหรือหน้าใหม่แล้วไม่มีในนี้ จะได้ไอคอนหนังสือ
+// ไอคอนประจำด่าน (เรียงตามภาค 1–7) และของหน้าเสริม/อ้างอิง ถ้าเพิ่มด่านหรือหน้าใหม่แล้วไม่มีในนี้ จะได้ไอคอนหนังสือ
 const STAGE_ICONS: LucideIcon[] = [Wrench, CodeXml, Database, ShieldCheck, AppWindow, Flag, Rocket];
 const PAGE_ICONS: Record<string, LucideIcon> = {
   "/react-language": SquareCode,
@@ -50,13 +50,13 @@ export function BookProgress() {
   const percent = Math.round((count / requiredLinks.length) * 100);
   return (
     <div className="flex flex-col gap-1.5 px-1">
-      <div className="flex justify-between text-xs text-fd-muted-foreground">
-        <span>ความคืบหน้าทั้งเล่ม</span>
+      <div className="flex justify-between text-[13px] text-fd-muted-foreground">
+        <span>บทหลักที่ติ๊กผ่าน</span>
         <span className="tabular-nums">
-          {count} / {requiredLinks.length} บท
+          {count} / {requiredLinks.length} บท (แยกจากการ์ด)
         </span>
       </div>
-      <div role="progressbar" aria-label="ความคืบหน้าทั้งเล่ม" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100} className="h-1.5 overflow-hidden rounded-full bg-fd-muted">
+      <div role="progressbar" aria-label="บทหลักที่ติ๊กผ่าน" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100} className="h-1.5 overflow-hidden rounded-full bg-fd-muted">
         <div className="h-full rounded-full bg-fd-primary transition-[width] duration-300" style={{ width: `${percent}%` }} />
       </div>
     </div>
@@ -128,7 +128,7 @@ type StageProps = {
 
 function Stage({ stage, icon: Icon, open, active, pathname, onToggle, onNavigate }: StageProps) {
   const { role } = useSession();
-  const { done } = useProgress();
+  const { done, ready } = useProgress();
   const locked = gate(stage.items[0]?.url ?? "/", role) !== "allow";
   const tracked = stage.items.filter((i) => required.has(i.url));
   const doneCount = tracked.filter((i) => done.has(i.url)).length;
@@ -152,13 +152,13 @@ function Stage({ stage, icon: Icon, open, active, pathname, onToggle, onNavigate
           <Icon className="size-4" />
         </span>
         <span className="flex min-w-0 flex-1 flex-col leading-tight">
-          <span className="text-[11px] text-fd-muted-foreground">{stage.kicker}</span>
+          <span className="text-[13px] text-fd-muted-foreground">{stage.kicker}</span>
           <span className="font-semibold">{stage.name}</span>
         </span>
         {locked && <Lock aria-label="ต้อง login" className="size-3.5 shrink-0 text-fd-muted-foreground" />}
         {!locked && tracked.length > 0 && (
-          <span className={`text-xs font-medium tabular-nums ${complete ? "text-fd-primary" : "text-fd-muted-foreground"}`}>
-            {doneCount}/{tracked.length}
+          <span className={`text-[13px] font-medium tabular-nums ${complete ? "text-fd-primary" : "text-fd-muted-foreground"}`}>
+            {ready ? `${doneCount}/${tracked.length}` : <span aria-label="กำลังโหลด" className="inline-block h-3.5 w-7 animate-pulse rounded bg-fd-muted" />}
           </span>
         )}
         <ChevronRight className={`size-3.5 shrink-0 text-fd-muted-foreground transition-transform ${open ? "rotate-90" : ""}`} />
@@ -189,7 +189,7 @@ function Chapter({ item, active, done, onNavigate }: { item: NavItem; active: bo
       aria-current={active ? "page" : undefined}
       className={`flex min-h-9 items-center gap-2.5 rounded-md px-2 py-1 hover:bg-fd-accent ${active ? "bg-fd-primary/10 font-semibold text-fd-primary" : ""}`}
     >
-      <span className={`flex h-5.5 min-w-6.5 shrink-0 items-center justify-center rounded-md border px-1 text-[11px] font-semibold tabular-nums ${badge}`}>
+      <span className={`flex h-5.5 min-w-6.5 shrink-0 items-center justify-center rounded-md border px-1 text-[13px] font-semibold tabular-nums ${badge}`}>
         {done ? <Check aria-label="ผ่านแล้ว" className="size-3" strokeWidth={3} /> : item.num}
       </span>
       <span className="min-w-0 flex-1 leading-snug">{item.title}</span>
@@ -201,7 +201,7 @@ function GroupLinks({ title, items, pathname, onNavigate }: { title: string; ite
   if (items.length === 0) return null;
   return (
     <>
-      <div className="px-2 pt-2 pb-1 text-[11px] font-semibold tracking-wide text-fd-muted-foreground">{title}</div>
+      <div className="px-2 pt-2 pb-1 text-[13px] font-semibold tracking-wide text-fd-muted-foreground">{title}</div>
       {items.map((item) => {
         const Icon = PAGE_ICONS[item.url] ?? BookOpen;
         const active = item.url === pathname;

@@ -28,7 +28,7 @@ export function LearningRoadmap() {
       <Pill>เริ่มที่นี่</Pill>
 
       {roadmap.map((level, li) => (
-        // เส้นแกนกลางร้อยทุกด่าน (จอแคบย้ายไปชิดซ้าย)
+        // เส้นแกนกลางร้อยทุกภาค (จอแคบย้ายไปชิดซ้าย)
         <section
           key={level.title}
           className="relative pt-7 before:absolute before:top-0 before:bottom-0 before:left-3.5 before:border-l-[3px] before:border-(--rm-line) sm:before:left-1/2 sm:before:-translate-x-1/2 last:before:bottom-5"

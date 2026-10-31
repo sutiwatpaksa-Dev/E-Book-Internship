@@ -156,9 +156,9 @@ function StudentLinks({ card }: { card: MentorCardSummary }) {
 
 function CardStatusBadge({ status }: { status: MentorCardSummary["status"] }) {
   return status === "published" ? (
-    <span className="rounded-full bg-green-600/15 px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap text-green-700 dark:text-green-400">เผยแพร่</span>
+    <span className="rounded-full bg-green-600/15 px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-green-700 dark:text-green-400">เผยแพร่</span>
   ) : (
-    <span className="rounded-full bg-fd-muted px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap text-fd-muted-foreground">ร่าง</span>
+    <span className="rounded-full bg-fd-muted px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-fd-muted-foreground">ร่าง</span>
   );
 }
 
@@ -486,7 +486,7 @@ export function AdminNotes({ content, initialPage, titles }: { content: ContentA
 }
 
 // เลือกหน้าจากชื่อ (พิมพ์บางส่วน เช่น "migration" หรือ "ขั้น 3") ไม่ต้องจำ URL
-// พิมพ์ path ที่ขึ้นต้นด้วย / เองก็ได้ สำหรับหน้าที่ไม่อยู่ในรายการ (เช่น /today)
+// พิมพ์ path ที่ขึ้นต้นด้วย / เองก็ได้ สำหรับหน้าที่ไม่อยู่ในรายการ (เช่น /dashboard)
 function PagePicker({ pages, value, onChange }: { pages: { url: string; title: string }[]; value: string; onChange: (url: string) => void }) {
   const [query, setQuery] = useState("");
   const picked = pages.find((p) => p.url === value);
@@ -628,11 +628,11 @@ export function AdminBuiltInCards({ content }: { content: ContentAdminState }) {
                         </a>
                         <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-fd-muted-foreground">
                           {!shown && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-fd-muted px-2 py-0.5 text-[11px] font-semibold">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-fd-muted px-2 py-0.5 text-xs font-semibold">
                               <EyeOff className="size-3" /> ซ่อนอยู่
                             </span>
                           )}
-                          {o && shown && <span className="rounded-full bg-fd-primary/10 px-2 py-0.5 text-[11px] font-semibold text-fd-primary">ปรับแล้ว</span>}
+                          {o && shown && <span className="rounded-full bg-fd-primary/10 px-2 py-0.5 text-xs font-semibold text-fd-primary">ปรับแล้ว</span>}
                           <span>
                             {topicName(o?.topic ?? c.topic)} · {o?.minutes ?? c.minutes} นาที
                           </span>

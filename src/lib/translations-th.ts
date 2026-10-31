@@ -11,6 +11,10 @@ export const translationsTh: Record<string, string> = {
   "Previous Page(pagination)": "บทก่อนหน้า",
   "Last updated on(page footer)": "อัปเดตล่าสุด",
   "Theme(site menu)": "ธีม",
+  "Toggle Theme(theme switcher)(aria-label)": "สลับโหมดมืด/สว่าง",
+  "Light(theme switcher)(aria-label)": "โหมดสว่าง",
+  "Dark(theme switcher)(aria-label)": "โหมดมืด",
+  "System(theme switcher)(aria-label)": "ตามระบบ",
   "Page Not Found(404 not found page)": "ไม่พบหน้านี้",
   "Back to Home(404 not found page)": "กลับหน้าแรก",
   "The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.(404 not found page)":

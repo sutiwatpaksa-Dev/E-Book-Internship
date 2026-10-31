@@ -149,7 +149,7 @@ export function stepOfUrl(url: string): StepSlug | null {
 }
 
 // สิ่งที่ควรทำต่อ: การ์ดแรกที่ยังไม่เข้าใจ (ตามลำดับขั้น) · ยังไม่เริ่มเลย = ขั้น 1 · ครบแล้ว card = null
-// แผนที่ (/learn) และหน้าวันนี้ (/today) ใช้ตัวเดียวกัน ปุ่ม "ทำต่อ" จึงพาไปที่เดียวกันเสมอ
+// แผนที่ (/learn) และหน้าวันนี้ (/dashboard) ใช้ตัวเดียวกัน ปุ่ม "ทำต่อ" จึงพาไปที่เดียวกันเสมอ
 export function nextUp(done: ReadonlySet<string>, list: readonly LearnCard[] = cards) {
   const started = list.some((c) => done.has(cardUrl(c.slug)));
   const card = list.find((c) => !done.has(cardUrl(c.slug))) ?? null;

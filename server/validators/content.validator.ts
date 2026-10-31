@@ -36,6 +36,8 @@ export const noteQuerySchema = z.object({ page: pageUrl });
 export const announcementSchema = z.object({
   body: z.string().trim().min(3).max(500),
   audience: z.enum(AUDIENCES),
+  // ผูกรุ่น: เห็นเฉพาะน้องในรุ่นนั้น (ไม่ส่ง = ทุกรุ่น)
+  cohortId: z.number().int().positive().nullable().optional(),
   // รับเวลาแบบ ISO จาก <input type="datetime-local"> ที่หน้าเว็บแปลงแล้ว · ไม่ส่ง = เริ่มทันที / ไม่มีวันจบ
   startsAt: z.iso.datetime({ offset: true }).optional(),
   endsAt: z.iso.datetime({ offset: true }).nullable().optional(),

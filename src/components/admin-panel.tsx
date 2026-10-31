@@ -1,6 +1,6 @@
 "use client";
 
-import { FilePlus2, FileText, FolderGit2, GraduationCap, History, Inbox, Layers, LayoutDashboard, Megaphone, MessageCircle, NotebookPen, Users, type LucideIcon } from "lucide-react";
+import { ChevronDown, ClipboardList, FilePlus2, FileText, FolderGit2, GraduationCap, History, Inbox, Layers, LayoutDashboard, Megaphone, MessageCircle, NotebookPen, Users, type LucideIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { useAdmin } from "@/hooks/use-admin";
@@ -8,6 +8,7 @@ import { useNavDrawer } from "@/hooks/use-nav-drawer";
 import { STATUS_LABEL } from "@/lib/thread-labels";
 import { useUnread } from "@/hooks/use-unread";
 import { useContentAdmin } from "@/hooks/use-content-admin";
+import { AdminBoard } from "./admin-board";
 import { AdminAnnouncements } from "./admin-announcements";
 import { AdminAudit } from "./admin-audit";
 import { AdminBuiltInCards, AdminMentorCards, AdminNotes } from "./admin-content";
@@ -25,8 +26,9 @@ import { Button } from "./button";
 import { ChatPanel } from "./chat-panel";
 import { ErrorText } from "./error-text";
 import { MobileDrawer } from "./mobile-drawer";
+import { Skeleton, SkeletonList } from "./skeleton";
 
-type TabId = "overview" | "questions" | "submissions" | "requests" | "cards" | "notes" | "builtin" | "announcements" | "cohorts" | "users" | "files" | "audit";
+type TabId = "overview" | "questions" | "board" | "submissions" | "requests" | "cards" | "notes" | "builtin" | "announcements" | "cohorts" | "users" | "files" | "audit";
 type Tab = { id: TabId; label: string; icon: LucideIcon };
 // เมนูแบ่ง 3 กลุ่มตามความถี่ที่ใช้: งานประจำวัน (เปิดทุกวัน) → เนื้อหา (เขียน/ปรับคู่มือ) → ระบบ (นานๆ ครั้ง)
 const GROUPS: { label: string; tabs: Tab[] }[] = [
@@ -34,17 +36,18 @@ const GROUPS: { label: string; tabs: Tab[] }[] = [
     label: "งานประจำวัน",
     tabs: [
       { id: "overview", label: "ภาพรวม", icon: LayoutDashboard },
-      { id: "questions", label: "ข้อความจากน้อง", icon: MessageCircle },
-      { id: "submissions", label: "งานที่ส่ง", icon: FolderGit2 },
-      { id: "requests", label: "คำขอเนื้อหา", icon: Inbox },
+      { id: "questions", label: "แชทกับน้อง", icon: MessageCircle },
+      { id: "board", label: "โพสต์งานให้น้อง", icon: ClipboardList },
+      { id: "submissions", label: "ตรวจงานที่ส่ง", icon: FolderGit2 },
+      { id: "requests", label: "คำขอการ์ดใหม่", icon: Inbox },
     ],
   },
   {
     label: "เนื้อหา",
     tabs: [
-      { id: "cards", label: "การ์ดของพี่เลี้ยง", icon: FilePlus2 },
-      { id: "notes", label: "โน้ตท้ายหน้า", icon: NotebookPen },
-      { id: "builtin", label: "การ์ดในระบบ", icon: Layers },
+      { id: "cards", label: "การ์ดที่เราเขียน", icon: FilePlus2 },
+      { id: "notes", label: "โน้ตใต้บทเรียน", icon: NotebookPen },
+      { id: "builtin", label: "จัดการการ์ดระบบ", icon: Layers },
       { id: "announcements", label: "ประกาศ", icon: Megaphone },
     ],
   },
@@ -53,7 +56,7 @@ const GROUPS: { label: string; tabs: Tab[] }[] = [
     tabs: [
       { id: "cohorts", label: "รุ่นฝึกงาน", icon: GraduationCap },
       { id: "users", label: "บัญชีผู้ใช้", icon: Users },
-      { id: "files", label: "โจทย์และตั้งค่า", icon: FileText },
+      { id: "files", label: "โจทย์ PDF และเกณฑ์", icon: FileText },
       { id: "audit", label: "บันทึกการกระทำ", icon: History },
     ],
   },
@@ -122,6 +125,7 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
       window.scrollTo({ top: 0 });
     }
   };
+  const [groupOpen, setGroupOpen] = useState<Record<string, boolean>>({});
   const active = TABS.find((t) => t.id === tab)!;
   const waiting = useUnread();
   // จำนวนงานรอตรวจบนเมนู · โหลดใหม่หลังบันทึกผลตรวจ
@@ -189,10 +193,25 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
   // เมนูชุดเดียว วางได้ 2 ที่: คอลัมน์ซ้ายบนจอกว้าง และลิ้นชักบนมือถือ
   const menuGroups = (
     <>
-      {GROUPS.map((g, i) => (
+      {GROUPS.map((g, i) => {
+        // กลุ่มที่ใช้ไม่บ่อยพับได้ · กลุ่มที่มีหน้าที่เปิดอยู่กางเสมอ
+        const expanded = i === 0 || groupOpen[g.label] || g.tabs.some((t) => t.id === tab);
+        return (
         <div key={g.label} className="flex flex-col gap-0.5">
-          <span className={`px-3 pb-1 text-xs font-semibold text-fd-muted-foreground ${i === 0 ? "" : "pt-5"}`}>{g.label}</span>
-          {g.tabs.map((t) => {
+          {i === 0 ? (
+            <span className="px-3 pb-1 text-sm font-semibold text-fd-muted-foreground">{g.label}</span>
+          ) : (
+            <button
+              type="button"
+              aria-expanded={expanded}
+              onClick={() => setGroupOpen((o) => ({ ...o, [g.label]: !expanded }))}
+              className="mt-3 flex min-h-9 items-center justify-between rounded-lg px-3 text-sm font-semibold text-fd-muted-foreground hover:bg-fd-accent"
+            >
+              {g.label}
+              <ChevronDown className={`size-4 transition-transform ${expanded ? "" : "-rotate-90"}`} />
+            </button>
+          )}
+          {expanded && g.tabs.map((t) => {
             const n = badge(t.id);
             return (
               <a
@@ -205,7 +224,7 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
                 <t.icon className="size-4" />
                 {t.label}
                 {n > 0 && (
-                  <span aria-label={`${n} เรื่องใหม่`} className="ms-auto rounded-full bg-orange-500 px-1.5 text-[11px] font-bold text-white">
+                  <span aria-label={`${n} เรื่องใหม่`} className="ms-auto rounded-full bg-orange-500 px-1.5 text-xs font-bold text-white">
                     {n}
                   </span>
                 )}
@@ -213,7 +232,8 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
             );
           })}
         </div>
-      ))}
+        );
+      })}
     </>
   );
 
@@ -254,16 +274,17 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
           (view.intern ? <AdminInternDetail admin={admin} nav={nav} userId={view.intern} /> : <AdminOverview admin={admin} content={content} nav={nav} titles={titles} />)}
         {/* key: สั่งเปิดเรื่องใหม่จากข้างนอก ให้แชทเริ่มใหม่ที่เรื่องนั้น (ดู chatKey ข้างบน) */}
         {tab === "questions" && <ChatPanel key={chatKey} side="dev" titles={titles} initialId={view.thread ?? null} onSelect={onSelectThread} />}
+        {tab === "board" && <AdminBoard admin={admin} nav={nav} />}
         {tab === "submissions" && <AdminSubmissions admin={admin} onChange={countSubs} />}
         {tab === "requests" && <AdminRequests admin={admin} nav={nav} />}
         {CONTENT_TABS.includes(tab) && content.loading ? (
-          <p className="text-sm text-fd-muted-foreground">กำลังโหลด…</p>
+          <SkeletonList />
         ) : (
           <>
             {tab === "cards" && <AdminMentorCards content={content} />}
             {tab === "notes" && <AdminNotes key={view.note ?? "list"} content={content} initialPage={view.note} titles={titles} />}
             {tab === "builtin" && <AdminBuiltInCards content={content} />}
-            {tab === "announcements" && <AdminAnnouncements content={content} />}
+            {tab === "announcements" && <AdminAnnouncements content={content} admin={admin} />}
           </>
         )}
         {tab === "cohorts" && <AdminCohorts admin={admin} nav={nav} cohortId={view.cohort ?? null} />}

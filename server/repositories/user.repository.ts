@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, like } from "drizzle-orm";
 import { db } from "../db/client";
 import { users, type Role } from "../db/schema";
 
@@ -40,6 +40,13 @@ export const userRepository = {
     const [u] = await db.select().from(users).where(eq(users.id, id));
     return u;
   },
+  // บัญชีตัวอย่างสำหรับปุ่มสลับในเครื่อง (ชื่อขึ้นต้น demo.) เรียงพี่เลี้ยงก่อน
+  demoAccounts: () =>
+    db
+      .select({ username: users.username, role: users.role })
+      .from(users)
+      .where(and(like(users.username, "demo.%"), eq(users.disabled, false)))
+      .orderBy(asc(users.role), asc(users.username)),
   async findByUsername(username: string) {
     const [u] = await db.select().from(users).where(eq(users.username, username));
     return u;

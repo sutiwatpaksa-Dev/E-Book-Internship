@@ -59,6 +59,15 @@ export const authService = {
     return { id: user.id, username: user.username, role: user.role, ver: user.sessionVersion, tmp: user.secretKind === "pin" };
   },
 
+  // สลับบัญชีในเครื่อง (route ตรวจ devSwitchAllowed ก่อนเรียก: ไม่ใช่ production + ฐานและเว็บอยู่ในเครื่อง) · ไม่ตรวจรหัสผ่าน
+  // รายการให้เลือกมีแค่บัญชีตัวอย่าง demo.* แต่สลับกลับบัญชีเดิมของตัวเองในฐานเครื่องได้ (หน้าเว็บจำชื่อไว้ให้)
+  devAccounts: () => userRepository.demoAccounts(),
+  async devSwitch(username: string) {
+    const user = await userRepository.findByUsername(username);
+    if (!user || user.disabled) throw new Error("NOT_FOUND");
+    return { id: user.id, username: user.username, role: user.role, ver: user.sessionVersion, tmp: false };
+  },
+
   // บัญชียังใช้ได้อยู่ไหม (API เช็กทุกครั้ง ปิดบัญชีแล้วใช้ API ไม่ได้ทันที)
   // ver ไม่ตรง = บัตรรุ่นเก่า (เปลี่ยนรหัสผ่านหรือออก PIN ใหม่ไปแล้ว) ถือว่าไม่ได้ login
   async activeUser(id: number, ver?: number) {

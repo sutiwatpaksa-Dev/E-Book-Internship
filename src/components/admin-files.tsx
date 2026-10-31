@@ -5,6 +5,7 @@ import { useState, type FormEvent } from "react";
 import { requirementUrl } from "@/api/files.api";
 import type { AdminState } from "@/hooks/use-admin";
 import { COHORT_STATUS_LABEL, cohortStatus } from "@/lib/cohort";
+import { COMMENT_KIND_LABEL, COMMENT_KINDS, criteriaProblem, DEFAULT_CRITERIA, templatesProblem, type CommentKind, type CommentTemplate, type Criterion } from "@/lib/rubric";
 import { DEFAULT_ROUNDS, roundsProblem, type RoundDef } from "@/lib/submission";
 import type { AdminAssignment, AssignmentInput, AssignmentSection, Cohort } from "@/types";
 import { Button } from "./button";
@@ -30,7 +31,7 @@ function parseSections(text: string): AssignmentSection[] | string {
   return out;
 }
 
-// แท็บโจทย์และตั้งค่า: โจทย์ฝึกงานทุกชิ้น (PDF + หัวข้อ) และลิงก์ระบบตัวอย่าง
+// แท็บโจทย์ PDF และเกณฑ์: โจทย์ฝึกงานทุกชิ้น (PDF + หัวข้อ) และลิงก์ระบบตัวอย่าง
 export function AdminFiles({ admin }: { admin: AdminState }) {
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<number | null>(null);
@@ -54,7 +55,7 @@ export function AdminFiles({ admin }: { admin: AdminState }) {
 
       {creating && (
         <AssignmentForm
-          initial={{ name: "", brief: "", sections: template, rounds: roundsTemplate }}
+          initial={{ name: "", brief: "", sections: template, rounds: roundsTemplate, criteria: DEFAULT_CRITERIA, templates: [] }}
           onCancel={() => setCreating(false)}
           onSave={async (slug, input) => {
             if (await admin.saveAssignment(null, slug, input)) setCreating(false);
@@ -153,14 +154,26 @@ function AssignmentForm({ initial, slug: fixedSlug, onSave, onCancel }: { initia
   const [name, setName] = useState(initial.name);
   const [brief, setBrief] = useState(initial.brief);
   const [sections, setSections] = useState(toText(initial.sections));
-  const [rounds, setRounds] = useState<RoundDef[]>(initial.rounds);
+  // งานของโจทย์จัดที่แท็บโพสต์งาน ฟอร์มนี้ส่งค่าเดิมกลับไปเฉย ๆ (ไม่แก้ ไม่ทำให้โพสต์หาย)
+  const [rounds] = useState<RoundDef[]>(initial.rounds);
+  const [criteria, setCriteria] = useState<Criterion[]>(initial.criteria ?? []);
+  const [templates, setTemplates] = useState<CommentTemplate[]>(initial.templates ?? []);
+  const criteriaErr = criteriaProblem(criteria.map((c) => ({ ...c, label: c.label.trim() })));
+  const templatesErr = templatesProblem(templates.map((t) => ({ ...t, title: t.title.trim(), body: t.body.trim() })));
   const parsed = parseSections(sections);
   const roundsErr = roundsProblem(rounds.map((r) => ({ ...r, label: r.label.trim() })));
   const badSlug = !fixedSlug && slug !== "" && !/^[a-z0-9-]{2,40}$/.test(slug);
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    if (typeof parsed === "string" || badSlug || roundsErr) return;
-    onSave(slug, { name: name.trim(), brief: brief.trim(), sections: parsed, rounds: rounds.map((r) => ({ ...r, label: r.label.trim(), what: r.what.trim() })) });
+    if (typeof parsed === "string" || badSlug || roundsErr || criteriaErr || templatesErr) return;
+    onSave(slug, {
+      name: name.trim(),
+      brief: brief.trim(),
+      sections: parsed,
+      rounds: rounds.map((r) => ({ ...r, label: r.label.trim(), what: r.what.trim() })),
+      criteria: criteria.map((c) => ({ ...c, label: c.label.trim() })),
+      templates: templates.map((t) => ({ ...t, title: t.title.trim(), body: t.body.trim() })),
+    });
   };
   return (
     <form onSubmit={submit} aria-label={fixedSlug ? "แก้โจทย์" : "สร้างโจทย์ใหม่"} className="grid gap-3 rounded-xl border border-fd-primary/40 p-4 sm:grid-cols-2">
@@ -189,14 +202,20 @@ function AssignmentForm({ initial, slug: fixedSlug, onSave, onCancel }: { initia
         </Field>
         {typeof parsed === "string" && <p className="mt-1 text-sm text-red-700 dark:text-red-400">{parsed}</p>}
       </div>
+      <p className="rounded-lg bg-fd-muted px-3 py-2 text-sm text-fd-muted-foreground sm:col-span-2">
+        งานและกำหนดส่ง ({rounds.length} งาน) จัดที่แท็บ &quot;โพสต์งานให้น้อง&quot; โพสต์ได้เหมือนโพสต์ Facebook · ที่นี่ตั้งชื่อโจทย์ PDF หัวข้อ เกณฑ์คะแนน และ template
+      </p>
       <div className="sm:col-span-2">
-        <RoundsEditor rounds={rounds} onChange={setRounds} error={roundsErr} />
+        <CriteriaEditor criteria={criteria} onChange={setCriteria} error={criteriaErr} />
+      </div>
+      <div className="sm:col-span-2">
+        <TemplatesEditor templates={templates} onChange={setTemplates} error={templatesErr} />
       </div>
       <div className="flex gap-2 sm:col-span-2">
         <Button type="button" variant="ghost" onClick={onCancel} className="min-h-11">
           ยกเลิก
         </Button>
-        <Button type="submit" disabled={typeof parsed === "string" || badSlug || !!roundsErr} className="min-h-11">
+        <Button type="submit" disabled={typeof parsed === "string" || badSlug || !!roundsErr || !!criteriaErr || !!templatesErr} className="min-h-11">
           {fixedSlug ? "บันทึก" : "สร้างโจทย์"}
         </Button>
       </div>
@@ -204,37 +223,80 @@ function AssignmentForm({ initial, slug: fixedSlug, onSave, onCancel }: { initia
   );
 }
 
-// รอบส่งงานของโจทย์: น้องเลือกส่งได้ตามรายการนี้ · รอบที่มีคนส่งแล้วลบไม่ได้ (server กัน) · เรียงตามวันให้เองตอนบันทึก
-function RoundsEditor({ rounds, onChange, error }: { rounds: RoundDef[]; onChange: (r: RoundDef[]) => void; error: string | null }) {
-  const set = (i: number, patch: Partial<RoundDef>) => onChange(rounds.map((r, j) => (j === i ? { ...r, ...patch } : r)));
-  // รหัสรอบใช้ภายใน เปลี่ยนไม่ได้หลังสร้าง (ติดอยู่กับงานที่ส่งแล้ว) รอบใหม่สุ่มรหัสให้
-  const add = () => onChange([...rounds, { id: `r${Date.now().toString(36)}`, label: "", day: Math.min(60, (rounds.at(-1)?.day ?? 0) + 1), what: "", deploy: false }]);
+// เกณฑ์ให้คะแนน: พี่เลี้ยงคนไหนก็แก้ได้ (บันทึกในประวัติการทำงาน) · งานที่ตรวจไปแล้วเก็บสำเนาคะแนนไว้ แก้เกณฑ์ทีหลังคะแนนเก่าไม่เปลี่ยน
+function CriteriaEditor({ criteria, onChange, error }: { criteria: Criterion[]; onChange: (c: Criterion[]) => void; error: string | null }) {
+  const set = (i: number, patch: Partial<Criterion>) => onChange(criteria.map((c, j) => (j === i ? { ...c, ...patch } : c)));
+  const add = () => onChange([...criteria, { id: `c${Date.now().toString(36)}`, label: "", max: 10 }]);
+  const total = criteria.reduce((n, c) => n + (Number.isFinite(c.max) ? c.max : 0), 0);
   return (
     <fieldset className="flex flex-col gap-2">
-      <legend className="mb-1 text-sm font-medium">รอบส่งงาน</legend>
-      <p className="text-xs text-fd-muted-foreground">น้องส่งงานได้ตามรอบเหล่านี้ · ติ๊ก "รับลิงก์เว็บ" ถ้ารอบนั้นให้น้องแนบลิงก์เว็บที่ deploy แล้ว</p>
-      {rounds.map((r, i) => (
-        <div key={r.id} className="grid gap-2 rounded-lg border border-fd-border p-3 sm:grid-cols-[1fr_5rem_1fr_auto_auto] sm:items-end">
-          <Field label="ชื่อรอบ">
-            <Input value={r.label} onChange={(e) => set(i, { label: e.target.value })} placeholder="ตรวจรอบ 1" maxLength={40} required />
+      <legend className="mb-1 text-sm font-medium">
+        เกณฑ์คะแนน <span className="font-normal text-fd-muted-foreground">(รวมเต็ม {total})</span>
+      </legend>
+      <p className="text-xs text-fd-muted-foreground">ตอนตรวจงาน พี่เลี้ยงกรอกคะแนนตามข้อเหล่านี้ · ถ้าไม่มีเกณฑ์เลย ตรวจแบบ ผ่าน/แก้ ตามเดิม</p>
+      {criteria.map((c, i) => (
+        <div key={c.id} className="grid gap-2 rounded-lg border border-fd-border p-3 sm:grid-cols-[1fr_6rem_auto] sm:items-end">
+          <Field label="ชื่อข้อ">
+            <Input value={c.label} onChange={(e) => set(i, { label: e.target.value })} placeholder="เช่น ทำงานได้ตามโจทย์" maxLength={80} required />
           </Field>
-          <Field label="วันที่">
-            <Input type="number" inputMode="numeric" min={1} max={60} value={r.day} onChange={(e) => set(i, { day: Number(e.target.value) })} required />
+          <Field label="คะแนนเต็ม">
+            <Input type="number" inputMode="numeric" min={1} max={100} value={c.max} onChange={(e) => set(i, { max: Number(e.target.value) })} required />
           </Field>
-          <Field label="ตรวจอะไร">
-            <Input value={r.what} onChange={(e) => set(i, { what: e.target.value })} placeholder="ตาราง + API" maxLength={60} />
+          <Button type="button" variant="ghost" className="min-h-11" aria-label={`ลบ ${c.label || `ข้อที่ ${i + 1}`}`} onClick={() => onChange(criteria.filter((_, j) => j !== i))}>
+            <Trash2 className="size-4" />
+          </Button>
+        </div>
+      ))}
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" variant="ghost" className="min-h-11" onClick={add} disabled={criteria.length >= 10}>
+          <Plus className="size-4" /> เพิ่มข้อ
+        </Button>
+        {criteria.length === 0 && (
+          <Button type="button" variant="ghost" className="min-h-11" onClick={() => onChange(DEFAULT_CRITERIA)}>
+            ใช้เกณฑ์เริ่มต้น (รวม 100)
+          </Button>
+        )}
+      </div>
+      {error && <p role="alert" className="text-sm text-red-700 dark:text-red-400">{error}</p>}
+    </fieldset>
+  );
+}
+
+// template ความเห็นของโจทย์นี้: ช่องที่เติมให้ตอนใช้ = {ชื่อน้อง} {รอบ} {ref}
+function TemplatesEditor({ templates, onChange, error }: { templates: CommentTemplate[]; onChange: (t: CommentTemplate[]) => void; error: string | null }) {
+  const set = (i: number, patch: Partial<CommentTemplate>) => onChange(templates.map((t, j) => (j === i ? { ...t, ...patch } : t)));
+  const add = () => onChange([...templates, { id: `t${Date.now().toString(36)}`, kind: "review", title: "", body: "" }]);
+  return (
+    <fieldset className="flex flex-col gap-2">
+      <legend className="mb-1 text-sm font-medium">template ความเห็น</legend>
+      <p className="text-xs text-fd-muted-foreground">ข้อความสำเร็จรูปให้แทรกตอนตรวจงานหรือเขียนความเห็น · ใส่ {"{ชื่อน้อง}"} {"{รอบ}"} {"{ref}"} ในข้อความ ระบบเติมให้เองตอนใช้ แทรกแล้วแก้ต่อก่อนส่งได้</p>
+      {templates.map((t, i) => (
+        <div key={t.id} className="grid gap-2 rounded-lg border border-fd-border p-3 sm:grid-cols-[10rem_1fr_auto] sm:items-start">
+          <Field label="ประเภท">
+            <select className={inputClass} value={t.kind} onChange={(e) => set(i, { kind: e.target.value as CommentKind })}>
+              {COMMENT_KINDS.map((k) => (
+                <option key={k} value={k}>
+                  {COMMENT_KIND_LABEL[k]}
+                </option>
+              ))}
+            </select>
           </Field>
-          <label className="flex min-h-11 items-center gap-2 text-sm">
-            <input type="checkbox" checked={r.deploy} onChange={(e) => set(i, { deploy: e.target.checked })} /> รับลิงก์เว็บ
-          </label>
-          <Button type="button" variant="ghost" className="min-h-11" aria-label={`ลบ ${r.label || `รอบที่ ${i + 1}`}`} onClick={() => onChange(rounds.filter((_, j) => j !== i))}>
+          <div className="flex flex-col gap-2">
+            <Field label="ชื่อ template">
+              <Input value={t.title} onChange={(e) => set(i, { title: e.target.value })} placeholder="เช่น commit ก้อนใหญ่เกินไป" maxLength={60} required />
+            </Field>
+            <Field label="ข้อความ">
+              <textarea className={`${inputClass} min-h-20`} value={t.body} onChange={(e) => set(i, { body: e.target.value })} maxLength={1000} required />
+            </Field>
+          </div>
+          <Button type="button" variant="ghost" className="min-h-11 sm:mt-6" aria-label={`ลบ ${t.title || `template ที่ ${i + 1}`}`} onClick={() => onChange(templates.filter((_, j) => j !== i))}>
             <Trash2 className="size-4" />
           </Button>
         </div>
       ))}
       <div>
-        <Button type="button" variant="ghost" className="min-h-11" onClick={add} disabled={rounds.length >= 10}>
-          <Plus className="size-4" /> เพิ่มรอบ
+        <Button type="button" variant="ghost" className="min-h-11" onClick={add} disabled={templates.length >= 40}>
+          <Plus className="size-4" /> เพิ่ม template
         </Button>
       </div>
       {error && <p role="alert" className="text-sm text-red-700 dark:text-red-400">{error}</p>}

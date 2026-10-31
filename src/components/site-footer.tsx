@@ -18,17 +18,17 @@ export function SiteFooter({ version }: { version: string }) {
             <span className="font-bold text-white">คู่มือฝึกงาน Blicktech</span>
           </div>
           <nav aria-label="ลิงก์ท้ายเว็บ" className="flex flex-col gap-1 text-[13px]">
-            <Link href="/changelog" className="flex min-h-11 items-center hover:text-white hover:underline md:min-h-7">
+            <Link href="/changelog" className="flex min-h-11 items-center hover:text-white hover:underline">
               มีอะไรใหม่ (v{version})
             </Link>
-            <Link href="/cookies" className="flex min-h-11 items-center hover:text-white hover:underline md:min-h-7">
+            <Link href="/cookies" className="flex min-h-11 items-center hover:text-white hover:underline">
               นโยบายคุกกี้
             </Link>
             <CookieSettingsLink />
-            <a href="https://roadmap.sh/full-stack" target="_blank" rel="noopener" className="flex min-h-11 items-center hover:text-white hover:underline md:min-h-7">
+            <a href="https://roadmap.sh/full-stack" target="_blank" rel="noopener" className="flex min-h-11 items-center hover:text-white hover:underline">
               ลำดับหัวข้ออ้างอิงจาก roadmap.sh
             </a>
-            <a href="https://github.com/sutiwatpaksa-Dev/E-Book-Internship" target="_blank" rel="noopener" className="flex min-h-11 items-center hover:text-white hover:underline md:min-h-7">
+            <a href="https://github.com/sutiwatpaksa-Dev/E-Book-Internship" target="_blank" rel="noopener" className="flex min-h-11 items-center hover:text-white hover:underline">
               ซอร์สโค้ดของเว็บนี้ (GitHub)
             </a>
           </nav>

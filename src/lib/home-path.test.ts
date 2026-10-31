@@ -10,7 +10,7 @@ describe("safeNext", () => {
     expect(safeNext("/learn/cards/readme", "intern")).toBe("/learn/cards/readme");
   });
   test("ลิงก์ออกนอกเว็บ → ไม่ยอม กลับหน้าแรก", () => {
-    expect(safeNext("https://evil.example", "intern")).toBe("/today");
-    expect(safeNext("//evil.example", "intern")).toBe("/today");
+    expect(safeNext("https://evil.example", "intern")).toBe("/dashboard");
+    expect(safeNext("//evil.example", "intern")).toBe("/dashboard");
   });
 });

@@ -1,7 +1,7 @@
 import type * as PageTree from "fumadocs-core/page-tree";
 
 // แปลงสารบัญจาก content/docs/meta.json (page tree ของ Fumadocs) เป็นโครงที่ headbar และ sidebar ใช้
-// ด่านมาจากตัวคั่น "---ด่าน N · ชื่อ---" · ชื่อบทมาจาก navTitle ในไฟล์ .mdx จึงแก้ชื่อบทที่เดียว เมนูเปลี่ยนตาม
+// ด่านมาจากตัวคั่น "---ภาค N · ชื่อ---" · ชื่อบทมาจาก navTitle ในไฟล์ .mdx จึงแก้ชื่อบทที่เดียว เมนูเปลี่ยนตาม
 // เป็นข้อมูลล้วน (ไม่มี React) ส่งจาก server ไปหน้าเว็บได้ และเขียนเทสต์ได้ง่าย
 
 export type NavItem = {
@@ -13,7 +13,7 @@ export type NavItem = {
 
 export type NavStage = {
   id: string;
-  // "ด่าน 2"
+  // "ภาค 2"
   kicker: string;
   // "ภาษาและ API"
   name: string;
@@ -21,7 +21,7 @@ export type NavStage = {
 };
 
 // เมนูหลัก 4 หมวด (ดู section-links.tsx) · บทเรียนเดิมและหน้าอ้างอิงนับเป็น "คลังการ์ด" เพราะใช้หยิบอ่านตอนต้องการ
-export type NavSection = "today" | "path" | "cards" | "project";
+export type NavSection = "dashboard" | "path" | "cards" | "project";
 
 export type NavModel = {
   home: NavItem | null;
@@ -32,7 +32,7 @@ export type NavModel = {
 
 const REF_SEPARATOR = "อ้างอิง";
 const PROJECT_URL = "/starter";
-export const TODAY_URL = "/today";
+export const DASHBOARD_URL = "/dashboard";
 export const CARDS_URL = "/learn/cards";
 
 const text = (name: unknown) => (typeof name === "string" ? name : "");
@@ -92,7 +92,7 @@ export function buildNav(tree: PageTree.Root, extraLinks: string[]): NavModel {
 
 // หน้านี้อยู่หมวดไหนของเมนูบน (ใช้ไฮไลต์ลิงก์ใน headbar)
 export function sectionOf(model: NavModel, url: string): NavSection | null {
-  if (url === TODAY_URL) return "today";
+  if (url === DASHBOARD_URL) return "dashboard";
   if (url === CARDS_URL || url.startsWith(`${CARDS_URL}/`)) return "cards";
   if (url === "/learn" || url.startsWith("/learn/")) return "path";
   if (url === PROJECT_URL || url.startsWith(`${PROJECT_URL}/`)) return "project";

@@ -173,7 +173,7 @@ export function AdminInternDetail({ admin, nav, userId }: { admin: AdminState; n
         </div>
       </section>
 
-      <InternSubmissions userId={u.id} />
+      <InternSubmissions admin={admin} userId={u.id} />
 
       <section aria-labelledby="threads-title" className="flex flex-col gap-2">
         <h2 id="threads-title" className="text-base font-semibold">

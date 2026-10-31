@@ -13,7 +13,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <NavProvider nav={buildNav(source.getPageTree(), extraLinks)} version={version}>
       <SiteHeader menu={false} />
-      <main className="flex flex-1 flex-col">{children}</main>
+      <main id="main-content" tabIndex={-1} className="flex flex-1 flex-col outline-none">{children}</main>
       <SiteFooter version={version} />
       <BottomNavSpacer />
       <BottomNav />

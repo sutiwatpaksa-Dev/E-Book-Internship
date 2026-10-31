@@ -58,7 +58,7 @@
   --chart-r3: oklch(62% 0.118 199);
   --chart-r4: oklch(75% 0.125 197);
 
-  /* ความสูง headbar (site-header.tsx) มือถือรวมแถบ "อยู่ด่านไหน" ด้วย
+  /* ความสูง headbar (site-header.tsx) มือถือรวมแถบ "อยู่ภาคไหน" ด้วย
      ส่งต่อให้ Fumadocs ผ่าน --fd-banner-height: sidebar และสารบัญขวาจะติดอยู่ใต้ headbar พอดี */
   --site-header-h: 88px;
   --fd-banner-height: var(--site-header-h);
@@ -228,4 +228,11 @@ html.req-open #nd-docs-layout {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
   }
+}
+
+/* บรรทัดอ่านยาวเกินไปบนจอกว้าง: จำกัดความกว้างย่อหน้าและรายการในบทให้อ่านสบาย (ตาราง/โค้ด/กล่องยังเต็มความกว้าง) */
+.prose > p,
+.prose > ul,
+.prose > ol {
+  max-width: 46rem;
 }

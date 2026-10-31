@@ -3,7 +3,11 @@
 
 // รอบส่งเป็นข้อมูลของโจทย์ (assignments.rubric.rounds) แก้ได้จากหลังบ้าน · นี่คือแม่แบบเริ่มต้น (แผน 10 วันของ STARTER)
 // ส่งซ้ำรอบเดิมได้ เก็บทุกครั้งไว้เป็นประวัติ · id ของรอบถูกเก็บไว้ในงานที่ส่งแล้ว จึงเปลี่ยนไม่ได้หลังสร้าง
-export type RoundDef = { id: string; label: string; day: number; what: string; deploy: boolean };
+// body/links/postedBy/postedAt/editedAt = ส่วนของ "โพสต์งาน" (คำสั่งงานแบบ Markdown, ลิงก์แนบ, ใครโพสต์เมื่อไร) ไม่บังคับ รอบเก่าที่ไม่มีก็ใช้ได้เหมือนเดิม
+export type TaskLink = { label: string; url: string };
+export type RoundDef = { id: string; label: string; day: number; what: string; deploy: boolean; body?: string; links?: TaskLink[]; postedBy?: string; postedAt?: string; editedAt?: string };
+export const BODY_MAX = 8000;
+export const LINKS_MAX = 6;
 export const DEFAULT_ROUNDS: RoundDef[] = [
   { id: "review-1", label: "ตรวจรอบ 1", day: 5, what: "ตาราง + API", deploy: false },
   { id: "review-2", label: "ตรวจรอบ 2", day: 9, what: "ทั้งระบบ", deploy: true },
@@ -18,6 +22,16 @@ export const isReviewable = (round: string) => round !== START_ROUND;
 export const roundLabel = (id: string, rounds: RoundDef[]) => (id === START_ROUND ? "ลงทะเบียน repo" : (rounds.find((r) => r.id === id)?.label ?? id));
 export const hasRound = (rounds: RoundDef[], id: string) => id === START_ROUND || rounds.some((r) => r.id === id);
 
+// ลิงก์แนบของโพสต์งาน: https เท่านั้น (พี่เลี้ยงแนบ repo ต้นแบบ, เอกสาร, วิดีโอ) ไม่รับ javascript: หรือ http ธรรมดา
+export function linksProblem(links: TaskLink[]): string | null {
+  if (links.length > LINKS_MAX) return `แนบลิงก์ได้ไม่เกิน ${LINKS_MAX} ลิงก์`;
+  for (const l of links) {
+    if (!l.label.trim() || l.label.trim().length > 60) return "ชื่อลิงก์ 1–60 ตัวอักษร";
+    if (l.url.length > 300 || !/^https:\/\/[^\s]+\.[^\s]+$/i.test(l.url.trim())) return `ลิงก์ "${l.label.trim()}" ต้องขึ้นต้นด้วย https://`;
+  }
+  return null;
+}
+
 // กฎของรายการรอบ ใช้ทั้งฟอร์มหลังบ้านและ server · คืนข้อความผิด หรือ null เมื่อผ่าน
 export const ROUND_ID = /^[a-z0-9-]{1,30}$/;
 export function roundsProblem(rounds: RoundDef[]): string | null {
@@ -30,6 +44,9 @@ export function roundsProblem(rounds: RoundDef[]): string | null {
     if (!r.label.trim() || r.label.trim().length > 40) return `${at}: ชื่อรอบ 1–40 ตัวอักษร`;
     if (!Number.isInteger(r.day) || r.day < 1 || r.day > 60) return `${at}: วันที่ต้องเป็นเลข 1–60`;
     if (r.what.length > 60) return `${at}: คำอธิบายไม่เกิน 60 ตัวอักษร`;
+    if ((r.body ?? "").length > BODY_MAX) return `${at}: คำสั่งงานยาวเกิน ${BODY_MAX} ตัวอักษร`;
+    const bad = linksProblem(r.links ?? []);
+    if (bad) return `${at}: ${bad}`;
   }
   return null;
 }

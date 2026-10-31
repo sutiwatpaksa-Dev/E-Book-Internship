@@ -26,4 +26,4 @@ contentRoutes.get("/notes", loggedIn, async (c) => {
   return c.json(await pageNoteService.listFor(parsed.data.page));
 });
 
-contentRoutes.get("/announcements", loggedIn, async (c) => c.json(await announcementService.activeFor(c.get("user").role)));
+contentRoutes.get("/announcements", loggedIn, async (c) => c.json(await announcementService.activeFor(c.get("user"))));

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "@/api/admin.api";
 import { filesApi } from "@/api/files.api";
-import type { AdminAssignment, AssignmentInput, Cohort, CohortInput, ProgressEntry, Role, SignupSettings, ThreadSummary, User } from "@/types";
+import type { PostSend, AdminAssignment, AssignmentInput, Cohort, CohortInput, ProgressEntry, Role, SignupSettings, ThreadSummary, User } from "@/types";
 import { toast } from "./use-toast";
 
 // ข้อมูลและคำสั่งทั้งหมดของหลังบ้าน แยกจากหน้าตา: component แค่เรียกใช้ ไม่เรียก API เอง
@@ -92,6 +92,7 @@ export function useAdmin() {
       run(async () => {
         const r = await adminApi.resetPin(u.id);
         setIssued({ username: u.username, pin: r.pin });
+        toast.success(`ออก PIN ใหม่ให้ ${u.username} แล้ว PIN เก่าใช้ไม่ได้ทันที`);
         await reload();
       }),
     updateUser: (u: User, changes: Parameters<typeof adminApi.updateUser>[1]) =>
@@ -166,6 +167,30 @@ export function useAdmin() {
         ok = true;
       });
       return ok;
+    },
+    // โพสต์งาน: คืน true เมื่อสำเร็จ (ให้ฟอร์มปิดตัวเอง) · ข้อผิดพลาดขึ้นเป็น toast เพราะฟอร์มอยู่ไกลจากแถบ error ด้านบน
+    savePost: async (assignmentId: number, roundId: string | null, input: PostSend) => {
+      try {
+        if (roundId) await adminApi.updatePost(assignmentId, roundId, input);
+        else await adminApi.addPost(assignmentId, input);
+        await reload();
+        toast.success(roundId ? "บันทึกโพสต์แล้ว" : "โพสต์งานแล้ว น้องในรุ่นที่ใช้โจทย์นี้เห็นทันที");
+        return true;
+      } catch (e) {
+        toast.error(`${roundId ? "บันทึก" : "โพสต์"}ไม่สำเร็จ: ${(e as Error).message}`);
+        return false;
+      }
+    },
+    removePost: async (assignmentId: number, roundId: string) => {
+      try {
+        await adminApi.removePost(assignmentId, roundId);
+        await reload();
+        toast.success("ลบโพสต์แล้ว");
+        return true;
+      } catch (e) {
+        toast.error(`ลบไม่สำเร็จ: ${(e as Error).message}`);
+        return false;
+      }
     },
     uploadAssignmentPdf: (a: AdminAssignment, file: File) =>
       run(async () => {

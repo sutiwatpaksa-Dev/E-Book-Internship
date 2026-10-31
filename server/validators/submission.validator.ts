@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { COMMENT_KINDS } from "../../src/lib/rubric";
 import { deployProblem, normalizeDeploy, normalizeRepo, refProblem, repoProblem, ROUND_ID, START_REF, START_ROUND, VERDICTS } from "../../src/lib/submission";
 
 // กฎของช่องอยู่ใน src/lib/submission.ts ใช้ร่วมกับฟอร์มของน้อง · ที่นี่คือด่านจริง (ยิง API ตรงก็ต้องผ่านกฎเดียวกัน)
@@ -30,9 +31,24 @@ export const reviewSchema = z
   .object({
     verdict: z.enum(VERDICTS, { error: "เลือกผลตรวจ: ผ่าน หรือ แก้แล้วส่งใหม่" }),
     review: z.string().trim().max(2000, { error: "ความเห็นไม่เกิน 2,000 ตัว" }).default(""),
+    // คะแนนรายข้อ (id เกณฑ์ → คะแนน) · ไม่ส่ง = ตรวจแบบไม่ให้คะแนน · ความถูกต้องเทียบกับเกณฑ์ของโจทย์ที่ submission.service
+    scores: z.record(z.string().max(30), z.number({ error: "คะแนนต้องเป็นตัวเลข" })).optional(),
   })
   // ให้แก้ต้องบอกว่าแก้อะไร ไม่งั้นน้องส่งรอบใหม่แบบเดาสุ่ม
   .superRefine((v, ctx) => check(ctx, "review", v.verdict === "revise" && !v.review ? "ถ้าให้แก้ เขียนบอกน้องด้วยว่าต้องแก้อะไร" : null));
 
 export type SubmitInput = z.infer<typeof submitSchema>;
 export type ReviewInput = z.infer<typeof reviewSchema>;
+
+// ความเห็นใต้งาน: น้องเขียนได้เฉพาะ "ความเห็นงาน" · พี่เลี้ยงเลือกประเภทได้ (commit, แนะนำการ์ด, เนื้อหาเพิ่มเติม)
+export const commentSchema = z.object({
+  kind: z.enum(COMMENT_KINDS, { error: "เลือกประเภทความเห็น" }).default("review"),
+  ref: z
+    .string()
+    .trim()
+    .max(100)
+    .default("")
+    .refine((v) => !v || refProblem(v) === null, "ชื่อ tag หรือ commit ไม่ถูกต้อง"),
+  body: z.string({ error: "เขียนความเห็นก่อนส่ง" }).trim().min(1, { error: "เขียนความเห็นก่อนส่ง" }).max(2000, { error: "ความเห็นไม่เกิน 2,000 ตัว" }),
+});
+export type CommentInput = z.infer<typeof commentSchema>;

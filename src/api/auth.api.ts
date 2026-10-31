@@ -6,6 +6,9 @@ type SessionInfo = { username: string; role: Role; mustSetPassword: boolean };
 
 export const authApi = {
   login: (username: string, secret: string) => request<SessionInfo>("/auth/login", jsonBody("POST", { username, secret })),
+  // ปุ่มสลับบัญชีทดสอบ (มีเฉพาะในเครื่อง · production ตอบ 404)
+  devAccounts: () => request<{ username: string; role: Role }[]>("/auth/dev-accounts"),
+  devSwitch: (username: string) => request<SessionInfo>("/auth/dev-switch", jsonBody("POST", { username })),
   logout: () => request<null>("/auth/logout", { method: "POST" }),
   me: () => request<SessionInfo>("/auth/me"),
   // current ใส่เฉพาะตอนเปลี่ยนรหัสผ่านเดิม (ครั้งแรกจาก PIN ไม่ต้อง)

@@ -8,11 +8,14 @@ import type { ContentAdminState } from "@/hooks/use-content-admin";
 import { useUnread } from "@/hooks/use-unread";
 import { cardEntries, cardSummary, dailyCounts, loginBuckets, shortDay, stepProgress } from "@/lib/admin-stats";
 import { inCohort, type CohortFilter } from "@/lib/cohort";
-import { timeAgo } from "@/lib/thread-labels";
+import { BLUE, ORANGE, RED, timeAgo } from "@/lib/thread-labels";
 import { internHref } from "@/lib/admin-links";
+import { buildPlan, REVIEW_WAIT_DAYS, workSummary } from "@/lib/work-plan";
 import { RowLink } from "./row-link";
+import { useSubmissions } from "./admin-submissions";
 import { ChartCard, ColumnChart, Figure, ProgressRows, SegmentBar } from "./admin-charts";
 import type { AdminNav } from "./admin-panel";
+import { Skeleton, SkeletonList } from "./skeleton";
 
 const fmt = (d: string | null) => (d ? new Date(d).toLocaleString("th-TH") : "ยังไม่เคยเข้า");
 // ฝึกงานสั้น หายไป 3 วันก็ตามงานไม่ทันแล้ว (เดิม 7 วัน รู้ตัวช้าไป)
@@ -47,6 +50,18 @@ export function AdminOverview({ admin, content, nav, titles }: Props) {
   // เคยเข้าแต่หายไปเกิน 7 วัน = อาจติดอะไรอยู่ (ทักไปถามความคืบหน้า)
   const neverIn = interns.filter((u) => !u.lastLoginAt);
   const stale = interns.filter((u) => (daysSince(u.lastLoginAt) ?? 0) > STALE_DAYS);
+  // งานที่ส่ง: เลยกำหนด / รอตรวจนาน ต่อน้อง (โจทย์ของรุ่น + วันเริ่มรุ่น) · โหลดไม่ได้หรือยังไม่เสร็จ = ไม่แสดงธง
+  const { items: subs } = useSubmissions();
+  const workOf = new Map(
+    interns.map((u) => {
+      const c = admin.cohorts.find((x) => x.id === u.cohortId);
+      const mine = (subs ?? []).filter((x) => x.userId === u.id);
+      const assignments = admin.assignments.filter((a) => u.cohortId !== null && a.cohortIds.includes(u.cohortId)).map(({ slug, name, rounds }) => ({ slug, name, rounds }));
+      return [u.id, workSummary(buildPlan({ assignments, submissions: mine, startsOn: c?.startsOn ?? null, ended: !!c?.endedAt }), mine)] as const;
+    }),
+  );
+  const lateInterns = interns.filter((u) => (workOf.get(u.id)?.late ?? 0) > 0);
+  const oldWaitingInterns = interns.filter((u) => (workOf.get(u.id)?.oldWaiting ?? 0) > 0);
   const toInterns = () => document.getElementById("interns")?.scrollIntoView({ behavior: "smooth" });
   const newRequests = threads.filter((t) => t.status === "new").length;
   const waitingList = threads.filter((t) => t.status === "waiting");
@@ -70,6 +85,8 @@ export function AdminOverview({ admin, content, nav, titles }: Props) {
     { show: newRequests > 0, text: `คำขอเนื้อหาที่ยังไม่รับเรื่อง ${newRequests} เรื่อง`, go: () => nav.goTab("requests") },
     { show: resets.length > 0, text: `ขอรีเซ็ตรหัสผ่าน ${resets.length} คน (${resets.map((u) => u.username).join(", ")}) ออก PIN ใหม่ให้ที่แท็บบัญชี`, go: () => nav.goTab("users") },
     { show: locked.length > 0, text: `บัญชีถูกล็อก ${locked.length} บัญชี (ใส่รหัสผิด 5 ครั้ง ล็อก 15 นาที)`, go: () => nav.goTab("users") },
+    { show: oldWaitingInterns.length > 0, text: `งานที่ส่งแล้วรอตรวจเกิน ${REVIEW_WAIT_DAYS} วัน ของน้อง ${oldWaitingInterns.length} คน`, go: () => nav.goTab("submissions") },
+    { show: lateInterns.length > 0, text: `น้อง ${lateInterns.length} คนมีงานเลยกำหนดส่ง (${lateInterns.map((u) => u.username).join(", ")}) ลองทักไปถาม`, go: toInterns },
     { show: neverIn.length > 0, text: `น้องยังไม่เคย login ${neverIn.length} คน ส่ง PIN ให้แล้วหรือยัง`, go: toInterns },
     { show: stale.length > 0, text: `น้องไม่ได้เข้ามาเกิน ${STALE_DAYS} วัน ${stale.length} คน ลองทักไปถาม`, go: toInterns },
     ...admin.assignments
@@ -147,7 +164,7 @@ export function AdminOverview({ admin, content, nav, titles }: Props) {
             onClick={k.go}
             className="flex min-h-24 flex-col items-start gap-0.5 rounded-xl border border-fd-border bg-fd-card px-4 py-3 text-start hover:border-fd-primary/50 hover:bg-fd-accent"
           >
-            <span className={`text-3xl leading-tight font-bold tabular-nums ${k.urgent ? "text-orange-700 dark:text-orange-400" : ""}`}>{admin.loading ? "–" : k.n}</span>
+            <span className={`text-3xl leading-tight font-bold tabular-nums ${k.urgent ? "text-red-700 dark:text-red-400" : ""}`}>{admin.loading ? <Skeleton className="h-8 w-10" /> : k.n}</span>
             <span className="text-sm font-semibold">{k.label}</span>
             <span className="line-clamp-1 text-xs text-fd-muted-foreground">{k.hint}</span>
           </button>
@@ -163,7 +180,7 @@ export function AdminOverview({ admin, content, nav, titles }: Props) {
               งานวันนี้
             </h2>
             {admin.loading ? (
-              <p className="text-sm text-fd-muted-foreground">กำลังโหลด…</p>
+              <SkeletonList rows={3} />
             ) : todo.length === 0 ? (
               <p className="flex items-center gap-2 rounded-xl border border-fd-border bg-fd-card px-4 py-3 text-sm">
                 <PartyPopper className="size-4 text-green-600" /> ไม่มีงานค้าง ทุกเรื่องได้รับการดูแลแล้ว
@@ -185,14 +202,15 @@ export function AdminOverview({ admin, content, nav, titles }: Props) {
 
           <section id="interns" aria-labelledby="interns-title" className="flex flex-col gap-2">
             <h2 id="interns-title" className="text-base font-semibold">
-              น้องแต่ละคน ({interns.length})
+              น้องแต่ละคน {admin.loading ? "" : `(${interns.length})`}
             </h2>
             <div className="overflow-x-auto rounded-xl border border-fd-border">
-              <table className="w-full min-w-[720px] text-sm">
+              <table className="w-full min-w-[820px] text-sm">
                 <thead className="bg-fd-muted text-left">
                   <tr>
                     <th className="px-3 py-2">ชื่อผู้ใช้</th>
                     <th className="px-3 py-2">อยู่ขั้น</th>
+                    <th className="px-3 py-2">งานที่ส่ง</th>
                     <th className="px-3 py-2">การ์ดที่ผ่าน</th>
                     <th className="px-3 py-2">ผ่านล่าสุด</th>
                     <th className="px-3 py-2">เข้าล่าสุด</th>
@@ -201,8 +219,8 @@ export function AdminOverview({ admin, content, nav, titles }: Props) {
                 <tbody>
                   {interns.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="px-3 py-6 text-center text-fd-muted-foreground">
-                        {admin.loading ? "กำลังโหลด…" : "ยังไม่มีบัญชีน้อง สร้างได้ในแท็บบัญชีผู้ใช้"}
+                      <td colSpan={6} className="px-3 py-6 text-center text-fd-muted-foreground">
+                        {admin.loading ? <Skeleton className="h-4 w-40" /> : "ยังไม่มีบัญชีน้อง สร้างได้ในแท็บบัญชีผู้ใช้"}
                       </td>
                     </tr>
                   )}
@@ -218,6 +236,9 @@ export function AdminOverview({ admin, content, nav, titles }: Props) {
                           {isLockedNow(u) && <span className="ms-2 text-xs text-orange-700 dark:text-orange-400">ล็อกอยู่</span>}
                         </td>
                         <td className="px-3 py-2 whitespace-nowrap">{s.where}</td>
+                        <td className="px-3 py-2">
+                          <WorkCell w={workOf.get(u.id)} ready={subs !== null} />
+                        </td>
                         <td className="px-3 py-2">
                           {/* shrink-0: แถบมี overflow-hidden ทำให้ flex บีบมันได้ถึง 0 จอแคบจึงเหลือแค่จุด */}
                           <div className="flex items-center gap-2">
@@ -370,4 +391,20 @@ function hotPages(threads: AdminState["threads"], now: number) {
     .map(([url, count]) => ({ url, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
+}
+
+// ช่อง "งานที่ส่ง" ในตารางน้อง: ผ่าน/ทั้งหมด + ป้ายเตือนเฉพาะที่ต้องทำอะไรต่อ (ไม่มีโจทย์ในรุ่น = ขีด)
+function WorkCell({ w, ready }: { w: ReturnType<typeof workSummary> | undefined; ready: boolean }) {
+  if (!ready) return <span className="text-fd-muted-foreground">…</span>;
+  if (!w || w.total === 0) return <span className="text-fd-muted-foreground">-</span>;
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 whitespace-nowrap">
+      <span className="tabular-nums">
+        {w.passed}/{w.total}
+      </span>
+      {w.late > 0 && <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${RED}`}>เลยกำหนด {w.late}</span>}
+      {w.oldWaiting > 0 && <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${ORANGE}`}>รอตรวจนาน {w.oldWaiting}</span>}
+      {w.revise > 0 && <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${BLUE}`}>รอน้องแก้ {w.revise}</span>}
+    </div>
+  );
 }

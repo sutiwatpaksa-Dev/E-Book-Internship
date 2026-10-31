@@ -14,7 +14,7 @@ export type RoadmapLevel = { title: string; goal: string; items: RoadmapItem[] }
 
 export const roadmap: RoadmapLevel[] = [
   {
-    title: "ด่าน 1 · เตรียมตัว",
+    title: "ภาค 1 · เตรียมตัว",
     goal: "เครื่องพร้อม เก็บงานเป็น รันของใน container ได้",
     items: [
       { num: "00", title: "ก่อนเริ่ม", link: "/00-start", outcome: "ติดตั้งเครื่องมือครบ ใช้ Terminal เบื้องต้นได้", time: "2-3 ชม." },
@@ -23,7 +23,7 @@ export const roadmap: RoadmapLevel[] = [
     ],
   },
   {
-    title: "ด่าน 2 · ภาษาและ API",
+    title: "ภาค 2 · ภาษาและ API",
     goal: "เขียน TypeScript และคุยกันผ่าน HTTP เป็น",
     items: [
       { num: "03", title: "Runtime & Package Manager", link: "/03-node-yarn-bun", outcome: "แยกตัวรันกับตัวจัดการ library ได้ เลือกเครื่องมือเป็น", time: "4 ชม." },
@@ -33,7 +33,7 @@ export const roadmap: RoadmapLevel[] = [
     ],
   },
   {
-    title: "ด่าน 3 · ข้อมูล",
+    title: "ภาค 3 · ข้อมูล",
     goal: "เก็บข้อมูลให้ถูกที่ และต่อจากโค้ดได้",
     items: [
       { num: "06", title: "ประเภทฐานข้อมูล", link: "/06-sql-nosql", outcome: "แยกประเภทฐานข้อมูลได้ เขียน SQL พื้นฐาน เข้าใจ transaction", time: "5 ชม." },
@@ -45,7 +45,7 @@ export const roadmap: RoadmapLevel[] = [
     ],
   },
   {
-    title: "ด่าน 4 · มืออาชีพ",
+    title: "ภาค 4 · มืออาชีพ",
     goal: "หาบั๊กเองเป็นระบบ และไม่เปิดช่องโหว่",
     items: [
       { num: "09", title: "Debugging", link: "/09-debugging", outcome: "หาบั๊กเองเป็นระบบ ใช้ debugger ได้", time: "3 ชม." },
@@ -54,7 +54,7 @@ export const roadmap: RoadmapLevel[] = [
     ],
   },
   {
-    title: "ด่าน 5 · สร้างเว็บ Fullstack",
+    title: "ภาค 5 · สร้างเว็บ Fullstack",
     goal: "หน้าบ้าน หลังบ้าน และ login ครบในโปรเจกต์เดียว",
     items: [
       { num: "11", title: "สร้างหน้าเว็บด้วย React", link: "/11-react", outcome: "สร้างหน้าเว็บจากชิ้นส่วนเล็กๆ ดึงข้อมูล ทำฟอร์ม", time: "4 ชม." },
@@ -69,14 +69,14 @@ export const roadmap: RoadmapLevel[] = [
     ],
   },
   {
-    title: "ด่าน 6 · Mini Project",
+    title: "ภาค 6 · Mini Project",
     goal: "ส่งมอบงานแบบลูกค้าจริง (ต้อง login)",
     items: [
       { num: "🏪", title: "เว็บไซต์ STARTER", link: "/starter", outcome: "เว็บไซต์ธุรกิจ Fullstack หน้าบ้าน + หลังบ้าน + DB", time: "10 วันทำงาน" },
     ],
   },
   {
-    title: "ด่าน 7 · ขึ้นเว็บจริง",
+    title: "ภาค 7 · ขึ้นเว็บจริง",
     goal: "เว็บออนไลน์บนโดเมนจริง และดูแลต่อได้",
     items: [
       { num: "17", title: "เน็ตเวิร์กพื้นฐาน", link: "/17-network", outcome: "เปิดเว็บ 1 ครั้งเกิดอะไรขึ้น และพังตรงไหนได้บ้าง", time: "3 ชม." },

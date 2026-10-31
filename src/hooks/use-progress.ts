@@ -89,6 +89,9 @@ export function useProgress() {
 
   // ตอน render ฝั่ง server ไม่มี localStorage จึงถือว่ายังไม่ได้ติ๊กอะไร
   const done = useSyncExternalStore(subscribe, read, () => EMPTY);
+  // ready: ตัวเลขที่แสดงเชื่อถือได้แล้ว · login อยู่แต่ยังไม่ได้ข้อมูลจากบัญชี = ยังไม่ ready (ห้ามโชว์ 0/39 ที่ยังไม่จริง ให้โชว์โครงรอแทน)
+  const loaded = useSyncExternalStore(subscribe, () => server !== null, () => false);
+  const ready = !role || loaded;
 
   const toggle = (link: string) => {
     const before = read();
@@ -111,5 +114,5 @@ export function useProgress() {
       toast.error("บันทึกความคืบหน้าไม่สำเร็จ ลองกดอีกครั้ง");
     });
   };
-  return { done, toggle };
+  return { done, toggle, ready };
 }

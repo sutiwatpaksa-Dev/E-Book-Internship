@@ -1,4 +1,4 @@
-import type { AdminAssignment, AssignmentInput, AuditEntry, BulkResult, Cohort, CohortInput, SignupSettings, FileInfo, IssuedPin, ProgressEntry, Role, ThreadDetail, ThreadStatus, ThreadSummary, User } from "@/types";
+import type { PostSend, AdminAssignment, AssignmentInput, AuditEntry, BulkResult, Cohort, CohortInput, SignupSettings, FileInfo, IssuedPin, ProgressEntry, Role, ThreadDetail, ThreadStatus, ThreadSummary, User } from "@/types";
 import { jsonBody, request } from "./client";
 
 export const adminApi = {
@@ -15,6 +15,9 @@ export const adminApi = {
   listAssignments: () => request<AdminAssignment[]>("/admin/assignments"),
   createAssignment: (slug: string, input: AssignmentInput) => request<{ id: number }>("/admin/assignments", jsonBody("POST", { slug, ...input })),
   updateAssignment: (id: number, input: AssignmentInput) => request<null>(`/admin/assignments/${id}`, jsonBody("PUT", input)),
+  addPost: (id: number, input: PostSend) => request<{ id: string }>(`/admin/assignments/${id}/posts`, jsonBody("POST", input)),
+  updatePost: (id: number, roundId: string, input: PostSend) => request<null>(`/admin/assignments/${id}/posts/${roundId}`, jsonBody("PUT", input)),
+  removePost: (id: number, roundId: string) => request<null>(`/admin/assignments/${id}/posts/${roundId}`, { method: "DELETE" }),
   uploadAssignmentPdf: (id: number, file: File) =>
     request<FileInfo>(`/admin/assignments/${id}/pdf`, { method: "PUT", headers: { "Content-Type": "application/pdf" }, body: file }),
   setCohortAssignments: (id: number, assignmentIds: number[]) => request<null>(`/admin/cohorts/${id}/assignments`, jsonBody("PUT", { assignmentIds })),

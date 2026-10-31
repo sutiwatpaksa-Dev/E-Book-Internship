@@ -186,7 +186,7 @@ export function BookPage() {
 
 **ในโจทย์ฝึกงาน** (ตัวอย่างจาก STARTER)**:** วันที่ 6 ทำ layout (Navbar + Footer) ด้วยโครงหน้าร่วมแบบข้อ 3 และวันที่ 9 ตรวจ SEO: ทุกหน้ามี title/description, มี OG tags, รูปมี `alt`, `<h1>` หน้าละ 1 ตัว, มี `robots.txt` และ `sitemap.xml` (ไฟล์ธรรมดาในโฟลเดอร์ `client/public/`) และ **README ต้องอธิบายข้อจำกัด SEO ของเว็บแบบ [SPA](/glossary#spa)** (ดูย่อหน้า "ข้อจำกัดของเว็บ Vite + React Router" ด้านล่าง)
 
-**เว็บคู่มือนี้:** ใช้ Next.js ที่มี router ในตัว: แต่ละโฟลเดอร์ใน `src/app/` คือที่อยู่หนึ่งหน้า (`src/app/(app)/today/page.tsx` คือ `/today`) แนวคิดเดียวกับ React Router คือ "ที่อยู่ → หน้า" + "โครงหน้าร่วม" (`layout.tsx` ทำหน้าที่เดียวกับ `PublicLayout` + `Outlet`) ส่วนชื่อหน้าตั้งด้วย `metadata` เช่น หน้าวันนี้ตั้ง `title: "วันนี้"`
+**เว็บคู่มือนี้:** ใช้ Next.js ที่มี router ในตัว: แต่ละโฟลเดอร์ใน `src/app/` คือที่อยู่หนึ่งหน้า (`src/app/(app)/dashboard/page.tsx` คือ `/dashboard`) แนวคิดเดียวกับ React Router คือ "ที่อยู่ → หน้า" + "โครงหน้าร่วม" (`layout.tsx` ทำหน้าที่เดียวกับ `PublicLayout` + `Outlet`) ส่วนชื่อหน้าตั้งด้วย `metadata` เช่น หน้าวันนี้ตั้ง `title: "วันนี้"`
 
 ข้อจำกัดของเว็บ Vite + React Router ที่ต้องอธิบายลูกค้าได้: server ส่ง HTML ว่างมาก่อน แล้ว JavaScript ค่อยวาดเนื้อหา Google รอวาดได้ แต่แอปแชตบางตัวไม่รอ การ์ดแชร์ลิงก์จึงอาจไม่ขึ้นตามชื่อหน้าที่ตั้งในชิ้นส่วน
 

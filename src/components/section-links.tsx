@@ -1,21 +1,21 @@
 "use client";
 
-import { FolderKanban, LayoutGrid, Lock, MessageCircle, Route, Sun, type LucideIcon } from "lucide-react";
+import { FolderKanban, LayoutDashboard, LayoutGrid, Lock, MessageCircle, Route, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 import { useUnread } from "@/hooks/use-unread";
 import { gate } from "@/lib/page-access";
-import { CARDS_URL, sectionOf, TODAY_URL, type NavSection } from "@/lib/nav-tree";
+import { CARDS_URL, sectionOf, DASHBOARD_URL, type NavSection } from "@/lib/nav-tree";
 import { useSite } from "./nav-provider";
 
-// เมนูหลัก 4 หมวด ใช้ทั้งบน headbar (จอกว้าง) ลิ้นชักมือถือ และแถบล่างมือถือ
+// เมนูหลัก 4 หมวด: งานของน้อง (ภาพรวม, โจทย์) ก่อน คู่มือ (เส้นทาง, คลังการ์ด) เป็นตัวเลือกเสริม ใช้ทั้งบน headbar (จอกว้าง) ลิ้นชักมือถือ และแถบล่างมือถือ
 // ไฮไลต์ตามหมวดของหน้าที่เปิดอยู่ เช่น เปิดการ์ด Migration → "คลังการ์ด" ติดสี
 const SECTIONS: { id: NavSection; label: string; short: string; href: string; icon: LucideIcon }[] = [
-  { id: "today", label: "วันนี้", short: "วันนี้", href: TODAY_URL, icon: Sun },
+  { id: "dashboard", label: "ภาพรวม", short: "ภาพรวม", href: DASHBOARD_URL, icon: LayoutDashboard },
+  { id: "project", label: "โจทย์ฝึกงาน", short: "โจทย์", href: "/starter", icon: FolderKanban },
   { id: "path", label: "เส้นทาง 7 ขั้น", short: "เส้นทาง", href: "/learn", icon: Route },
   { id: "cards", label: "คลังการ์ด", short: "การ์ด", href: CARDS_URL, icon: LayoutGrid },
-  { id: "project", label: "โจทย์ฝึกงาน", short: "โจทย์", href: "/starter", icon: FolderKanban },
 ];
 
 function useSections() {
@@ -53,7 +53,7 @@ export function BottomNav() {
   const pathname = usePathname();
   const unread = useUnread();
   const asking = pathname.startsWith("/questions");
-  const tab = "relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium";
+  const tab = "relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium";
 
   return (
     <nav

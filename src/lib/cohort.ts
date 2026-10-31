@@ -49,3 +49,31 @@ export const cohortRange = (c: Pick<Cohort, "startsOn" | "endsOn">) =>
 // ตัวกรอง "รุ่น" ในหลังบ้าน: id ของรุ่น, ทุกรุ่น, หรือบัญชีที่ไม่มีรุ่น
 export type CohortFilter = number | "all" | "none";
 export const inCohort = (cohortId: number | null, f: CohortFilter) => f === "all" || (f === "none" ? cohortId === null : cohortId === f);
+
+// วันทำงานที่ n ของรุ่น (n=1 = วันทำงานแรกนับจากวันเริ่ม) เป็น YYYY-MM-DD · นับแบบเดียวกับ workdays() จึงขึ้นกับจันทร์–ศุกร์เท่านั้น
+// ไม่รู้วันหยุดราชการ วันที่ที่ได้จึงเป็นค่าประมาณ (หน้าเว็บต้องบอกผู้ใช้) · n < 1 คืน null
+export function workdayDate(startsOn: string, n: number): string | null {
+  if (!Number.isInteger(n) || n < 1) return null;
+  const d = new Date(`${startsOn}T00:00:00Z`);
+  let count = 0;
+  for (;;) {
+    const w = d.getUTCDay();
+    if (w !== 0 && w !== 6 && ++count === n) return d.toISOString().slice(0, 10);
+    d.setUTCDate(d.getUTCDate() + 1);
+  }
+}
+
+// ห่างกันกี่วันตามปฏิทิน (to - from) เป็นบวกเมื่อ to อยู่หลัง from
+export const daysBetween = (from: string, to: string) => Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
+
+// "ศ. 6 พ.ย." ใช้ในกำหนดส่ง
+export const thaiDayMonth = (d: string) => new Date(`${d}T00:00:00+07:00`).toLocaleDateString("th-TH", { weekday: "short", day: "numeric", month: "short", timeZone: "Asia/Bangkok" });
+
+// วันที่ปฏิทิน → "วันทำงานที่ N ของรุ่น" (ตรงข้ามกับ workdayDate) · ก่อนวันเริ่มรุ่น = null
+// ตรงกับเสาร์-อาทิตย์ = นับเป็นวันทำงานสุดท้ายก่อนหน้า (ศุกร์) ให้ผู้เรียกเตือนผู้ใช้ด้วย isWeekend
+export function dayOfDate(startsOn: string, date: string): number | null {
+  if (date < startsOn) return null;
+  const n = workdays(startsOn, date);
+  return n >= 1 ? n : null;
+}
+export const isWeekend = (date: string) => [0, 6].includes(new Date(`${date}T00:00:00Z`).getUTCDay());

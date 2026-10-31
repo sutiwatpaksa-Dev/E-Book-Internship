@@ -14,6 +14,7 @@ import { Button } from "./button";
 import { ConfirmBox } from "./confirm-box";
 import { EmptyState } from "./empty-state";
 import { Field, Input, inputClass } from "./field";
+import { Skeleton, SkeletonList } from "./skeleton";
 
 // สีป้ายสถานะ: กำลังฝึก = สีหลัก, เลยวันจบ = ส้ม (ต้องมีคนตัดสินใจ), ที่เหลือ = เทา
 const STATUS_TONE: Record<CohortStatus, string> = {
@@ -69,7 +70,9 @@ function CohortList({ admin, nav }: { admin: AdminState; nav: AdminNav }) {
         />
       )}
 
-      {admin.cohorts.length === 0 && !creating ? (
+      {admin.loading && admin.cohorts.length === 0 ? (
+        <SkeletonList rows={3} />
+      ) : admin.cohorts.length === 0 && !creating ? (
         <EmptyState icon={GraduationCap} title="ยังไม่มีรุ่นฝึกงาน">
           สร้างรุ่นแรก แล้วย้ายบัญชีน้องที่มีอยู่ ({interns.length} คน) เข้ารุ่นได้จากหน้ารุ่น
         </EmptyState>
@@ -311,7 +314,7 @@ function Assignments({ admin, nav, cohort: c }: { admin: AdminState; nav: AdminN
       {c.endedAt ? (
         <p className="text-sm text-fd-muted-foreground">รุ่นจบแล้ว เพิ่มหรือเอาโจทย์ออกไม่ได้ (ถ้าจำเป็นกด &quot;เปิดรุ่นกลับ&quot; ก่อน)</p>
       ) : (
-        <p className="text-sm text-fd-muted-foreground">เลือกได้หลายโจทย์ น้องเห็นทุกโจทย์ที่เลือก โจทย์ที่เพิ่มล่าสุดเปิดเป็นชิ้นแรก · สร้างโจทย์ใหม่ได้ที่เมนู &quot;โจทย์และตั้งค่า&quot;</p>
+        <p className="text-sm text-fd-muted-foreground">เลือกได้หลายโจทย์ น้องเห็นทุกโจทย์ที่เลือก โจทย์ที่เพิ่มล่าสุดเปิดเป็นชิ้นแรก · สร้างโจทย์ใหม่ได้ที่เมนู &quot;โจทย์ PDF และเกณฑ์&quot;</p>
       )}
       {admin.assignments.length === 0 ? (
         <p className="text-sm text-fd-muted-foreground">ยังไม่มีโจทย์ในระบบ</p>

@@ -116,9 +116,9 @@ export function RequirementViewer() {
         type="button"
         onClick={() => show(1)}
         title="แสดงเอกสาร Requirement ต้นฉบับข้างคู่มือ"
-        className="fixed right-5 bottom-5 z-40 inline-flex min-h-11 items-center gap-2 rounded-lg bg-fd-primary px-4 text-sm font-semibold text-fd-primary-foreground shadow-md transition hover:brightness-110"
+        aria-label="แสดงเอกสาร Requirement" className="fixed right-5 bottom-24 z-40 inline-flex min-h-11 items-center gap-2 rounded-lg lg:bottom-5 bg-fd-primary px-4 text-sm font-semibold text-fd-primary-foreground shadow-md transition hover:brightness-110"
       >
-        <FileText className="size-4" /> แสดงเอกสาร Requirement
+        <FileText className="size-4" /> <span className="max-sm:hidden">แสดงเอกสาร Requirement</span>
       </button>
     );
   }

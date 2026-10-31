@@ -4,6 +4,7 @@ import { MessageCircle, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useChat, type ChatSide } from "@/hooks/use-chat";
 import type { InternThreadKind, ThreadKind } from "@/types";
+import { SkeletonList } from "./skeleton";
 import { Button } from "./button";
 import { EmptyState } from "./empty-state";
 import { ErrorText } from "./error-text";
@@ -42,6 +43,27 @@ export function ChatPanel({ side, titles, initialId = null, initialNew = null, o
   const [filter, setFilter] = useState<Filter>("all");
 
   const rows = chat.threads.filter((t) => filter === "all" || (filter === "unread" ? t.unread : t.kind === filter));
+  // จอกว้างที่ยังไม่ได้เลือกเรื่อง: เปิดเรื่องแรก (ที่ยังไม่อ่านก่อน) ให้ฝั่งขวาไม่ว่าง · มือถือไม่ทำ เพราะเลือกแล้วรายการจะถูกซ่อน
+  const autoPicked = useRef(false);
+  useEffect(() => {
+    if (autoPicked.current || chat.selectedId !== null || composing !== null || chat.threads.length === 0) return;
+    autoPicked.current = true;
+    if (!window.matchMedia("(min-width: 768px)").matches) return;
+    chat.select((chat.threads.find((t) => t.unread) ?? chat.threads[0]).id);
+  }, [chat, composing]);
+  // J / K = เรื่องถัดไป / ก่อนหน้า (เฉพาะตอนไม่ได้พิมพ์อยู่ในช่องกรอก)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || (e.key !== "j" && e.key !== "k")) return;
+      const t = e.target as HTMLElement;
+      if (t.closest("input, textarea, select, [contenteditable]")) return;
+      const i = rows.findIndex((r) => r.id === chat.selectedId);
+      const next = rows[e.key === "j" ? Math.min(rows.length - 1, i + 1) : Math.max(0, i - 1)];
+      if (next) chat.select(next.id);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  });
   const showRight = composing !== null || chat.selectedId !== null;
 
   return (
@@ -61,21 +83,23 @@ export function ChatPanel({ side, titles, initialId = null, initialNew = null, o
                 <Plus className="size-4" /> เริ่มเรื่องใหม่
               </Button>
             )}
+            <div role="group" aria-label="กรองเรื่อง" className="no-scrollbar flex w-full gap-1 overflow-x-auto pb-1">
             {FILTERS.map((f) => (
               <button
                 key={f.id}
                 type="button"
                 aria-pressed={f.id === filter}
                 onClick={() => setFilter(f.id)}
-                className={`h-8 rounded-md px-2 text-xs ${f.id === filter ? "bg-fd-primary/10 font-semibold text-fd-primary" : "hover:bg-fd-accent"}`}
+                className={`h-9 shrink-0 rounded-md px-2.5 text-sm ${f.id === filter ? "bg-fd-primary/10 font-semibold text-fd-primary" : "hover:bg-fd-accent"}`}
               >
                 {f.label}
               </button>
             ))}
+            </div>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto">
             {chat.loading ? (
-              <p className="p-4 text-sm text-fd-muted-foreground">กำลังโหลด…</p>
+              <div className="p-3"><SkeletonList rows={5} /></div>
             ) : rows.length === 0 ? (
               <p className="p-4 text-sm text-fd-muted-foreground">{filter === "all" ? "ยังไม่มีเรื่อง" : "ไม่มีเรื่องในหมวดนี้"}</p>
             ) : (
@@ -122,7 +146,7 @@ export function ChatPanel({ side, titles, initialId = null, initialNew = null, o
           )}
         </section>
       </div>
-      <p className="text-xs text-fd-muted-foreground">อัปเดตเองทุก 20 วินาทีขณะเปิดหน้านี้ไว้ และทันทีเมื่อกลับมาที่แท็บนี้</p>
+      <p className="text-sm text-fd-muted-foreground">อัปเดตเองทุก 20 วินาที · กด J / K เลื่อนเรื่อง · Ctrl/⌘ + Enter เพื่อส่ง</p>
     </div>
   );
 }

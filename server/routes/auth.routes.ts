@@ -2,6 +2,7 @@ import { Hono, type Context } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { env } from "../config/env";
 import type { Role } from "../db/schema";
+import { devSwitchAllowed } from "../lib/dev-switch";
 import { createSessionToken, readSessionToken, ROLE_HINT_COOKIE, SESSION_COOKIE, SESSION_SECONDS } from "../lib/session";
 import { authService } from "../services/auth.service";
 import { registerService } from "../services/register.service";
@@ -73,4 +74,14 @@ authRoutes.get("/me", async (c) => {
   const user = session && (await authService.activeUser(session.userId, session.ver));
   if (!session || !user) return c.json({ error: "ยังไม่ได้ login" }, 401);
   return c.json({ username: session.username, role: session.role, mustSetPassword: user.mustSetPassword });
+});
+
+// ปุ่มสลับบัญชีทดสอบ (เฉพาะในเครื่อง): นอกเงื่อนไข devSwitchAllowed ตอบเหมือนไม่มีหน้านี้
+const devOn = () => devSwitchAllowed({ NODE_ENV: process.env.NODE_ENV, DATABASE_URL: env.DATABASE_URL, APP_ORIGIN: env.APP_ORIGIN });
+authRoutes.get("/dev-accounts", async (c) => (devOn() ? c.json(await authService.devAccounts()) : c.json({ error: "ไม่พบ", path: c.req.path }, 404)));
+authRoutes.post("/dev-switch", async (c) => {
+  if (!devOn()) return c.json({ error: "ไม่พบ", path: c.req.path }, 404);
+  const body = (await c.req.json().catch(() => null)) as { username?: unknown } | null;
+  if (typeof body?.username !== "string") return c.json({ error: "ระบุบัญชี" }, 400);
+  return issue(c, await authService.devSwitch(body.username));
 });

@@ -6,7 +6,7 @@ import { Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { stepBySlug, stepOfUrl } from "@/data/learn";
-import { sectionOf, stageOf, TODAY_URL } from "@/lib/nav-tree";
+import { sectionOf, stageOf, DASHBOARD_URL } from "@/lib/nav-tree";
 import { AccountMenu } from "./account-menu";
 import { MenuButton } from "./mobile-drawer";
 import { NotificationBell } from "./notification-bell";
@@ -18,7 +18,7 @@ const iconButton = "flex size-11 shrink-0 items-center justify-center rounded-lg
 
 // แถบบนสุดทุกหน้า: โลโก้ · เมนูหลัก 4 หมวด · ค้นหา · โหมดมืด · บัญชี
 // ความสูงมาจากตัวแปร --site-header-h ใน global.css ซึ่ง Fumadocs ใช้ต่อ (sidebar/สารบัญขวาติดอยู่ใต้แถบนี้พอดี)
-// menu=false: หน้าที่ไม่มี sidebar (เช่น /today) ไม่ต้องมีปุ่ม ☰ ใช้แถบล่างแทน
+// menu=false: หน้าที่ไม่มี sidebar (เช่น /dashboard) ไม่ต้องมีปุ่ม ☰ ใช้แถบล่างแทน
 export function SiteHeader({ menu = true }: { menu?: boolean }) {
   const { version } = useSite();
 
@@ -27,14 +27,14 @@ export function SiteHeader({ menu = true }: { menu?: boolean }) {
       <div className="flex min-h-0 flex-1 items-center gap-1 px-2 sm:gap-3 md:px-4">
         {menu && <MenuButton label="เปิดเมนูบทเรียน" />}
 
-        <Link href={TODAY_URL} className="flex min-h-11 items-center gap-2.5 me-1">
+        <Link href={DASHBOARD_URL} className="flex min-h-11 items-center gap-2.5 me-1">
           <BrandMark size={30} />
           <span className="flex flex-col leading-tight">
-            <span className="font-bold">คู่มือฝึกงาน</span>
-            <span className="text-[11px] text-fd-muted-foreground max-sm:hidden">Blicktech · Full-stack</span>
+            <span className="font-bold whitespace-nowrap">คู่มือฝึกงาน</span>
+            <span className="text-xs text-fd-muted-foreground max-xl:hidden">Blicktech · Full-stack</span>
           </span>
         </Link>
-        <Link href="/changelog" title="มีอะไรใหม่" className="rounded-full bg-fd-primary/10 px-2 py-0.5 text-[11px] font-semibold text-fd-primary hover:bg-fd-primary/15 max-sm:hidden">
+        <Link href="/changelog" title="มีอะไรใหม่" className="rounded-full bg-fd-primary/10 px-2 py-0.5 text-xs font-semibold text-fd-primary hover:bg-fd-primary/15 max-xl:hidden">
           v{version}
         </Link>
 
@@ -44,7 +44,7 @@ export function SiteHeader({ menu = true }: { menu?: boolean }) {
 
         <div className="ms-auto flex items-center gap-1.5 sm:gap-2">
           <SearchButton />
-          <ThemeSwitch className="max-md:hidden" />
+          <ThemeSwitch className="min-h-11 px-1.5 max-md:hidden" />
           <NotificationBell />
           <AccountMenu />
         </div>
@@ -66,11 +66,11 @@ function SearchButton() {
       <button
         type="button"
         onClick={() => setOpenSearch(true)}
-        className="flex h-10 w-56 items-center gap-2 rounded-lg border border-fd-border bg-fd-secondary/50 px-3 text-left text-sm text-fd-muted-foreground hover:bg-fd-accent max-md:hidden xl:w-64"
+        className="flex h-10 w-44 items-center gap-2 rounded-lg border border-fd-border bg-fd-secondary/50 px-3 text-left text-sm text-fd-muted-foreground hover:bg-fd-accent max-md:hidden xl:w-64"
       >
         <Search className="size-4" />
-        <span className="flex-1">ค้นหาในคู่มือ</span>
-        <span className="flex gap-0.5">
+        <span className="flex-1 truncate">ค้นหาในคู่มือ</span>
+        <span className="flex gap-0.5 max-xl:hidden">
           {hotKey.map((k, i) => (
             <kbd key={i} className="rounded border border-fd-border bg-fd-background px-1.5 text-xs">
               {k.display}
@@ -82,7 +82,7 @@ function SearchButton() {
   );
 }
 
-// แถบเล็กใต้ headbar บนมือถือ: บอกว่าอยู่ด่านไหน บทที่เท่าไร (จอกว้างดูจาก sidebar ได้อยู่แล้ว)
+// แถบเล็กใต้ headbar บนมือถือ: บอกว่าอยู่ภาคไหน บทที่เท่าไร (จอกว้างดูจาก sidebar ได้อยู่แล้ว)
 function WhereAmI() {
   const { nav } = useSite();
   const pathname = usePathname();
@@ -102,8 +102,8 @@ function WhereAmI() {
       ? `ขั้น ${stepBySlug(step).num} · ${stepBySlug(step).name}`
       : section === "path"
         ? "แผนที่ 7 ขั้น"
-        : section === "today"
-        ? "วันนี้"
+        : section === "dashboard"
+        ? "ภาพรวม"
         : nav.refs.some((r) => r.url === pathname)
           ? "อ้างอิง"
           : section === "cards"

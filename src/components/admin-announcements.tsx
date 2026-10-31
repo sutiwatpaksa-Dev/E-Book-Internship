@@ -2,6 +2,7 @@
 
 import { Megaphone } from "lucide-react";
 import { useState } from "react";
+import type { AdminState } from "@/hooks/use-admin";
 import type { ContentAdminState } from "@/hooks/use-content-admin";
 import { timeAgo } from "@/lib/thread-labels";
 import type { Announcement, Audience } from "@/types";
@@ -14,18 +15,20 @@ const AUDIENCE_LABEL: Record<Audience, string> = { intern: "น้องฝึ�
 
 // ประกาศ = แถบบนหน้า "วันนี้" ของคนในกลุ่มที่เลือก + แจ้งเตือนที่กระดิ่ง 1 ครั้งตอนประกาศ
 // ตั้งวันจบไว้ได้ ถึงเวลาแล้วหายเอง ไม่ต้องกลับมาปิด
-export function AdminAnnouncements({ content }: { content: ContentAdminState }) {
+export function AdminAnnouncements({ content, admin }: { content: ContentAdminState; admin: AdminState }) {
   const [body, setBody] = useState("");
   const [audience, setAudience] = useState<Audience>("intern");
   // ค่าจาก <input type="datetime-local"> เป็นเวลาท้องถิ่นไม่มีเขตเวลา แปลงเป็น ISO ก่อนส่ง
   const [endsAt, setEndsAt] = useState("");
+  // ผูกรุ่น: ว่าง = น้องทุกรุ่น (เลือกได้เฉพาะรุ่นที่ยังไม่จบ)
+  const [cohortId, setCohortId] = useState("");
   const [confirm, setConfirm] = useState<Announcement | null>(null);
   const now = Date.now();
   const active = (a: Announcement) => new Date(a.startsAt).getTime() <= now && (!a.endsAt || new Date(a.endsAt).getTime() > now);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    const ok = await content.createAnnouncement({ body: body.trim(), audience, endsAt: endsAt ? new Date(endsAt).toISOString() : null });
+    const ok = await content.createAnnouncement({ body: body.trim(), audience, cohortId: audience === "intern" && cohortId ? Number(cohortId) : null, endsAt: endsAt ? new Date(endsAt).toISOString() : null });
     if (ok) {
       setBody("");
       setEndsAt("");
@@ -49,6 +52,20 @@ export function AdminAnnouncements({ content }: { content: ContentAdminState }) 
             ))}
           </select>
         </Field>
+        {audience === "intern" && (
+          <Field label="เฉพาะรุ่น" hint="เว้นว่าง = น้องทุกรุ่น · เลือกรุ่นแล้วเฉพาะน้องในรุ่นนั้นเห็นและได้แจ้งเตือน">
+            <select className={inputClass} value={cohortId} onChange={(e) => setCohortId(e.target.value)}>
+              <option value="">ทุกรุ่น</option>
+              {admin.cohorts
+                .filter((c) => !c.endedAt)
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+            </select>
+          </Field>
+        )}
         <Field label="หายเองเมื่อ (เว้นว่าง = จนกว่าจะกดปิด)">
           <Input type="datetime-local" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} />
         </Field>
@@ -79,7 +96,7 @@ export function AdminAnnouncements({ content }: { content: ContentAdminState }) 
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
                   <p className="whitespace-pre-line">{a.body}</p>
                   <p className="text-xs text-fd-muted-foreground">
-                    {on ? "กำลังแสดง" : "จบแล้ว"} · ถึง{AUDIENCE_LABEL[a.audience]} · {a.author} · {timeAgo(a.createdAt)}
+                    {on ? "กำลังแสดง" : "จบแล้ว"} · ถึง{AUDIENCE_LABEL[a.audience]}{a.cohortId ? ` (${admin.cohorts.find((c) => c.id === a.cohortId)?.name ?? "รุ่นที่ถูกลบ"})` : ""} · {a.author} · {timeAgo(a.createdAt)}
                     {a.endsAt && on && ` · หายเอง ${new Date(a.endsAt).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" })}`}
                   </p>
                 </div>

@@ -90,7 +90,7 @@ export function ColumnChart({ data, unit }: { data: { key: string; label: string
   return (
     // grid 2 คอลัมน์: แกน y | พื้นที่กราฟ · ป้ายแกน x อยู่แถวล่างคอลัมน์เดียวกับกราฟ จึงตรงกับแท่งเสมอ
     <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1">
-      <div className="flex h-36 flex-col justify-between text-end text-[11px] leading-none text-fd-muted-foreground tabular-nums" aria-hidden>
+      <div className="flex h-36 flex-col justify-between text-end text-xs leading-none text-fd-muted-foreground tabular-nums" aria-hidden>
         <span>{max}</span>
         <span>{max / 2}</span>
         <span>0</span>
@@ -132,7 +132,7 @@ export function ColumnChart({ data, unit }: { data: { key: string; label: string
         )}
       </div>
       <span aria-hidden />
-      <div className="flex justify-between text-[11px] text-fd-muted-foreground" aria-hidden>
+      <div className="flex justify-between text-xs text-fd-muted-foreground" aria-hidden>
         {[...marks].map((i) => (
           <span key={i}>{data[i]?.label}</span>
         ))}

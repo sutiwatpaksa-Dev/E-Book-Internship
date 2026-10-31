@@ -10,7 +10,7 @@ import { useProgress } from "@/hooks/use-progress";
 // น้องควรรู้ภายใน 5 วินาทีว่าอยู่ตรงไหนและต้องทำอะไรต่อ จึงวางปุ่มทำต่อไว้บนสุด
 export function LearnMap() {
   const { done } = useProgress();
-  // ใช้รายการเดียวกับ /today (ตัดใบที่พี่เลี้ยงซ่อน) ปุ่ม "ทำต่อ" ของสองหน้าจึงตรงกัน
+  // ใช้รายการเดียวกับ /dashboard (ตัดใบที่พี่เลี้ยงซ่อน) ปุ่ม "ทำต่อ" ของสองหน้าจึงตรงกัน
   const { cards } = useCatalog();
   const { started, card: next } = nextUp(done, cards);
 

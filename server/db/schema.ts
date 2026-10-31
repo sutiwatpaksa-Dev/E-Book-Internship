@@ -1,4 +1,5 @@
 import { type AnyPgColumn, boolean, customType, date, index, integer, jsonb, pgTable, primaryKey, serial, text, timestamp } from "drizzle-orm/pg-core";
+import type { CommentKind, CommentTemplate, Criterion, Scores } from "../../src/lib/rubric";
 import { DEFAULT_ROUNDS, type RoundDef } from "../../src/lib/submission";
 
 const bytea = customType<{ data: Buffer }>({ dataType: () => "bytea" });
@@ -92,7 +93,8 @@ export const cohortMentors = pgTable(
 export type AssignmentSection = { key: string; label: string; page: number };
 
 // ข้อมูลการตรวจของโจทย์ที่พี่เลี้ยงแก้เองจากหลังบ้าน (เฟส 1: รอบส่ง) · ค่าเริ่มต้นคือแผน 10 วันของ STARTER
-export type AssignmentRubric = { rounds: RoundDef[] };
+// criteria/templates ไม่มี = ยังไม่ตั้ง (โจทย์เก่าทำงานเหมือนเดิม ไม่มีช่องให้คะแนน)
+export type AssignmentRubric = { rounds: RoundDef[]; criteria?: Criterion[]; templates?: CommentTemplate[] };
 
 // โจทย์ฝึกงาน (เช่น STARTER) · โครงงาน 10 วัน เกณฑ์ และ stack เหมือนกันทุกโจทย์ ต่างกันที่ระบบทำให้ใคร
 // เก็บใน DB ไม่ใช่ MDX เพราะ repo นี้เปิดสาธารณะ โจทย์ของรุ่นถัดไปต้องไม่หลุดก่อนรุ่นเริ่ม
@@ -147,8 +149,52 @@ export const submissions = pgTable(
     review: text("review"),
     reviewedBy: integer("reviewed_by").references(() => users.id, { onDelete: "set null" }),
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    // คะแนนรายข้อ ณ ตอนตรวจ (สำเนาชื่อและคะแนนเต็ม) · ว่าง = ตรวจแบบไม่ให้คะแนน หรือเป็นงานเก่า
+    scores: jsonb("scores").$type<Scores>(),
   },
   (t) => [index("submissions_user_idx").on(t.userId, t.createdAt), index("submissions_waiting_idx").on(t.reviewedAt)],
+);
+
+// โพสต์งานของพี่เลี้ยงที่ไม่ผูกรอบส่ง (งานเสริม ประกาศเฉพาะงาน) ต่อรุ่น · รอบส่งปกติมาจาก assignments.rubric ไม่ต้องมีแถวที่นี่
+export const taskPosts = pgTable(
+  "task_posts",
+  {
+    id: serial("id").primaryKey(),
+    cohortId: integer("cohort_id")
+      .notNull()
+      .references(() => cohorts.id, { onDelete: "cascade" }),
+    assignmentId: integer("assignment_id").references(() => assignments.id, { onDelete: "set null" }),
+    title: text("title").notNull(),
+    body: text("body").notNull().default(""),
+    dueOn: date("due_on"),
+    createdBy: integer("created_by")
+      .notNull()
+      .references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    editedAt: timestamp("edited_at", { withTimezone: true }),
+  },
+  (t) => [index("task_posts_cohort_idx").on(t.cohortId, t.createdAt)],
+);
+
+// ความเห็นใต้งานของน้อง 1 คน: เห็นได้เฉพาะน้องคนนั้นกับพี่เลี้ยง (ไม่ใช่ทั้งรุ่น)
+// task = "<slug โจทย์>/<รหัสรอบ>" หรือ "post/<id>" · kind = ความเห็นงาน / commit / แนะนำการ์ด / เนื้อหาเพิ่มเติม · ref = tag หรือ commit ที่พูดถึง
+export const taskComments = pgTable(
+  "task_comments",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    task: text("task").notNull(),
+    authorId: integer("author_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: text("kind").$type<CommentKind>().notNull().default("review"),
+    ref: text("ref"),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("task_comments_task_idx").on(t.userId, t.task, t.createdAt)],
 );
 
 // นับครั้งที่ login ผิดต่อ IP เก็บใน DB เพราะบน Vercel แต่ละคำขออาจวิ่งไปคนละเครื่อง ตัวนับในหน่วยความจำจึงใช้ไม่ได้
@@ -313,6 +359,8 @@ export const announcements = pgTable("announcements", {
   id: serial("id").primaryKey(),
   body: text("body").notNull(),
   audience: text("audience").$type<Audience>().notNull().default("intern"),
+  // ว่าง = ทุกรุ่น · ใส่รุ่น = เห็นเฉพาะน้องในรุ่นนั้น
+  cohortId: integer("cohort_id").references(() => cohorts.id, { onDelete: "cascade" }),
   startsAt: timestamp("starts_at", { withTimezone: true }).notNull().defaultNow(),
   // ว่าง = แสดงจนกว่าพี่เลี้ยงจะกดปิด (ปิด = ตั้งเวลาจบเป็นตอนนี้ ประวัติยังอยู่)
   endsAt: timestamp("ends_at", { withTimezone: true }),

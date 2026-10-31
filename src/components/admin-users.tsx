@@ -15,6 +15,7 @@ import { CohortSelect, defaultCohortId } from "./admin-cohorts";
 import { Button } from "./button";
 import { ConfirmBox } from "./confirm-box";
 import { Field, Input, inputClass } from "./field";
+import { Skeleton, SkeletonList } from "./skeleton";
 
 const PAGE_SIZE = 10;
 const fmt = (d: string | null) => (d ? new Date(d).toLocaleString("th-TH") : "–");
@@ -111,7 +112,7 @@ export function AdminUsers({ admin, nav }: { admin: AdminState; nav: AdminNav })
           </div>
           <Field label="บทบาท">
             <select className={inputClass} value={newRole} onChange={(e) => setNewRole(e.target.value as Role)}>
-              <option value="intern">Internship</option>
+              <option value="intern">ฝึกงาน</option>
               {admin.me?.superAdmin && <option value="dev">Dev (พี่เลี้ยง)</option>}
             </select>
           </Field>
@@ -196,7 +197,7 @@ export function AdminUsers({ admin, nav }: { admin: AdminState; nav: AdminNav })
       {/* จอแคบ (มือถือ): แถวละการ์ด ปุ่มจัดการอยู่ในการ์ดเลย ไม่ต้องเลื่อนตารางไปขวาสุด (เดิมกว้าง 760px ในจอ 335px)
           ใช้ markup ชุดเดียวกับตาราง เปลี่ยนแค่ CSS ใต้ md: ข้อมูลไม่ต้องเขียนซ้ำ 2 ที่ · ชื่อช่องมาจาก data-label */}
       <div className="md:overflow-x-auto md:rounded-xl md:border md:border-fd-border">
-        <table className="w-full text-sm max-md:block md:min-w-[760px]">
+        <table className="w-full text-sm max-md:block md:min-w-[700px]">
           <thead className="bg-fd-muted text-left max-md:hidden">
             <tr>
               <th className="px-3 py-2">ชื่อผู้ใช้</th>
@@ -204,14 +205,14 @@ export function AdminUsers({ admin, nav }: { admin: AdminState; nav: AdminNav })
               <th className="px-3 py-2">รุ่น</th>
               <th className="px-3 py-2">สถานะ</th>
               <th className="px-3 py-2">เข้าล่าสุด</th>
-              <th className="px-3 py-2 text-end">จัดการ</th>
+              <th className="px-3 py-2 text-end md:sticky md:end-0 md:bg-fd-muted md:shadow-[-8px_0_8px_-8px_rgb(0_0_0/0.25)]">จัดการ</th>
             </tr>
           </thead>
           <tbody className="max-md:flex max-md:flex-col max-md:gap-3">
             {shown.length === 0 && (
               <tr className="max-md:block">
                 <td colSpan={6} className="px-3 py-6 text-center text-fd-muted-foreground max-md:block">
-                  {admin.loading ? "กำลังโหลด…" : "ไม่พบบัญชีที่ตรงกับที่ค้นหา"}
+                  {admin.loading ? <Skeleton className="h-4 w-40" /> : "ไม่พบบัญชีที่ตรงกับที่ค้นหา"}
                 </td>
               </tr>
             )}
@@ -255,7 +256,7 @@ export function AdminUsers({ admin, nav }: { admin: AdminState; nav: AdminNav })
                   {u.resetRequestedAt && !u.disabled && <span className="block text-xs text-fd-muted-foreground">{fmt(u.resetRequestedAt)}</span>}
                 </td>
                 <td data-label="เข้าล่าสุด" className="px-3 py-2 whitespace-nowrap max-md:p-0 max-md:before:block max-md:before:text-xs max-md:before:text-fd-muted-foreground max-md:before:content-[attr(data-label)]">{fmt(u.lastLoginAt)}</td>
-                <td className="px-3 py-2 max-md:col-span-2 max-md:border-t max-md:border-fd-border max-md:p-0 max-md:pt-2">
+                <td className="px-3 py-2 md:sticky md:end-0 md:bg-fd-card md:shadow-[-8px_0_8px_-8px_rgb(0_0_0/0.25)] max-md:col-span-2 max-md:border-t max-md:border-fd-border max-md:p-0 max-md:pt-2">
                   {/* ปุ่มที่ต้องทำตอนนี้อยู่ข้างนอก (ปลดล็อก, น้องขอรีเซ็ต) ที่เหลือเก็บในเมนู ⋯ แถวจะได้ไม่รก */}
                   <div className="flex items-center justify-end gap-1 whitespace-nowrap max-md:flex-wrap max-md:justify-start">
                     {isLockedNow(u) && (
@@ -296,7 +297,7 @@ export function AdminUsers({ admin, nav }: { admin: AdminState; nav: AdminNav })
 
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-fd-muted-foreground">
         <span>
-          แสดง {shown.length} จาก {rows.length} บัญชี (หน้าละ {PAGE_SIZE})
+          {admin.loading ? "กำลังโหลด…" : `แสดง ${shown.length} จาก ${rows.length} บัญชี (หน้าละ ${PAGE_SIZE})`}
         </span>
         <nav aria-label="เปลี่ยนหน้า" className="flex items-center gap-1">
           <Button variant="ghost" aria-label="หน้าก่อน" disabled={current <= 1} onClick={() => setPage(current - 1)}>
