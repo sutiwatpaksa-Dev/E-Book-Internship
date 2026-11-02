@@ -63,11 +63,23 @@ export const threadRepository = {
     return r.n;
   },
 
-  async countUnread(side: Role, ownerId?: number) {
+  // cohorts (ฝั่งพี่เลี้ยง): นับเฉพาะเรื่องของน้องในรุ่นเหล่านี้ · "none" = น้องที่ไม่มีรุ่น
+  async countUnread(side: Role, ownerId?: number, cohorts?: number[] | "none") {
+    if (Array.isArray(cohorts) && cohorts.length === 0) return 0;
+    const owners =
+      cohorts === undefined
+        ? undefined
+        : inArray(
+            threads.createdBy,
+            db
+              .select({ id: users.id })
+              .from(users)
+              .where(cohorts === "none" ? isNull(users.cohortId) : inArray(users.cohortId, cohorts)),
+          );
     const [r] = await db
       .select({ n: count() })
       .from(threads)
-      .where(and(unreadFor(side), ownerId === undefined ? undefined : eq(threads.createdBy, ownerId)));
+      .where(and(unreadFor(side), ownerId === undefined ? undefined : eq(threads.createdBy, ownerId), owners));
     return r.n;
   },
 

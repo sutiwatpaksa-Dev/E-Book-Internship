@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { dayOfDate, isWeekend, cohortDay, cohortStatus, daysBetween, inCohort, todayTH, workdayDate, workdays } from "./cohort";
+import { dayOfDate, isWeekend, cohortDay, cohortStatus, cohortQuery, daysBetween, inCohort, resolveCohortFilter, todayTH, workdayDate, workdays } from "./cohort";
 
 const c = { startsOn: "2026-11-02", endsOn: "2026-12-25", endedAt: null };
 
@@ -25,6 +25,31 @@ describe("รุ่นฝึกงาน", () => {
     expect(inCohort(null, "none")).toBe(true);
     expect(inCohort(3, "none")).toBe(false);
     expect(inCohort(3, 3)).toBe(true);
+  });
+});
+
+describe("ตัวกรอง \"รุ่นของฉัน\" ในหลังบ้าน", () => {
+  test("รุ่นของฉัน = เฉพาะรุ่นที่เป็นพี่เลี้ยงประจำ น้องที่ไม่มีรุ่นไม่นับ", () => {
+    expect(inCohort(2, "mine", [2, 5])).toBe(true);
+    expect(inCohort(3, "mine", [2, 5])).toBe(false);
+    expect(inCohort(null, "mine", [2])).toBe(false);
+  });
+  test("ค่าเริ่ม: ดูแลรุ่นอยู่ = รุ่นของฉัน ไม่ได้ดูแล = ทุกรุ่น", () => {
+    expect(resolveCohortFilter(null, [2], [1, 2])).toBe("mine");
+    expect(resolveCohortFilter(null, [], [1, 2])).toBe("all");
+  });
+  test("ค่าที่จำไว้ใช้ได้ = ใช้ต่อ (รีเฟรชแล้วไม่หาย) · ใช้ไม่ได้แล้ว = กลับค่าเริ่ม", () => {
+    expect(resolveCohortFilter("all", [2], [1, 2])).toBe("all");
+    expect(resolveCohortFilter(1, [2], [1, 2])).toBe(1);
+    expect(resolveCohortFilter(9, [2], [1, 2])).toBe("mine");
+    expect(resolveCohortFilter("mine", [], [1, 2])).toBe("all");
+    expect(resolveCohortFilter("none", [], [])).toBe("none");
+  });
+  test("ส่งให้ server", () => {
+    expect(cohortQuery("all", [2])).toBeNull();
+    expect(cohortQuery("mine", [2, 5])).toBe("2,5");
+    expect(cohortQuery("none", [])).toBe("none");
+    expect(cohortQuery(3, [])).toBe("3");
   });
 });
 

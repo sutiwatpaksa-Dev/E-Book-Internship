@@ -28,13 +28,17 @@ type Props = {
   // เปิดมาจากลิงก์ ?t=12 (เปิดเรื่องนั้นเลย) หรือ ?new=content_request (เปิดฟอร์มขอเนื้อหา)
   initialId?: number | null;
   initialNew?: InternThreadKind | null;
+  // หลังบ้านกรองรุ่นอยู่: เห็นเฉพาะเรื่องของน้องชื่อเหล่านี้ · null = ทุกเรื่อง
+  owners?: ReadonlySet<string> | null;
+  // false = ตัวกรองยังไม่พร้อม (ข้อมูลรุ่นยังโหลดไม่เสร็จ) ห้ามเปิดเรื่องอัตโนมัติ ไม่งั้นเปิดผิดเรื่องแล้วเรื่องนั้นกลายเป็นอ่านแล้ว
+  ready?: boolean;
   // บอกหน้าที่ครอบอยู่ว่าตอนนี้เปิดเรื่องไหน (หลังบ้านจดลง URL) · เรียกตอนเริ่มด้วย
   onSelect?: (id: number | null) => void;
 };
 
 // แชทแบบรายการเรื่อง + ห้องแชท (คล้าย LINE/Messenger) ใช้ทั้งน้องและพี่เลี้ยง
 // มือถือ: เห็นรายการก่อน แตะเรื่องแล้วค่อยเห็นห้องแชท (ปุ่ม ← กลับ)
-export function ChatPanel({ side, titles, initialId = null, initialNew = null, onSelect }: Props) {
+export function ChatPanel({ side, titles, initialId = null, initialNew = null, owners = null, ready = true, onSelect }: Props) {
   const chat = useChat(side, initialId);
   // เก็บ onSelect ใน ref: แม่สร้างฟังก์ชันใหม่ทุก render ถ้าใส่ใน deps จะเรียกซ้ำทุกครั้ง
   const report = useRef(onSelect);
@@ -43,15 +47,16 @@ export function ChatPanel({ side, titles, initialId = null, initialNew = null, o
   const [composing, setComposing] = useState<InternThreadKind | null>(initialNew);
   const [filter, setFilter] = useState<Filter>("all");
 
-  const rows = chat.threads.filter((t) => filter === "all" || (filter === "unread" ? t.unread : t.kind === filter));
+  const rows = chat.threads.filter((t) => (!owners || (!!t.owner && owners.has(t.owner))) && (filter === "all" || (filter === "unread" ? t.unread : t.kind === filter)));
   // จอกว้างที่ยังไม่ได้เลือกเรื่อง: เปิดเรื่องแรก (ที่ยังไม่อ่านก่อน) ให้ฝั่งขวาไม่ว่าง · มือถือไม่ทำ เพราะเลือกแล้วรายการจะถูกซ่อน
   const autoPicked = useRef(false);
+  // เลือกจากรายการที่กรองแล้วเท่านั้น: เปิดเรื่องนอกตัวกรองรุ่น = ทำให้เรื่องของรุ่นอื่นกลายเป็น "อ่านแล้ว" ทั้งที่ไม่มีใครเห็น
   useEffect(() => {
-    if (autoPicked.current || chat.selectedId !== null || composing !== null || chat.threads.length === 0) return;
+    if (!ready || autoPicked.current || chat.selectedId !== null || composing !== null || rows.length === 0) return;
     autoPicked.current = true;
     if (!window.matchMedia("(min-width: 768px)").matches) return;
-    chat.select((chat.threads.find((t) => t.unread) ?? chat.threads[0]).id);
-  }, [chat, composing]);
+    chat.select((rows.find((t) => t.unread) ?? rows[0]).id);
+  }, [chat, composing, rows, ready]);
   // J / K = เรื่องถัดไป / ก่อนหน้า (เฉพาะตอนไม่ได้พิมพ์อยู่ในช่องกรอก)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

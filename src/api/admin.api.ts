@@ -22,7 +22,8 @@ export const adminApi = {
     request<FileInfo>(`/admin/assignments/${id}/pdf`, { method: "PUT", headers: { "Content-Type": "application/pdf" }, body: file }),
   setCohortAssignments: (id: number, assignmentIds: number[]) => request<null>(`/admin/cohorts/${id}/assignments`, jsonBody("PUT", { assignmentIds })),
   listThreads: () => request<ThreadSummary[]>("/admin/threads"),
-  unreadThreads: () => request<{ count: number }>("/admin/threads/unread-count"),
+  // cohorts = ผลจาก cohortQuery() ใน src/lib/cohort.ts · ไม่ส่ง = ทุกเรื่อง
+  unreadThreads: (cohorts?: string) => request<{ count: number }>(`/admin/threads/unread-count${cohorts ? `?cohorts=${encodeURIComponent(cohorts)}` : ""}`),
   getThread: (id: number) => request<ThreadDetail>(`/admin/threads/${id}`),
   sendMessage: (input: { userIds?: number[]; cohortId?: number; subject: string; body: string }) => request<{ count: number }>("/admin/threads/send", jsonBody("POST", input)),
   replyThread: (id: number, body: string) => request<null>(`/admin/threads/${id}/messages`, jsonBody("POST", { body })),

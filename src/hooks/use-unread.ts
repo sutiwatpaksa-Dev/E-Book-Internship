@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { adminApi } from "@/api/admin.api";
 import { threadsApi } from "@/api/threads.api";
 import type { Role } from "@/types";
@@ -36,6 +36,25 @@ export async function refreshUnread(role: Role | null) {
   } catch {
     // บัตรหมดอายุหรือเน็ตหลุด: คงเลขเดิมไว้ เมนูบัญชีจัดการเรื่อง login เอง
   }
+}
+
+// ป้ายบนเมนูหลังบ้านเมื่อกรองรุ่นอยู่: นับเฉพาะเรื่องของน้องในรุ่นนั้น (cohorts = cohortQuery()) · null = ใช้เลขรวม
+// ดึงใหม่ทุกครั้งที่เลขรวมเปลี่ยน (มีคนพิมพ์มา / เราเปิดอ่าน) ไม่ต้องรอรอบ 60 วินาที
+export function useScopedUnread(cohorts: string | null) {
+  const all = useUnread();
+  const [scoped, setScoped] = useState<number | null>(null);
+  useEffect(() => {
+    if (cohorts === null) return setScoped(null);
+    let alive = true;
+    adminApi
+      .unreadThreads(cohorts)
+      .then((r) => alive && setScoped(r.count))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [cohorts, all]);
+  return cohorts === null ? all : (scoped ?? 0);
 }
 
 export function useUnread() {

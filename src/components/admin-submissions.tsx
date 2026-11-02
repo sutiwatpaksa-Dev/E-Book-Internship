@@ -36,8 +36,10 @@ export function useSubmissions() {
 }
 
 // แท็บงานที่ส่ง: ค่าเริ่มต้นโชว์แค่ที่รอตรวจ (ครั้งล่าสุดของแต่ละรอบ) · สลับดูทั้งหมดได้
-export function AdminSubmissions({ admin, onChange }: { admin: AdminState; onChange: () => void }) {
-  const { items, error, reload } = useSubmissions();
+// inScope = ตัวกรองรุ่นของหลังบ้าน (รุ่นของฉัน / ทุกรุ่น / รุ่นที่เลือก)
+export function AdminSubmissions({ admin, onChange, inScope }: { admin: AdminState; onChange: () => void; inScope: (cohortId: number | null) => boolean }) {
+  const { items: all, error, reload } = useSubmissions();
+  const items = all?.filter((s) => inScope(s.cohortId)) ?? null;
   const [show, setShow] = useState<"waiting" | "latest">("waiting");
   if (error) return <ErrorText>{error}</ErrorText>;
   if (!items) return <SkeletonList />;
@@ -50,7 +52,7 @@ export function AdminSubmissions({ admin, onChange }: { admin: AdminState; onCha
 
   return (
     <div className="flex max-w-3xl flex-col gap-4">
-      <RepoList admin={admin} items={items} />
+      <RepoList admin={admin} items={items} inScope={inScope} />
       <h2 className="text-base font-semibold">งานที่ส่งตรวจ</h2>
       <p className="text-sm text-fd-muted-foreground">น้องส่ง tag บน GitHub กดลิงก์เพื่อดูโค้ด ณ จุดที่ส่ง · ส่งซ้ำรอบเดิม = ตรวจแค่ครั้งล่าสุด</p>
       <div role="group" aria-label="แสดง" className="flex gap-2">
@@ -75,9 +77,9 @@ export function AdminSubmissions({ admin, onChange }: { admin: AdminState; onCha
 }
 
 // repo ของน้องทุกคนในรุ่นที่ยังไม่จบ: ตามดูโค้ดได้ตั้งแต่วันที่ 1 ไม่ต้องรอวันตรวจ · คนที่ยังไม่ส่งลิงก์ขึ้นให้เห็นจะได้ทัก
-function RepoList({ admin, items }: { admin: AdminState; items: AdminSubmission[] }) {
+function RepoList({ admin, items, inScope }: { admin: AdminState; items: AdminSubmission[]; inScope: (cohortId: number | null) => boolean }) {
   const running = new Set(admin.cohorts.filter((c) => !c.endedAt).map((c) => c.id));
-  const interns = admin.users.filter((u) => u.role === "intern" && !u.disabled && u.cohortId !== null && running.has(u.cohortId));
+  const interns = admin.users.filter((u) => u.role === "intern" && !u.disabled && u.cohortId !== null && running.has(u.cohortId) && inScope(u.cohortId));
   if (interns.length === 0) return null;
   const missingList = interns.filter((u) => !repoOf(items, u.id));
   const missing = missingList.length;

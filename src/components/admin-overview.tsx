@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { daysSince, isLockedNow, type AdminState } from "@/hooks/use-admin";
 import { mentorCardUrl } from "@/data/learn";
 import type { ContentAdminState } from "@/hooks/use-content-admin";
-import { useUnread } from "@/hooks/use-unread";
 import { cardEntries, cardSummary, dailyCounts, loginBuckets, shortDay, stepProgress } from "@/lib/admin-stats";
 import { inCohort, type CohortFilter } from "@/lib/cohort";
 import { BLUE, ORANGE, RED, timeAgo } from "@/lib/thread-labels";
@@ -27,22 +26,19 @@ const DAY = 24 * 60 * 60 * 1000;
 // แท็บภาพรวม: ตัวเลข 4 กล่อง (กดแล้วไปที่นั่น) → "ต้องทำวันนี้" → ความคืบหน้าของน้องทุกคน
 // ข้างขวา: หน้าที่ถูกถามบ่อย ถามซ้ำแปลว่าเนื้อหาตรงนั้นยังไม่พอ ปุ่มเพิ่มโน้ต/การ์ดอยู่ตรงนั้นเลย
 // ตัวเลขทั้งหมดคำนวณจากข้อมูลที่โหลดมาแล้ว (ไม่มีข้อมูลตัวอย่าง และไม่ต้องมีตารางใหม่)
-type Props = { admin: AdminState; content: ContentAdminState; nav: AdminNav; titles: Record<string, string> };
+// cohort + mine มาจากแถบเลือกรุ่นของหลังบ้าน (admin-panel) · unread = ข้อความยังไม่อ่านตามตัวกรองเดียวกัน
+type Props = { admin: AdminState; content: ContentAdminState; nav: AdminNav; titles: Record<string, string>; cohort: CohortFilter; mine: readonly number[]; unread: number };
 
-export function AdminOverview({ admin, content, nav, titles }: Props) {
-  const unread = useUnread();
-  const [saved, setCohort] = useCohortFilter();
+export function AdminOverview({ admin, content, nav, titles, cohort, mine, unread }: Props) {
   // ช่วงเวลาของกราฟรายวัน (ฝึกงานสั้น 14 วันเห็นภาพพอ · 30 วันไว้ดูทั้งรุ่น)
   const [days, setDays] = useState<14 | 30>(14);
-  // รุ่นที่จำไว้ถูกลบไปแล้ว (หรือรายการยังโหลดไม่เสร็จ) ให้ดูทุกรุ่นแทน
-  const cohort: CohortFilter = typeof saved === "number" && !admin.cohorts.some((c) => c.id === saved) ? "all" : saved;
   const ended = new Set(admin.cohorts.filter((c) => c.endedAt).map((c) => c.id));
   // "ทุกรุ่น" ไม่นับน้องของรุ่นที่จบแล้ว (ไม่ต้องตามว่าใครหายไป) · เลือกรุ่นที่จบแล้วตรงๆ ยังดูได้
   const interns = admin.users.filter(
-    (u) => u.role === "intern" && !u.disabled && inCohort(u.cohortId, cohort) && (cohort !== "all" || u.cohortId === null || !ended.has(u.cohortId)),
+    (u) => u.role === "intern" && !u.disabled && inCohort(u.cohortId, cohort, mine) && (cohort !== "all" || u.cohortId === null || !ended.has(u.cohortId)),
   );
   // เรื่องในแชทผูกกับชื่อเจ้าของ: กรองตามรุ่น = เอาเฉพาะเรื่องของน้องในรุ่นนั้น
-  const owners = new Set(admin.users.filter((u) => u.role === "intern" && inCohort(u.cohortId, cohort)).map((u) => u.username));
+  const owners = new Set(admin.users.filter((u) => u.role === "intern" && inCohort(u.cohortId, cohort, mine)).map((u) => u.username));
   const threads = cohort === "all" ? admin.threads : admin.threads.filter((t) => !!t.owner && owners.has(t.owner));
   const locked = admin.users.filter(isLockedNow);
   // ทุกบัญชี (รวมพี่เลี้ยง) ไม่กรองตามรุ่น: คนที่ขอรีเซ็ตเข้าระบบไม่ได้จนกว่าจะมีคนออก PIN ให้
@@ -124,25 +120,6 @@ export function AdminOverview({ admin, content, nav, titles }: Props) {
     <div className="flex flex-col gap-6">
       {/* ตัวกรองแถวเดียวด้านบน มีผลกับทุกอย่างข้างล่าง (ตัวเลข กราฟ ตาราง) ตัวเลขจึงตรงกันเสมอ */}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-        {admin.cohorts.length > 0 && (
-          <label className="flex flex-wrap items-center gap-2 text-sm font-medium">
-            ดูเฉพาะรุ่น
-            <select
-              className="min-h-11 rounded-lg border border-fd-border bg-fd-background px-3"
-              value={String(cohort)}
-              onChange={(e) => setCohort(e.target.value === "all" || e.target.value === "none" ? e.target.value : Number(e.target.value))}
-            >
-              <option value="all">ทุกรุ่นที่ยังไม่จบ</option>
-              {admin.cohorts.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                  {c.endedAt ? " (จบแล้ว)" : ""}
-                </option>
-              ))}
-              <option value="none">ไม่มีรุ่น</option>
-            </select>
-          </label>
-        )}
         <div role="group" aria-label="ช่วงเวลาของกราฟ" className="flex items-center gap-1 text-sm">
           {([14, 30] as const).map((d) => (
             <button
@@ -363,25 +340,6 @@ function OverviewCharts({ admin, interns, threads, days }: { admin: AdminState; 
 }
 
 // นับคำถามที่น้องกดถามจากหน้าไหน (pageUrl ติดมากับเรื่องอัตโนมัติจากกล่องท้ายหน้า) ในช่วง HOT_DAYS วันล่าสุด
-// รุ่นที่เลือกดูจำไว้ในเบราว์เซอร์ของพี่เลี้ยงคนนั้น (เปิดหลังบ้านครั้งหน้าไม่ต้องเลือกใหม่)
-// อ่านหลัง mount เท่านั้น ให้ render แรกตรงกับ server · localStorage ใช้ไม่ได้ (โหมดส่วนตัว) ก็แค่ไม่จำ
-const COHORT_KEY = "admin.cohort";
-function useCohortFilter() {
-  const [f, setF] = useState<CohortFilter>("all");
-  useEffect(() => {
-    try {
-      const v = localStorage.getItem(COHORT_KEY);
-      if (v) setF(v === "all" || v === "none" ? v : Number(v));
-    } catch {}
-  }, []);
-  const set = (v: CohortFilter) => {
-    setF(v);
-    try {
-      localStorage.setItem(COHORT_KEY, String(v));
-    } catch {}
-  };
-  return [f, set] as const;
-}
 
 function hotPages(threads: AdminState["threads"], now: number) {
   const counts = new Map<string, number>();

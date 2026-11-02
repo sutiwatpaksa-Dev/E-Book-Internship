@@ -6,7 +6,12 @@ import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { useAdmin } from "@/hooks/use-admin";
 import { useNavDrawer } from "@/hooks/use-nav-drawer";
 import { STATUS_LABEL } from "@/lib/thread-labels";
-import { useUnread } from "@/hooks/use-unread";
+import { useScopedUnread } from "@/hooks/use-unread";
+import { useCohortFilter } from "@/hooks/use-cohort-filter";
+import { cohortQuery, inCohort } from "@/lib/cohort";
+import { waitingOf } from "@/lib/submission";
+import type { AdminSubmission } from "@/types";
+import { CohortFilterBar } from "./cohort-filter-bar";
 import { useContentAdmin } from "@/hooks/use-content-admin";
 import { AdminBoard } from "./admin-board";
 import { AdminAnnouncements } from "./admin-announcements";
@@ -128,13 +133,20 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
   };
   const [groupOpen, setGroupOpen] = useState<Record<string, boolean>>({});
   const active = TABS.find((t) => t.id === tab)!;
-  const waiting = useUnread();
-  // จำนวนงานรอตรวจบนเมนู · โหลดใหม่หลังบันทึกผลตรวจ
-  const [waitingSubs, setWaitingSubs] = useState(0);
+  // ตัวกรองรุ่นกลาง (ภาพรวม แชท งานที่ส่ง) · mine = รุ่นที่ยังไม่จบซึ่งเราเป็นพี่เลี้ยงประจำ
+  const myId = admin.me?.id;
+  const mine = admin.cohorts.filter((c) => !c.endedAt && myId !== undefined && c.mentorIds.includes(myId)).map((c) => c.id);
+  const [cohort, setCohort] = useCohortFilter(mine, admin.cohorts.map((c) => c.id));
+  const inScope = (cohortId: number | null) => inCohort(cohortId, cohort, mine);
+  const owners = cohort === "all" ? null : new Set(admin.users.filter((u) => u.role === "intern" && inScope(u.cohortId)).map((u) => u.username));
+  const waiting = useScopedUnread(cohortQuery(cohort, mine));
+  // จำนวนงานรอตรวจบนเมนู (ตามตัวกรองรุ่น) · โหลดใหม่หลังบันทึกผลตรวจ
+  const [subs, setSubs] = useState<AdminSubmission[]>([]);
+  const waitingSubs = waitingOf(subs.filter((s) => inScope(s.cohortId))).length;
   const countSubs = () =>
     submissionsApi
       .all()
-      .then((r) => setWaitingSubs(r.waiting))
+      .then((r) => setSubs(r.items))
       .catch(() => {});
   useEffect(() => {
     countSubs();
@@ -272,12 +284,19 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
           </div>
         )}
 
+        {(tab === "questions" || tab === "submissions" || (tab === "overview" && !view.intern)) && admin.cohorts.length > 0 && (
+          <CohortFilterBar cohorts={admin.cohorts} mine={mine} value={cohort} onChange={setCohort} />
+        )}
         {tab === "overview" &&
-          (view.intern ? <AdminInternDetail admin={admin} nav={nav} userId={view.intern} /> : <AdminOverview admin={admin} content={content} nav={nav} titles={titles} />)}
+          (view.intern ? (
+            <AdminInternDetail admin={admin} nav={nav} userId={view.intern} />
+          ) : (
+            <AdminOverview admin={admin} content={content} nav={nav} titles={titles} cohort={cohort} mine={mine} unread={waiting} />
+          ))}
         {/* key: สั่งเปิดเรื่องใหม่จากข้างนอก ให้แชทเริ่มใหม่ที่เรื่องนั้น (ดู chatKey ข้างบน) */}
-        {tab === "questions" && <ChatPanel key={chatKey} side="dev" titles={titles} initialId={view.thread ?? null} onSelect={onSelectThread} />}
+        {tab === "questions" && <ChatPanel key={chatKey} side="dev" titles={titles} initialId={view.thread ?? null} owners={owners} ready={!admin.loading && !!admin.me} onSelect={onSelectThread} />}
         {tab === "board" && <AdminBoard admin={admin} nav={nav} />}
-        {tab === "submissions" && <AdminSubmissions admin={admin} onChange={countSubs} />}
+        {tab === "submissions" && <AdminSubmissions admin={admin} onChange={countSubs} inScope={inScope} />}
         {tab === "requests" && <AdminRequests admin={admin} nav={nav} />}
         {tab === "feedback" && <AdminRequests admin={admin} nav={nav} kind="feedback" />}
         {CONTENT_TABS.includes(tab) && content.loading ? (

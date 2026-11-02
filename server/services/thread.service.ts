@@ -99,7 +99,7 @@ export const threadService = {
   },
 
   listAll: () => threadRepository.listAll(),
-  unreadForDevs: () => threadRepository.countUnread("dev"),
+  unreadForDevs: (cohorts?: number[] | "none") => threadRepository.countUnread("dev", undefined, cohorts),
 
   async getAny(id: number) {
     await anyThread(id);

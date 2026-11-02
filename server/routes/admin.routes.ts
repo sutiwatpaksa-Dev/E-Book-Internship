@@ -69,7 +69,13 @@ adminRoutes.post("/threads/send", async (c) => {
 });
 
 adminRoutes.get("/threads", async (c) => c.json(await threadService.listAll()));
-adminRoutes.get("/threads/unread-count", async (c) => c.json({ count: await threadService.unreadForDevs() }));
+// ?cohorts=1,2 หรือ ?cohorts=none = นับเฉพาะเรื่องของน้องในรุ่นนั้น (ป้ายบนเมนูให้ตรงกับตัวกรองรุ่น) · ไม่ส่ง = ทุกเรื่อง
+// ค่าที่ไม่ใช่ตัวเลขถูกทิ้ง ไม่ส่งต่อไปถึง SQL
+adminRoutes.get("/threads/unread-count", async (c) => {
+  const q = c.req.query("cohorts");
+  const cohorts = q === undefined ? undefined : q === "none" ? ("none" as const) : q.split(",").map(Number).filter((n) => Number.isInteger(n) && n > 0);
+  return c.json({ count: await threadService.unreadForDevs(cohorts) });
+});
 adminRoutes.get("/threads/:id", async (c) => c.json(await threadService.getAny(Number(c.req.param("id")))));
 
 adminRoutes.post("/threads/:id/messages", async (c) => {
