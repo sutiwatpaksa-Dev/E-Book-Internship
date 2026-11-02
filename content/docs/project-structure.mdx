@@ -79,14 +79,12 @@ console.log("brand =", brand);
 อยู่ในโฟลเดอร์ `case-demo` แล้วสั่ง `bun run index.ts` บน Mac หรือ Windows จะรันได้ (`brand = Asus`) เพราะระบบไฟล์ของสองระบบนี้ไม่แยกตัวพิมพ์ แล้วลองรันแบบ Linux ใน Docker:
 
 ```bash
-# Mac / Linux / Git Bash
-docker run --rm -v "$PWD":/src:ro oven/bun:1 sh -c 'cp -r /src /app && cd /app && bun run index.ts'
+# Mac และ Windows (Git Bash) พิมพ์เหมือนกัน
+HERE=$(pwd -W 2>/dev/null || pwd)          # Windows ได้ C:/Users/... ที่ Docker อ่านออก · Mac ไม่มี -W จึงใช้ pwd ธรรมดา
+MSYS_NO_PATHCONV=1 docker run --rm -v "$HERE:/src:ro" oven/bun:1 sh -c 'cp -r /src /app && cd /app && bun run index.ts'
 ```
-```powershell
-# PowerShell: ต้องเขียน ${PWD} ไว้ในเครื่องหมายคำพูดก้อนเดียวกับ :/src:ro
-# ถ้าเขียน "$PWD":/src:ro แบบ bash, PowerShell จะตัดคำที่เครื่องหมายคำพูดปิด ได้ 2 argument แล้ว Docker อ่านคำสั่งเพี้ยน
-docker run --rm -v "${PWD}:/src:ro" oven/bun:1 sh -c 'cp -r /src /app && cd /app && bun run index.ts'
-```
+(`MSYS_NO_PATHCONV=1` กัน Git Bash แปลง `/src` ซึ่งเป็น path **ในกล่อง** ให้เป็น path ของ Windows ดู[กล่องนิสัยของ Git Bash](/00-start#windows-ใช้-git-bash-เท่านั้น) บน Mac ไม่มีผล)
+
 **ควรเห็น:**
 ```
 error: ENOENT reading "/app/laptop.ts"
