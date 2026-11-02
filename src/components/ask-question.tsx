@@ -75,7 +75,7 @@ export function AskQuestion({ pageUrl }: { pageUrl: string }) {
           <Button variant="ghost" onClick={() => setOpen(true)}>
             เขียนคำถาม
           </Button>
-          <Link href="/questions?new=content_request" className="text-sm text-fd-primary underline">
+          <Link href="/questions?new=content_request" className="inline-flex min-h-11 items-center text-sm text-fd-primary underline">
             อยากได้เนื้อหาเรื่องอื่น? ขอเนื้อหาเพิ่ม
           </Link>
         </div>

@@ -34,8 +34,9 @@ export function SiteHeader({ menu = true }: { menu?: boolean }) {
             <span className="text-xs text-fd-muted-foreground max-xl:hidden">Blicktech · Full-stack</span>
           </span>
         </Link>
-        <Link href="/changelog" title="มีอะไรใหม่" className="rounded-full bg-fd-primary/10 px-2 py-0.5 text-xs font-semibold text-fd-primary hover:bg-fd-primary/15 max-xl:hidden">
-          v{version}
+        {/* พื้นที่กดสูง 44px ส่วนป้ายยังเล็กเท่าเดิม */}
+        <Link href="/changelog" title="มีอะไรใหม่" aria-label={`เวอร์ชัน ${version} ดูมีอะไรใหม่`} className="group inline-flex min-h-11 items-center px-1 max-xl:hidden">
+          <span className="rounded-full bg-fd-primary/10 px-2 py-0.5 text-xs font-semibold text-fd-primary group-hover:bg-fd-primary/15">v{version}</span>
         </Link>
 
         <nav aria-label="เมนูหลัก" className="ms-2 flex items-center gap-0.5 max-lg:hidden">

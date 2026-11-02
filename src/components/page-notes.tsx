@@ -31,7 +31,7 @@ export function PageNotes({ pageUrl }: { pageUrl: string }) {
       {role === "dev" && (
         <Link
           href={`/dev/admin?tab=notes&note=${encodeURIComponent(pageUrl)}`}
-          className="inline-flex min-h-10 items-center gap-1.5 self-start text-sm font-medium text-fd-primary hover:underline"
+          className="inline-flex min-h-11 items-center gap-1.5 self-start text-sm font-medium text-fd-primary hover:underline"
         >
           <NotebookPen className="size-4" /> เพิ่มโน้ตหน้านี้
         </Link>

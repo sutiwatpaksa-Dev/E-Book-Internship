@@ -23,7 +23,8 @@ export function DocPage({ slugs }: { slugs: string[] | undefined }) {
   // หน้าขั้นของโครงใหม่ (/learn/coding ฯลฯ): หัวบอกขั้นที่เท่าไรและต้องได้อะไร ท้ายหน้ามีขั้นก่อน/ถัดไป
   const step = steps.find((s) => stepUrl(s.slug) === page.url) ?? null;
   return (
-    <DocsPage toc={page.data.toc} full={page.data.full} breadcrumb={{ enabled: !card }}>
+    // แถบ "ในบทนี้" ที่ติดด้านบนบนมือถือ: มีประโยชน์เฉพาะหน้ายาวที่มีหลายหัวข้อ หน้าที่มีไม่ถึง 3 หัวข้อไม่ต้องกินพื้นที่จอ
+    <DocsPage toc={page.data.toc} full={page.data.full} breadcrumb={{ enabled: !card }} tableOfContentPopover={{ enabled: page.data.toc.length >= 3 }}>
       {!page.data.hideTitle && <DocsTitle>{page.data.title}</DocsTitle>}
       {page.data.description && <DocsDescription>{page.data.description}</DocsDescription>}
       {/* เฉพาะบทหลักที่นับในความคืบหน้า (บทเสริมและหน้าอ้างอิงไม่มีปุ่มนี้) */}

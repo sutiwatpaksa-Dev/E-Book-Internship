@@ -165,7 +165,12 @@
   border-radius: 10px;
   border: 1px solid var(--color-fd-border);
 }
+/* <picture> ใช้สลับภาพแนวตั้งบนจอมือถือ: ให้กรอบและระยะเหมือนรูปปกติ */
+.prose picture img {
+  width: 100%;
+}
 .prose img + em,
+.prose picture + em,
 .prose a:has(> img) + em {
   display: block;
   text-align: center;
@@ -235,4 +240,11 @@ html.req-open #nd-docs-layout {
 .prose > ul,
 .prose > ol {
   max-width: 46rem;
+}
+
+/* ปุ่มคัดลอกลิงก์หัวข้อของ Fumadocs (24px) โผล่เฉพาะตอนเอาเมาส์ชี้ จอสัมผัสไม่มี hover จึงเป็นปุ่มล่องหนที่แตะโดนโดยไม่ตั้งใจ ซ่อนไปเลย */
+@media (hover: none) {
+  .group\/heading > button {
+    display: none;
+  }
 }

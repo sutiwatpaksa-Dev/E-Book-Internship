@@ -7,6 +7,8 @@ export const translationsTh: Record<string, string> = {
   "On this page(table of contents)": "ในบทนี้",
   "No Headings(table of contents)": "ไม่มีหัวข้อ",
   "Table of Contents(inline table of contents)": "สารบัญ",
+  "Copy Anchor Link(heading anchor)(aria-label)": "คัดลอกลิงก์หัวข้อนี้",
+  "Copied Anchor Link(heading anchor)(aria-label)": "คัดลอกลิงก์แล้ว",
   "Next Page(pagination)": "บทถัดไป",
   "Previous Page(pagination)": "บทก่อนหน้า",
   "Last updated on(page footer)": "อัปเดตล่าสุด",

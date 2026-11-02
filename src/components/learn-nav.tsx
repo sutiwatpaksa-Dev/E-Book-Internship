@@ -16,9 +16,18 @@ export function LearnNav({ onNavigate }: { onNavigate?: () => void }) {
   const { done, ready } = useProgress();
   const { cards, mentorCards, mentorStepOf } = useCatalog();
   const nav = useRef<HTMLElement>(null);
-  // ขั้นที่กางยาว: เลื่อนรายการในเมนูให้บทที่อ่านอยู่โผล่มาให้เห็น (nearest = ไม่ขยับหน้าถ้าเห็นอยู่แล้ว)
+  // ขั้นที่กางยาว: เลื่อนรายการในเมนูให้บทที่อ่านอยู่โผล่มาให้เห็น (เห็นอยู่แล้วไม่ขยับ)
+  // เลื่อนกล่องเมนูเองแทน scrollIntoView: Chrome ย้ายจุดเริ่มกด Tab ไปที่ลิงก์ที่ scrollIntoView
+  // กด Tab ครั้งแรกจึงข้ามลิงก์ "ข้ามไปเนื้อหา" กับแถบด้านบนไปทั้งหมด
   useEffect(() => {
-    nav.current?.querySelector('[aria-current="page"]')?.scrollIntoView({ block: "nearest" });
+    const el = nav.current?.querySelector<HTMLElement>('[aria-current="page"]');
+    let box = el?.parentElement ?? null;
+    while (box && !(box.scrollHeight > box.clientHeight && /(auto|scroll)/.test(getComputedStyle(box).overflowY))) box = box.parentElement;
+    if (!el || !box) return;
+    const e = el.getBoundingClientRect();
+    const b = box.getBoundingClientRect();
+    if (e.top < b.top) box.scrollTop -= b.top - e.top;
+    else if (e.bottom > b.bottom) box.scrollTop += e.bottom - b.bottom;
   }, [pathname]);
   const current = stepOfUrl(pathname) ?? mentorStepOf(pathname);
   const count = cards.filter((c) => done.has(cardUrl(c.slug))).length;
