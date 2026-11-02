@@ -1,9 +1,9 @@
 "use client";
 
-import { BookOpen, Check, ChevronRight, LayoutGrid, Map } from "lucide-react";
+import { Check, ChevronRight, LayoutGrid, Map } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Fragment, useEffect, useRef } from "react";
+import { Fragment } from "react";
 import { cardUrl, cardsOf, LEARN_BASE, legacyOf, mentorCardUrl, steps, stepOfUrl, stepUrl } from "@/data/learn";
 import { useCatalog } from "@/hooks/use-catalog";
 import { useProgress } from "@/hooks/use-progress";
@@ -15,25 +15,11 @@ export function LearnNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const { done, ready } = useProgress();
   const { cards, mentorCards, mentorStepOf } = useCatalog();
-  const nav = useRef<HTMLElement>(null);
-  // ขั้นที่กางยาว: เลื่อนรายการในเมนูให้บทที่อ่านอยู่โผล่มาให้เห็น (เห็นอยู่แล้วไม่ขยับ)
-  // เลื่อนกล่องเมนูเองแทน scrollIntoView: Chrome ย้ายจุดเริ่มกด Tab ไปที่ลิงก์ที่ scrollIntoView
-  // กด Tab ครั้งแรกจึงข้ามลิงก์ "ข้ามไปเนื้อหา" กับแถบด้านบนไปทั้งหมด
-  useEffect(() => {
-    const el = nav.current?.querySelector<HTMLElement>('[aria-current="page"]');
-    let box = el?.parentElement ?? null;
-    while (box && !(box.scrollHeight > box.clientHeight && /(auto|scroll)/.test(getComputedStyle(box).overflowY))) box = box.parentElement;
-    if (!el || !box) return;
-    const e = el.getBoundingClientRect();
-    const b = box.getBoundingClientRect();
-    if (e.top < b.top) box.scrollTop -= b.top - e.top;
-    else if (e.bottom > b.bottom) box.scrollTop += e.bottom - b.bottom;
-  }, [pathname]);
   const current = stepOfUrl(pathname) ?? mentorStepOf(pathname);
   const count = cards.filter((c) => done.has(cardUrl(c.slug))).length;
 
   return (
-    <nav ref={nav} aria-label="7 ขั้นของการทำซอฟต์แวร์" className="flex flex-col gap-0.5 text-sm">
+    <nav aria-label="7 ขั้นของการทำซอฟต์แวร์" className="flex flex-col gap-0.5 text-sm">
       <Link
         href={LEARN_BASE}
         onClick={onNavigate}
@@ -106,10 +92,6 @@ export function LearnNav({ onNavigate }: { onNavigate?: () => void }) {
       <Link href="/learn/cards" onClick={onNavigate} className="flex min-h-9 items-center gap-2 rounded-md px-2 py-1 text-fd-muted-foreground hover:bg-fd-accent">
         <LayoutGrid className="size-4" />
         คลังการ์ด
-      </Link>
-      <Link href="#full" onClick={onNavigate} className="flex min-h-9 items-center gap-2 rounded-md px-2 py-1 text-fd-muted-foreground hover:bg-fd-accent">
-        <BookOpen className="size-4" />
-        บทเรียนฉบับเต็ม (แบบเดิม)
       </Link>
     </nav>
   );

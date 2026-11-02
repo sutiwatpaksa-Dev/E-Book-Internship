@@ -1,77 +1,48 @@
 "use client";
 
-import { FolderKanban, LayoutDashboard, LayoutGrid, Lock, MessageCircle, Route, type LucideIcon } from "lucide-react";
+import { ClipboardList, LayoutDashboard, Menu, MessageCircle, Route } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 import { useUnread } from "@/hooks/use-unread";
-import { gate } from "@/lib/page-access";
-import { CARDS_URL, sectionOf, DASHBOARD_URL, type NavSection } from "@/lib/nav-tree";
-import { useSite } from "./nav-provider";
+import { DASHBOARD_URL } from "@/lib/nav-tree";
+import { useNavDrawer } from "@/hooks/use-nav-drawer";
 
-// เมนูหลัก 4 หมวด: งานของน้อง (ภาพรวม, โจทย์) ก่อน คู่มือ (เส้นทาง, คลังการ์ด) เป็นตัวเลือกเสริม ใช้ทั้งบน headbar (จอกว้าง) ลิ้นชักมือถือ และแถบล่างมือถือ
-// ไฮไลต์ตามหมวดของหน้าที่เปิดอยู่ เช่น เปิดการ์ด Migration → "คลังการ์ด" ติดสี
-const SECTIONS: { id: NavSection; label: string; short: string; href: string; icon: LucideIcon }[] = [
-  { id: "dashboard", label: "ภาพรวม", short: "ภาพรวม", href: DASHBOARD_URL, icon: LayoutDashboard },
-  { id: "project", label: "โจทย์ฝึกงาน", short: "โจทย์", href: "/starter", icon: FolderKanban },
-  { id: "path", label: "เส้นทาง 7 ขั้น", short: "เส้นทาง", href: "/learn", icon: Route },
-  { id: "cards", label: "คลังการ์ด", short: "การ์ด", href: CARDS_URL, icon: LayoutGrid },
-];
-
-function useSections() {
-  const { nav } = useSite();
+// แถบล่างบนมือถือ: ของที่น้องใช้ทุกวันอยู่ในระยะนิ้วโป้ง (ภาพรวม · กระดานงาน · ถามพี่เลี้ยง) + "เมนู" เปิดเมนูเต็ม (site-nav.tsx)
+// เมนูมีที่เดียวคือ sidebar/ลิ้นชัก แถบนี้เป็นแค่ทางลัด · จอกว้างซ่อน · หน้าเว็บต้องเว้นที่ด้านล่างให้ด้วย <BottomNavSpacer />
+// ช่องที่ 2: น้อง = กระดานงาน (เปิดได้เฉพาะน้อง) · พี่เลี้ยง/ยังไม่ login = เส้นทาง 7 ขั้น
+export function BottomNav() {
   const pathname = usePathname();
   const { role } = useSession();
-  const active = sectionOf(nav, pathname);
-  return SECTIONS.map((s) => ({ ...s, active: s.id === active, locked: gate(s.href, role) !== "allow" }));
-}
-
-export function SectionLinks({ variant }: { variant: "bar" | "pills" }) {
-  const sections = useSections();
-  const look =
-    variant === "bar"
-      ? { base: "h-10 rounded-lg px-3", on: "bg-fd-primary/10 font-semibold text-fd-primary", off: "font-medium hover:bg-fd-accent hover:text-fd-primary" }
-      : { base: "h-8 rounded-full border px-3", on: "border-fd-primary bg-fd-primary font-semibold text-fd-primary-foreground", off: "border-fd-border font-medium hover:bg-fd-accent" };
-
-  return sections.map((s) => (
-    <Link
-      key={s.id}
-      href={s.href}
-      aria-current={s.active ? "page" : undefined}
-      className={`inline-flex shrink-0 items-center gap-1.5 text-sm whitespace-nowrap transition-colors ${look.base} ${s.active ? look.on : look.off}`}
-    >
-      {s.label}
-      {s.locked && <Lock aria-label="ต้อง login" className="size-3.5" />}
-    </Link>
-  ));
-}
-
-// แถบล่างบนมือถือ: เมนูหลักอยู่ในระยะนิ้วโป้ง + ปุ่ม "ถาม" ที่ใช้บ่อยตอนติด
-// จอกว้างซ่อน (มีเมนูบน headbar แล้ว) · หน้าเว็บต้องเว้นที่ด้านล่างให้ด้วย <BottomNavSpacer />
-export function BottomNav() {
-  const sections = useSections();
-  const pathname = usePathname();
   const unread = useUnread();
-  const asking = pathname.startsWith("/questions");
+  const { open, setOpen } = useNavDrawer();
+  const on = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
   const tab = "relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium";
+  const tone = (active: boolean) => (active ? "text-fd-primary" : "text-fd-muted-foreground");
+  const second = role === "intern" ? { href: "/work", label: "กระดานงาน", icon: ClipboardList } : { href: "/learn", label: "เส้นทาง", icon: Route };
+  const links = [{ href: DASHBOARD_URL, label: "ภาพรวม", icon: LayoutDashboard }, second, { href: "/questions", label: "ถามพี่เลี้ยง", icon: MessageCircle }];
 
   return (
     <nav
-      aria-label="เมนูหลัก"
+      aria-label="ทางลัด"
       className="fixed inset-x-0 bottom-0 z-40 flex border-t border-fd-border bg-fd-background/95 px-1 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm md:hidden"
     >
-      {sections.map((s) => (
-        <Link key={s.id} href={s.href} aria-current={s.active ? "page" : undefined} className={`${tab} ${s.active ? "text-fd-primary" : "text-fd-muted-foreground"}`}>
-          <s.icon className="size-5.5" strokeWidth={s.active ? 2.4 : 2} aria-hidden />
-          {s.short}
-        </Link>
-      ))}
-      <Link href="/questions" aria-current={asking ? "page" : undefined} className={`${tab} ${asking ? "text-fd-primary" : "text-fd-muted-foreground"}`}>
-        <MessageCircle className="size-5.5" strokeWidth={asking ? 2.4 : 2} aria-hidden />
-        ถาม
-        {/* จุดเดียวกับป้ายบนเมนูบัญชี */}
-        {unread > 0 && <span aria-label={`ข้อความใหม่ ${unread} เรื่อง`} className="absolute top-2 left-1/2 ms-1.5 size-3 rounded-full border-2 border-fd-background bg-orange-500" />}
-      </Link>
+      {links.map((l) => {
+        const active = !open && on(l.href);
+        return (
+          <Link key={l.href} href={l.href} aria-current={active ? "page" : undefined} className={`${tab} ${tone(active)}`}>
+            <l.icon className="size-5.5" strokeWidth={active ? 2.4 : 2} aria-hidden />
+            {l.label}
+            {l.href === "/questions" && unread > 0 && (
+              <span aria-label={`ข้อความใหม่ ${unread} เรื่อง`} className="absolute top-2 left-1/2 ms-1.5 size-3 rounded-full border-2 border-fd-background bg-orange-500" />
+            )}
+          </Link>
+        );
+      })}
+      <button type="button" onClick={() => setOpen(true)} aria-expanded={open} className={`${tab} ${tone(open)}`}>
+        <Menu className="size-5.5" strokeWidth={open ? 2.4 : 2} aria-hidden />
+        เมนู
+      </button>
     </nav>
   );
 }

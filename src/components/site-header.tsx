@@ -12,13 +12,12 @@ import { MenuButton } from "./mobile-drawer";
 import { NotificationBell } from "./notification-bell";
 import { BrandMark } from "./brand-mark";
 import { useSite } from "./nav-provider";
-import { SectionLinks } from "./section-links";
 
 const iconButton = "flex size-11 shrink-0 items-center justify-center rounded-lg hover:bg-fd-accent";
 
-// แถบบนสุดทุกหน้า: โลโก้ · เมนูหลัก 4 หมวด · ค้นหา · โหมดมืด · บัญชี
+// แถบบนสุดทุกหน้า: โลโก้ · ค้นหา · โหมดมืด · แจ้งเตือน · บัญชี (เมนูอยู่ใน sidebar ซ้าย)
 // ความสูงมาจากตัวแปร --site-header-h ใน global.css ซึ่ง Fumadocs ใช้ต่อ (sidebar/สารบัญขวาติดอยู่ใต้แถบนี้พอดี)
-// menu=false: หน้าที่ไม่มี sidebar (เช่น /dashboard) ไม่ต้องมีปุ่ม ☰ ใช้แถบล่างแทน
+// menu=false: หน้าที่ไม่มีเมนูซ้าย (ตอนนี้ทุกหน้าในคู่มือมีแล้ว เหลือไว้เผื่อหน้าพิเศษ)
 export function SiteHeader({ menu = true }: { menu?: boolean }) {
   const { version } = useSite();
 
@@ -39,12 +38,14 @@ export function SiteHeader({ menu = true }: { menu?: boolean }) {
           <span className="rounded-full bg-fd-primary/10 px-2 py-0.5 text-xs font-semibold text-fd-primary group-hover:bg-fd-primary/15">v{version}</span>
         </Link>
 
-        <nav aria-label="เมนูหลัก" className="ms-2 flex items-center gap-0.5 max-lg:hidden">
-          <SectionLinks variant="bar" />
-        </nav>
-
-        <div className="ms-auto flex items-center gap-1.5 sm:gap-2">
-          <SearchButton />
+        {/* เมนูทุกหน้าอยู่ที่ sidebar ซ้ายที่เดียว (site-nav.tsx) แถบบนเหลือแค่เครื่องมือ ไม่ซ้ำกันสองที่ */}
+        <div className="flex min-w-0 flex-1 justify-center max-md:hidden">
+          <SearchButton wide />
+        </div>
+        <div className="ms-auto flex items-center gap-1.5 sm:gap-2 md:ms-0">
+          <div className="md:hidden">
+            <SearchButton />
+          </div>
           <ThemeSwitch className="min-h-11 px-1.5 max-md:hidden" />
           <NotificationBell />
           <AccountMenu />
@@ -56,18 +57,21 @@ export function SiteHeader({ menu = true }: { menu?: boolean }) {
 }
 
 // ปุ่มค้นหา: เปิดหน้าต่างค้นหาของ Fumadocs (กด ⌘K / Ctrl+K ได้จากทุกหน้า)
-function SearchButton() {
+function SearchButton({ wide = false }: { wide?: boolean }) {
   const { enabled, setOpenSearch, hotKey } = useSearchContext();
   if (!enabled) return null;
-  return (
-    <>
-      <button type="button" onClick={() => setOpenSearch(true)} aria-label="ค้นหา" className={`${iconButton} md:hidden`}>
+  if (!wide)
+    return (
+      <button type="button" onClick={() => setOpenSearch(true)} aria-label="ค้นหา" className={iconButton}>
         <Search className="size-5" />
       </button>
+    );
+  return (
+    <>
       <button
         type="button"
         onClick={() => setOpenSearch(true)}
-        className="flex h-10 w-44 items-center gap-2 rounded-lg border border-fd-border bg-fd-secondary/50 px-3 text-left text-sm text-fd-muted-foreground hover:bg-fd-accent max-md:hidden xl:w-64"
+        className="flex h-11 w-full max-w-md items-center gap-2 rounded-lg border border-fd-border bg-fd-secondary/50 px-3 text-left text-sm text-fd-muted-foreground hover:bg-fd-accent"
       >
         <Search className="size-4" />
         <span className="flex-1 truncate">ค้นหาในคู่มือ</span>
