@@ -24,4 +24,7 @@ describe("createThreadSchema (ฝั่งน้อง)", () => {
     expect(createThreadSchema.safeParse({ ...base, kind: "question" }).success).toBe(true);
     expect(createThreadSchema.safeParse({ ...base, kind: "mentor_message" }).success).toBe(false);
   });
+  test("น้องส่ง feedback ได้", () => {
+    expect(createThreadSchema.safeParse({ subject: "Feedback การฝึกงาน", body: "1. การ์ดช่วยมาก", kind: "feedback" }).success).toBe(true);
+  });
 });

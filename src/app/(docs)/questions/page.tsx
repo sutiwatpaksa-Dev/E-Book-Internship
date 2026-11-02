@@ -12,11 +12,11 @@ export default async function QuestionsPage({ searchParams }: Props) {
   await requirePageAccess("/questions");
   const q = await searchParams;
   const initialId = Number(q.t) || null;
-  const initialNew = q.new === "content_request" || q.new === "question" ? q.new : null;
+  const initialNew = q.new === "content_request" || q.new === "question" || q.new === "feedback" ? q.new : null;
   return (
     <DocsPage full>
       <DocsTitle>ข้อความถึงพี่เลี้ยง</DocsTitle>
-      <DocsDescription>ถามเรื่องที่ติด หรือขอเนื้อหาที่อยากเรียนเพิ่ม เห็นกันแค่เรากับพี่เลี้ยง</DocsDescription>
+      <DocsDescription>ถามเรื่องที่ติด ขอเนื้อหาที่อยากเรียนเพิ่ม หรือให้ feedback การฝึกงาน เห็นกันแค่เรากับพี่เลี้ยง</DocsDescription>
       <DocsBody>
         <ChatPanel side="intern" titles={pageTitles()} initialId={initialId} initialNew={initialNew} />
       </DocsBody>

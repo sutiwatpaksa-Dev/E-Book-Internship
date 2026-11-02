@@ -2,21 +2,30 @@
 
 import type { AdminState } from "@/hooks/use-admin";
 import { STATUS_LABEL, STATUSES_OF, timeAgo } from "@/lib/thread-labels";
+import type { ThreadKind } from "@/types";
 import type { AdminNav } from "./admin-panel";
 
-// บอร์ดคำขอเนื้อหา: เห็นทุกคำขอเรียงตามขั้น ใช้วางแผนว่าจะเขียนบทไหนก่อน
+// บอร์ดคำขอเนื้อหา / feedback จากน้อง: เห็นทุกเรื่องเรียงตามขั้น ใช้วางแผนว่าจะทำอะไรก่อน
 // ย้ายขั้นทำในแชท (กดการ์ด) เพื่อให้ทุกการเปลี่ยนสถานะมีบรรทัดแจ้งน้องเสมอ
 export function AdminRequests({
   admin,
   nav,
+  kind = "content_request",
 }: {
   admin: AdminState;
   nav: AdminNav;
+  kind?: Extract<ThreadKind, "content_request" | "feedback">;
 }) {
-  const requests = admin.threads.filter((t) => t.kind === "content_request");
+  const requests = admin.threads.filter((t) => t.kind === kind);
 
   return (
     <div className="flex flex-col gap-3">
+      {kind === "feedback" && (
+        <p className="text-sm">
+          น้องส่ง feedback ได้จากหน้าข้อความถึงพี่เลี้ยง (ปุ่ม &quot;ให้ feedback&quot;) และจากแดชบอร์ด · ส่งได้แม้รุ่นจบแล้ว · ทั้งหมด{" "}
+          <strong className="tabular-nums">{requests.length}</strong> เรื่อง
+        </p>
+      )}
       <p className="text-sm text-fd-muted-foreground">
         กดการ์ดเพื่อเปิดแชท ตอบน้องและเลื่อนขั้นที่หัวเรื่อง · ขั้น
         &quot;ไม่ทำ&quot; ต้องบอกเหตุผลเสมอ
@@ -27,7 +36,7 @@ export function AdminRequests({
       {/* จอแคบ: เลื่อนซ้าย-ขวาดูทีละคอลัมน์ · จอกว้าง: 5 คอลัมน์เต็มความกว้าง */}
       <div className="relative">
         <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:px-0 xl:grid xl:grid-cols-5 xl:gap-2 xl:overflow-visible">
-          {STATUSES_OF.content_request.map((status) => {
+          {STATUSES_OF[kind].map((status) => {
             const cards = requests.filter((t) => t.status === status);
             return (
               <section
@@ -65,7 +74,7 @@ export function AdminRequests({
                       {t.subject}
                     </span>
                     <span className="text-xs text-fd-muted-foreground">
-                      {t.owner} · ขอเมื่อ {timeAgo(t.createdAt)}
+                      {t.owner} · {kind === "feedback" ? "ส่ง" : "ขอ"}{/* timeAgo ตอบ "เมื่อสักครู่" มาเอง ไม่ต้องเติม "เมื่อ" ซ้ำ */}{timeAgo(t.createdAt) === "เมื่อสักครู่" ? "เมื่อสักครู่" : `เมื่อ ${timeAgo(t.createdAt)}`}
                     </span>
                   </button>
                 ))}

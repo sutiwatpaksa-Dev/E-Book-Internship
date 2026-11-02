@@ -21,8 +21,9 @@ const STATUS_LABEL: Record<ThreadStatus, string> = {
   declined: "ไม่ทำ",
 };
 
-// ขอเนื้อหามีสถานะของตัวเอง ที่เหลือ (คำถาม, ข้อความจากพี่เลี้ยง) ใช้สถานะแบบคำถาม: รอตอบ ↔ ตอบแล้ว
-const isRequest = (kind: ThreadKind) => kind === "content_request";
+// ขอเนื้อหาและ feedback มีสถานะแบบงาน (เรื่องใหม่ → รับเรื่อง → กำลังทำ → ทำแล้ว / ไม่ทำ) ที่เหลือ (คำถาม, ข้อความจากพี่เลี้ยง) ใช้สถานะแบบคำถาม: รอตอบ ↔ ตอบแล้ว
+const isRequest = (kind: ThreadKind) => kind === "content_request" || kind === "feedback";
+const WHAT: Record<ThreadKind, string> = { question: "ถามใหม่", content_request: "ขอเนื้อหา", feedback: "ให้ feedback", mentor_message: "" };
 const allowedStatuses = (kind: ThreadKind): readonly ThreadStatus[] => (isRequest(kind) ? REQUEST_STATUSES : QUESTION_STATUSES);
 
 // กดแจ้งเตือนแล้วเปิดเรื่องนั้นเลย: พี่เลี้ยงเปิดในหลังบ้าน น้องเปิดในหน้าคุยกับพี่เลี้ยง
@@ -59,14 +60,14 @@ export const threadService = {
 
   async create(userId: number, input: { kind: ThreadKind; subject: string; body: string; pageUrl?: string }) {
     // รุ่นจบแล้ว: อ่านคู่มือต่อได้ แต่ไม่เปิดเรื่องใหม่ (พี่เลี้ยงรุ่นนั้นไม่ได้ดูหลังบ้านทุกวันแล้ว) · ตอบเรื่องเดิมยังได้
-    if (await cohortService.endedFor(userId)) throw new Error("COHORT_ENDED");
+    // ยกเว้น feedback: ช่วงจบรุ่นคือตอนที่น้องเล่าภาพรวมได้ครบที่สุด
+    if (input.kind !== "feedback" && (await cohortService.endedFor(userId))) throw new Error("COHORT_ENDED");
     if ((await threadRepository.countOpenByOwner(userId)) >= MAX_OPEN_PER_USER) throw new Error("TOO_MANY_OPEN_THREADS");
     const id = await threadRepository.create(
       { createdBy: userId, kind: input.kind, subject: input.subject, pageUrl: input.pageUrl ?? null, status: input.kind === "question" ? "waiting" : "new" },
       input.body,
     );
-    const what = input.kind === "question" ? "ถามใหม่" : "ขอเนื้อหา";
-    await notificationService.toMentorsOf(userId, { kind: `new_${input.kind}`, title: `${await nameOf(userId)} ${what}: ${input.subject}`, link: devLink(id) });
+    await notificationService.toMentorsOf(userId, { kind: `new_${input.kind}`, title: `${await nameOf(userId)} ${WHAT[input.kind]}: ${input.subject}`, link: devLink(id) });
     return { id };
   },
 

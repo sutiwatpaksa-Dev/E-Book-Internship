@@ -18,6 +18,7 @@ const FILTERS: { id: Filter; label: string }[] = [
   { id: "unread", label: "ยังไม่อ่าน" },
   { id: "question", label: "คำถาม" },
   { id: "content_request", label: "ขอเนื้อหา" },
+  { id: "feedback", label: "Feedback" },
   { id: "mentor_message", label: "จากพี่เลี้ยง" },
 ];
 
@@ -83,7 +84,8 @@ export function ChatPanel({ side, titles, initialId = null, initialNew = null, o
                 <Plus className="size-4" /> เริ่มเรื่องใหม่
               </Button>
             )}
-            <div role="group" aria-label="กรองเรื่อง" className="no-scrollbar flex w-full gap-1 overflow-x-auto pb-1">
+            {/* 6 ปุ่มไม่พอดีแถวเดียวในคอลัมน์ 19rem: ขึ้นบรรทัดใหม่ แทนเลื่อนข้าง (แถบเลื่อนซ่อนอยู่ ปุ่มท้ายจึงเหมือนไม่มี) */}
+            <div role="group" aria-label="กรองเรื่อง" className="flex w-full flex-wrap gap-1 pb-1">
             {FILTERS.map((f) => (
               <button
                 key={f.id}

@@ -4,6 +4,7 @@ import type { ThreadKind, ThreadStatus } from "@/types";
 export const KIND_LABEL: Record<ThreadKind, { label: string }> = {
   question: { label: "ถามพี่เลี้ยง" },
   content_request: { label: "ขอเนื้อหาเพิ่ม" },
+  feedback: { label: "ให้ feedback" },
   mentor_message: { label: "ข้อความจากพี่เลี้ยง" },
 };
 
@@ -38,6 +39,7 @@ export const STATUS_TONE: Record<ThreadStatus, string> = {
 export const STATUSES_OF: Record<ThreadKind, ThreadStatus[]> = {
   question: ["waiting", "answered", "closed"],
   content_request: ["new", "accepted", "in_progress", "done", "declined"],
+  feedback: ["new", "accepted", "in_progress", "done", "declined"],
   mentor_message: ["waiting", "answered", "closed"],
 };
 

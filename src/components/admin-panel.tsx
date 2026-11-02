@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ClipboardList, FilePlus2, FileText, FolderGit2, GraduationCap, History, Inbox, Layers, LayoutDashboard, Megaphone, MessageCircle, NotebookPen, Users, type LucideIcon } from "lucide-react";
+import { ChevronDown, ClipboardList, MessageSquareHeart, FilePlus2, FileText, FolderGit2, GraduationCap, History, Inbox, Layers, LayoutDashboard, Megaphone, MessageCircle, NotebookPen, Users, type LucideIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { useAdmin } from "@/hooks/use-admin";
@@ -28,7 +28,7 @@ import { ErrorText } from "./error-text";
 import { MobileDrawer } from "./mobile-drawer";
 import { Skeleton, SkeletonList } from "./skeleton";
 
-type TabId = "overview" | "questions" | "board" | "submissions" | "requests" | "cards" | "notes" | "builtin" | "announcements" | "cohorts" | "users" | "files" | "audit";
+type TabId = "overview" | "questions" | "board" | "submissions" | "requests" | "feedback" | "cards" | "notes" | "builtin" | "announcements" | "cohorts" | "users" | "files" | "audit";
 type Tab = { id: TabId; label: string; icon: LucideIcon };
 // เมนูแบ่ง 3 กลุ่มตามความถี่ที่ใช้: งานประจำวัน (เปิดทุกวัน) → เนื้อหา (เขียน/ปรับคู่มือ) → ระบบ (นานๆ ครั้ง)
 const GROUPS: { label: string; tabs: Tab[] }[] = [
@@ -40,6 +40,7 @@ const GROUPS: { label: string; tabs: Tab[] }[] = [
       { id: "board", label: "โพสต์งานให้น้อง", icon: ClipboardList },
       { id: "submissions", label: "ตรวจงานที่ส่ง", icon: FolderGit2 },
       { id: "requests", label: "คำขอการ์ดใหม่", icon: Inbox },
+      { id: "feedback", label: "Feedback จากน้อง", icon: MessageSquareHeart },
     ],
   },
   {
@@ -189,7 +190,8 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
     nav.goTab(id);
   };
   const newRequests = admin.threads.filter((t) => t.kind === "content_request" && t.status === "new").length;
-  const badge = (id: TabId) => (id === "questions" ? waiting : id === "submissions" ? waitingSubs : id === "requests" ? newRequests : 0);
+  const newFeedback = admin.threads.filter((t) => t.kind === "feedback" && t.status === "new").length;
+  const badge = (id: TabId) => (id === "questions" ? waiting : id === "submissions" ? waitingSubs : id === "requests" ? newRequests : id === "feedback" ? newFeedback : 0);
   // เมนูชุดเดียว วางได้ 2 ที่: คอลัมน์ซ้ายบนจอกว้าง และลิ้นชักบนมือถือ
   const menuGroups = (
     <>
@@ -277,6 +279,7 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
         {tab === "board" && <AdminBoard admin={admin} nav={nav} />}
         {tab === "submissions" && <AdminSubmissions admin={admin} onChange={countSubs} />}
         {tab === "requests" && <AdminRequests admin={admin} nav={nav} />}
+        {tab === "feedback" && <AdminRequests admin={admin} nav={nav} kind="feedback" />}
         {CONTENT_TABS.includes(tab) && content.loading ? (
           <SkeletonList />
         ) : (

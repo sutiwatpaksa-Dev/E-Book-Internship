@@ -16,7 +16,13 @@ import { Button } from "./button";
 import { inputClass } from "./field";
 import { StatusBadge } from "./status-badge";
 
-// คำตอบสำเร็จรูปของพี่เลี้ยง: กดแล้วแทรกลงช่องพิมพ์ ให้แก้ต่อได้ก่อนส่ง
+// คำตอบสำเร็จรูปของพี่เลี้ยง: กดแล้วแทรกลงช่องพิมพ์ ให้แก้ต่อได้ก่อนส่ง · feedback ใช้ชุดของตัวเอง (ไม่ได้มาถามปัญหา)
+const CANNED_FEEDBACK = [
+  "ขอบคุณที่เล่าให้ฟังนะ พี่อ่านครบแล้ว",
+  "เรื่องนี้พี่จะปรับให้รุ่นถัดไป ทำเสร็จแล้วจะบอกในแชทนี้",
+  "ขอรายละเอียดเพิ่มอีกนิด ติดที่บทหรือการ์ดไหน ตอนทำขั้นไหน",
+  "เรื่องนี้ยังเปลี่ยนไม่ได้ในรอบนี้ เพราะ…",
+];
 const CANNED = [
   "รับเรื่องแล้วนะ เดี๋ยวพี่ดูให้ แล้วตอบกลับภายในวันนี้",
   "ลองส่ง error เต็มๆ หรือแคปหน้าจอมาให้พี่ดูหน่อย",
@@ -152,7 +158,7 @@ export function ThreadView({
             role="group"
             aria-label="คำตอบสำเร็จรูป"
           >
-            {CANNED.map((c) => (
+            {(thread.kind === "feedback" ? CANNED_FEEDBACK : CANNED).map((c) => (
               <button
                 key={c}
                 type="button"
@@ -180,7 +186,8 @@ export function ThreadView({
           />
           {chat.canSetStatus &&
             thread.status !== "answered" &&
-            thread.kind !== "content_request" && (
+            thread.kind !== "content_request" &&
+            thread.kind !== "feedback" && (
               <Button
                 type="button"
                 variant="ghost"

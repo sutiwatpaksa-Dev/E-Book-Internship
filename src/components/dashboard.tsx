@@ -453,6 +453,9 @@ function FromMentor({ work }: { work: Work }) {
         <span>{unread > 0 ? `ข้อความใหม่ ${unread} เรื่อง` : "ข้อความกับพี่เลี้ยง"}</span>
         <ArrowRight className="size-4" />
       </Link>
+      <Link href="/questions?new=feedback" className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-fd-primary hover:underline">
+        ฝึกงานเป็นยังไงบ้าง? ให้ feedback พี่เลี้ยง
+      </Link>
     </section>
   );
 }
