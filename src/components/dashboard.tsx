@@ -12,6 +12,7 @@ import { useSession } from "@/hooks/use-session";
 import { useMyWork, type Cohort, type Work } from "@/hooks/use-my-work";
 import { useUnread } from "@/hooks/use-unread";
 import { dailyCounts, shortDay } from "@/lib/admin-stats";
+import { mentorNames } from "@/lib/mentors";
 import { COHORT_STATUS_LABEL, cohortDay, cohortRange, cohortStatus, thaiDayMonth } from "@/lib/cohort";
 import { buildPlan, dueLabel, nextWork, type PlanItem } from "@/lib/work-plan";
 import type { ProgressEntry } from "@/types";
@@ -422,11 +423,27 @@ function Where({ count, total, step, cohort }: { count: number | null; total: nu
 function FromMentor({ work }: { work: Work }) {
   const unread = useUnread();
   const latest = work.data?.items.find((s) => s.reviewedAt && s.review);
+  // รอโหลดรุ่นเสร็จก่อนค่อยบอก ไม่งั้นขึ้น "ทุกคน" แวบหนึ่งแล้วเปลี่ยนเป็นชื่อ
+  const names = work.loading || work.failed ? undefined : work.cohort ? mentorNames(work.cohort.mentors) : null;
   return (
     <section aria-labelledby="mentor-title" className={`${box} flex flex-col gap-3`}>
       <h2 id="mentor-title" className="flex items-center gap-2 font-semibold">
         <MessageCircle className="size-5 text-fd-primary" /> จากพี่เลี้ยง
       </h2>
+      {names !== undefined && (
+        <p className="text-sm">
+          {names ? (
+            <>
+              พี่เลี้ยงประจำรุ่น: <strong>{names}</strong>{" "}
+              <Link href="/profile#mentors" className="inline-flex min-h-11 items-center text-fd-primary underline sm:min-h-0">
+                ข้อมูลติดต่อ
+              </Link>
+            </>
+          ) : (
+            <span className="text-fd-muted-foreground">ยังไม่มีพี่เลี้ยงประจำรุ่น คำถามและงานที่ส่งจะถึงพี่เลี้ยงทุกคน</span>
+          )}
+        </p>
+      )}
       {latest && (
         <p className="line-clamp-3 rounded-lg bg-fd-muted px-3 py-2 text-sm">
           <span className="font-semibold">{latest.reviewer ?? "พี่เลี้ยง"}</span> ตรวจ {latest.roundLabel}: {latest.review}

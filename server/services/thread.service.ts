@@ -66,7 +66,7 @@ export const threadService = {
       input.body,
     );
     const what = input.kind === "question" ? "ถามใหม่" : "ขอเนื้อหา";
-    await notificationService.toRoles(["dev"], { kind: `new_${input.kind}`, title: `${await nameOf(userId)} ${what}: ${input.subject}`, link: devLink(id) });
+    await notificationService.toMentorsOf(userId, { kind: `new_${input.kind}`, title: `${await nameOf(userId)} ${what}: ${input.subject}`, link: devLink(id) });
     return { id };
   },
 
@@ -79,7 +79,7 @@ export const threadService = {
   async replyMine(userId: number, id: number, body: string) {
     const t = await ownedThread(userId, id);
     await threadRepository.addMessages(id, userId, "intern", [{ body }], isRequest(t.kind) ? undefined : "waiting");
-    await notificationService.toRoles(["dev"], { kind: "intern_reply", title: `${await nameOf(userId)} ตอบกลับ: ${t.subject}`, link: devLink(id) });
+    await notificationService.toMentorsOf(userId, { kind: "intern_reply", title: `${await nameOf(userId)} ตอบกลับ: ${t.subject}`, link: devLink(id) });
   },
 
   // ---- ฝั่งพี่เลี้ยง ----

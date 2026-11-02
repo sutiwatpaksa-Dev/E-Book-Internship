@@ -4,8 +4,10 @@ import { ExternalLink, GitCommitHorizontal, Send } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 import { submissionsApi } from "@/api/submissions.api";
+import { useMyMentors } from "@/hooks/use-my-mentors";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "@/hooks/use-toast";
+import { sendToLine } from "@/lib/mentors";
 import { commitsUrl, deployProblem, isReviewable, latestOnly, refProblem, repoProblem, START_ROUND, takesDeploy, treeUrl, type RoundDef } from "@/lib/submission";
 import type { MySubmissions, Submission } from "@/types";
 import { Button } from "./button";
@@ -253,6 +255,7 @@ function SubmitForm({ assignment, rounds, defaultRound, lastRepo, onSent }: { as
   const [touched, setTouched] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const to = sendToLine(useMyMentors());
   useEffect(() => setRound(defaultRound), [defaultRound]);
 
   // บอกผิดใต้ช่องเมื่อพิมพ์แล้ว (ช่องว่างตอนเพิ่งเปิดหน้ายังไม่ขึ้นแดง)
@@ -269,7 +272,7 @@ function SubmitForm({ assignment, rounds, defaultRound, lastRepo, onSent }: { as
     setError(null);
     try {
       await submissionsApi.submit({ assignment, round, repoUrl, ref, deployUrl: showDeploy ? deployUrl : "", note });
-      toast.success("ส่งงานแล้ว พี่เลี้ยงได้รับแจ้งเตือน");
+      toast.success(to ? `ส่งงานแล้ว ${to.replace("ส่งถึง", "แจ้ง")} แล้ว` : "ส่งงานแล้ว พี่เลี้ยงได้รับแจ้งเตือน");
       setRef("");
       setDeployUrl("");
       setNote("");
@@ -325,6 +328,7 @@ function SubmitForm({ assignment, rounds, defaultRound, lastRepo, onSent }: { as
       </Field>
       {error && <ErrorText>{error}</ErrorText>}
       <p className="text-xs text-fd-muted-foreground">เว็บนี้ไม่ได้เปิดดูโค้ดให้ พี่เลี้ยงกดลิงก์ไปดูบน GitHub เอง ลองกดลิงก์ของตัวเองหลังส่งว่าเปิดได้</p>
+      {to && <p className="text-xs text-fd-muted-foreground">{to} ทันทีที่กดส่ง</p>}
       <Button type="submit" disabled={sending} className="min-h-11 w-fit">
         <Send className="size-4" /> {sending ? "กำลังส่ง…" : "ส่งงาน"}
       </Button>

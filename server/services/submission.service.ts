@@ -42,7 +42,7 @@ export const submissionService = {
     const s = await submissionRepository.create({ userId: user.id, assignmentId: a.id, round: input.round, repoUrl: input.repoUrl, ref: input.ref, deployUrl: input.deployUrl, note: input.note });
     const who = (await userRepository.findById(user.id))?.username ?? "น้อง";
     const title = input.round === START_ROUND ? `${who} ส่งลิงก์ repo แล้ว ตามดูโค้ดได้` : `${who} ส่งงาน ${roundLabel(input.round, a.rubric.rounds)} (${input.ref})`;
-    await notificationService.toRoles(["dev"], { kind: "submission", title, link: DEV_LINK }, user.id);
+    await notificationService.toMentorsOf(user.id, { kind: "submission", title, link: DEV_LINK });
     return s;
   },
 
@@ -84,7 +84,7 @@ export const submissionService = {
     if (input.kind !== "review") throw new Error("COMMENT_KIND_FORBIDDEN");
     const c = await taskCommentRepository.create({ userId: user.id, task: taskKey(assignment, round), authorId: user.id, kind: "review", ref: null, body: input.body });
     const who = (await userRepository.findById(user.id))?.username ?? "น้อง";
-    await notificationService.toRoles(["dev"], { kind: "submission", title: `${who} เขียนความเห็นใต้งาน ${await labelOf(assignment, round)}`, link: DEV_LINK }, user.id);
+    await notificationService.toMentorsOf(user.id, { kind: "submission", title: `${who} เขียนความเห็นใต้งาน ${await labelOf(assignment, round)}`, link: DEV_LINK });
     return c;
   },
   async commentsOf(userId: number, assignment: string, round: string) {

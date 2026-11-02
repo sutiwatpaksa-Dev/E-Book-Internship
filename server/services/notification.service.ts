@@ -1,4 +1,6 @@
 import type { Role } from "../db/schema";
+import { mentorRecipients } from "../lib/mentor-recipients";
+import { cohortRepository } from "../repositories/cohort.repository";
 import { notificationRepository, type NewNotification } from "../repositories/notification.repository";
 import { userRepository } from "../repositories/user.repository";
 
@@ -13,7 +15,14 @@ async function safely(fn: () => Promise<void>) {
   }
 }
 
+// พี่เลี้ยงที่ดูแลรุ่นนี้ (ยังไม่ปิดบัญชี) · ไม่มีรุ่นหรือรุ่นไม่มีพี่เลี้ยงประจำ = พี่เลี้ยงทุกคน
+async function mentorIdsFor(cohortId: number | null, exceptUserId?: number) {
+  const mine = cohortId ? await cohortRepository.mentorIdsOf(cohortId) : [];
+  return mentorRecipients(mine, mine.length > 0 ? [] : await userRepository.activeIdsByRole(["dev"]), exceptUserId);
+}
+
 export const notificationService = {
+  mentorIdsFor,
   toUser: (userId: number, n: NewNotification) => safely(() => notificationRepository.addMany([userId], n)),
   toUsers: (ids: number[], n: NewNotification) => safely(async () => (ids.length ? notificationRepository.addMany(ids, n) : undefined)),
 
@@ -22,6 +31,14 @@ export const notificationService = {
     safely(async () => {
       const ids = (await userRepository.activeIdsByRole(roles)).filter((id) => id !== exceptUserId);
       await notificationRepository.addMany(ids, n);
+    }),
+
+  // เรื่องของน้องคนนี้ (ถาม ตอบกลับ ส่งงาน) ถึงพี่เลี้ยงประจำรุ่นของน้อง ไม่ใช่พี่เลี้ยงทุกคน
+  toMentorsOf: (internId: number, n: NewNotification) =>
+    safely(async () => {
+      const u = await userRepository.findById(internId);
+      const ids = await mentorIdsFor(u?.cohortId ?? null, internId);
+      if (ids.length > 0) await notificationRepository.addMany(ids, n);
     }),
 
   async listMine(userId: number) {

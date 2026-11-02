@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useMyMentors } from "@/hooks/use-my-mentors";
+import { sendToLine } from "@/lib/mentors";
 import { KIND_LABEL } from "@/lib/thread-labels";
 import type { NewThread, InternThreadKind } from "@/types";
 import { Button } from "./button";
@@ -32,6 +34,7 @@ export function NewThreadForm({ kinds = ["question", "content_request"], default
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
+  const to = sendToLine(useMyMentors());
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -69,7 +72,7 @@ export function NewThreadForm({ kinds = ["question", "content_request"], default
       <Field label="รายละเอียด">
         <textarea className={`${inputClass} min-h-32`} value={body} onChange={(e) => setBody(e.target.value)} minLength={10} maxLength={2000} required placeholder={HINT[kind].placeholder} />
       </Field>
-      <p className="text-xs text-fd-muted-foreground">เห็นแค่เรากับพี่เลี้ยง น้องคนอื่นไม่เห็น</p>
+      <p className="text-xs text-fd-muted-foreground">{to ? `${to} · น้องคนอื่นไม่เห็น` : "เห็นแค่เรากับพี่เลี้ยง น้องคนอื่นไม่เห็น"}</p>
       <div className="flex gap-2">
         <Button type="submit" disabled={sending}>
           {sending ? "กำลังส่ง…" : "ส่ง"}

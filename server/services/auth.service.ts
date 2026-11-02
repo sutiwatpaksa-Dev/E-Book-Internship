@@ -2,7 +2,6 @@ import { hashPin } from "../lib/pin";
 import { ipFailureRepository } from "../repositories/ip-failure.repository";
 import { userRepository } from "../repositories/user.repository";
 import { passwordProblem } from "../validators/auth.validator";
-import { cohortRepository } from "../repositories/cohort.repository";
 import { auditService } from "./audit.service";
 import { notificationService } from "./notification.service";
 import { userService } from "./user.service";
@@ -110,10 +109,7 @@ export const authService = {
     await userRepository.update(u.id, { resetRequestedAt: now });
     await auditService.log(u.id, "user.reset_request", u.username);
     // ผู้รับ: บัญชีพี่เลี้ยง → Super admin (คนเดียวที่ออก PIN ให้พี่เลี้ยงได้) · น้อง → พี่เลี้ยงประจำรุ่น ถ้าไม่มีก็พี่เลี้ยงทุกคน
-    const to =
-      u.role === "dev"
-        ? await userRepository.activeSuperAdminIds()
-        : (u.cohortId && (await cohortRepository.mentorIdsOf(u.cohortId)).length ? await cohortRepository.mentorIdsOf(u.cohortId) : await userRepository.activeIdsByRole(["dev"]));
-    await notificationService.toUsers(to.filter((id) => id !== u.id), { kind: "reset_request", title: `${u.nickname || u.username} ขอรีเซ็ตรหัสผ่าน`, link: "/dev/admin?tab=users" });
+    const to = u.role === "dev" ? (await userRepository.activeSuperAdminIds()).filter((id) => id !== u.id) : await notificationService.mentorIdsFor(u.cohortId, u.id);
+    await notificationService.toUsers(to, { kind: "reset_request", title: `${u.nickname || u.username} ขอรีเซ็ตรหัสผ่าน`, link: "/dev/admin?tab=users" });
   },
 };

@@ -97,6 +97,7 @@ function CohortList({ admin, nav }: { admin: AdminState; nav: AdminNav }) {
                       <RowLink href={cohortHref(c.id)} onGo={() => nav.openCohort(c.id)} className="inline-flex min-h-10 items-center font-semibold">
                         {c.name}
                       </RowLink>
+                      {c.mentorIds.length === 0 && !c.endedAt && <span className="ms-2 rounded-full bg-orange-100 px-2 py-0.5 text-xs whitespace-nowrap text-orange-800 dark:bg-orange-950 dark:text-orange-300">ยังไม่มีพี่เลี้ยงประจำ</span>}
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap text-fd-muted-foreground">{cohortRange(c)}</td>
                     <td className="px-3 py-2 tabular-nums">{c.internCount}</td>
@@ -488,7 +489,7 @@ function AddMembers({ admin, cohort: c, name }: { admin: AdminState; cohort: Coh
   );
 }
 
-// พี่เลี้ยงประจำรุ่น: ใช้บอกน้องว่าใครดูแล และส่งแจ้งเตือนเรื่องของรุ่นนี้ (พี่เลี้ยงทุกคนยังเห็นทุกรุ่น)
+// พี่เลี้ยงประจำรุ่น: น้องเห็นชื่อตอนถามและส่งงาน และได้แจ้งเตือนเรื่องของน้องรุ่นนี้แทนพี่เลี้ยงทุกคน (พี่เลี้ยงทุกคนยังเปิดดูทุกรุ่นได้)
 function Mentors({ admin, cohort: c }: { admin: AdminState; cohort: Cohort }) {
   const devs = admin.users.filter((u) => u.role === "dev" && !u.disabled);
   const [picked, setPicked] = useState<Set<number>>(new Set(c.mentorIds));
@@ -500,6 +501,11 @@ function Mentors({ admin, cohort: c }: { admin: AdminState; cohort: Cohort }) {
       <h2 id="mentor-title" className="text-base font-semibold">
         พี่เลี้ยงประจำรุ่น
       </h2>
+      <p className="text-sm text-fd-muted-foreground">
+        {c.mentorIds.length > 0
+          ? "คำถาม คำตอบกลับ และงานที่น้องรุ่นนี้ส่ง แจ้งเตือนเฉพาะคนที่เลือกไว้ น้องเห็นชื่อตอนถามและส่งงาน"
+          : "ยังไม่ได้ตั้ง: เรื่องของน้องรุ่นนี้แจ้งเตือนพี่เลี้ยงทุกคน เลือกอย่างน้อย 1 คนจะได้รู้ว่าใครต้องตอบ"}
+      </p>
       <div className="flex flex-wrap gap-1">
         {devs.map((u) => (
           <label key={u.id} className="flex min-h-11 cursor-pointer items-center gap-2.5 rounded-lg px-2 hover:bg-fd-accent">
