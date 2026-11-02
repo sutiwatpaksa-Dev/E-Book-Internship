@@ -40,7 +40,7 @@ Postgres เริ่มจากโปรเจกต์วิจัยที�
 
 ### 1. เปิด Postgres ในเครื่องด้วย Docker
 
-ต้องเปิดโปรแกรม Docker Desktop ไว้ก่อน แล้วพิมพ์ใน Terminal (เหมือนกันทั้ง Mac และ Windows ที่ใช้ [Git Bash](/00-start#windows-ใช้-git-bash-เท่านั้น))
+ต้องเปิดโปรแกรม Docker Desktop ไว้ก่อน (ยังไม่ได้ติดตั้ง? ทำตาม [ติดตั้ง Docker และตรวจว่าพร้อมใช้](/02-docker#4-ติดตั้ง-docker-และตรวจว่าพร้อมใช้) ในบทที่ 2 ก่อน) แล้วพิมพ์ใน Terminal (เหมือนกันทั้ง Mac และ Windows ที่ใช้ [Git Bash](/00-start#windows-ใช้-git-bash-เท่านั้น))
 
 ```bash
 MSYS_NO_PATHCONV=1 docker run -d --name pg -e POSTGRES_PASSWORD=secret -p 5432:5432 -v pgdata:/var/lib/postgresql/data postgres:17-alpine

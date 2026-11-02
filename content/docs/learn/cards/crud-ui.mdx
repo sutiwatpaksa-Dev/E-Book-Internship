@@ -129,11 +129,18 @@ adminBookRoutes.delete("/:id", async (c) => {
 
 **ควรเห็น:** `curl -i --json '{"title":"x"}' http://localhost:3000/api/books` ได้ `404` (Hono ไม่เจอ route ที่ตรง method จึงตกไปที่ `notFound`)
 
-แบ่งหน้าต้องมีหนังสือเกิน 10 เล่มถึงจะเห็นผล เพิ่มบรรทัดนี้ใน `seed.ts` (ก่อน `process.exit`) แล้วรัน `bun run seed`
+แบ่งหน้าต้องมีหนังสือเกิน 10 เล่มถึงจะเห็นผล หนังสือชุดนี้ใช้ทดสอบในเครื่องเท่านั้น จึงแยกเป็นไฟล์ใหม่ `server/src/db/seed-demo.ts` **ไม่ใส่ใน `seed.ts`** เพราะการ์ด deploy จะรัน `bun run seed` กับฐานของเว็บจริง ถ้าใส่ไว้ใน `seed.ts` หนังสือทดสอบ 20 เล่มจะขึ้นเว็บจริงไปด้วย
 
 ```ts
+import { db } from "./index";
+import { books } from "./schema";
+
 await db.insert(books).values(Array.from({ length: 20 }, (_, i) => ({ title: `นิยายเล่มที่ ${i + 1}` })));
+console.log("เพิ่มหนังสือทดสอบ 20 เล่ม");
+process.exit(0);
 ```
+
+รันครั้งเดียวในโฟลเดอร์ `server/` ด้วย `bun run src/db/seed-demo.ts` (รันซ้ำ หนังสือจะเบิ้ลอีก 20 เล่ม)
 
 **ควรเห็น:** (`-b cookies.txt` จากการ์ด Login, Windows ใช้ Git Bash)
 
@@ -145,7 +152,7 @@ curl "http://localhost:3000/api/admin/books?page=1" -b cookies.txt
 {"success":true,"data":[{"id":27,"title":"นิยายเล่มที่ 20","createdAt":"..."}, ...],"meta":{"page":1,"limit":10,"total":27}}
 ```
 
-แถวแรกเป็น `นิยายเล่มที่ 20` เพราะเรียงจาก id มากไปน้อย ส่วน `id` กับ `total` ของแต่ละคนไม่เท่ากัน ขึ้นกับว่าเคยรัน seed และเพิ่มหนังสือจากการ์ดก่อนๆ ไปกี่ครั้ง (seed ใส่ข้อมูลซ้ำทุกครั้งที่รัน ดูทริคข้อ 3 ของการ์ด [Migration](/learn/cards/migration))
+แถวแรกเป็น `นิยายเล่มที่ 20` เพราะเรียงจาก id มากไปน้อย ส่วน `id` กับ `total` ของแต่ละคนไม่เท่ากัน ขึ้นกับว่าเคยรัน seed, seed-demo และเพิ่มหนังสือจากการ์ดก่อนๆ ไปกี่ครั้ง (seed ใส่ข้อมูลซ้ำทุกครั้งที่รัน ดูทริคข้อ 3 ของการ์ด [Migration](/learn/cards/migration))
 
 `?page=0` ได้ `400` พร้อม `"details":{"page":["Too small: expected number to be >=1"]}` และไม่มีบัตรได้ `401` ทุกตัว
 
@@ -165,6 +172,8 @@ export async function requestPage<T>(path: string): Promise<Page<T>> {
   return { items: body.data, meta: body.meta! };
 }
 ```
+
+type ของ `body` อ่านทีละชิ้น: **`A & B`** = type ที่มีทุกช่องของทั้ง A และ B (ที่นี่คือคำตอบปกติ `ApiResponse` + ช่อง `meta`) · **`Page<T>["meta"]`** = หยิบ type ของช่อง `meta` ใน `Page` มาใช้ซ้ำ ไม่ต้องพิมพ์ `{ page, limit, total }` อีกรอบ · `<T>` คือช่องว่างของ type แบบเดียวกับ `request<T>` ในการ์ด [ดึงข้อมูลจาก API](/learn/cards/data-fetching)
 
 `body.meta!` = บอก TypeScript ว่า "route นี้ส่ง `meta` มาแน่" (`!` ตัวเดียวกับในการ์ด [Drizzle](/learn/cards/drizzle-orm)) เพราะ type ด้านบนเขียน `meta?` ไว้เผื่อ route ที่ไม่แบ่งหน้า
 
@@ -239,6 +248,23 @@ export function BookEditor({ initial, onSave, onDone }: {
 ```
 
 ### 4. หน้าจัดการ `client/src/pages/admin/admin-books-page.tsx`
+
+หน้านี้จำค่าไว้ 5 อย่าง และทุกอย่างวนกลับมาที่การโหลดรายการใหม่ ดูภาพนี้ก่อนอ่านโค้ด
+
+```text
+ค่าที่หน้านี้จำไว้
+  URL ?q=&page=  คำค้นกับเลขหน้า (อยู่ใน URL รีเฟรชแล้วไม่หาย)
+  result         ผลที่โหลดมา (null = ยังโหลดไม่เสร็จ)
+  error          ข้อความเมื่อโหลดไม่สำเร็จ
+  editing        ฟอร์ม: null = ปิด · "new" = เพิ่มเล่มใหม่ · หนังสือ 1 เล่ม = แก้เล่มนั้น
+  reload         ตัวเลขไว้สั่งโหลดใหม่ (เพิ่ม 1 = โหลดใหม่)
+
+ q / page / reload เปลี่ยน ──► useEffect โหลดรายการ ──► ได้ result หรือ error ──► วาดตาราง
+           ▲                                                                  │
+           │                                                                  ▼
+ ค้นหา / เปลี่ยนหน้า: setParams แก้ q, page  ◄──── ผู้ใช้กด ค้นหา, หน้าถัดไป, เพิ่ม, แก้, ลบ
+ บันทึกหรือลบสำเร็จ: reload + 1             ◄────┘
+```
 
 ```tsx
 import { useEffect, useState } from "react";
@@ -332,6 +358,11 @@ export function AdminBooksPage() {
   );
 }
 ```
+
+2 จุดที่ต่างจากการ์ดก่อน:
+
+- **ช่องค้นหาใช้ `defaultValue` ไม่ใช่ `value`** ในการ์ด [ฟอร์ม](/learn/cards/react-forms) ช่องกรอกผูกกับ state ทุกตัวอักษร (`value` + `onChange`) ที่นี่ไม่ต้อง เพราะเราอ่านค่าแค่ตอนกด Enter (`e.currentTarget.value`) `defaultValue` แค่ใส่ค่าเริ่มต้นจาก URL ให้ แล้วปล่อยให้ผู้ใช้พิมพ์เอง
+- **`setParams({ q, page })` แทน query ทั้งชุด** ไม่ได้แก้ทีละตัว จึงต้องส่งทั้ง `q` และ `page` ทุกครั้ง ถ้าส่งแค่ `{ page: "2" }` คำค้นจะหายจาก URL
 
 ใน `App.tsx` เพิ่ม `import { AdminBooksPage } from "./pages/admin/admin-books-page";` และ `<Route path="books" element={<AdminBooksPage />} />` ใต้ `<Route index ...>` ของหลังบ้าน
 

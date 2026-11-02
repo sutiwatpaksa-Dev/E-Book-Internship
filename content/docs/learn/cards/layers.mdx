@@ -50,6 +50,26 @@ PostgreSQL
 1. **หนังสือ** ย้ายจาก array ในการ์ด Hono ลงฐานข้อมูล (ไม่มีกฎ มีแค่ 2 ชั้น)
 2. **ยืมหนังสือ** `POST /api/loans` มีกฎว่ายืมค้างได้ไม่เกิน 3 เล่ม (ครบ 3 ชั้น)
 
+จบการ์ดนี้แล้ว `server/src/` จะหน้าตาแบบนี้ (ไฟล์ที่ไม่ได้เขียนว่า "ใหม่" หรือ "แทน" มีอยู่แล้วจากการ์ดก่อน ไม่ต้องแตะ)
+
+```text
+server/src/
+├─ index.ts                      ต่อ route ทั้งหมด · เพิ่ม 2 บรรทัดของ loans
+├─ lib/response.ts               ok / fail (การ์ด Hono)
+├─ db/                           schema.ts, index.ts, seed.ts (การ์ด Drizzle, Migration)
+├─ validators/
+│  ├─ book.validator.ts          (การ์ด Zod)
+│  └─ loan.validator.ts          ใหม่
+├─ routes/          ชั้นรับคำขอ   แปลงผลเป็น status กับ JSON
+│  ├─ books.routes.ts            แทนทั้งไฟล์
+│  └─ loans.routes.ts            ใหม่
+├─ services/        ชั้นกฎ        กฎของระบบ เช่น ยืมได้ไม่เกิน 3 เล่ม
+│  └─ loan.service.ts            ใหม่
+└─ repositories/    ชั้นข้อมูล    คุยกับฐานข้อมูล
+   ├─ book.repository.ts         ใหม่
+   └─ loan.repository.ts         ใหม่
+```
+
 ### 1. หนังสือลงฐานข้อมูล
 
 **repository** `server/src/repositories/book.repository.ts`
@@ -175,6 +195,8 @@ export const loanService = {
 
 service เรียกได้หลาย repository: ถาม `bookRepository` ก่อนว่ามีเล่มนี้ไหม แล้วค่อยนับโควตาจาก `loanRepository`
 
+**`throw new Error("LOAN_LIMIT")`** = หยุดทำงานตรงนั้นทันที แล้วส่ง error ที่มีรหัส `LOAN_LIMIT` ขึ้นไปหาคนที่เรียก (route) บรรทัดที่เหลือไม่ทำ ตอนนี้ยังไม่มีใครรับ error นี้ จึงกลายเป็น `500` การ์ดถัดไปจะสร้างตัวรับไว้ที่เดียว
+
 **route** `server/src/routes/loans.routes.ts` · HTTP อย่างเดียว
 
 ```ts
@@ -195,7 +217,11 @@ loanRoutes.post("/", async (c) => {
 
 แล้วเพิ่มใน `server/src/index.ts`: `import { loanRoutes } from "./routes/loans.routes";` บนสุด และ `app.route("/loans", loanRoutes);` ต่อจากบรรทัด books
 
-**ควรเห็น:** (วิธียิง `POST` ดูการ์ด [ยิงทดสอบ API](/learn/cards/api-testing)) ส่ง `{ "memberId": 1, "bookId": 1 }` ได้ `201`
+**ควรเห็น:** ยิง `POST` ด้วย curl (พิมพ์เหมือนกันทั้ง Mac และ Git Bash · เครื่องมือที่สะดวกกว่านี้อยู่ในการ์ด [ยิงทดสอบ API](/learn/cards/api-testing)) ส่ง `{ "memberId": 1, "bookId": 1 }` ได้ `201`
+
+```bash
+curl -i -H "Content-Type: application/json" -d '{"memberId":1,"bookId":1}' http://localhost:3000/api/loans
+```
 
 ```json
 {"success":true,"data":{"id":1,"memberId":1,"bookId":1,"dueAt":"2026-11-09T06:43:43.729Z","returnedAt":null}}
@@ -240,7 +266,7 @@ loanRoutes.post("/", async (c) => {
 
 <Hint level={1}>เพิ่มฟังก์ชัน `remove` ใน `bookRepository` ดูแบบจาก `create`: Drizzle มี `db.delete(ตาราง).where(...).returning()` และอย่าลืมว่า route เฉพาะต้องมาก่อน `/:id`</Hint>
 <Hint level={2}>`/available` เขียน query ใหม่ก็ได้ หรือกรองผลจาก `list("")` ด้วย `.filter()` ก็ได้ ลองคิดว่าถ้ามีหนังสือหมื่นเล่ม แบบไหนดีกว่า</Hint>
-<Hint level={3}>ลองลบเล่มที่เคยถูกยืม จะได้ `500` ใน Terminal เห็นรหัส `23503` (foreign key: ยังมีแถวใน loans ชี้มา) เป็นคำตอบของ "ลองคิด" ข้างบน เก็บไว้ทำให้เป็น `409` ในการ์ดถัดไป</Hint>
+<Hint level={3}>ลองลบเล่มที่เคยถูกยืม จะได้ `500` ใน Terminal เห็นรหัส `23503` (foreign key: ยังมีแถวใน loans ชี้มา) เป็นคำตอบของ "ลองคิด" ข้างบน เก็บไว้ก่อน โจทย์ของการ์ดถัดไปสอนวิธีอ่านรหัสจาก Postgres (`err.cause.code`) ใช้วิธีเดียวกันแปลง `23503` เป็น `409` ได้</Hint>
 
 ## อ่านเพิ่ม
 

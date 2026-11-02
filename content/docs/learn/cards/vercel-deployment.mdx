@@ -194,7 +194,7 @@ git push
 | `/books/2` แล้วกดรีเฟรช | หน้าหนังสือเล่ม 2 ไม่ใช่ 404 ของ Vercel |
 | login หลังบ้านด้วยอีเมลและรหัสที่ใส่ตอน seed ในข้อ 3 | เข้าได้ และใน DevTools → Application → Cookies เห็น cookie ติ๊ก `Secure` และ `HttpOnly` |
 
-แถว cookie: ติ๊ก `Secure` มาจาก `secure: process.env.NODE_ENV === "production"` ในการ์ด JWT บนเครื่องเราค่านี้มาจาก script `start` แต่ Vercel ไม่ได้เรียก `start` ค่า `NODE_ENV` ตอนรันจึงมาจาก Vercel ถ้าไม่เห็นติ๊ก `Secure` ให้เปิด **Logs** ดูว่า `NODE_ENV` เป็นอะไร (cookie ที่ไม่ Secure บน https ยังใช้ได้ แต่ถูกส่งผ่าน http ได้ด้วย)
+แถว cookie: ติ๊ก `Secure` มาจาก `secure: process.env.NODE_ENV === "production"` ในการ์ด JWT บนเครื่องเราค่านี้มาจาก script `start` แต่ Vercel ไม่ได้เรียก `start` ค่า `NODE_ENV` ตอนรันจึงมาจาก Vercel ถ้าไม่เห็นติ๊ก `Secure` ให้ login ใหม่โดยเปิด DevTools แท็บ **Network** ไว้ กดคำขอ `login` แล้วดู Response Headers บรรทัด `set-cookie` ถ้าไม่มีคำว่า `Secure` แปลว่า `NODE_ENV` ตอนรันบน Vercel ไม่ใช่ `production` ให้เพิ่ม `NODE_ENV` = `production` ใน Settings → Environment Variables แล้ว Redeploy (cookie ที่ไม่ Secure บน https ยังใช้ได้ แต่ถูกส่งผ่าน http ได้ด้วย)
 
 คำขอแรกหลังไม่มีคนใช้สักพักจะช้า 1–3 วินาที เพราะ Neon ปลุกฐานข้อมูลที่หยุดไว้ และ Vercel เปิด function ขึ้นมาใหม่ คำขอต่อไปจะเร็วตามปกติ
 

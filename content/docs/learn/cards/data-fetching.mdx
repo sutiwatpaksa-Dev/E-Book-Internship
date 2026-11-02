@@ -39,7 +39,7 @@ server
 
 ตอนพัฒนามี 2 โปรแกรมรันพร้อมกัน: หน้าเว็บ (Vite, port 5173) และ API (Hono, port 3000) ต่างคน "ต่างบ้าน" browser จะไม่ยอมให้หน้าเว็บอ่านคำตอบจากบ้านอื่นง่ายๆ (เรื่อง [CORS](/glossary#cors)) วิธีที่ง่ายที่สุดคือให้ Vite เป็นคนกลาง ([proxy](/glossary#proxy-dev)): หน้าเว็บขอ `/api/...` ที่ Vite แล้ว Vite ส่งต่อให้ Hono
 
-เพิ่ม `server` ใน `client/vite.config.ts` แล้วรีสตาร์ท `bun run dev`
+เพิ่ม `server` ใน `client/vite.config.ts` แล้วรีสตาร์ท `bun run dev` **ของ client** (ในแท็บ Terminal ที่รัน Vite กด `Ctrl+C` แล้วรันใหม่) ส่วน server ในอีกแท็บต้องรันค้างไว้ ไม่งั้น proxy ไม่มีที่ส่งต่อ
 
 ```ts
 export default defineConfig({
@@ -108,7 +108,7 @@ export const booksApi = {
 
 ### 2. ชิ้นส่วนสนใจแค่ 3 สถานะ
 
-แก้ `src/pages/books-page.tsx` จากการ์ด Component ให้ดึงเองแทนรับ props
+**แทนทั้งไฟล์** `src/pages/books-page.tsx` จากการ์ด Component ให้ดึงข้อมูลเองแทนรับ props
 
 ```tsx
 import { useEffect, useState } from "react";
@@ -168,7 +168,7 @@ export function BooksPage() {
 
 ## ลองเอง
 
-**โจทย์:** เพิ่มปุ่ม "ลบ" ในกล่องหนังสือแต่ละเล่ม ที่เรียก `DELETE /api/books/:id` (จากโจทย์ข้อ 2 ของการ์ด [แบ่งชั้น](/learn/cards/layers)) ระหว่างส่ง ปุ่มกดซ้ำไม่ได้ ลบสำเร็จแล้วเล่มนั้นหายจากรายการ ลบไม่สำเร็จต้องเห็นข้อความจาก API
+**โจทย์:** เพิ่มปุ่ม "ลบ" ในกล่องหนังสือแต่ละเล่ม ที่เรียก `DELETE /api/books/:id` (จากโจทย์ข้อ 2 ของการ์ด [แบ่งชั้น](/learn/cards/layers) ถ้ายังไม่ได้ทำ ให้ทำโจทย์นั้นก่อน ฝั่ง server ยังไม่มี route ลบ) ระหว่างส่ง ปุ่มกดซ้ำไม่ได้ ลบสำเร็จแล้วเล่มนั้นหายจากรายการ ลบไม่สำเร็จต้องเห็นข้อความจาก API
 
 <Hint level={1}>เพิ่มฟังก์ชัน `remove` ใน `books.api.ts` ก่อน ลองเรียกจาก Console ของ browser ให้ได้ผลก่อนไปทำหน้าจอ (ใช้ `jsonBody` ไม่ได้เพราะไม่มี body ส่งแค่ `{ method: "DELETE" }`)</Hint>
 <Hint level={2}>ปุ่มต้องรู้ว่า "กำลังส่ง" อยู่ไหม นั่นคือ state อีกตัว ใช้คู่กับ `disabled` ส่วนการลบเกิดเพราะผู้ใช้กด จึงอยู่ใน `onClick` ไม่ใช่ `useEffect`</Hint>

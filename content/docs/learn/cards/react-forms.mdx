@@ -88,7 +88,13 @@ export function NewBookForm({ onSaved }: { onSaved: () => void }) {
 }
 ```
 
-วางฟอร์มไว้บนรายการใน `src/App.tsx`
+type ของ `errors` อ่านจากในออกนอก:
+
+- **`keyof typeof empty`** = ชื่อช่องทั้งหมดของฟอร์ม (ตอนนี้มีแค่ `"title"`) เพิ่มช่องใน `empty` เมื่อไร type ตามเอง
+- **`Record<ชื่อช่อง, string>`** = object ที่มีทุกช่อง ค่าเป็นข้อความ error
+- **`Partial<...>`** = มีบางช่องหรือไม่มีเลยก็ได้ ช่องที่ไม่ผิดไม่ต้องมี ค่าจริงจึงเป็น `{}` หรือ `{ title: "กรอกชื่อหนังสือ" }`
+
+วางฟอร์มไว้บนรายการ **แทนทั้งไฟล์** `src/App.tsx` ด้วยข้างล่าง (การ์ดก่อนเรียก `BooksPage` ไว้แล้ว ตอนนี้เพิ่ม `NewBookForm` ไว้ข้างบน)
 
 ```tsx
 import { NewBookForm } from "./components/new-book-form";

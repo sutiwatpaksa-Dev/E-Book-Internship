@@ -51,23 +51,36 @@ story 5 (ยืมเกิน 3 เล่ม) ยังไม่มีหน้
 
 `Ctrl+C` ใช้หยุด server ได้ทั้ง Windows และ Mac (บน Mac ก็เป็น `Ctrl` ไม่ใช่ `Cmd`)
 
-**แก้บั๊ก server ล่ม** ใน `client/src/components/require-librarian.tsx`: ถือว่า "ยังไม่ได้ login" เฉพาะเมื่อ server ตอบ `401` จริง (`status` มาจาก `ApiError` ในการ์ด [ดึงข้อมูลจาก API](/learn/cards/data-fetching)) ที่เหลือคือ "ติดต่อไม่ได้"
+**แก้บั๊ก server ล่ม** ใน `client/src/components/require-librarian.tsx`: ถือว่า "ยังไม่ได้ login" เฉพาะเมื่อ server ตอบ `401` จริง (`status` มาจาก `ApiError` ในการ์ด [ดึงข้อมูลจาก API](/learn/cards/data-fetching)) ที่เหลือคือ "ติดต่อไม่ได้" **แทนทั้งไฟล์** ด้วยข้างล่าง (ต่างจากของเดิมในการ์ด [หน้าหลังบ้านที่ต้อง login](/learn/cards/protected-routes) 4 จุดที่มีคอมเมนต์ `// ใหม่`)
 
 ```tsx
-import { ApiError } from "../api/client";   // เพิ่มบนสุด
+import { useEffect, useState, type ReactNode } from "react";
+import { Navigate, useLocation } from "react-router";
+import { ApiError } from "../api/client";                                          // ใหม่
+import { authApi } from "../api/auth.api";
 
-const [state, setState] = useState<"checking" | "in" | "out" | "error">("checking");
+export function RequireLibrarian({ children }: { children: ReactNode }) {
+  const location = useLocation();
+  const [state, setState] = useState<"checking" | "in" | "out" | "error">("checking");   // ใหม่: เพิ่ม "error"
 
-authApi.me().then(() => setState("in")).catch((e) => setState(e instanceof ApiError && e.status === 401 ? "out" : "error"));
+  useEffect(() => {
+    authApi.me()
+      .then(() => setState("in"))
+      .catch((e) => setState(e instanceof ApiError && e.status === 401 ? "out" : "error"));   // ใหม่: 401 เท่านั้นที่แปลว่ายังไม่ login
+  }, [location.pathname]);
 
-if (state === "error") return <p className="p-8">ติดต่อ server ไม่ได้ ลองรีเฟรชอีกครั้ง</p>;   // วางเหนือ return สุดท้าย
+  if (state === "checking") return <p className="p-8">กำลังตรวจสอบสิทธิ์...</p>;
+  if (state === "out") return <Navigate to="/admin/login" replace state={{ from: location.pathname + location.search }} />;
+  if (state === "error") return <p className="p-8">ติดต่อ server ไม่ได้ ลองรีเฟรชอีกครั้ง</p>;   // ใหม่
+  return <>{children}</>;
+}
 ```
 
 **ควรเห็น:** ปิด server แล้วรีเฟรช `/admin/books` ขึ้น "ติดต่อ server ไม่ได้" ไม่เด้งไปหน้า login (Vite ตอบ `502` เมื่อ server ดับ ไม่ใช่ `401` ลองแล้ว) เปิด server กลับแล้วรีเฟรช เห็นตารางเหมือนเดิม
 
 **ถ้าทำตามการ์ดช่วง Coding มาครบ จะเจอบั๊กจริงอย่างน้อย 1 ข้อตรงนี้:** ชื่อยาว 300 ตัวได้ข้อความ `Too big: expected string to have <=200 characters` เพราะ `.max(200)` ในการ์ด [ตรวจข้อมูลด้วย Zod](/learn/cards/validation) ไม่ได้ใส่ข้อความไทยไว้ และหน้าหลังบ้านแสดงข้อความจาก server ตรงๆ นี่คือเหตุผลที่ต้องลองทางพัง: คนเขียนไม่เคยวาง 300 ตัว จึงไม่เคยเห็น จดเป็นรายงานบั๊ก (แบบข้อ 4) แล้วแก้ด้วย `.max(200, "ชื่อยาวเกิน 200 ตัวอักษร")`
 
-**3. ดู 3 ขนาดจอ** เปิด DevTools (`F12` บน Windows, `Cmd+Option+I` บน Mac) แล้วกดปุ่มรูปมือถือ หรือ `Ctrl+Shift+M` / `Cmd+Shift+M` พิมพ์ความกว้าง 375, 768 และ 1280 ทีละขนาด ทุกหน้าต้องไม่มีแถบเลื่อนแนวนอนของทั้งหน้า ตารางยาวเลื่อนได้ในกรอบของมันเอง และปุ่มกดด้วยนิ้วได้ (สูงอย่างน้อย 44px) วัดได้โดยกดปุ่มลูกศรมุมซ้ายบนของ DevTools แล้วชี้ที่ปุ่ม จะขึ้นขนาด เช่น `64 × 40` ข้อนี้หน้า [หน้าจัดการข้อมูล](/learn/cards/crud-ui) จะไม่ผ่าน: ปุ่มส่วนใหญ่ใช้ `py-2` สูงราว 40px ปุ่มแบ่งหน้าใช้ `py-1` ส่วน "แก้" กับ "ลบ" เป็นแค่ตัวหนังสือ จดเป็นบั๊ก แล้วแก้ด้วยคลาส `min-h-11` (44px)
+**3. ดู 3 ขนาดจอ** เปิด DevTools (`F12` บน Windows, `Cmd+Option+I` บน Mac) แล้วกดปุ่มรูปมือถือ หรือ `Ctrl+Shift+M` / `Cmd+Shift+M` พิมพ์ความกว้าง 375, 768 และ 1280 ทีละขนาด ทุกหน้าต้องไม่มีแถบเลื่อนแนวนอนของทั้งหน้า ตารางยาวเลื่อนได้ในกรอบของมันเอง และปุ่มกดด้วยนิ้วได้ (สูงอย่างน้อย 44px) วัดได้โดยกดปุ่มลูกศรมุมซ้ายบนของ DevTools แล้วชี้ที่ปุ่ม จะขึ้นขนาด เช่น `64 × 40` ข้อนี้หน้า [หน้าจัดการข้อมูล](/learn/cards/crud-ui) จะไม่ผ่าน: ปุ่มส่วนใหญ่ใช้ `py-2` สูงราว 40px ปุ่มแบ่งหน้าใช้ `py-1` ส่วน "แก้" กับ "ลบ" เป็นแค่ตัวหนังสือ จดเป็นบั๊ก แล้วแก้ด้วยคลาส `min-h-11` (44px) คู่กับ `inline-flex items-center` (ไม่งั้นปุ่มสูงขึ้นแต่ตัวหนังสือค้างอยู่ขอบบน) เช่น `className="inline-flex min-h-11 items-center px-3 ..."` คลาสอื่นของปุ่มเดิมคงไว้
 
 **4. จดผลลงไฟล์** สร้าง `TESTING.md` ไว้ที่ root ของโปรเจกต์ (ข้าง `NOTES.md`) เป็นตารางจากข้อ 1–3 เพิ่มคอลัมน์ "ผล" กับวันที่ ทุกรอบที่ทดสอบให้จดว่าผ่านหรือไม่ผ่าน ข้อที่ไม่ผ่านเขียนเป็น **รายงานบั๊ก** แบบนี้ (ตัวอย่างรูปแบบ ถ้าทำตามการ์ด crud-ui ปุ่มถูกปิดระหว่างบันทึกอยู่แล้ว อาจไม่เจอบั๊กนี้)
 

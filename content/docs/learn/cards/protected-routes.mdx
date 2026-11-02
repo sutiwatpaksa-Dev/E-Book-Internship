@@ -87,6 +87,8 @@ export function RequireLibrarian({ children }: { children: ReactNode }) {
 }
 ```
 
+**`children: ReactNode`** = ของที่วางไว้ระหว่าง `<RequireLibrarian>` กับ `</RequireLibrarian>` (หน้าหรือ component อะไรก็ได้ที่ React วาดได้ `ReactNode` คือชื่อ type ของ "อะไรก็ได้ที่วาดได้") ส่วน `type` หน้าชื่อใน import แปลว่าเอามาแค่ type ไม่ได้เอาโค้ดมารัน
+
 `state={{ from }}` ฝากที่อยู่เดิมไว้ให้หน้า login โดยไม่โชว์ใน URL (รวม `?q=...` ด้วย ไม่งั้นคำค้นหาหายตอนกลับมา ลองแล้วเจอจริง)
 
 ### 3. หน้า login `client/src/pages/admin/login-page.tsx`

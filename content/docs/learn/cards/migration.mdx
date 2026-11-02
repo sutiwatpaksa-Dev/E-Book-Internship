@@ -58,9 +58,9 @@ members 3 columns 0 indexes 0 fks
 bunx drizzle-kit migrate
 ```
 
-**ควรเห็น:** `[✓] migrations applied successfully!` แล้วใน pgAdmin คลิกขวาที่ฐาน `postgres` → Refresh แล้วเปิด Schemas → public → Tables จะเห็นตาราง `members`, `books`, `loans` และตาราง `__drizzle_migrations` ที่จดว่ารันไฟล์ไหนไปแล้ว (อยู่ใต้ schema ชื่อ `drizzle` คำว่า schema ใน pgAdmin หมายถึง "กลุ่มตาราง" ในฐานข้อมูล เช่น `public` คนละเรื่องกับไฟล์ `schema.ts`)
+**ควรเห็น:** `[✓] migrations applied successfully!` แล้วใน pgAdmin คลิกขวาที่ฐาน `postgres` → Refresh แล้วเปิด Schemas → public → Tables จะเห็นตาราง `members`, `books`, `loans` ส่วนตาราง `__drizzle_migrations` ที่จดว่ารันไฟล์ไหนไปแล้ว ไม่อยู่ใน `public` ให้เปิด Schemas → **drizzle** → Tables แทน (คำว่า schema ใน pgAdmin หมายถึง "กลุ่มตาราง" ในฐานข้อมูล เช่น `public`, `drizzle` คนละเรื่องกับไฟล์ `schema.ts`)
 
-> **ขึ้น `relation "members" already exists`?** แปลว่าเคยสร้างตารางเองในฐาน `postgres` (การ์ด SQL รุ่นก่อนให้ทำแบบนั้น) ใน Query Tool ของฐาน `postgres` รัน `DROP TABLE loans, books, members;` (ต้องลบสามตารางในคำสั่งเดียว ถ้าลบ `members` ตัวเดียว จะติด foreign key ที่ `loans` ชี้มา) แล้ว `bunx drizzle-kit migrate` ใหม่ ข้อมูลที่ลองใส่ไว้จะหายไป ซึ่งไม่เป็นไร seed ขั้นถัดไปใส่ให้ใหม่
+> **ขึ้น `relation "members" already exists`?** แปลว่าเคยสร้างตารางชื่อเดียวกันเองในฐาน `postgres` (เช่น ตอนลองการ์ด [SQL ที่ใช้บ่อย](/learn/cards/sql-basics)) ใน Query Tool ของฐาน `postgres` รัน `DROP TABLE loans, books, members;` (ต้องลบสามตารางในคำสั่งเดียว ถ้าลบ `members` ตัวเดียว จะติด foreign key ที่ `loans` ชี้มา) แล้ว `bunx drizzle-kit migrate` ใหม่ ข้อมูลที่ลองใส่ไว้จะหายไป ซึ่งไม่เป็นไร seed ขั้นถัดไปใส่ให้ใหม่
 
 **3. Seed ข้อมูลตั้งต้น** `server/src/db/seed.ts`
 
@@ -112,8 +112,8 @@ process.exit(0);   // ปิด connection ที่ค้างอยู่ ไ
 **โจทย์:** เพิ่มเบอร์โทรให้สมาชิก โดยสมาชิก 2 คนที่ seed ไว้ต้องไม่พัง และสมาชิกใหม่ต้องกรอกเบอร์ทุกคน
 
 <Hint level={1}>ถ้าเพิ่มคอลัมน์ที่ห้ามว่างทันที แถวเก่าที่ไม่มีเบอร์จะทำให้ migrate ไม่ผ่าน ต้องคิดว่าแถวเก่าจะได้ค่าอะไร</Hint>
-<Hint level={2}>มีสองทาง: ให้ค่าเริ่มต้น (`.default(...)`) หรือแบ่งเป็น 2 migration (เพิ่มแบบว่างได้ → เติมข้อมูล → ค่อยเปลี่ยนเป็นห้ามว่าง)</Hint>
-<Hint level={3}>เลือกทางหนึ่ง แก้ schema → generate → **อ่านไฟล์ SQL** → migrate แล้วลองเพิ่มสมาชิกใหม่ใน pgAdmin โดยไม่ใส่เบอร์ ต้องเจอ error</Hint>
+<Hint level={2}>ทางลัดคือให้ค่าเริ่มต้น (`.default(...)`) แถวเก่าผ่าน แต่สมาชิกใหม่ที่ลืมกรอกก็ได้ค่าเริ่มต้นไปเงียบๆ ไม่ตรงโจทย์ข้อหลัง ทางที่ตรงโจทย์คือแบ่งเป็น 2 migration: เพิ่มแบบว่างได้ → เติมเบอร์ให้แถวเก่า → ค่อยเปลี่ยนเป็นห้ามว่าง</Hint>
+<Hint level={3}>แก้ schema → generate → **อ่านไฟล์ SQL** → migrate ทีละรอบ แล้วลองเพิ่มสมาชิกใหม่ใน pgAdmin โดยไม่ใส่เบอร์ ต้องเจอ error `null value in column "phone"` (ถ้าไม่เจอ แปลว่ายังมีค่าเริ่มต้นค้างอยู่ หรือยังไม่ได้เปลี่ยนเป็นห้ามว่าง)</Hint>
 
 ## อ่านเพิ่ม
 

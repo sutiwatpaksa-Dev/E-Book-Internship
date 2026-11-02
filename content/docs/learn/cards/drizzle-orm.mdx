@@ -151,11 +151,11 @@ process.exit(0);   // ปิด connection ที่ค้าง ไม่งั
 
 ## ลองเอง
 
-**โจทย์:** หลังสร้างตารางในการ์ด Migration แล้ว เขียนคำสั่ง Drizzle ดึง "ชื่อสมาชิก + ชื่อหนังสือ" ของการยืมที่ยังไม่คืน (ผลเดียวกับ SQL ในการ์ด SQL ที่ใช้บ่อย)
+**โจทย์:** หลังสร้างตารางในการ์ด Migration แล้ว (seed ของการ์ดนั้นยังไม่มีการยืม ให้เพิ่มแถวใน `loans` เองใน pgAdmin สัก 2 แถว ไม่งั้นได้ `[]`) เขียนคำสั่ง Drizzle ดึง "ชื่อสมาชิก + ชื่อหนังสือ" ของการยืมที่ยังไม่คืน (ผลเดียวกับ SQL ในการ์ด SQL ที่ใช้บ่อย)
 
 <Hint level={1}>เลือกเฉพาะบางคอลัมน์ได้ด้วย `db.select({ name: members.name, ... })`</Hint>
 <Hint level={2}>ต่อตารางด้วย `.innerJoin(ตาราง, eq(คอลัมน์ฝั่งนี้, คอลัมน์ฝั่งนั้น))` ต้องต่อ 2 ครั้ง และ `eq` import มาจาก `drizzle-orm`</Hint>
-<Hint level={3}>โครง: `db.select({...}).from(loans).innerJoin(...).innerJoin(...).where(isNull(...))` เติมช่องเอง แล้วเปิด `logger: true` ดู SQL ที่ได้ เทียบกับ SQL ที่เขียนเองในการ์ดก่อน</Hint>
+<Hint level={3}>โครง: `db.select({...}).from(loans).innerJoin(...).innerJoin(...).where(isNull(...))` เติมช่องเอง แล้วเปิด `logger: true` (ใส่ใน `server/src/db/index.ts` เป็น `drizzle(process.env.DATABASE_URL!, { schema, logger: true })`) ดู SQL ที่ได้ เทียบกับ SQL ที่เขียนเองในการ์ดก่อน</Hint>
 
 ## อ่านเพิ่ม
 
