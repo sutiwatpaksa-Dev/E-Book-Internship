@@ -3,7 +3,7 @@
 import { ClipboardList, LayoutDashboard, Menu, MessageCircle, Route } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession } from "@/hooks/use-session";
+import { useRoleKnown, useSession } from "@/hooks/use-session";
 import { useUnread } from "@/hooks/use-unread";
 import { DASHBOARD_URL } from "@/lib/nav-tree";
 import { useNavDrawer } from "@/hooks/use-nav-drawer";
@@ -14,6 +14,7 @@ import { useNavDrawer } from "@/hooks/use-nav-drawer";
 export function BottomNav() {
   const pathname = usePathname();
   const { role } = useSession();
+  const known = useRoleKnown();
   const unread = useUnread();
   const { open, setOpen } = useNavDrawer();
   const on = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
@@ -27,7 +28,9 @@ export function BottomNav() {
       aria-label="ทางลัด"
       className="fixed inset-x-0 bottom-0 z-40 flex border-t border-fd-border bg-fd-background/95 px-1 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm md:hidden"
     >
-      {links.map((l) => {
+      {links.map((l, n) => {
+        // ช่อง 2 ขึ้นกับ role: ยังไม่รู้ = ช่องว่างกว้างเท่ากัน ไม่ขึ้น "เส้นทาง" แวบแล้วเปลี่ยนเป็น "กระดานงาน"
+        if (n === 1 && !known) return <span key="pending" aria-hidden className={tab} />;
         const active = !open && on(l.href);
         return (
           <Link key={l.href} href={l.href} aria-current={active ? "page" : undefined} className={`${tab} ${tone(active)}`}>

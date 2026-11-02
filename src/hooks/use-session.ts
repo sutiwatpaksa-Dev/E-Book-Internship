@@ -19,6 +19,11 @@ const subscribe = (l: () => void) => {
   return () => listeners.delete(l);
 };
 
+// false = render แรก (ฝั่ง server และตอน hydrate) ยังอ่าน cookie ไม่ได้ role จึงเป็น null ชั่วคราว
+// ใช้จองที่ให้ของที่ขึ้นกับ role ไม่ให้เมนูขยับตอนรู้ role
+const noop = () => () => {};
+export const useRoleKnown = () => useSyncExternalStore(noop, () => true, () => false);
+
 export function useSession() {
   // ตอน render ฝั่ง server ไม่มี cookie ของเบราว์เซอร์ จึงถือว่ายังไม่ login
   const role = useSyncExternalStore(subscribe, readRoleHint, () => null);

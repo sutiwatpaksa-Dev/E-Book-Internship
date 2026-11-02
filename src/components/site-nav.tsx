@@ -4,7 +4,7 @@ import { BookOpen, ChevronRight, ClipboardList, FolderKanban, LayoutDashboard, L
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, type ReactNode } from "react";
-import { useSession } from "@/hooks/use-session";
+import { useRoleKnown, useSession } from "@/hooks/use-session";
 import { useUnread } from "@/hooks/use-unread";
 import { LEARN_BASE } from "@/data/learn";
 import { DASHBOARD_URL } from "@/lib/nav-tree";
@@ -16,14 +16,16 @@ import { BookProgress, SidebarNav } from "./sidebar-nav";
 // เมนูซ้ายชุดเดียวทุกหน้า (ภาพรวม กระดานงาน 7 ขั้น การ์ด บทเดิม ฯลฯ) โครงไม่เปลี่ยนตามหน้า เปลี่ยนแค่แถบที่ไฮไลต์
 // เดิมแต่ละหมวดหน้ามีเมนูของตัวเอง กดไปบทเดิมแล้วเมนู 7 ขั้นหายทั้งชุด น้องสับสนว่าอยู่ที่ไหน
 // ใช้ทั้ง sidebar จอกว้าง (site-sidebar.tsx) และลิ้นชักมือถือ
-type Item = { href: string; label: string; icon: LucideIcon; show: (role: Role | null) => boolean };
-const MY_WORK: Item[] = [
-  { href: DASHBOARD_URL, label: "ภาพรวม", icon: LayoutDashboard, show: () => true },
-  { href: "/work", label: "กระดานงาน", icon: ClipboardList, show: (r) => r === "intern" },
-  { href: "/starter", label: "โจทย์ฝึกงาน", icon: FolderKanban, show: () => true },
-  { href: "/questions", label: "ข้อความถึงพี่เลี้ยง", icon: MessageCircle, show: () => true },
-  { href: "/profile", label: "โปรไฟล์", icon: UserRound, show: (r) => r !== null },
-  { href: "/dev/admin", label: "หลังบ้านพี่เลี้ยง", icon: Settings, show: (r) => r === "dev" },
+// 5 ช่องที่ตำแหน่งคงที่: ช่อง 2 และ 5 ขึ้นกับ role (น้อง = กระดานงาน/โปรไฟล์ · พี่เลี้ยง = หลังบ้าน/โปรไฟล์)
+// น้องกับพี่เลี้ยงจึงมี 5 แถวเท่ากัน · ตอนโหลดหน้ายังไม่รู้ role ช่องเหล่านี้เป็นแถบจองที่สูงเท่ากัน เมนูไม่ขยับตอนรู้ role
+type Item = { href: string; label: string; icon: LucideIcon };
+type Slot = Item | ((role: Role | null) => Item | null);
+const MY_WORK: Slot[] = [
+  { href: DASHBOARD_URL, label: "ภาพรวม", icon: LayoutDashboard },
+  (r) => (r === "intern" ? { href: "/work", label: "กระดานงาน", icon: ClipboardList } : r === "dev" ? { href: "/dev/admin", label: "หลังบ้านพี่เลี้ยง", icon: Settings } : null),
+  { href: "/starter", label: "โจทย์ฝึกงาน", icon: FolderKanban },
+  { href: "/questions", label: "ข้อความถึงพี่เลี้ยง", icon: MessageCircle },
+  (r) => (r ? { href: "/profile", label: "โปรไฟล์", icon: UserRound } : null),
 ];
 
 // หน้าที่อยู่นอกหมวด "งานของฉัน" และ "เรียนรู้" = บทเดิม/อ้างอิง (บท 00–23, ศัพท์, cheat sheet, มีอะไรใหม่)
@@ -35,6 +37,7 @@ const isActive = (pathname: string, href: string) => pathname === href || pathna
 export function SiteNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const { role } = useSession();
+  const known = useRoleKnown();
   const unread = useUnread();
   const reference = isReferencePage(pathname);
   const root = useRef<HTMLDivElement>(null);
@@ -71,7 +74,10 @@ export function SiteNav({ onNavigate }: { onNavigate?: () => void }) {
     <div ref={root} className="flex flex-col gap-5">
       <Group title="งานของฉัน">
         <nav aria-label="งานของฉัน" className="flex flex-col gap-0.5 text-sm">
-          {MY_WORK.filter((i) => i.show(role)).map((i) => {
+          {MY_WORK.map((slot, n) => {
+            if (typeof slot === "function" && !known) return <span key={n} aria-hidden className="mx-2.5 my-[11px] block h-[22px] animate-pulse rounded bg-fd-muted" />;
+            const i = typeof slot === "function" ? slot(role) : slot;
+            if (!i) return null;
             const active = isActive(pathname, i.href);
             const locked = gate(i.href, role) === "login";
             return (
