@@ -3,7 +3,7 @@
 import { internHref } from "@/lib/admin-links";
 import { RowLink } from "./row-link";
 import { RowMenu } from "./row-menu";
-import { ArrowLeftRight, Search, UserPlus, Users } from "lucide-react";
+import { ArrowLeftRight, Lock, Search, UserPlus, Users } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { isLockedNow, type AdminState } from "@/hooks/use-admin";
 import { inCohort, type CohortFilter } from "@/lib/cohort";
@@ -19,7 +19,8 @@ import { Field, Input, inputClass } from "./field";
 import { Skeleton, SkeletonList } from "./skeleton";
 
 const PAGE_SIZE = 10;
-const fmt = (d: string | null) => (d ? new Date(d).toLocaleString("th-TH") : "–");
+// วันที่ + ชั่วโมง:นาที (วินาทีไม่ช่วยตัดสินอะไร แต่ทำให้คอลัมน์กว้าง)
+const fmt = (d: string | null) => (d ? new Date(d).toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" }) : "–");
 // แถบกรอง: ทุกชิ้นสูง 36px เท่ากัน (ช่องค้นหา, ปุ่มกลุ่ม, ตัวเลือกรุ่น) สายตาจะอ่านเป็นแถวเดียว
 const toolbarInput = `${inputClass} h-9 py-0`;
 const FILTERS: { id: Role | "all"; label: string }[] = [
@@ -206,7 +207,7 @@ export function AdminUsers({ admin, nav }: { admin: AdminState; nav: AdminNav })
               <th className="px-3 py-2">รุ่น</th>
               <th className="px-3 py-2">สถานะ</th>
               <th className="px-3 py-2">เข้าล่าสุด</th>
-              <th className="px-3 py-2 text-end md:sticky md:end-0 md:bg-fd-muted md:shadow-[-8px_0_8px_-8px_rgb(0_0_0/0.25)]">จัดการ</th>
+              <th className="px-3 py-2 text-end xl:sticky xl:end-0 xl:bg-fd-muted xl:shadow-[-8px_0_8px_-8px_rgb(0_0_0/0.25)]">จัดการ</th>
             </tr>
           </thead>
           <tbody className="max-md:flex max-md:flex-col max-md:gap-3">
@@ -221,7 +222,7 @@ export function AdminUsers({ admin, nav }: { admin: AdminState; nav: AdminNav })
               <tr key={u.id} className="relative border-t border-fd-border hover:bg-fd-accent/50 max-md:grid max-md:grid-cols-2 max-md:gap-x-3 max-md:gap-y-2.5 max-md:rounded-xl max-md:border max-md:bg-fd-card max-md:p-3">
                 {/* ทุกแถวมี 2 บรรทัด (ชื่อผู้ใช้ + ชื่อจริง) แถวจึงสูงเท่ากัน ยังไม่กรอกชื่อ = บอกตรงๆ */}
                 <td className="px-3 py-2 max-md:col-span-2 max-md:p-0">
-                  <span className="flex items-center gap-2 font-medium">
+                  <span className="flex flex-wrap items-center gap-x-2 gap-y-1 font-medium">
                     {/* น้อง: กดชื่อเปิดหน้าน้องรายคน (โปรไฟล์ ช่องติดต่อ ความคืบหน้า) */}
                     {u.role === "intern" ? (
                       <RowLink href={internHref(u.id)} onGo={() => nav.openIntern(u.id)}>
@@ -231,6 +232,8 @@ export function AdminUsers({ admin, nav }: { admin: AdminState; nav: AdminNav })
                       u.username
                     )}
                     {u.role === "dev" && u.superAdmin && <span className="rounded-full bg-fd-primary/10 px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-fd-primary">Super admin</span>}
+                    {/* เดิมอยู่ในคอลัมน์จัดการ ทำให้คอลัมน์ที่ติดขอบขวากว้างจนทับคอลัมน์อื่น */}
+                    {isMe(u) && <span className="rounded-full bg-fd-muted px-2 py-0.5 text-xs whitespace-nowrap text-fd-muted-foreground">บัญชีของคุณ</span>}
                   </span>
                   <span className="block text-xs text-fd-muted-foreground">{u.fullName ?? "ยังไม่ระบุชื่อ"}</span>
                 </td>
@@ -258,7 +261,8 @@ export function AdminUsers({ admin, nav }: { admin: AdminState; nav: AdminNav })
                   {!u.disabled && <span className="block"><OnlineBadge lastSeenAt={u.lastSeenAt} quiet /></span>}
                 </td>
                 <td data-label="เข้าล่าสุด" className="px-3 py-2 whitespace-nowrap max-md:p-0 max-md:before:block max-md:before:text-xs max-md:before:text-fd-muted-foreground max-md:before:content-[attr(data-label)]">{fmt(u.lastLoginAt)}</td>
-                <td className="px-3 py-2 md:sticky md:end-0 md:bg-fd-card md:shadow-[-8px_0_8px_-8px_rgb(0_0_0/0.25)] max-md:col-span-2 max-md:border-t max-md:border-fd-border max-md:p-0 max-md:pt-2">
+                {/* ติดขอบขวาเฉพาะจอกว้าง (≥1280) · จอกลางเลื่อนตารางตามปกติ ไม่งั้นคอลัมน์นี้ทับ "รุ่น" กับ "เข้าล่าสุด" */}
+                <td className="px-3 py-2 xl:sticky xl:end-0 xl:bg-fd-card xl:shadow-[-8px_0_8px_-8px_rgb(0_0_0/0.25)] max-md:col-span-2 max-md:border-t max-md:border-fd-border max-md:p-0 max-md:pt-2">
                   {/* ปุ่มที่ต้องทำตอนนี้อยู่ข้างนอก (ปลดล็อก, น้องขอรีเซ็ต) ที่เหลือเก็บในเมนู ⋯ แถวจะได้ไม่รก */}
                   <div className="flex items-center justify-end gap-1 whitespace-nowrap max-md:flex-wrap max-md:justify-start">
                     {isLockedNow(u) && (
@@ -271,14 +275,13 @@ export function AdminUsers({ admin, nav }: { admin: AdminState; nav: AdminNav })
                         ออก PIN ใหม่
                       </Button>
                     )}
-                    {/* ไม่มีปุ่มให้กด = บอกเหตุผลแทนช่องว่าง (server ก็ไม่ให้ปิดบัญชีตัวเอง) */}
-                    {isMe(u) ? (
-                      <span className="inline-flex h-9 items-center px-2 text-xs text-fd-muted-foreground">บัญชีของคุณ</span>
-                    ) : !canManage(u) ? (
-                      <span className="inline-flex h-9 items-center px-2 text-xs text-fd-muted-foreground" title="บัญชีพี่เลี้ยงจัดการได้เฉพาะ Super admin">
-                        เฉพาะ Super admin
+                    {/* ไม่มีอะไรให้กด = บอกเหตุผลแทนช่องว่าง (ไอคอนแทนข้อความ คอลัมน์จะได้แคบ) */}
+                    {!isMe(u) && !canManage(u) && (
+                      <span className="inline-flex size-11 items-center justify-center text-fd-muted-foreground" title="บัญชีพี่เลี้ยงจัดการได้เฉพาะ Super admin">
+                        <Lock className="size-4" aria-hidden />
+                        <span className="sr-only">บัญชีพี่เลี้ยงจัดการได้เฉพาะ Super admin</span>
                       </span>
-                    ) : null}
+                    )}
                     <RowMenu
                       label={`จัดการ ${u.username}`}
                       items={[
