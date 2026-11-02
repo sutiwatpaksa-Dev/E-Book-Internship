@@ -1,6 +1,7 @@
 import { type AnyPgColumn, boolean, customType, date, index, integer, jsonb, pgTable, primaryKey, serial, text, timestamp } from "drizzle-orm/pg-core";
 import type { CommentKind, CommentTemplate, Criterion, Scores } from "../../src/lib/rubric";
-import { DEFAULT_ROUNDS, type RoundDef } from "../../src/lib/submission";
+import type { PostKind, Requirement } from "../../src/lib/post";
+import { DEFAULT_ROUNDS, type RoundDef, type TaskLink } from "../../src/lib/submission";
 
 const bytea = customType<{ data: Buffer }>({ dataType: () => "bytea" });
 
@@ -109,6 +110,10 @@ export const assignments = pgTable("assignments", {
   pdfKey: text("pdf_key").notNull().unique(),
   sections: jsonb("sections").$type<AssignmentSection[]>().notNull().default([]),
   rubric: jsonb("rubric").$type<AssignmentRubric>().notNull().default({ rounds: DEFAULT_ROUNDS }),
+  // ภาพรวมโจทย์ใหญ่ (Markdown) แทนหน้า MDX ใน repo · ว่าง = ยังไม่ได้เขียน
+  overview: text("overview").notNull().default(""),
+  // เก็บโจทย์แล้ว: ไม่ให้เลือกใช้กับรุ่นใหม่ แต่งานและคะแนนเดิมยังเปิดดูได้
+  archivedAt: timestamp("archived_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -351,6 +356,63 @@ export const announcements = pgTable("announcements", {
     .references(() => users.id),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// โพสต์ในฟีด (งาน / ประกาศ / แหล่งเรียนรู้) · กฎอยู่ใน src/lib/post.ts
+// งานที่ผูกโจทย์ใหญ่ (assignment_id) = งานย่อยของโจทย์ กำหนดส่งเป็นวันทำงานที่ N ของรุ่น (due_day)
+// โพสต์อื่นใช้วันที่จริง (due_at) · เห็นได้เฉพาะรุ่นใน post_cohorts หรือ all_cohorts (ไม่มีค่าเริ่มที่ทำให้หลุดไปรุ่นอื่น)
+export const posts = pgTable(
+  "posts",
+  {
+    id: serial("id").primaryKey(),
+    kind: text("kind").$type<PostKind>().notNull(),
+    assignmentId: integer("assignment_id").references(() => assignments.id, { onDelete: "restrict" }),
+    title: text("title").notNull(),
+    body: text("body").notNull().default(""),
+    links: jsonb("links").$type<TaskLink[]>().notNull().default([]),
+    allCohorts: boolean("all_cohorts").notNull().default(false),
+    dueDay: integer("due_day"),
+    dueAt: date("due_at"),
+    // ช่องที่น้องต้องส่ง (ใช้ในเฟส B)
+    requires: jsonb("requires").$type<Requirement[]>().notNull().default([]),
+    pinned: boolean("pinned").notNull().default(false),
+    sortOrder: integer("sort_order").notNull().default(0),
+    authorId: integer("author_id")
+      .notNull()
+      .references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    editedAt: timestamp("edited_at", { withTimezone: true }),
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
+  },
+  (t) => [index("posts_created_idx").on(t.createdAt), index("posts_assignment_idx").on(t.assignmentId)],
+);
+
+export const postCohorts = pgTable(
+  "post_cohorts",
+  {
+    postId: integer("post_id")
+      .notNull()
+      .references(() => posts.id, { onDelete: "cascade" }),
+    cohortId: integer("cohort_id")
+      .notNull()
+      .references(() => cohorts.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.postId, t.cohortId] }), index("post_cohorts_cohort_idx").on(t.cohortId)],
+);
+
+// "รับทราบ" คนละครั้งต่อโพสต์ · กดซ้ำ = ยกเลิก (ลบแถว)
+export const postAcks = pgTable(
+  "post_acks",
+  {
+    postId: integer("post_id")
+      .notNull()
+      .references(() => posts.id, { onDelete: "cascade" }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    ackedAt: timestamp("acked_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.postId, t.userId] })],
+);
 
 // ปรับการ์ดในโค้ดโดยไม่แก้ไฟล์: ซ่อนจากรายการ หรือเปลี่ยนชื่อ/เวลาอ่าน/หมวดที่แสดง · ไม่มีแถว = ใช้ค่าในโค้ด
 export const cardOverrides = pgTable("card_overrides", {

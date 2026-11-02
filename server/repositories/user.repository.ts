@@ -60,7 +60,7 @@ export const userRepository = {
   // น้องที่ยังใช้งานอยู่ ตามรายชื่อหรือรุ่น (ใช้ตอนพี่เลี้ยงส่งข้อความ)
   activeInterns: (where: { ids?: number[]; cohortId?: number }) =>
     db
-      .select({ id: users.id, username: users.username })
+      .select({ id: users.id, username: users.username, cohortId: users.cohortId })
       .from(users)
       .where(and(eq(users.disabled, false), eq(users.role, "intern"), where.ids ? inArray(users.id, where.ids) : undefined, where.cohortId ? eq(users.cohortId, where.cohortId) : undefined))
       .orderBy(asc(users.username)),

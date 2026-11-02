@@ -198,3 +198,26 @@ export type CommentSend = { kind?: CommentKind; ref?: string; body: string };
 
 // โพสต์งาน (ฟอร์มของพี่เลี้ยง) · day = วันทำงานที่ N ของรุ่น
 export type PostSend = { label: string; what: string; day: number; deploy: boolean; body: string; links: { label: string; url: string }[] };
+
+// โพสต์ในฟีด (รูปร่างตรงกับ server/services/post.service.ts) · กฎอยู่ใน src/lib/post.ts
+export type FeedPost = {
+  id: number;
+  kind: import("@/lib/post").PostKind;
+  assignmentId: number | null;
+  assignmentName: string | null;
+  title: string;
+  body: string;
+  links: { label: string; url: string }[];
+  allCohorts: boolean;
+  dueDay: number | null;
+  dueAt: string | null;
+  // กำหนดส่งเป็นวันที่ของรุ่นคนดู (YYYY-MM-DD) · null = ไม่มีกำหนด
+  due: string | null;
+  pinned: boolean;
+  author: string;
+  createdAt: string;
+  editedAt: string | null;
+  acked: boolean;
+};
+export type AdminPost = Omit<FeedPost, "due" | "acked"> & { cohortIds: number[]; archivedAt: string | null; acks: number; audience: number };
+export type PostAck = { username: string; ackedAt: string | null };

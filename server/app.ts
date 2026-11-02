@@ -11,6 +11,7 @@ import { fileRoutes } from "./routes/file.routes";
 import { notificationRoutes } from "./routes/notification.routes";
 import { profileRoutes } from "./routes/profile.routes";
 import { progressRoutes } from "./routes/progress.routes";
+import { postRoutes } from "./routes/post.routes";
 import { submissionRoutes } from "./routes/submission.routes";
 import { threadRoutes } from "./routes/thread.routes";
 
@@ -43,6 +44,7 @@ app.route("/profile", profileRoutes);
 app.route("/content", contentRoutes);
 app.route("/notifications", notificationRoutes);
 app.route("/submissions", submissionRoutes);
+app.route("/posts", postRoutes);
 
 // บอก path ที่ server เห็นด้วย ช่วยตรวจว่า rewrite ของ Vercel ส่ง path เดิมมาครบไหม
 app.notFound((c) => c.json({ error: "ไม่พบ", path: c.req.path }, 404));

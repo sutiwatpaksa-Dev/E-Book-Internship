@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ClipboardList, MessageSquareHeart, FilePlus2, FileText, FolderGit2, GraduationCap, History, Inbox, Layers, LayoutDashboard, Megaphone, MessageCircle, NotebookPen, Users, type LucideIcon } from "lucide-react";
+import { ChevronDown, ClipboardList, MessageSquareHeart, Newspaper, FilePlus2, FileText, FolderGit2, GraduationCap, History, Inbox, Layers, LayoutDashboard, Megaphone, MessageCircle, NotebookPen, Users, type LucideIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { useAdmin } from "@/hooks/use-admin";
@@ -14,6 +14,7 @@ import type { AdminSubmission } from "@/types";
 import { CohortFilterBar } from "./cohort-filter-bar";
 import { useContentAdmin } from "@/hooks/use-content-admin";
 import { AdminBoard } from "./admin-board";
+import { AdminFeed } from "./admin-feed";
 import { AdminAnnouncements } from "./admin-announcements";
 import { AdminAudit } from "./admin-audit";
 import { AdminBuiltInCards, AdminMentorCards, AdminNotes } from "./admin-content";
@@ -33,7 +34,7 @@ import { ErrorText } from "./error-text";
 import { MobileDrawer } from "./mobile-drawer";
 import { Skeleton, SkeletonList } from "./skeleton";
 
-type TabId = "overview" | "questions" | "board" | "submissions" | "requests" | "feedback" | "cards" | "notes" | "builtin" | "announcements" | "cohorts" | "users" | "files" | "audit";
+type TabId = "overview" | "feed" | "questions" | "board" | "submissions" | "requests" | "feedback" | "cards" | "notes" | "builtin" | "announcements" | "cohorts" | "users" | "files" | "audit";
 type Tab = { id: TabId; label: string; icon: LucideIcon };
 // เมนูแบ่ง 3 กลุ่มตามความถี่ที่ใช้: งานประจำวัน (เปิดทุกวัน) → เนื้อหา (เขียน/ปรับคู่มือ) → ระบบ (นานๆ ครั้ง)
 const GROUPS: { label: string; tabs: Tab[] }[] = [
@@ -41,6 +42,7 @@ const GROUPS: { label: string; tabs: Tab[] }[] = [
     label: "งานประจำวัน",
     tabs: [
       { id: "overview", label: "ภาพรวม", icon: LayoutDashboard },
+      { id: "feed", label: "งานและประกาศ", icon: Newspaper },
       { id: "questions", label: "แชทกับน้อง", icon: MessageCircle },
       { id: "board", label: "โพสต์งานให้น้อง", icon: ClipboardList },
       { id: "submissions", label: "ตรวจงานที่ส่ง", icon: FolderGit2 },
@@ -295,6 +297,7 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
           ))}
         {/* key: สั่งเปิดเรื่องใหม่จากข้างนอก ให้แชทเริ่มใหม่ที่เรื่องนั้น (ดู chatKey ข้างบน) */}
         {tab === "questions" && <ChatPanel key={chatKey} side="dev" titles={titles} initialId={view.thread ?? null} owners={owners} ready={!admin.loading && !!admin.me} onSelect={onSelectThread} />}
+        {tab === "feed" && <AdminFeed admin={admin} />}
         {tab === "board" && <AdminBoard admin={admin} nav={nav} />}
         {tab === "submissions" && <AdminSubmissions admin={admin} onChange={countSubs} inScope={inScope} />}
         {tab === "requests" && <AdminRequests admin={admin} nav={nav} />}

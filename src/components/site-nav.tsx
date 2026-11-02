@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, ChevronRight, ClipboardList, FolderKanban, LayoutDashboard, Lock, MessageCircle, Settings, UserRound, type LucideIcon } from "lucide-react";
+import { BookOpen, ChevronRight, Newspaper, ClipboardList, FolderKanban, LayoutDashboard, Lock, MessageCircle, Settings, UserRound, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, type ReactNode } from "react";
@@ -16,12 +16,13 @@ import { BookProgress, SidebarNav } from "./sidebar-nav";
 // เมนูซ้ายชุดเดียวทุกหน้า (ภาพรวม กระดานงาน 7 ขั้น การ์ด บทเดิม ฯลฯ) โครงไม่เปลี่ยนตามหน้า เปลี่ยนแค่แถบที่ไฮไลต์
 // เดิมแต่ละหมวดหน้ามีเมนูของตัวเอง กดไปบทเดิมแล้วเมนู 7 ขั้นหายทั้งชุด น้องสับสนว่าอยู่ที่ไหน
 // ใช้ทั้ง sidebar จอกว้าง (site-sidebar.tsx) และลิ้นชักมือถือ
-// 5 ช่องที่ตำแหน่งคงที่: ช่อง 2 และ 5 ขึ้นกับ role (น้อง = กระดานงาน/โปรไฟล์ · พี่เลี้ยง = หลังบ้าน/โปรไฟล์)
+// 6 ช่องที่ตำแหน่งคงที่: ช่อง 3 และ 6 ขึ้นกับ role (น้อง = กระดานงาน/โปรไฟล์ · พี่เลี้ยง = หลังบ้าน/โปรไฟล์)
 // น้องกับพี่เลี้ยงจึงมี 5 แถวเท่ากัน · ตอนโหลดหน้ายังไม่รู้ role ช่องเหล่านี้เป็นแถบจองที่สูงเท่ากัน เมนูไม่ขยับตอนรู้ role
 type Item = { href: string; label: string; icon: LucideIcon };
 type Slot = Item | ((role: Role | null) => Item | null);
 const MY_WORK: Slot[] = [
   { href: DASHBOARD_URL, label: "ภาพรวม", icon: LayoutDashboard },
+  { href: "/feed", label: "งานและประกาศ", icon: Newspaper },
   (r) => (r === "intern" ? { href: "/work", label: "กระดานงาน", icon: ClipboardList } : r === "dev" ? { href: "/dev/admin", label: "หลังบ้านพี่เลี้ยง", icon: Settings } : null),
   { href: "/starter", label: "โจทย์ฝึกงาน", icon: FolderKanban },
   { href: "/questions", label: "ข้อความถึงพี่เลี้ยง", icon: MessageCircle },
@@ -29,7 +30,7 @@ const MY_WORK: Slot[] = [
 ];
 
 // หน้าที่อยู่นอกหมวด "งานของฉัน" และ "เรียนรู้" = บทเดิม/อ้างอิง (บท 00–23, ศัพท์, cheat sheet, มีอะไรใหม่)
-const APP_PATHS = [DASHBOARD_URL, "/work", "/starter", "/questions", "/profile", "/dev", LEARN_BASE];
+const APP_PATHS = [DASHBOARD_URL, "/feed", "/work", "/starter", "/questions", "/profile", "/dev", LEARN_BASE];
 export const isReferencePage = (pathname: string) => pathname !== "/" && !APP_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
 const isActive = (pathname: string, href: string) => pathname === href || pathname.startsWith(`${href}/`);

@@ -36,12 +36,16 @@ export const AUDIT_LABEL: Record<string, string> = {
   "cohort.signup": "ตั้งค่ารับสมัคร",
   "user.register": "สมัครด้วยรหัสรุ่น",
   "user.reset_request": "ขอรีเซ็ตรหัสผ่าน",
+  "post.create": "โพสต์ในฟีด",
+  "post.update": "แก้โพสต์",
+  "post.pin": "ปักหมุด/เลิกปักหมุดโพสต์",
+  "post.archive": "เก็บโพสต์",
 };
 
 // กลุ่มของรหัส ใช้กรองในหน้าบันทึก: ดูจากคำหน้าจุด (user.create → user → บัญชี)
 export const AUDIT_GROUPS = [
   { id: "user", label: "บัญชี", prefixes: ["user", "cohort"] },
-  { id: "content", label: "เนื้อหา", prefixes: ["card", "note", "announcement"] },
+  { id: "content", label: "เนื้อหา", prefixes: ["card", "note", "announcement", "post"] },
   { id: "thread", label: "แชทและงานที่ส่ง", prefixes: ["thread", "submission"] },
   { id: "file", label: "ไฟล์", prefixes: ["file", "assignment"] },
 ] as const;

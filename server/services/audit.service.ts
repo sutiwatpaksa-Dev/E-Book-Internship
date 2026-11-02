@@ -37,7 +37,11 @@ export type AuditAction =
   | "cohort.invite"
   | "cohort.signup"
   | "user.register"
-  | "user.reset_request";
+  | "user.reset_request"
+  | "post.create"
+  | "post.update"
+  | "post.pin"
+  | "post.archive";
 
 const LIMIT = 200;
 
