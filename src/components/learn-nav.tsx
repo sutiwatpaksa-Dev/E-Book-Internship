@@ -24,7 +24,7 @@ export function LearnNav({ onNavigate }: { onNavigate?: () => void }) {
         href={LEARN_BASE}
         onClick={onNavigate}
         aria-current={pathname === LEARN_BASE ? "page" : undefined}
-        className={`flex min-h-10 items-center gap-2.5 rounded-lg px-2.5 font-medium hover:bg-fd-accent ${pathname === LEARN_BASE ? "bg-fd-primary/10 text-fd-primary" : ""}`}
+        className={`flex min-h-10 items-center gap-2.5 rounded-lg px-2.5 font-medium hover:bg-fd-accent ${pathname === LEARN_BASE ? "bg-fd-muted font-semibold text-fd-foreground shadow-[inset_3px_0_0_var(--color-fd-primary)]" : ""}`}
       >
         <Map className="size-4.5 text-fd-primary" />
         แผนที่ 7 ขั้น
@@ -103,7 +103,7 @@ function NavCard({ href, title, active, done, mentor = false, onNavigate }: { hr
       href={href}
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
-      className={`flex min-h-9 items-center gap-2 rounded-md px-2 py-1 hover:bg-fd-accent ${active ? "bg-fd-primary/10 font-semibold text-fd-primary" : ""}`}
+      className={`flex min-h-9 items-center gap-2 rounded-md px-2 py-1 hover:bg-fd-accent ${active ? "bg-fd-muted font-semibold text-fd-foreground shadow-[inset_3px_0_0_var(--color-fd-primary)]" : ""}`}
     >
       <span className={`flex size-4 shrink-0 items-center justify-center rounded-full border ${done ? "border-fd-primary bg-fd-primary text-fd-primary-foreground" : "border-fd-border"}`}>
         {done && <Check aria-label="เข้าใจแล้ว" className="size-2.5" strokeWidth={3} />}

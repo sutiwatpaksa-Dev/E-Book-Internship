@@ -16,8 +16,9 @@ import { ChartCard, ColumnChart, Figure, ProgressRows, SegmentBar } from "./admi
 import type { AdminNav } from "./admin-panel";
 import { OnlineBadge } from "./online-badge";
 import { Skeleton, SkeletonList } from "./skeleton";
+import { thDateTime } from "@/lib/date-format";
 
-const fmt = (d: string | null) => (d ? new Date(d).toLocaleString("th-TH") : "ยังไม่เคยเข้า");
+const fmt = (d: string | null) => (d ? thDateTime(d) : "ยังไม่เคยเข้า");
 // ฝึกงานสั้น หายไป 3 วันก็ตามงานไม่ทันแล้ว (เดิม 7 วัน รู้ตัวช้าไป)
 const STALE_DAYS = 3;
 const HOT_DAYS = 7;
@@ -92,8 +93,8 @@ export function AdminOverview({ admin, content, nav, titles, cohort, mine, unrea
   ].filter((t) => t.show);
 
   const kpis = [
-    { n: waiting, label: "คำถามรอตอบ", hint: oldest ? `เก่าสุด ${timeAgo(oldest)}` : "ไม่มีค้าง", urgent: waiting > 0, go: () => nav.goTab("questions") },
-    { n: newRequests, label: "คำขอเนื้อหาใหม่", hint: newRequests ? "ยังไม่รับเรื่อง" : "ไม่มีค้าง", urgent: newRequests > 0, go: () => nav.goTab("requests") },
+    { n: waiting, label: "คำถามรอตอบ", hint: oldest ? `เก่าสุด ${timeAgo(oldest)}` : "ไม่มีค้าง", urgent: waiting > 0, primary: true, go: () => nav.goTab("questions") },
+    { n: newRequests, label: "คำขอเนื้อหาใหม่", hint: newRequests ? "ยังไม่รับเรื่อง" : "ไม่มีค้าง", urgent: newRequests > 0, primary: false, go: () => nav.goTab("requests") },
     {
       n: stale.length,
       label: `น้องไม่ได้เข้า ${STALE_DAYS} วันขึ้นไป`,
@@ -105,13 +106,15 @@ export function AdminOverview({ admin, content, nav, titles, cohort, mine, unrea
         : "ทุกคนเข้ามาสม่ำเสมอ",
       // หายไปหลายวัน = ควรทักไปถาม เป็นงานที่ต้องทำเหมือนคำถามค้าง จึงขึ้นสีเตือนด้วย
       urgent: stale.length > 0,
+      primary: true,
       go: toInterns,
     },
     {
       n: activeAnn.length,
       label: "ประกาศที่แสดงอยู่",
-      hint: soonestEnd ? `หายเอง ${new Date(soonestEnd).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" })}` : activeAnn.length ? "แสดงจนกว่าจะปิด" : "ไม่มี",
+      hint: soonestEnd ? `หายเอง ${thDateTime(soonestEnd)}` : activeAnn.length ? "แสดงจนกว่าจะปิด" : "ไม่มี",
       urgent: false,
+      primary: false,
       go: () => nav.goTab("announcements"),
     },
   ];
@@ -134,17 +137,22 @@ export function AdminOverview({ admin, content, nav, titles, cohort, mine, unrea
           ))}
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {/* 2 ตัวเลขที่ต้องลงมือ (คำถามรอตอบ, น้องหายไป) ใหญ่กว่าตัวอื่น · สีอำพัน + คำว่า "ต้องทำ" = มีงานรอเรา (ไม่ใช้สีอย่างเดียว)
+          ช่องตัวเลขสูงคงที่ (h-12 / h-9) skeleton กับตัวเลขจริงสูงเท่ากัน โหลดเสร็จแล้วการ์ดไม่กระตุก */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
         {kpis.map((k) => (
           <button
             key={k.label}
             type="button"
             onClick={k.go}
-            className="flex min-h-24 flex-col items-start gap-0.5 rounded-xl border border-fd-border bg-fd-card px-4 py-3 text-start hover:border-fd-primary/50 hover:bg-fd-accent"
+            className={`flex flex-col items-start gap-0.5 rounded-xl border bg-fd-card px-4 py-3 text-start hover:border-fd-primary/50 hover:bg-fd-accent ${k.primary ? "lg:col-span-2" : ""} ${k.urgent ? "border-amber-500/60" : "border-fd-border"}`}
           >
-            <span className={`text-3xl leading-tight font-bold tabular-nums ${k.urgent ? "text-red-700 dark:text-red-400" : ""}`}>{admin.loading ? <Skeleton className="h-8 w-10" /> : k.n}</span>
+            <span className={`flex items-center gap-2 font-bold tabular-nums ${k.primary ? "h-12 text-5xl" : "h-9 text-2xl"} ${k.urgent ? "text-amber-700 dark:text-amber-400" : ""}`}>
+              {admin.loading ? <Skeleton className={k.primary ? "h-10 w-14" : "h-7 w-10"} /> : k.n}
+              {!admin.loading && k.urgent && <span className="rounded-md bg-amber-500/15 px-1.5 py-0.5 text-xs font-semibold text-amber-800 dark:text-amber-300">ต้องทำ</span>}
+            </span>
             <span className="text-sm font-semibold">{k.label}</span>
-            <span className="line-clamp-1 text-xs text-fd-muted-foreground">{k.hint}</span>
+            <span className="line-clamp-1 text-sm text-fd-muted-foreground">{k.hint}</span>
           </button>
         ))}
       </div>
@@ -168,7 +176,7 @@ export function AdminOverview({ admin, content, nav, titles, cohort, mine, unrea
                 {todo.map((t) => (
                   <li key={t.text}>
                     <button type="button" onClick={t.go} className="flex w-full items-center gap-3 px-4 py-3 text-start text-sm hover:bg-fd-accent">
-                      <span className="size-2 shrink-0 rounded-full bg-orange-500" />
+                      <span className="size-2 shrink-0 rounded-full bg-amber-500" />
                       <span className="flex-1">{t.text}</span>
                       <ChevronRight className="size-4 text-fd-muted-foreground" />
                     </button>
@@ -211,7 +219,7 @@ export function AdminOverview({ admin, content, nav, titles, cohort, mine, unrea
                           <RowLink href={internHref(u.id)} onGo={() => nav.openIntern(u.id)}>
                             {u.username}
                           </RowLink>
-                          {isLockedNow(u) && <span className="ms-2 text-xs text-orange-700 dark:text-orange-400">ล็อกอยู่</span>}
+                          {isLockedNow(u) && <span className="ms-2 text-xs text-amber-700 dark:text-amber-400">ล็อกอยู่</span>}
                           <span className="block"><OnlineBadge lastSeenAt={u.lastSeenAt} quiet /></span>
                         </td>
                         <td className="px-3 py-2 whitespace-nowrap">{s.where}</td>
@@ -230,15 +238,16 @@ export function AdminOverview({ admin, content, nav, titles, cohort, mine, unrea
                           </div>
                         </td>
                         <td className="px-3 py-2">{s.last ? `${s.last.title} · ${timeAgo(s.last.at)}` : <span className="text-fd-muted-foreground">ยังไม่ติ๊ก</span>}</td>
-                        <td className={`px-3 py-2 whitespace-nowrap ${isStale ? "text-orange-700 dark:text-orange-400" : ""}`}>{fmt(u.lastLoginAt)}</td>
+                        <td className={`px-3 py-2 whitespace-nowrap ${isStale ? "text-amber-700 dark:text-amber-400" : ""}`}>{fmt(u.lastLoginAt)}</td>
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
             </div>
-            <p className="text-xs text-fd-muted-foreground">
-              นับเฉพาะการ์ดใน 7 ขั้น (ตัวเดียวกับกราฟด้านบน) · ความคืบหน้ามาจากปุ่ม &quot;เข้าใจแล้ว&quot; ที่น้องติ๊กเองตอน login อยู่ (ติ๊กก่อน login จะย้ายขึ้นบัญชีเมื่อ login ครั้งถัดไป) ใช้ดูว่าใครติดตรงไหน ไม่ใช่คะแนน
+            {/* หมายเหตุสั้น ตัวใหญ่พออ่าน รายละเอียด (ติ๊กก่อน login ย้ายขึ้นบัญชีทีหลัง) อยู่ใน title ไม่ต้องอ่านทุกครั้ง */}
+            <p className="text-sm text-fd-muted-foreground" title="ติ๊กตอนยังไม่ login จะย้ายขึ้นบัญชีเมื่อ login ครั้งถัดไป">
+              นับจากปุ่ม &quot;เข้าใจแล้ว&quot; ที่น้องกดเอง ใช้ดูว่าใครติดตรงไหน ไม่ใช่คะแนน
             </p>
           </section>
         </div>

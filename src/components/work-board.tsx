@@ -71,7 +71,7 @@ export function WorkBoard() {
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <span className="text-lg font-semibold">{p.round.label}</span>
                     <WorkBadge state={p.state} daysLeft={p.daysLeft} />
-                    {p.lateDays > 0 && <span className="rounded-md bg-orange-500/15 px-2 py-0.5 text-xs font-semibold text-orange-800 dark:text-orange-300">ส่งช้า {p.lateDays} วัน</span>}
+                    {p.lateDays > 0 && <span className="rounded-md bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-800 dark:text-amber-300">ส่งช้า {p.lateDays} วัน</span>}
                     {next === p && <span className="sr-only">งานถัดไป</span>}
                     <ArrowRight className="ms-auto size-4 text-fd-muted-foreground" aria-hidden />
                   </div>

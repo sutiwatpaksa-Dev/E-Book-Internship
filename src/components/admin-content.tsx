@@ -88,7 +88,7 @@ export function AdminMentorCards({ content }: { content: ContentAdminState }) {
         </Button>
       </div>
       {content.cards.length === 0 ? (
-        <EmptyState icon={FilePlus2} title="ยังไม่มีการ์ดจากพี่เลี้ยง">
+        <EmptyState icon={FilePlus2} title="ยังไม่มีการ์ดจากพี่เลี้ยง" action={<Button onClick={() => setEditing({ id: null, card: EMPTY_CARD })} className="mt-2 min-h-11">เขียนการ์ดแรก</Button>}>
           เรื่องที่น้องถามซ้ำบ่อย หรือเรื่องเฉพาะของทีม (ตั้งชื่อ branch, ขั้นตอน review) เขียนเป็นการ์ดได้เลย
         </EmptyState>
       ) : (
@@ -451,7 +451,7 @@ export function AdminNotes({ content, initialPage, titles }: { content: ContentA
       )}
 
       {content.notes.length === 0 && !editing ? (
-        <EmptyState icon={NotebookPen} title="ยังไม่มีโน้ต">
+        <EmptyState icon={NotebookPen} title="ยังไม่มีโน้ต" action={<Button onClick={() => setEditing({ id: null, pageUrl: "", body: "", visible: true })} className="mt-2 min-h-11">เพิ่มโน้ตแรก</Button>}>
           เพิ่มคำแนะนำบนการ์ดเดิมได้โดยไม่ต้องแก้ไฟล์คู่มือ
         </EmptyState>
       ) : (

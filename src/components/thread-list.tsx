@@ -18,7 +18,7 @@ export function ThreadList({ threads, selectedId, titles, onSelect }: Props) {
           >
             <span className="flex items-center gap-2">
               <span className={`min-w-0 flex-1 line-clamp-2 break-words ${t.unread ? "font-bold" : "font-medium"}`}>{t.subject}</span>
-              {t.unread && <span aria-label="มีข้อความใหม่" className="size-2.5 shrink-0 rounded-full bg-orange-500" />}
+              {t.unread && <span aria-label="มีข้อความใหม่" className="size-2.5 shrink-0 rounded-full bg-amber-500" />}
             </span>
             <span className="flex items-center gap-2 text-sm text-fd-muted-foreground">
               <StatusBadge status={t.status} />

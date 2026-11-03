@@ -13,9 +13,10 @@ import { PING_EVERY_MS } from "@/lib/presence";
 import { playChime, setSoundOn, soundOn, subscribeSound } from "@/lib/chime";
 
 export const ROLE_LABEL = { intern: "ฝึกงาน", dev: "พี่เลี้ยง" } as const;
+// บทบาทไม่ใช่สถานะเตือน จึงไม่ใช้อำพัน (สงวนไว้บอกว่ามีงานรอ) · น้อง = เทา · พี่เลี้ยง = ม่วงอ่อน แยกกันด้วยคำบนป้ายอยู่แล้ว
 export const ROLE_BADGE = {
-  intern: "bg-fd-primary/10 text-fd-primary",
-  dev: "bg-orange-500/15 text-orange-800 dark:text-orange-300",
+  intern: "bg-fd-muted text-fd-foreground",
+  dev: "bg-violet-600/15 text-violet-800 dark:text-violet-300",
 } as const;
 
 const itemClass = "flex min-h-10 w-full items-center gap-2 rounded-md px-2.5 text-left text-sm hover:bg-fd-accent";
@@ -104,7 +105,7 @@ export function AccountMenu() {
         <span className="relative flex size-8 items-center justify-center rounded-full bg-fd-primary/10 text-sm font-bold text-fd-primary">
           {username?.[0]?.toUpperCase() ?? "·"}
           {/* จุดส้ม = มีข้อความใหม่ในแชทกับพี่เลี้ยง (พี่เลี้ยง: น้องพิมพ์มา) */}
-          {unread > 0 && <span role="img" title={`มีข้อความใหม่ ${unread} เรื่อง`} aria-label={`ข้อความใหม่ ${unread} เรื่อง`} className="absolute -end-0.5 -top-0.5 size-3 rounded-full border-2 border-fd-background bg-orange-500" />}
+          {unread > 0 && <span role="img" title={`มีข้อความใหม่ ${unread} เรื่อง`} aria-label={`ข้อความใหม่ ${unread} เรื่อง`} className="absolute -end-0.5 -top-0.5 size-3 rounded-full border-2 border-fd-background bg-amber-500" />}
         </span>
         <span className="max-w-28 truncate text-sm font-medium max-sm:hidden">{username}</span>
         <span className={`rounded-full px-2 py-0.5 text-xs font-semibold max-sm:hidden ${ROLE_BADGE[role]}`}>{ROLE_LABEL[role]}</span>
@@ -126,7 +127,7 @@ export function AccountMenu() {
           </Link>
           <Link role="menuitem" href={role === "dev" ? "/dev/admin?tab=questions" : "/questions"} className={itemClass}>
             <MessageCircle className="size-4" /> {role === "dev" ? "ข้อความจากน้อง" : "ข้อความถึงพี่เลี้ยง"}
-            {unread > 0 && <span className="ms-auto rounded-full bg-orange-500 px-1.5 text-xs font-bold text-white">{unread}</span>}
+            {unread > 0 && <span className="ms-auto rounded-full bg-amber-500 px-1.5 text-xs font-bold text-white">{unread}</span>}
           </Link>
           <a role="menuitem" href={REQUIREMENT_PDF_URL} target="_blank" rel="noopener" className={itemClass}>
             <FileText className="size-4" /> เอกสาร Requirement

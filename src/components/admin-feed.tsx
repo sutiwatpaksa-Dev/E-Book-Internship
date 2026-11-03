@@ -110,7 +110,7 @@ export function AdminFeed({ admin }: { admin: AdminState }) {
       {!posts ? (
         <SkeletonList rows={3} />
       ) : live.length === 0 ? (
-        <EmptyState icon={Users} title="ยังไม่มีโพสต์">
+        <EmptyState icon={Users} title="ยังไม่มีโพสต์" action={<Button onClick={() => setEditing("new")} className="mt-2 min-h-11">โพสต์แรก</Button>}>
           โพสต์แรกจะขึ้นในฟีด &quot;งานและประกาศ&quot; ของน้องในรุ่นที่เลือก พร้อมแจ้งเตือน
         </EmptyState>
       ) : (
@@ -198,7 +198,7 @@ function PostRow({ admin, post: p, onEdit, onPin, onArchive }: { admin: AdminSta
             [...acks]
               .sort((a, b) => Number(!!a.ackedAt) - Number(!!b.ackedAt))
               .map((a) => (
-                <span key={a.username} className={a.ackedAt ? "" : "font-semibold text-orange-700 dark:text-orange-400"}>
+                <span key={a.username} className={a.ackedAt ? "" : "font-semibold text-amber-700 dark:text-amber-400"}>
                   {a.ackedAt ? "✓" : "ยังไม่รับทราบ:"} {a.username}
                 </span>
               ))
@@ -371,7 +371,7 @@ function Composer({ admin, edit, onDone }: { admin: AdminState; edit: AdminPost 
         <input type="checkbox" className="size-5" checked={p.pinned} onChange={(e) => set({ pinned: e.target.checked })} /> ปักหมุดไว้บนสุดของฟีด
       </label>
 
-      {problem && p.title.trim() && <p className="text-sm text-orange-700 dark:text-orange-400">{problem}</p>}
+      {problem && p.title.trim() && <p className="text-sm text-amber-700 dark:text-amber-400">{problem}</p>}
       <div className="flex gap-2">
         <Button type="button" variant="ghost" onClick={() => onDone(false)}>
           ยกเลิก

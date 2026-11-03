@@ -59,12 +59,13 @@ export function Dashboard() {
         </div>
       )}
       {role === "dev" && (
-        <section className={`${box} flex flex-wrap items-center justify-between gap-3`}>
-          <p>บัญชีพี่เลี้ยงดูภาพรวมของน้องทุกคนที่หลังบ้าน</p>
-          <Link href="/dev/admin" className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-fd-primary px-4 text-sm font-semibold text-fd-primary-foreground hover:brightness-110">
-            ไปหลังบ้าน <ArrowRight className="size-4" />
+        // บรรทัดเดียว ไม่เป็นการ์ดหรือปุ่มใหญ่: เมนูซ้าย "หลังบ้านพี่เลี้ยง" มีอยู่แล้ว ไม่ต้องแย่งความสนใจซ้ำ
+        <p className="text-sm text-fd-muted-foreground">
+          หน้านี้เป็นภาพรวมของน้อง ของพี่เลี้ยงอยู่ที่{" "}
+          <Link href="/dev/admin" className="inline-flex min-h-11 items-center gap-1 font-semibold text-fd-primary underline underline-offset-4">
+            หลังบ้านพี่เลี้ยง <ArrowRight className="size-3.5" aria-hidden />
           </Link>
-        </section>
+        </p>
       )}
       {mounted && !role && (
         <section className={`${box} flex flex-wrap items-center justify-between gap-3`}>
@@ -153,16 +154,19 @@ function ContinueBox({ up, done, cards }: { up: ReturnType<typeof nextUp>; done:
           })}
         </ol>
       ) : !started ? (
-        <ol aria-label="ใช้คู่มือนี้ยังไง" className="grid gap-3 sm:grid-cols-3">
+        // รายการธรรมดาคั่นด้วยเส้น ไม่เป็นการ์ดซ้อนในการ์ด
+        <ol aria-label="ใช้คู่มือนี้ยังไง" className="flex flex-col divide-y divide-fd-border">
           {[
             ["เปิดหน้าขั้น", "อ่านไม่เกิน 5 นาที รู้ว่าขั้นนี้ต้องได้อะไร"],
             ["เปิดการ์ดตอนต้องใช้", "ใบละ 1 เรื่อง ไม่ต้องอ่านทั้งเล่มก่อน"],
             ["ลองเองก่อนดูคำใบ้", "ไม่มีเฉลยเต็ม คำใบ้เปิดทีละระดับ"],
           ].map(([title, text], i) => (
-            <li key={title} className="flex flex-col gap-1 rounded-xl bg-fd-background/70 p-3">
-              <span className="text-sm font-bold text-fd-primary tabular-nums">{i + 1}</span>
-              <span className="font-semibold">{title}</span>
-              <span className="text-sm text-fd-muted-foreground">{text}</span>
+            <li key={title} className="flex items-baseline gap-3 py-2.5">
+              <span className="w-4 shrink-0 text-sm font-bold text-fd-muted-foreground tabular-nums">{i + 1}.</span>
+              <span>
+                <span className="font-semibold">{title}</span>
+                <span className="text-fd-muted-foreground"> · {text}</span>
+              </span>
             </li>
           ))}
         </ol>
@@ -304,7 +308,7 @@ function cohortLine(c: Cohort) {
 
 // ใกล้กำหนด (เหลือ ≤ 2 วัน) เน้นสีส้ม · เลยกำหนดไม่เน้นที่นี่ เพราะป้ายสถานะ "เลยกำหนด N วัน" บอกอยู่แล้ว
 const DUE_TONE = (daysLeft: number | null, state: PlanItem["state"]) =>
-  (state === "todo" || state === "revise") && daysLeft !== null && daysLeft >= 0 && daysLeft <= 2 ? "font-semibold text-orange-700 dark:text-orange-400" : "text-fd-muted-foreground";
+  (state === "todo" || state === "revise") && daysLeft !== null && daysLeft >= 0 && daysLeft <= 2 ? "font-semibold text-amber-700 dark:text-amber-400" : "text-fd-muted-foreground";
 
 // งานของฉัน: รอบส่งของโจทย์เรียงตามกำหนดส่ง พร้อมสถานะ · ตัวเต็ม (ฟอร์มส่งงาน) อยู่ในหน้าการส่งงาน
 function MyTasks({ work }: { work: Work }) {
@@ -353,7 +357,7 @@ function MyTasks({ work }: { work: Work }) {
                       {p.round.label}
                     </Link>
                     <WorkBadge state={p.state} daysLeft={p.daysLeft} />
-                    {p.lateDays > 0 && <span className="rounded-md bg-orange-500/15 px-2 py-0.5 text-sm font-semibold text-orange-800 dark:text-orange-300">ส่งช้า {p.lateDays} วัน</span>}
+                    {p.lateDays > 0 && <span className="rounded-md bg-amber-500/15 px-2 py-0.5 text-sm font-semibold text-amber-800 dark:text-amber-300">ส่งช้า {p.lateDays} วัน</span>}
                     {isNext && <span className="sr-only">งานถัดไป</span>}
                     <span className={`ms-auto text-sm tabular-nums ${DUE_TONE(p.daysLeft, p.state)}`}>
                       {p.dueOn ? `กำหนดส่ง ${thaiDayMonth(p.dueOn)}${due && (p.state === "todo" || p.state === "revise") && p.daysLeft! >= 0 ? ` · ${due}` : ""}` : `วันที่ ${p.round.day} ของรุ่น`}

@@ -6,6 +6,7 @@ import { contentApi } from "@/api/content.api";
 import { useSession } from "@/hooks/use-session";
 import { timeAgo } from "@/lib/thread-labels";
 import type { Announcement } from "@/types";
+import { thDateTime } from "@/lib/date-format";
 
 // แถบประกาศจากพี่เลี้ยงบนหน้า "วันนี้" (สร้างที่หลังบ้าน แท็บประกาศ)
 // server กรองให้แล้วว่าใครเห็นและยังไม่หมดเวลา หน้านี้แค่แสดง
@@ -34,7 +35,7 @@ export function AnnouncementBanner() {
             <p className="whitespace-pre-line font-medium">{a.body}</p>
             <p className="text-sm text-fd-muted-foreground">
               ประกาศโดย {a.author} ·{" "}
-              <time dateTime={a.createdAt} title={new Date(a.createdAt).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" })}>
+              <time dateTime={a.createdAt} title={thDateTime(a.createdAt)}>
                 {timeAgo(a.createdAt)}
               </time>
             </p>

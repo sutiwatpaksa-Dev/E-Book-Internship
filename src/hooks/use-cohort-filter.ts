@@ -9,7 +9,7 @@ import { resolveCohortFilter, type CohortFilter } from "@/lib/cohort";
 const KEY = "admin.cohort";
 const parse = (v: string): CohortFilter => (v === "all" || v === "mine" || v === "none" ? v : Number(v));
 
-export function useCohortFilter(mine: readonly number[], cohortIds: readonly number[]) {
+export function useCohortFilter(mine: readonly number[], running: readonly number[]) {
   const [saved, setSaved] = useState<CohortFilter | null>(null);
   useEffect(() => {
     try {
@@ -23,5 +23,5 @@ export function useCohortFilter(mine: readonly number[], cohortIds: readonly num
       localStorage.setItem(KEY, String(v));
     } catch {}
   };
-  return [resolveCohortFilter(saved, mine, cohortIds), set] as const;
+  return [resolveCohortFilter(saved, mine, running), set] as const;
 }

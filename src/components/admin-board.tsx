@@ -173,7 +173,7 @@ function PostCard({ admin, a, r, subs, onEdit, onRemove, onSubs }: { admin: Admi
 
       <div className="flex flex-wrap gap-2 text-xs">
         {cohorts.length === 0 ? (
-          <span className="rounded-md bg-orange-500/15 px-2 py-1 font-semibold text-orange-800 dark:text-orange-300">ยังไม่มีรุ่นใช้โจทย์นี้ น้องจึงยังไม่เห็น</span>
+          <span className="rounded-md bg-amber-500/15 px-2 py-1 font-semibold text-amber-800 dark:text-amber-300">ยังไม่มีรุ่นใช้โจทย์นี้ น้องจึงยังไม่เห็น</span>
         ) : (
           <>
             {shownCohorts.map((c) => (
@@ -403,10 +403,10 @@ function PostComposer({ admin, edit, onClose }: { admin: AdminState; edit: { a: 
                   {c.name}: {thaiDayMonth(workdayDate(c.startsOn, day) ?? c.startsOn)}
                 </span>
               ))}
-              {date && isWeekend(date) && <span className="text-orange-700 dark:text-orange-400">วันที่เลือกเป็นเสาร์-อาทิตย์ ระบบนับเป็นศุกร์ก่อนหน้า</span>}
+              {date && isWeekend(date) && <span className="text-amber-700 dark:text-amber-400">วันที่เลือกเป็นเสาร์-อาทิตย์ ระบบนับเป็นศุกร์ก่อนหน้า</span>}
             </>
           ) : date ? (
-            <span className="text-orange-700 dark:text-orange-400">วันที่ต้องไม่ก่อนวันเริ่มรุ่น</span>
+            <span className="text-amber-700 dark:text-amber-400">วันที่ต้องไม่ก่อนวันเริ่มรุ่น</span>
           ) : (
             <span>เลือกวันที่ หรือกรอกวันที่ N</span>
           )}

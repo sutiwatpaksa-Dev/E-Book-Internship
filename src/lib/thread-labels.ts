@@ -19,7 +19,8 @@ export const STATUS_LABEL: Record<ThreadStatus, string> = {
   declined: "ไม่ทำ",
 };
 
-export const ORANGE = "bg-orange-500/15 text-orange-800 dark:text-orange-300";
+// เตือน = สีอำพันสีเดียวทั้งเว็บ (สีรองคู่กับสีหลัก) · ชื่อคงเป็น ORANGE ให้ที่ใช้อยู่ไม่ต้องแก้
+export const ORANGE = "bg-amber-500/15 text-amber-800 dark:text-amber-300";
 export const GREEN = "bg-green-600/15 text-green-800 dark:text-green-300";
 export const BLUE = "bg-fd-primary/10 text-fd-primary";
 export const GRAY = "bg-fd-muted text-fd-muted-foreground";

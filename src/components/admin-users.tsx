@@ -17,10 +17,23 @@ import { OnlineBadge } from "./online-badge";
 import { ConfirmBox } from "./confirm-box";
 import { Field, Input, inputClass } from "./field";
 import { Skeleton, SkeletonList } from "./skeleton";
+import { thDateTime } from "@/lib/date-format";
+import { GRAY, GREEN, ORANGE } from "@/lib/thread-labels";
 
 const PAGE_SIZE = 10;
 // วันที่ + ชั่วโมง:นาที (วินาทีไม่ช่วยตัดสินอะไร แต่ทำให้คอลัมน์กว้าง)
-const fmt = (d: string | null) => (d ? new Date(d).toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" }) : "–");
+const fmt = (d: string | null) => (d ? thDateTime(d) : "–");
+// สถานะบัญชี 1 ป้าย: ส้ม = ต้องมีคนทำอะไร (ขอรีเซ็ต, ล็อก) · เทา = ปิดหรือรอน้องตั้งรหัส · เขียว = ปกติ
+const accountStatus = (u: User): { label: string; tone: string } =>
+  u.disabled
+    ? { label: "ปิดอยู่", tone: GRAY }
+    : u.resetRequestedAt
+      ? { label: "ขอรีเซ็ตรหัสผ่าน", tone: ORANGE }
+      : isLockedNow(u)
+        ? { label: "ล็อกชั่วคราว", tone: ORANGE }
+        : u.secretKind === "pin"
+          ? { label: "รอตั้งรหัสผ่าน", tone: GRAY }
+          : { label: "ใช้งาน", tone: GREEN };
 // แถบกรอง: ทุกชิ้นสูง 36px เท่ากัน (ช่องค้นหา, ปุ่มกลุ่ม, ตัวเลือกรุ่น) สายตาจะอ่านเป็นแถวเดียว
 const toolbarInput = `${inputClass} h-9 py-0`;
 const FILTERS: { id: Role | "all"; label: string }[] = [
@@ -234,6 +247,7 @@ export function AdminUsers({ admin, nav }: { admin: AdminState; nav: AdminNav })
                     {u.role === "dev" && u.superAdmin && <span className="rounded-full bg-fd-primary/10 px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-fd-primary">Super admin</span>}
                     {/* เดิมอยู่ในคอลัมน์จัดการ ทำให้คอลัมน์ที่ติดขอบขวากว้างจนทับคอลัมน์อื่น */}
                     {isMe(u) && <span className="rounded-full bg-fd-muted px-2 py-0.5 text-xs whitespace-nowrap text-fd-muted-foreground">บัญชีของคุณ</span>}
+                    {!u.disabled && <OnlineBadge lastSeenAt={u.lastSeenAt} quiet />}
                   </span>
                   <span className="block text-xs text-fd-muted-foreground">{u.fullName ?? "ยังไม่ระบุชื่อ"}</span>
                 </td>
@@ -255,10 +269,16 @@ export function AdminUsers({ admin, nav }: { admin: AdminState; nav: AdminNav })
                   </span>
                 </td>
                 <td data-label="รุ่น" className="px-3 py-2 whitespace-nowrap text-fd-muted-foreground max-md:p-0 max-md:whitespace-normal max-md:before:block max-md:before:text-xs max-md:before:text-fd-muted-foreground max-md:before:content-[attr(data-label)]">{u.role === "intern" ? cohortName(u.cohortId) : "–"}</td>
-                <td data-label="สถานะ" className={`px-3 py-2 whitespace-nowrap max-md:p-0 max-md:before:block max-md:before:text-xs max-md:before:text-fd-muted-foreground max-md:before:content-[attr(data-label)] ${u.disabled || isLockedNow(u) || u.resetRequestedAt ? "text-orange-700 dark:text-orange-400" : ""}`}>
-                  {u.disabled ? "ปิดอยู่" : u.resetRequestedAt ? "ขอรีเซ็ตรหัสผ่าน" : isLockedNow(u) ? "ล็อกชั่วคราว" : u.secretKind === "pin" ? "รอตั้งรหัสผ่าน" : "ใช้งาน"}
-                  {u.resetRequestedAt && !u.disabled && <span className="block text-xs text-fd-muted-foreground">{fmt(u.resetRequestedAt)}</span>}
-                  {!u.disabled && <span className="block"><OnlineBadge lastSeenAt={u.lastSeenAt} quiet /></span>}
+                <td data-label="สถานะ" className="px-3 py-2 whitespace-nowrap max-md:p-0 max-md:before:block max-md:before:text-xs max-md:before:text-fd-muted-foreground max-md:before:content-[attr(data-label)]">
+                  {/* ป้ายเดียวต่อแถว สีบอกว่าต้องทำอะไรไหม (ส้ม = มีงานรอเรา) · วันที่ขอรีเซ็ตอยู่ใน title ไม่ซ้อนเป็นบรรทัดที่ 2 */}
+                  {(() => {
+                    const s = accountStatus(u);
+                    return (
+                      <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${s.tone}`} title={u.resetRequestedAt ? `ขอเมื่อ ${fmt(u.resetRequestedAt)}` : undefined}>
+                        {s.label}
+                      </span>
+                    );
+                  })()}
                 </td>
                 <td data-label="เข้าล่าสุด" className="px-3 py-2 whitespace-nowrap max-md:p-0 max-md:before:block max-md:before:text-xs max-md:before:text-fd-muted-foreground max-md:before:content-[attr(data-label)]">{fmt(u.lastLoginAt)}</td>
                 {/* ติดขอบขวาเฉพาะจอกว้าง (≥1280) · จอกลางเลื่อนตารางตามปกติ ไม่งั้นคอลัมน์นี้ทับ "รุ่น" กับ "เข้าล่าสุด" */}

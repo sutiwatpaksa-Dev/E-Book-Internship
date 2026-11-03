@@ -15,6 +15,7 @@ import type { ThreadDetail, ThreadStatus } from "@/types";
 import { Button } from "./button";
 import { inputClass } from "./field";
 import { StatusBadge } from "./status-badge";
+import { thDateTime } from "@/lib/date-format";
 
 // คำตอบสำเร็จรูปของพี่เลี้ยง: กดแล้วแทรกลงช่องพิมพ์ ให้แก้ต่อได้ก่อนส่ง · feedback ใช้ชุดของตัวเอง (ไม่ได้มาถามปัญหา)
 const CANNED_FEEDBACK = [
@@ -30,11 +31,7 @@ const CANNED = [
   "เพิ่มการ์ดเรื่องนี้ให้แล้ว ลองกลับไปดูในคลังการ์ดนะ",
 ];
 
-const fmt = (d: string) =>
-  new Date(d).toLocaleString("th-TH", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
+const fmt = thDateTime;
 
 // ห้องแชทของเรื่องเดียว: หัวเรื่อง → ข้อความ → ช่องพิมพ์ตอบ
 export function ThreadView({

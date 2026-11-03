@@ -54,7 +54,7 @@ export function AdminBulkCreate({ admin, onClose }: { admin: AdminState; onClose
               <tr key={r.username} className="border-t border-fd-border first:border-0">
                 <td className="py-1.5 pe-4 font-medium">{r.username}</td>
                 <td className="py-1.5">
-                  {"pin" in r ? <code className="font-bold tracking-[0.2em]">{r.pin}</code> : <span className="text-orange-700 dark:text-orange-400">ข้าม: {r.error}</span>}
+                  {"pin" in r ? <code className="font-bold tracking-[0.2em]">{r.pin}</code> : <span className="text-amber-700 dark:text-amber-400">ข้าม: {r.error}</span>}
                 </td>
               </tr>
             ))}
@@ -86,7 +86,7 @@ export function AdminBulkCreate({ admin, onClose }: { admin: AdminState; onClose
         />
       </Field>
       {invalid.length > 0 && (
-        <div role="alert" className="rounded-lg border border-orange-500/40 bg-orange-500/5 px-3 py-2 text-sm">
+        <div role="alert" className="rounded-lg border border-amber-500/40 bg-amber-500/5 px-3 py-2 text-sm">
           <p>ชื่อเหล่านี้ใช้ไม่ได้ จะถูกข้าม (แก้ในช่องด้านบนก่อนกดสร้างก็ได้)</p>
           <ul className="mt-1 list-disc ps-5">
             {invalid.map((n) => (

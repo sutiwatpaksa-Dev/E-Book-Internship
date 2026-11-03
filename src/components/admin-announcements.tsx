@@ -10,6 +10,7 @@ import { Button } from "./button";
 import { ConfirmBox } from "./confirm-box";
 import { EmptyState } from "./empty-state";
 import { Field, Input, inputClass } from "./field";
+import { thDateTime } from "@/lib/date-format";
 
 const AUDIENCE_LABEL: Record<Audience, string> = { intern: "น้องฝึกงาน", dev: "พี่เลี้ยง", all: "ทุกคน" };
 
@@ -97,7 +98,7 @@ export function AdminAnnouncements({ content, admin }: { content: ContentAdminSt
                   <p className="whitespace-pre-line">{a.body}</p>
                   <p className="text-xs text-fd-muted-foreground">
                     {on ? "กำลังแสดง" : "จบแล้ว"} · ถึง{AUDIENCE_LABEL[a.audience]}{a.cohortId ? ` (${admin.cohorts.find((c) => c.id === a.cohortId)?.name ?? "รุ่นที่ถูกลบ"})` : ""} · {a.author} · {timeAgo(a.createdAt)}
-                    {a.endsAt && on && ` · หายเอง ${new Date(a.endsAt).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" })}`}
+                    {a.endsAt && on && ` · หายเอง ${thDateTime(a.endsAt)}`}
                   </p>
                 </div>
                 {on && (

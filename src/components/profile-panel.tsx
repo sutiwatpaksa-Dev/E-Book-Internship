@@ -16,6 +16,7 @@ import { EducationFields } from "./education-fields";
 import { ErrorText } from "./error-text";
 import { Field, Input, inputClass } from "./field";
 import { PasswordForm } from "./password-form";
+import { thDateTime } from "@/lib/date-format";
 
 type Tab = "info" | "password";
 const TABS: { id: Tab; label: string }[] = [
@@ -234,7 +235,7 @@ function InternSummary({ profile: { cohort, lastLoginAt } }: { profile: Profile 
 
       {lastLoginAt && (
         <p className="p-4 text-xs text-fd-muted-foreground">
-          เข้าครั้งนี้เมื่อ {new Date(lastLoginAt).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" })} · ถ้าไม่ใช่เรา เปลี่ยนรหัสผ่านทันที
+          เข้าครั้งนี้เมื่อ {thDateTime(lastLoginAt)} · ถ้าไม่ใช่เรา เปลี่ยนรหัสผ่านทันที
         </p>
       )}
     </aside>

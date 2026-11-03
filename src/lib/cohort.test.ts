@@ -37,6 +37,11 @@ describe("ตัวกรอง \"รุ่นของฉัน\" ในหล�
   test("ค่าเริ่ม: ดูแลรุ่นอยู่ = รุ่นของฉัน ไม่ได้ดูแล = ทุกรุ่น", () => {
     expect(resolveCohortFilter(null, [2], [1, 2])).toBe("mine");
     expect(resolveCohortFilter(null, [], [1, 2])).toBe("all");
+    expect(resolveCohortFilter(null, [], [5])).toBe(5); // ฝึกอยู่รุ่นเดียว = เริ่มที่รุ่นนั้น
+  });
+  test("รุ่นที่จบแล้วไม่ถูกจำ เปิดหน้าใหม่กลับไปรุ่นที่กำลังฝึก", () => {
+    expect(resolveCohortFilter(3, [], [5])).toBe(5); // 3 จบแล้ว (ไม่อยู่ใน running)
+    expect(resolveCohortFilter(3, [5], [5, 6])).toBe("mine");
   });
   test("ค่าที่จำไว้ใช้ได้ = ใช้ต่อ (รีเฟรชแล้วไม่หาย) · ใช้ไม่ได้แล้ว = กลับค่าเริ่ม", () => {
     expect(resolveCohortFilter("all", [2], [1, 2])).toBe("all");

@@ -18,7 +18,7 @@ import { SkeletonList } from "./skeleton";
 type Filter = "all" | PostKind;
 const KIND_TONE: Record<PostKind, string> = {
   task: "bg-fd-primary/10 text-fd-primary",
-  announcement: "bg-orange-500/15 text-orange-800 dark:text-orange-300",
+  announcement: "bg-amber-500/15 text-amber-800 dark:text-amber-300",
   resource: "bg-green-600/15 text-green-800 dark:text-green-300",
   review: "bg-violet-600/15 text-violet-800 dark:text-violet-300",
 };
@@ -88,7 +88,7 @@ export function PostFeed() {
 function DueLine({ due }: { due: string | null }) {
   if (!due) return <p className="text-sm text-fd-muted-foreground">ไม่มีกำหนดส่ง</p>;
   const left = daysBetween(todayTH(), due);
-  const tone = left < 0 ? "text-red-700 dark:text-red-400" : left <= 2 ? "text-orange-700 dark:text-orange-400" : "text-fd-muted-foreground";
+  const tone = left < 0 ? "text-red-700 dark:text-red-400" : left <= 2 ? "text-amber-700 dark:text-amber-400" : "text-fd-muted-foreground";
   const words = left < 0 ? `เลยกำหนด ${-left} วัน` : left === 0 ? "ส่งวันนี้" : `เหลือ ${left} วัน`;
   return (
     <p className={`text-sm font-semibold ${tone}`}>

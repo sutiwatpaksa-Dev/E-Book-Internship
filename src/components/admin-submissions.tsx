@@ -16,8 +16,9 @@ import { VerdictBadge } from "./status-badge";
 import { TaskThread } from "./task-thread";
 import { TemplatePicker } from "./template-picker";
 import { Skeleton, SkeletonList } from "./skeleton";
+import { thDateTime } from "@/lib/date-format";
 
-const fmt = (d: string) => new Date(d).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" });
+const fmt = thDateTime;
 const card = "flex flex-col gap-2 rounded-xl border border-fd-border bg-fd-card p-4 text-sm";
 
 // โหลดงานที่ส่งทั้งหมดครั้งเดียว ใช้ทั้งแท็บ "งานที่ส่ง" และหน้าน้องรายคน

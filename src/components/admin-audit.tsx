@@ -6,6 +6,7 @@ import { AUDIT_GROUPS, AUDIT_LABEL, auditGroupOf, type AuditGroup } from "@/lib/
 import type { AuditEntry } from "@/types";
 import { ROLE_LABEL } from "./account-menu";
 import { ErrorText } from "./error-text";
+import { thDateTime } from "@/lib/date-format";
 
 // บันทึกการกระทำ 200 รายการล่าสุด: ใครทำอะไรกับใครเมื่อไร (ดูอย่างเดียว แก้หรือลบไม่ได้)
 // โหลดเมื่อเปิดแท็บนี้เท่านั้น ไม่โหลดพร้อมหน้าอื่นเพราะไม่ได้ใช้ทุกวัน
@@ -76,7 +77,7 @@ export function AdminAudit() {
             )}
             {shown.map((r) => (
               <tr key={r.id} className="border-t border-fd-border">
-                <td className="px-3 py-2 whitespace-nowrap">{new Date(r.createdAt).toLocaleString("th-TH")}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{thDateTime(r.createdAt)}</td>
                 <td className="px-3 py-2">{r.actor}</td>
                 <td className="px-3 py-2 whitespace-nowrap">{AUDIT_LABEL[r.action] ?? r.action}</td>
                 <td className="px-3 py-2">{r.target}</td>

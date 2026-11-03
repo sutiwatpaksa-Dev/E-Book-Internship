@@ -1,6 +1,6 @@
 "use client";
 
-import { FileUp, Pencil, Plus, Trash2 } from "lucide-react";
+import { FileUp, Lock, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { requirementUrl } from "@/api/files.api";
 import type { AdminState } from "@/hooks/use-admin";
@@ -11,8 +11,9 @@ import type { AdminAssignment, AssignmentInput, AssignmentSection, Cohort } from
 import { Button } from "./button";
 import { ConfirmBox } from "./confirm-box";
 import { Field, Input, inputClass } from "./field";
+import { thDateTime } from "@/lib/date-format";
 
-const fmt = (d: string) => new Date(d).toLocaleString("th-TH");
+const fmt = thDateTime;
 const card = "flex flex-col gap-2 rounded-xl border border-fd-border bg-fd-card p-4 text-sm";
 
 // หัวข้อเขียนบรรทัดละ 1 หัวข้อ "key | ชื่อหัวข้อ | หน้า" แก้ในช่องข้อความเดียวได้เร็วกว่าฟอร์มทีละแถว
@@ -41,7 +42,7 @@ export function AdminFiles({ admin }: { admin: AdminState }) {
   const roundsTemplate = assignments.find((a) => a.slug === "starter")?.rounds ?? DEFAULT_ROUNDS;
 
   return (
-    <div className="flex max-w-3xl flex-col gap-4">
+    <div className="flex max-w-5xl flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-fd-muted-foreground">
           โจทย์แต่ละชิ้นมี PDF และหัวข้อของตัวเอง · เลือกโจทย์ให้รุ่นได้ในหน้ารุ่น (รุ่นหนึ่งมีได้หลายโจทย์) · น้องเห็นเฉพาะโจทย์ของรุ่นตัวเอง
@@ -127,7 +128,7 @@ function Pdf({ admin, assignment: a }: { admin: AdminState; assignment: AdminAss
             </a>
           </>
         ) : (
-          <span className="text-orange-800 dark:text-orange-300">ยังไม่มี PDF น้องในรุ่นที่ใช้โจทย์นี้จะเปิดเอกสารไม่ได้</span>
+          <span className="text-amber-800 dark:text-amber-300">ยังไม่มี PDF น้องในรุ่นที่ใช้โจทย์นี้จะเปิดเอกสารไม่ได้</span>
         )}
       </span>
       <label className="inline-flex min-h-11 w-fit cursor-pointer items-center gap-2 rounded-lg bg-fd-primary px-3 font-medium text-fd-primary-foreground focus-within:ring-2 focus-within:ring-fd-primary/40 hover:brightness-110">
@@ -341,11 +342,20 @@ function CohortPicker({ admin, assignment: a }: { admin: AdminState; assignment:
         <ul className="grid gap-x-4 sm:grid-cols-2">
           {cohorts.map((c) => (
             <li key={c.id}>
-              <label className={`flex min-h-11 items-center gap-2.5 rounded-lg px-2 ${locked(c) ? "opacity-60" : "cursor-pointer hover:bg-fd-accent"}`}>
-                <input type="checkbox" className="size-5 shrink-0" checked={picked.has(c.id)} disabled={locked(c) || saving} onChange={() => toggle(c.id)} />
-                <span className="min-w-0 flex-1 truncate font-medium">{c.name}</span>
-                <span className="shrink-0 text-xs text-fd-muted-foreground">{COHORT_STATUS_LABEL[cohortStatus(c)]}</span>
-              </label>
+              {/* รุ่นที่จบแล้ว: ไม่ใช่ checkbox เทาๆ (ดูเหมือนบั๊ก) แต่เป็นกุญแจ + บอกเป็นคำว่าใช้โจทย์นี้หรือไม่ */}
+              {locked(c) ? (
+                <div className="flex min-h-11 items-center gap-2.5 px-2 text-fd-muted-foreground" title="รุ่นที่จบแล้วแก้ไม่ได้">
+                  <Lock className="size-4 shrink-0" aria-hidden />
+                  <span className="min-w-0 flex-1 font-medium break-words">{c.name}</span>
+                  <span className="shrink-0 text-xs">{picked.has(c.id) ? "ใช้โจทย์นี้ · จบแล้ว" : "จบแล้ว"}</span>
+                </div>
+              ) : (
+                <label className="flex min-h-11 cursor-pointer items-center gap-2.5 rounded-lg px-2 hover:bg-fd-accent">
+                  <input type="checkbox" className="size-5 shrink-0" checked={picked.has(c.id)} disabled={saving} onChange={() => toggle(c.id)} />
+                  <span className="min-w-0 flex-1 font-medium break-words">{c.name}</span>
+                  <span className="shrink-0 text-xs text-fd-muted-foreground">{COHORT_STATUS_LABEL[cohortStatus(c)]}</span>
+                </label>
+              )}
             </li>
           ))}
         </ul>

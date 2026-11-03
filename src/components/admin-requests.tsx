@@ -67,7 +67,7 @@ export function AdminRequests({
                     >
                       {t.unread && (
                         <span
-                          className="me-1.5 inline-block size-2 rounded-full bg-orange-500"
+                          className="me-1.5 inline-block size-2 rounded-full bg-amber-500"
                           aria-label="ยังไม่อ่าน"
                         />
                       )}

@@ -138,7 +138,7 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
   // ตัวกรองรุ่นกลาง (ภาพรวม แชท งานที่ส่ง) · mine = รุ่นที่ยังไม่จบซึ่งเราเป็นพี่เลี้ยงประจำ
   const myId = admin.me?.id;
   const mine = admin.cohorts.filter((c) => !c.endedAt && myId !== undefined && c.mentorIds.includes(myId)).map((c) => c.id);
-  const [cohort, setCohort] = useCohortFilter(mine, admin.cohorts.map((c) => c.id));
+  const [cohort, setCohort] = useCohortFilter(mine, admin.cohorts.filter((c) => !c.endedAt).map((c) => c.id));
   const inScope = (cohortId: number | null) => inCohort(cohortId, cohort, mine);
   const owners = cohort === "all" ? null : new Set(admin.users.filter((u) => u.role === "intern" && inScope(u.cohortId)).map((u) => u.username));
   const waiting = useScopedUnread(cohortQuery(cohort, mine));
@@ -240,7 +240,7 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
                 <t.icon className="size-4" />
                 {t.label}
                 {n > 0 && (
-                  <span aria-label={`${n} เรื่องใหม่`} className="ms-auto rounded-full bg-orange-500 px-1.5 text-xs font-bold text-white">
+                  <span aria-label={`${n} เรื่องใหม่`} className="ms-auto rounded-full bg-amber-500 px-1.5 text-xs font-bold text-white">
                     {n}
                   </span>
                 )}

@@ -46,7 +46,7 @@ export function NotificationBell() {
       >
         <Bell className="size-5" />
         {n.unread > 0 && (
-          <span aria-hidden className="absolute end-0.5 top-0.5 min-w-4 rounded-full bg-orange-500 px-1 text-center text-xs leading-4 font-bold text-white">
+          <span aria-hidden className="absolute end-0.5 top-0.5 min-w-4 rounded-full bg-amber-500 px-1 text-center text-xs leading-4 font-bold text-white">
             {n.unread > 9 ? "9+" : n.unread}
           </span>
         )}
@@ -64,7 +64,7 @@ export function NotificationBell() {
                 const body = (
                   <>
                     <span className={x.readAt ? "" : "font-semibold"}>
-                      {!x.readAt && <span aria-label="ใหม่" className="me-1.5 inline-block size-2 rounded-full bg-orange-500" />}
+                      {!x.readAt && <span aria-label="ใหม่" className="me-1.5 inline-block size-2 rounded-full bg-amber-500" />}
                       {x.title}
                     </span>
                     <span className="text-xs text-fd-muted-foreground">{timeAgo(x.createdAt)}</span>

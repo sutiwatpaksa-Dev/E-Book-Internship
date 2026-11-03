@@ -51,13 +51,13 @@ export type CohortFilter = number | "all" | "mine" | "none";
 export const inCohort = (cohortId: number | null, f: CohortFilter, mine: readonly number[] = []) =>
   f === "all" || (f === "none" ? cohortId === null : f === "mine" ? cohortId !== null && mine.includes(cohortId) : cohortId === f);
 
-// ค่าที่ใช้จริงจากค่าที่จำไว้ในเบราว์เซอร์: ค่าเริ่ม = "รุ่นของฉัน" ถ้าดูแลรุ่นที่ยังไม่จบอยู่ ไม่งั้น "ทุกรุ่น"
-// ค่าที่จำไว้ใช้ไม่ได้แล้ว (รุ่นถูกลบ, ไม่ได้ดูแลรุ่นไหนแล้ว) กลับไปค่าเริ่ม ไม่ให้หน้าว่างเปล่าโดยไม่รู้สาเหตุ
-export function resolveCohortFilter(saved: CohortFilter | null, mine: readonly number[], cohortIds: readonly number[]): CohortFilter {
-  const fallback: CohortFilter = mine.length > 0 ? "mine" : "all";
-  if (saved === null) return fallback;
-  if (saved === "mine") return fallback;
-  if (typeof saved === "number") return cohortIds.includes(saved) ? saved : fallback;
+// ค่าที่ใช้จริงจากค่าที่จำไว้ในเบราว์เซอร์ · running = id ของรุ่นที่ยังไม่จบ
+// ค่าเริ่ม: "รุ่นของฉัน" ถ้าดูแลรุ่นที่ยังฝึกอยู่ → รุ่นที่ฝึกอยู่ถ้ามีรุ่นเดียว → "ทุกรุ่น"
+// จำได้เฉพาะรุ่นที่ยังฝึกอยู่: รุ่นที่จบแล้ว (หรือถูกลบ) เลือกดูได้ แต่เปิดหน้าใหม่จะกลับค่าเริ่ม ไม่ค้างที่รุ่นเก่าจนดูเหมือนไม่มีงาน
+export function resolveCohortFilter(saved: CohortFilter | null, mine: readonly number[], running: readonly number[]): CohortFilter {
+  const fallback: CohortFilter = mine.length > 0 ? "mine" : running.length === 1 ? running[0] : "all";
+  if (saved === null || saved === "mine") return fallback;
+  if (typeof saved === "number") return running.includes(saved) ? saved : fallback;
   return saved;
 }
 

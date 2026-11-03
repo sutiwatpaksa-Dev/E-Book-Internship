@@ -37,7 +37,7 @@ export function BottomNav() {
             <l.icon className="size-5.5" strokeWidth={active ? 2.4 : 2} aria-hidden />
             {l.label}
             {l.href === "/questions" && unread > 0 && (
-              <span aria-label={`ข้อความใหม่ ${unread} เรื่อง`} className="absolute top-2 left-1/2 ms-1.5 size-3 rounded-full border-2 border-fd-background bg-orange-500" />
+              <span aria-label={`ข้อความใหม่ ${unread} เรื่อง`} className="absolute top-2 left-1/2 ms-1.5 size-3 rounded-full border-2 border-fd-background bg-amber-500" />
             )}
           </Link>
         );

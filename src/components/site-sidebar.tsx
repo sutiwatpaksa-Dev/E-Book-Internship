@@ -14,7 +14,7 @@ export function SiteSidebar() {
     <>
       <div className="sticky top-(--fd-docs-row-1) z-20 h-[calc(var(--fd-docs-height)-var(--fd-docs-row-1))] [grid-area:sidebar] max-md:hidden">
         <aside id="nd-sidebar" aria-label="เมนูข้าง" className="absolute inset-y-0 start-0 flex w-full flex-col items-end border-e border-fd-border bg-fd-card">
-          <div className="flex h-full w-(--fd-sidebar-width) flex-col overflow-y-auto overscroll-contain">
+          <div className="flex h-full w-(--fd-sidebar-width) flex-col overflow-y-auto overscroll-contain [scrollbar-color:transparent_transparent] [scrollbar-width:thin] hover:[scrollbar-color:var(--color-fd-border)_transparent] focus-within:[scrollbar-color:var(--color-fd-border)_transparent]">
             <div className="px-3 pt-4 pb-6">
               <SiteNav />
             </div>

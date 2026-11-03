@@ -14,8 +14,9 @@ import { Button } from "./button";
 import { ErrorText } from "./error-text";
 import { Field, Input, inputClass } from "./field";
 import { VerdictBadge } from "./status-badge";
+import { thDateTime } from "@/lib/date-format";
 
-const fmt = (d: string) => new Date(d).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" });
+const fmt = thDateTime;
 const box = "not-prose flex flex-col gap-3 rounded-2xl border border-fd-border bg-fd-card p-4 text-sm";
 
 // ส่งงานของน้องในหน้า "การส่งงาน + เกณฑ์": โค้ดอยู่บน GitHub แล้ว ที่นี่แค่บอกพี่เลี้ยงว่า "ตรวจ tag นี้"

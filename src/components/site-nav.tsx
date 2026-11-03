@@ -87,13 +87,13 @@ export function SiteNav({ onNavigate }: { onNavigate?: () => void }) {
                 href={i.href}
                 onClick={onNavigate}
                 aria-current={active ? "page" : undefined}
-                className={`flex min-h-11 items-center gap-2.5 rounded-lg px-2.5 hover:bg-fd-accent ${active ? "bg-fd-primary/10 font-semibold text-fd-primary" : ""}`}
+                className={`flex min-h-11 items-center gap-2.5 rounded-lg px-2.5 hover:bg-fd-accent ${active ? "bg-fd-muted font-semibold text-fd-foreground shadow-[inset_3px_0_0_var(--color-fd-primary)]" : ""}`}
               >
                 <i.icon className="size-4.5 shrink-0 text-fd-primary" aria-hidden />
                 <span className="min-w-0 flex-1">{i.label}</span>
                 {locked && <Lock className="size-3.5 text-fd-muted-foreground" aria-label="ต้อง login" />}
                 {i.href === "/questions" && unread > 0 && (
-                  <span className="rounded-full bg-orange-500 px-1.5 text-xs font-semibold text-white tabular-nums" aria-label={`ข้อความใหม่ ${unread} เรื่อง`}>
+                  <span className="rounded-full bg-amber-500 px-1.5 text-xs font-semibold text-white tabular-nums" aria-label={`ข้อความใหม่ ${unread} เรื่อง`}>
                     {unread}
                   </span>
                 )}

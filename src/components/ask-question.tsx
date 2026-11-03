@@ -57,7 +57,7 @@ export function AskQuestion({ pageUrl }: { pageUrl: string }) {
               <Link href={`/questions?t=${t.id}`} className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-fd-accent">
                 <StatusBadge status={t.status} />
                 <span className={`min-w-0 flex-1 truncate ${t.unread ? "font-bold" : ""}`}>{t.subject}</span>
-                {t.unread && <span className="text-xs font-semibold text-orange-600">ข้อความใหม่</span>}
+                {t.unread && <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">ข้อความใหม่</span>}
               </Link>
             </li>
           ))}

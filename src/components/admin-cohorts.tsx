@@ -19,7 +19,7 @@ import { Skeleton, SkeletonList } from "./skeleton";
 // สีป้ายสถานะ: กำลังฝึก = สีหลัก, เลยวันจบ = ส้ม (ต้องมีคนตัดสินใจ), ที่เหลือ = เทา
 const STATUS_TONE: Record<CohortStatus, string> = {
   active: "bg-fd-primary/10 text-fd-primary",
-  overdue: "bg-orange-500/15 text-orange-800 dark:text-orange-300",
+  overdue: "bg-amber-500/15 text-amber-800 dark:text-amber-300",
   upcoming: "bg-fd-muted text-fd-muted-foreground",
   ended: "bg-fd-muted text-fd-muted-foreground",
 };
@@ -73,7 +73,7 @@ function CohortList({ admin, nav }: { admin: AdminState; nav: AdminNav }) {
       {admin.loading && admin.cohorts.length === 0 ? (
         <SkeletonList rows={3} />
       ) : admin.cohorts.length === 0 && !creating ? (
-        <EmptyState icon={GraduationCap} title="ยังไม่มีรุ่นฝึกงาน">
+        <EmptyState icon={GraduationCap} title="ยังไม่มีรุ่นฝึกงาน" action={<Button onClick={() => setCreating(true)} className="mt-2 min-h-11">สร้างรุ่นแรก</Button>}>
           สร้างรุ่นแรก แล้วย้ายบัญชีน้องที่มีอยู่ ({interns.length} คน) เข้ารุ่นได้จากหน้ารุ่น
         </EmptyState>
       ) : (
@@ -97,7 +97,7 @@ function CohortList({ admin, nav }: { admin: AdminState; nav: AdminNav }) {
                       <RowLink href={cohortHref(c.id)} onGo={() => nav.openCohort(c.id)} className="inline-flex min-h-10 items-center font-semibold">
                         {c.name}
                       </RowLink>
-                      {c.mentorIds.length === 0 && !c.endedAt && <span className="ms-2 rounded-full bg-orange-100 px-2 py-0.5 text-xs whitespace-nowrap text-orange-800 dark:bg-orange-950 dark:text-orange-300">ยังไม่มีพี่เลี้ยงประจำ</span>}
+                      {c.mentorIds.length === 0 && !c.endedAt && <span className="ms-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs whitespace-nowrap text-amber-800 dark:bg-amber-950 dark:text-amber-300">ยังไม่มีพี่เลี้ยงประจำ</span>}
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap text-fd-muted-foreground">{cohortRange(c)}</td>
                     <td className="px-3 py-2 tabular-nums">{c.internCount}</td>
@@ -268,7 +268,7 @@ function CohortDetail({ admin, nav, cohort: c }: { admin: AdminState; nav: Admin
                         <RowLink href={internHref(u.id)} onGo={() => nav.openIntern(u.id)} className="inline-flex min-h-10 items-center">
                           {u.username}
                         </RowLink>
-                        {u.disabled && <span className="ms-2 text-xs text-orange-700 dark:text-orange-400">ปิดอยู่</span>}
+                        {u.disabled && <span className="ms-2 text-xs text-amber-700 dark:text-amber-400">ปิดอยู่</span>}
                       </td>
                       <td className="px-3 py-2 tabular-nums">
                         {cardsDone(admin, u.id)}/{cards.length}
@@ -326,7 +326,7 @@ function Assignments({ admin, nav, cohort: c }: { admin: AdminState; nav: AdminN
               <label className={`flex min-h-11 items-center gap-2.5 rounded-lg px-2 ${c.endedAt ? "opacity-70" : "cursor-pointer hover:bg-fd-accent"}`}>
                 <input type="checkbox" className="size-5" checked={picked.has(a.id)} disabled={!!c.endedAt} onChange={() => toggle(a.id)} />
                 <span className="font-medium">{a.name}</span>
-                {!a.pdf && <span className="text-xs text-orange-800 dark:text-orange-300">ยังไม่มี PDF</span>}
+                {!a.pdf && <span className="text-xs text-amber-800 dark:text-amber-300">ยังไม่มี PDF</span>}
               </label>
             </li>
           ))}

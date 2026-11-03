@@ -15,8 +15,9 @@ import { Button } from "./button";
 import { OnlineBadge } from "./online-badge";
 import { ConfirmBox } from "./confirm-box";
 import { StatusBadge } from "./status-badge";
+import { thDateTime } from "@/lib/date-format";
 
-const fmt = (d: string | null) => (d ? new Date(d).toLocaleString("th-TH") : "ยังไม่เคยเข้า");
+const fmt = (d: string | null) => (d ? thDateTime(d) : "ยังไม่เคยเข้า");
 const day = (d: string) => new Date(d).toLocaleDateString("th-TH", { day: "numeric", month: "short" });
 
 // ขั้นที่ยังไม่มีการ์ด (เช่น Maintenance) ไม่แสดง กล่อง 0/0 อ่านแล้วเหมือนน้องไม่ได้ทำ (เหมือนกราฟหน้าภาพรวม)
@@ -68,7 +69,7 @@ export function AdminInternDetail({ admin, nav, userId }: { admin: AdminState; n
         </Button>
         <span className="text-sm text-fd-muted-foreground">
           <OnlineBadge lastSeenAt={u.lastSeenAt} /> · {u.disabled ? "ปิดบัญชีอยู่" : isLockedNow(u) ? "ล็อกชั่วคราว" : "ใช้งาน"} · เข้าล่าสุด {fmt(u.lastLoginAt)}
-          {days !== null && days > 7 && <span className="text-orange-700 dark:text-orange-400"> ({days} วันก่อน)</span>}
+          {days !== null && days > 7 && <span className="text-amber-700 dark:text-amber-400"> ({days} วันก่อน)</span>}
         </span>
       </div>
       {/* โปรไฟล์ที่น้องกรอกเอง (ยังไม่กรอก = บอกตรงๆ ไม่ซ่อน จะได้รู้ว่าต้องทักให้กรอก) */}
@@ -100,7 +101,7 @@ export function AdminInternDetail({ admin, nav, userId }: { admin: AdminState; n
           ))}
         </dl>
         <p className="text-xs text-fd-muted-foreground">น้องกรอกเองที่เมนูบัญชี → โปรไฟล์ของฉัน · พี่เลี้ยงทุกคนเห็นข้อมูลนี้</p>
-        {u.secretKind === "pin" && <span className="text-orange-700 dark:text-orange-400">ยังใช้ PIN ชั่วคราว: login ครั้งหน้าระบบจะให้ตั้งรหัสผ่าน</span>}
+        {u.secretKind === "pin" && <span className="text-amber-700 dark:text-amber-400">ยังใช้ PIN ชั่วคราว: login ครั้งหน้าระบบจะให้ตั้งรหัสผ่าน</span>}
       </div>
 
       <div className="flex flex-wrap gap-2">

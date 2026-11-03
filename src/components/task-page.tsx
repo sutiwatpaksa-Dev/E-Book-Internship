@@ -14,8 +14,9 @@ import { ErrorText } from "./error-text";
 import { MarkdownBody } from "./markdown-body";
 import { VerdictBadge, WorkBadge } from "./status-badge";
 import { TaskThread } from "./task-thread";
+import { thDateTime } from "@/lib/date-format";
 
-const fmt = (d: string) => new Date(d).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" });
+const fmt = thDateTime;
 const SUBMIT_LINK = "/starter/submission#ส่งงานของคุณ";
 
 // หน้างาน 1 ชิ้น (โจทย์ + รอบ) แบบ timeline: กำหนดส่ง → ที่ส่งไปทุกครั้ง → ผลตรวจและคะแนน → ความเห็น
@@ -48,7 +49,7 @@ export function TaskPage({ assignment, round }: { assignment: string; round: str
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-2xl font-bold sm:text-3xl">{item.round.label}</h1>
               <WorkBadge state={item.state} daysLeft={item.daysLeft} />
-              {item.lateDays > 0 && <span className="rounded-md bg-orange-500/15 px-2 py-0.5 text-xs font-semibold text-orange-800 dark:text-orange-300">ส่งช้า {item.lateDays} วัน</span>}
+              {item.lateDays > 0 && <span className="rounded-md bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-800 dark:text-amber-300">ส่งช้า {item.lateDays} วัน</span>}
             </div>
             <p className="text-fd-muted-foreground">
               {item.assignmentName} · {item.round.what}
