@@ -6,8 +6,8 @@ import { adminPostsApi } from "@/api/posts.api";
 import type { AdminState } from "@/hooks/use-admin";
 import { toast } from "@/hooks/use-toast";
 import { thaiDayMonth, workdayDate } from "@/lib/cohort";
-import { DUE_DAY_MAX, POST_KIND_LABEL, POST_KINDS, postInputProblem, TITLE_MAX, type PostInput, type PostKind } from "@/lib/post";
-import { BODY_MAX, LINKS_MAX } from "@/lib/submission";
+import { DUE_DAY_MAX, POST_BODY_MAX, POST_KIND_LABEL, POST_KINDS, postInputProblem, TITLE_MAX, type PostInput, type PostKind } from "@/lib/post";
+import { LINKS_MAX } from "@/lib/submission";
 import { timeAgo } from "@/lib/thread-labels";
 import type { AdminPost, PostAck } from "@/types";
 import { Button } from "./button";
@@ -257,7 +257,7 @@ function Composer({ admin, edit, onDone }: { admin: AdminState; edit: AdminPost 
   const selectedCohorts = admin.cohorts.filter((c) => p.cohortIds.includes(c.id));
   return (
     <form onSubmit={submit} aria-label={edit ? "แก้โพสต์" : "โพสต์ใหม่"} className="flex flex-col gap-4 rounded-2xl border border-fd-primary/40 bg-fd-card p-4 sm:p-5">
-      <div role="radiogroup" aria-label="แบบโพสต์" className="grid grid-cols-3 gap-2">
+      <div role="radiogroup" aria-label="แบบโพสต์" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {POST_KINDS.map((k) => (
           <button key={k} type="button" role="radio" aria-checked={p.kind === k} onClick={() => setKind(k)} className={`min-h-11 rounded-lg border px-2 text-sm font-medium ${p.kind === k ? "border-fd-primary bg-fd-primary/10 text-fd-primary" : "border-fd-border hover:bg-fd-accent"}`}>
             {POST_KIND_LABEL[k]}
@@ -267,7 +267,7 @@ function Composer({ admin, edit, onDone }: { admin: AdminState; edit: AdminPost 
 
       <label className={field}>
         หัวข้อ
-        <input className={`${inputClass} text-base font-semibold`} value={p.title} onChange={(e) => set({ title: e.target.value })} maxLength={TITLE_MAX} required autoFocus placeholder={p.kind === "task" ? "เช่น ตรวจรอบ 1: ตาราง + API" : p.kind === "announcement" ? "เช่น ศุกร์นี้ประชุมรวม 15:00" : "เช่น เกณฑ์คุณภาพโค้ดของทีม"} />
+        <input className={`${inputClass} text-base font-semibold`} value={p.title} onChange={(e) => set({ title: e.target.value })} maxLength={TITLE_MAX} required autoFocus placeholder={p.kind === "task" ? "เช่น ตรวจรอบ 1: ตาราง + API" : p.kind === "announcement" ? "เช่น ศุกร์นี้ประชุมรวม 15:00" : p.kind === "review" ? "เช่น ผลรีวิว deploy Vercel: web-com" : "เช่น เกณฑ์คุณภาพโค้ดของทีม"} />
       </label>
 
       <div className="flex flex-col gap-2">
@@ -292,7 +292,7 @@ function Composer({ admin, edit, onDone }: { admin: AdminState; edit: AdminPost 
                 </button>
               ))}
             </div>
-            <textarea ref={area} className={`${inputClass} min-h-40 font-mono text-sm`} value={p.body} onChange={(e) => set({ body: e.target.value })} maxLength={BODY_MAX} aria-label="รายละเอียด (Markdown)" />
+            <textarea ref={area} className={`${inputClass} min-h-40 font-mono text-sm`} value={p.body} onChange={(e) => set({ body: e.target.value })} maxLength={POST_BODY_MAX} aria-label="รายละเอียด (Markdown)" />
           </>
         )}
       </div>

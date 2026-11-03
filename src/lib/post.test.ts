@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { dueDateFor, feedOrder, postInputProblem, visibleTo, type PostInput } from "./post";
+import { dueDateFor, feedOrder, POST_BODY_MAX, postInputProblem, visibleTo, type PostInput } from "./post";
 
 const base: PostInput = { kind: "announcement", assignmentId: null, title: "ประชุมรวมศุกร์นี้", body: "", links: [], allCohorts: false, cohortIds: [22], dueDay: null, dueAt: null, pinned: false };
 
@@ -27,6 +27,13 @@ describe("กฎของโพสต์", () => {
     expect(postInputProblem(base)).toBeNull();
     expect(postInputProblem({ ...base, dueAt: "2026-11-07" })).not.toBeNull();
     expect(postInputProblem({ ...base, kind: "resource", assignmentId: 1 })).not.toBeNull();
+  });
+  test("ผลรีวิวเป็นโพสต์ให้อ่าน ไม่มีกำหนดส่งและไม่ผูกโจทย์ ยาวได้ถึง POST_BODY_MAX", () => {
+    const review = { ...base, kind: "review" as const, title: "ผลรีวิว deploy Vercel: web-com" };
+    expect(postInputProblem({ ...review, body: "ก".repeat(10_000) })).toBeNull();
+    expect(postInputProblem({ ...review, body: "ก".repeat(POST_BODY_MAX + 1) })).not.toBeNull();
+    expect(postInputProblem({ ...review, dueAt: "2026-11-07" })).not.toBeNull();
+    expect(postInputProblem({ ...review, assignmentId: 1 })).not.toBeNull();
   });
   test("งานย่อยของโจทย์ใช้วันทำงานที่ N", () => {
     const task = { ...base, kind: "task" as const, assignmentId: 1 };

@@ -1,12 +1,12 @@
 import { workdayDate } from "./cohort";
-import { BODY_MAX, linksProblem, type TaskLink } from "./submission";
+import { linksProblem, type TaskLink } from "./submission";
 
-// โพสต์ในฟีด: งาน (ส่งได้) · ประกาศ · แหล่งเรียนรู้ · ทุกแบบมีปุ่ม "รับทราบ"
+// โพสต์ในฟีด: งาน (ส่งได้) · ประกาศ · แหล่งเรียนรู้ · ผลรีวิว (ผลตรวจงานที่ให้เพื่อนทั้งรุ่นอ่านได้) · ทุกแบบมีปุ่ม "รับทราบ"
 // งานที่ผูกโจทย์ใหญ่ (assignmentId) = งานย่อยของโจทย์นั้น กำหนดส่งเป็นวันทำงานที่ N ของรุ่น (dueDay)
 // โพสต์ที่ไม่ผูกโจทย์ใช้วันที่จริง (dueAt) · ใช้กฎชุดนี้ทั้งฟอร์มหลังบ้านและ server
-export const POST_KINDS = ["task", "announcement", "resource"] as const;
+export const POST_KINDS = ["task", "announcement", "resource", "review"] as const;
 export type PostKind = (typeof POST_KINDS)[number];
-export const POST_KIND_LABEL: Record<PostKind, string> = { task: "งาน", announcement: "ประกาศ", resource: "แหล่งเรียนรู้" };
+export const POST_KIND_LABEL: Record<PostKind, string> = { task: "งาน", announcement: "ประกาศ", resource: "แหล่งเรียนรู้", review: "ผลรีวิว" };
 
 // ช่องที่น้องต้องส่งในงาน (ใช้จริงในเฟส B) · required = บังคับกรอก
 export const REQUIRE_FIELDS = ["repo", "ref", "deploy", "link", "file", "text"] as const;
@@ -16,6 +16,8 @@ export type Requirement = { field: RequireField; required: boolean };
 export const TITLE_MIN = 3;
 export const TITLE_MAX = 120;
 export const DUE_DAY_MAX = 120;
+// โพสต์ยาวกว่าคำสั่งงาน (BODY_MAX 8,000) เพราะผลรีวิวทั้งฉบับ (ตาราง + โค้ด) ยาวราว 10,000 ตัวอักษร
+export const POST_BODY_MAX = 20000;
 
 export type PostInput = {
   kind: PostKind;
@@ -34,14 +36,14 @@ export type PostInput = {
 export function postInputProblem(p: PostInput): string | null {
   const title = p.title.trim();
   if (title.length < TITLE_MIN || title.length > TITLE_MAX) return `หัวข้อ ${TITLE_MIN}–${TITLE_MAX} ตัวอักษร`;
-  if (p.body.length > BODY_MAX) return `รายละเอียดไม่เกิน ${BODY_MAX.toLocaleString()} ตัวอักษร`;
+  if (p.body.length > POST_BODY_MAX) return `รายละเอียดไม่เกิน ${POST_BODY_MAX.toLocaleString()} ตัวอักษร`;
   const linkErr = linksProblem(p.links);
   if (linkErr) return linkErr;
   // ต้องเลือกรุ่นเสมอ ไม่มีค่าเริ่มที่ทำให้โพสต์หลุดไปถึงรุ่นที่ไม่ได้ตั้งใจ
   if (!p.allCohorts && p.cohortIds.length === 0) return "เลือกรุ่นที่จะเห็นโพสต์นี้ (หรือติ๊กทุกรุ่น)";
   if (p.kind !== "task") {
     if (p.assignmentId !== null) return "ผูกโจทย์ใหญ่ได้เฉพาะโพสต์งาน";
-    if (p.dueDay !== null || p.dueAt !== null) return "ประกาศและแหล่งเรียนรู้ไม่มีกำหนดส่ง";
+    if (p.dueDay !== null || p.dueAt !== null) return "มีกำหนดส่งได้เฉพาะโพสต์งาน";
     return null;
   }
   if (p.assignmentId !== null) {

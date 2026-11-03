@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { BODY_MAX, LINKS_MAX } from "../../src/lib/submission";
-import { DUE_DAY_MAX, POST_KINDS, postInputProblem, TITLE_MAX } from "../../src/lib/post";
+import { LINKS_MAX } from "../../src/lib/submission";
+import { DUE_DAY_MAX, POST_BODY_MAX, POST_KINDS, postInputProblem, TITLE_MAX } from "../../src/lib/post";
 
 const link = z.object({ label: z.string().trim().max(60), url: z.string().trim().max(300) });
 
@@ -10,7 +10,7 @@ export const postSchema = z
     kind: z.enum(POST_KINDS),
     assignmentId: z.number().int().positive().nullable(),
     title: z.string().trim().max(TITLE_MAX),
-    body: z.string().max(BODY_MAX),
+    body: z.string().max(POST_BODY_MAX),
     links: z.array(link).max(LINKS_MAX),
     allCohorts: z.boolean(),
     cohortIds: z.array(z.number().int().positive()).max(50),

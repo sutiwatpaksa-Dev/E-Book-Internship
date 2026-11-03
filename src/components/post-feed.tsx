@@ -20,6 +20,7 @@ const KIND_TONE: Record<PostKind, string> = {
   task: "bg-fd-primary/10 text-fd-primary",
   announcement: "bg-orange-500/15 text-orange-800 dark:text-orange-300",
   resource: "bg-green-600/15 text-green-800 dark:text-green-300",
+  review: "bg-violet-600/15 text-violet-800 dark:text-violet-300",
 };
 
 export function PostFeed() {
@@ -96,7 +97,16 @@ function DueLine({ due }: { due: string | null }) {
   );
 }
 
+// โพสต์ยาว (เช่น ผลรีวิวทั้งฉบับ) ย่อไว้ก่อนให้ฟีดไม่ยาวเกิน · มาจากลิงก์แจ้งเตือน (#post-id) = เปิดเต็มเลย
+const LONG_BODY = 1500;
+
 function PostCard({ post: p, onAck }: { post: FeedPost; onAck: () => void }) {
+  const long = p.body.length > LONG_BODY;
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (long && window.location.hash === `#post-${p.id}`) setOpen(true);
+  }, [long, p.id]);
+  const collapsed = long && !open;
   return (
     <article id={`post-${p.id}`} aria-labelledby={`post-${p.id}-title`} className={`flex scroll-mt-28 flex-col gap-3 rounded-2xl border bg-fd-card p-4 sm:p-5 ${p.pinned ? "border-fd-primary/60" : "border-fd-border"}`}>
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
@@ -117,7 +127,17 @@ function PostCard({ post: p, onAck }: { post: FeedPost; onAck: () => void }) {
         {p.title}
       </h2>
       {p.kind === "task" && <DueLine due={p.due} />}
-      {p.body.trim() && <MarkdownBody md={p.body} className="text-sm" />}
+      {p.body.trim() && (
+        <div id={`post-${p.id}-body`} className={collapsed ? "relative max-h-80 overflow-hidden" : undefined}>
+          <MarkdownBody md={p.body} className="text-sm" />
+          {collapsed && <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-fd-card" />}
+        </div>
+      )}
+      {long && (
+        <button type="button" aria-expanded={open} aria-controls={`post-${p.id}-body`} onClick={() => setOpen((v) => !v)} className="inline-flex min-h-11 items-center self-start rounded-lg px-3 text-sm font-semibold text-fd-primary hover:bg-fd-accent">
+          {open ? "ย่อ" : "อ่านทั้งหมด"}
+        </button>
+      )}
 
       {p.links.length > 0 && (
         <ul className="flex flex-wrap gap-2">
