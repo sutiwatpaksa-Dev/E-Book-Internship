@@ -40,6 +40,10 @@
     "production-build",
     "docker-compose",
     "vps-deployment",
-    "vercel-deployment"
+    "vercel-deployment",
+    "log-monitoring",
+    "backup-restore",
+    "dependency-updates",
+    "feedback-loop"
   ]
 }
