@@ -61,7 +61,7 @@ export function PostFeed() {
   return (
     <div className="flex flex-col gap-4">
       <div role="group" aria-label="กรองโพสต์" className="flex flex-wrap gap-2">
-        {(["all", ...POST_KINDS] as Filter[]).map((k) => (
+        {(["all", ...POST_KINDS] as Filter[]).filter((k) => k === "all" || k === filter || count(k) > 0).map((k) => (
           <button
             key={k}
             type="button"
@@ -97,15 +97,27 @@ function DueLine({ due }: { due: string | null }) {
   );
 }
 
-// โพสต์ยาว (เช่น ผลรีวิวทั้งฉบับ) ย่อไว้ก่อนให้ฟีดไม่ยาวเกิน · มาจากลิงก์แจ้งเตือน (#post-id) = เปิดเต็มเลย
-const LONG_BODY = 1500;
+// โพสต์ยาว (เช่น ผลรีวิวทั้งฉบับ) พับไว้เสมอ เห็นหัวข้อ + ต้นเรื่องราว 3 บรรทัด แล้วกด "อ่านทั้งหมด"
+// ปุ่มรับทราบของโพสต์ยาวอยู่หัวการ์ด ไม่ต้องเลื่อนถึงท้ายก่อนถึงจะกดได้
+const LONG_BODY = 600;
+
+function AckButton({ acked, onAck }: { acked: boolean; onAck: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={acked}
+      onClick={onAck}
+      className={`inline-flex min-h-11 items-center gap-1.5 rounded-lg border px-4 text-sm font-semibold ${acked ? "border-fd-primary bg-fd-primary/10 text-fd-primary" : "border-fd-border hover:bg-fd-accent"}`}
+    >
+      {acked && <Check className="size-4" aria-hidden />}
+      {acked ? "รับทราบแล้ว" : "รับทราบ"}
+    </button>
+  );
+}
 
 function PostCard({ post: p, onAck }: { post: FeedPost; onAck: () => void }) {
   const long = p.body.length > LONG_BODY;
   const [open, setOpen] = useState(false);
-  useEffect(() => {
-    if (long && window.location.hash === `#post-${p.id}`) setOpen(true);
-  }, [long, p.id]);
   const collapsed = long && !open;
   return (
     <article id={`post-${p.id}`} aria-labelledby={`post-${p.id}-title`} className={`flex scroll-mt-28 flex-col gap-3 rounded-2xl border bg-fd-card p-4 sm:p-5 ${p.pinned ? "border-fd-primary/60" : "border-fd-border"}`}>
@@ -123,19 +135,22 @@ function PostCard({ post: p, onAck }: { post: FeedPost; onAck: () => void }) {
         </span>
       </div>
 
-      <h2 id={`post-${p.id}-title`} className="text-lg leading-snug font-semibold">
-        {p.title}
-      </h2>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <h2 id={`post-${p.id}-title`} className="min-w-0 flex-1 text-lg leading-snug font-semibold break-words">
+          {p.title}
+        </h2>
+        {long && <AckButton acked={p.acked} onAck={onAck} />}
+      </div>
       {p.kind === "task" && <DueLine due={p.due} />}
       {p.body.trim() && (
-        <div id={`post-${p.id}-body`} className={collapsed ? "relative max-h-80 overflow-hidden" : undefined}>
+        <div id={`post-${p.id}-body`} className={collapsed ? "relative max-h-28 overflow-hidden" : undefined}>
           <MarkdownBody md={p.body} className="text-sm" />
           {collapsed && <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-fd-card" />}
         </div>
       )}
       {long && (
-        <button type="button" aria-expanded={open} aria-controls={`post-${p.id}-body`} onClick={() => setOpen((v) => !v)} className="inline-flex min-h-11 items-center self-start rounded-lg px-3 text-sm font-semibold text-fd-primary hover:bg-fd-accent">
-          {open ? "ย่อ" : "อ่านทั้งหมด"}
+        <button type="button" aria-expanded={open} aria-controls={`post-${p.id}-body`} onClick={() => setOpen((v) => !v)} className="inline-flex min-h-11 items-center gap-1 self-start rounded-lg border border-fd-border px-4 text-sm font-semibold text-fd-primary hover:bg-fd-accent">
+          {open ? "ย่อโพสต์" : `อ่านทั้งหมด (${Math.ceil(p.body.length / 1000)}k ตัวอักษร)`}
         </button>
       )}
 
@@ -152,15 +167,7 @@ function PostCard({ post: p, onAck }: { post: FeedPost; onAck: () => void }) {
       )}
 
       <div className="flex flex-wrap items-center gap-3 border-t border-fd-border pt-3">
-        <button
-          type="button"
-          aria-pressed={p.acked}
-          onClick={onAck}
-          className={`inline-flex min-h-11 items-center gap-1.5 rounded-lg border px-4 text-sm font-semibold ${p.acked ? "border-fd-primary bg-fd-primary/10 text-fd-primary" : "border-fd-border hover:bg-fd-accent"}`}
-        >
-          {p.acked && <Check className="size-4" aria-hidden />}
-          {p.acked ? "รับทราบแล้ว" : "รับทราบ"}
-        </button>
+        <AckButton acked={p.acked} onAck={onAck} />
         {p.kind === "task" && <span className="text-xs text-fd-muted-foreground">ช่องส่งงานในโพสต์จะมาในเวอร์ชันถัดไป ระหว่างนี้ส่งตามที่พี่เลี้ยงบอกในโพสต์</span>}
       </div>
     </article>

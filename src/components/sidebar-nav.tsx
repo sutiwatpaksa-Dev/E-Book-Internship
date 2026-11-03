@@ -187,7 +187,7 @@ function Chapter({ item, active, done, onNavigate }: { item: NavItem; active: bo
       href={item.url}
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
-      className={`flex min-h-9 items-center gap-2.5 rounded-md px-2 py-1 hover:bg-fd-accent ${active ? "bg-fd-primary/10 font-semibold text-fd-primary" : ""}`}
+      className={`flex min-h-9 items-center gap-2.5 rounded-md px-2 py-1 pointer-coarse:min-h-11 hover:bg-fd-accent ${active ? "bg-fd-primary/10 font-semibold text-fd-primary" : ""}`}
     >
       <span className={`flex h-5.5 min-w-6.5 shrink-0 items-center justify-center rounded-md border px-1 text-[13px] font-semibold tabular-nums ${badge}`}>
         {done ? <Check aria-label="ผ่านแล้ว" className="size-3" strokeWidth={3} /> : item.num}
@@ -211,7 +211,7 @@ function GroupLinks({ title, items, pathname, onNavigate }: { title: string; ite
             href={item.url}
             onClick={onNavigate}
             aria-current={active ? "page" : undefined}
-            className={`flex min-h-9 items-center gap-2.5 rounded-md px-2 py-1 hover:bg-fd-accent ${active ? "bg-fd-primary/10 font-semibold text-fd-primary" : ""}`}
+            className={`flex min-h-9 items-center gap-2.5 rounded-md px-2 py-1 pointer-coarse:min-h-11 hover:bg-fd-accent ${active ? "bg-fd-primary/10 font-semibold text-fd-primary" : ""}`}
           >
             <Icon className="size-4 shrink-0 text-fd-muted-foreground" />
             {item.title}

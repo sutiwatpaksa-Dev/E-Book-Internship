@@ -17,6 +17,8 @@ const columns = {
   dueAt: posts.dueAt,
   pinned: posts.pinned,
   author: users.username,
+  authorNickname: users.nickname,
+  authorFullName: users.fullName,
   createdAt: posts.createdAt,
   editedAt: posts.editedAt,
   archivedAt: posts.archivedAt,

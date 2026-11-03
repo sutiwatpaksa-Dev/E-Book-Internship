@@ -35,7 +35,7 @@ export function SiteHeader({ menu = true }: { menu?: boolean }) {
         </Link>
         {/* พื้นที่กดสูง 44px ส่วนป้ายยังเล็กเท่าเดิม */}
         <Link href="/changelog" title="มีอะไรใหม่" aria-label={`เวอร์ชัน ${version} ดูมีอะไรใหม่`} className="group inline-flex min-h-11 items-center px-1 max-xl:hidden">
-          <span className="rounded-full bg-fd-primary/10 px-2 py-0.5 text-xs font-semibold text-fd-primary group-hover:bg-fd-primary/15">v{version}</span>
+          <span className="text-xs text-fd-muted-foreground tabular-nums group-hover:text-fd-foreground group-hover:underline">v{version}</span>
         </Link>
 
         {/* เมนูทุกหน้าอยู่ที่ sidebar ซ้ายที่เดียว (site-nav.tsx) แถบบนเหลือแค่เครื่องมือ ไม่ซ้ำกันสองที่ */}

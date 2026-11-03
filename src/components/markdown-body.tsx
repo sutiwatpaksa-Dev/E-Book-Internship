@@ -5,6 +5,9 @@ import { renderMarkdown } from "@/lib/markdown";
 // กล่องโค้ด: การ์ดในโค้ดได้กรอบจาก CodeBlock ของ Fumadocs แต่ HTML ที่แปลงเองไม่ผ่าน component นั้น จึงใส่กรอบให้ตรงนี้
 const codeBox = "[&_pre]:overflow-x-auto [&_pre]:rounded-xl [&_pre]:border [&_pre]:border-fd-border [&_pre]:bg-fd-secondary [&_pre]:p-4 [&_pre]:text-sm [&_pre_code]:border-0 [&_pre_code]:bg-transparent [&_pre_code]:p-0";
 
+// ขึ้นบรรทัดเดียวใน Markdown ปกติถูกยุบเป็นช่องว่าง แต่คนเขียนในหลังบ้านตั้งใจให้ขึ้นบรรทัดใหม่ (แบบคอมเมนต์ GitHub) จึงให้ <p> แสดงตามบรรทัดที่พิมพ์
+const lineBreaks = "[&_p]:whitespace-pre-line";
+
 export function MarkdownBody({ md, className = "" }: { md: string; className?: string }) {
-  return <div className={`prose max-w-none ${codeBox} ${className}`} dangerouslySetInnerHTML={{ __html: renderMarkdown(md) }} />;
+  return <div className={`prose max-w-none ${codeBox} ${lineBreaks} ${className}`} dangerouslySetInnerHTML={{ __html: renderMarkdown(md) }} />;
 }

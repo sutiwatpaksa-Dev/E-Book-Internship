@@ -26,6 +26,8 @@ const TOOLS: { label: string; snippet: string }[] = [
   { label: "ติ๊กได้", snippet: "\n- [ ] สิ่งที่ต้องทำ\n" },
   { label: "โค้ด", snippet: "\n```bash\nคำสั่ง\n```\n" },
   { label: "ตาราง", snippet: "\n| ข้อ | รายละเอียด |\n|---|---|\n| 1 | … |\n" },
+  { label: "กล่องเตือน", snippet: "\n> [!CAUTION]\n> เรื่องที่ต้องทำก่อนข้ออื่น\n" },
+  { label: "ระดับ", snippet: "\n### 🔴 ต้องแก้ทันที · หัวข้อ\n### 🟠 ควรแก้ · หัวข้อ\n### ⚪ เก็บกวาด · หัวข้อ\n" },
 ];
 
 const EMPTY: PostInput = { kind: "task", assignmentId: null, title: "", body: "", links: [], allCohorts: false, cohortIds: [], dueDay: null, dueAt: null, pinned: false };

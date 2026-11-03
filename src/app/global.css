@@ -248,3 +248,52 @@ html.req-open #nd-docs-layout {
     display: none;
   }
 }
+
+/* กล่องเตือนใน Markdown ที่พี่เลี้ยงเขียน (> [!CAUTION] ฯลฯ ดู src/lib/markdown.ts) · ป้ายคำไทยอยู่บรรทัดแรกเสมอ สีเป็นแค่ตัวช่วย
+   ต้องขึ้นต้นด้วย .prose blockquote ไม่งั้นแพ้กฎ blockquote ของ Fumadocs (ได้ขอบสีหลักแทนสีแดง) */
+/* สีตั้งต้นแยกไว้ที่ความเจาะจงต่ำ ให้ .md-alert-caution ฯลฯ ด้านล่างทับได้ */
+.md-alert {
+  --alert: var(--color-fd-primary);
+}
+.prose blockquote.md-alert {
+  margin-block: 1rem;
+  border-inline-start: 4px solid var(--alert);
+  border-radius: 0.75rem;
+  background: color-mix(in oklch, var(--alert) 9%, transparent);
+  padding: 0.75rem 1rem;
+  font-style: normal;
+  font-weight: inherit;
+  color: inherit;
+  quotes: none;
+}
+.prose blockquote.md-alert > p {
+  margin-block: 0.25rem;
+}
+.md-alert .md-alert-title {
+  font-weight: 700;
+  color: var(--alert);
+}
+.md-alert-caution {
+  --alert: oklch(52% 0.19 27);
+}
+.md-alert-warning {
+  --alert: oklch(55% 0.15 55);
+}
+.md-alert-important {
+  --alert: oklch(50% 0.17 300);
+}
+.dark .md-alert-caution {
+  --alert: oklch(72% 0.16 25);
+}
+.dark .md-alert-warning {
+  --alert: oklch(78% 0.14 70);
+}
+.dark .md-alert-important {
+  --alert: oklch(75% 0.13 300);
+}
+.md-alert-caution .md-alert-title::before {
+  content: "⛔ ";
+}
+.md-alert-warning .md-alert-title::before {
+  content: "⚠️ ";
+}

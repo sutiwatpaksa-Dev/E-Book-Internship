@@ -9,6 +9,9 @@ import { notificationService } from "./notification.service";
 
 type Viewer = { id: number; role: Role };
 const FEED_LINK = (id: number) => `/feed#post-${id}`;
+// น้องเห็นผู้โพสต์เป็นชื่อเล่น/ชื่อจริงของพี่เลี้ยง ไม่ใช่ชื่อบัญชี login
+const authorLabel = (p: { author: string; authorNickname: string | null; authorFullName: string | null }) =>
+  p.authorNickname?.trim() ? `พี่${p.authorNickname.trim()}` : p.authorFullName?.trim() || "พี่เลี้ยง";
 
 // รุ่นของคนดู + วันเริ่มรุ่น (ใช้แปลง "วันทำงานที่ N" เป็นวันที่ของรุ่นนั้น)
 async function viewerCohort(userId: number) {
@@ -58,7 +61,12 @@ export const postService = {
   async feed(viewer: Viewer) {
     const { cohortId, startsOn } = await viewerCohort(viewer.id);
     const rows = await postRepository.listVisible(viewer.role === "dev" ? "any" : cohortId, viewer.id);
-    const items = rows.map(({ ackedAt, archivedAt: _, ...p }) => ({ ...p, due: dueDateFor(p, startsOn), acked: !!ackedAt }));
+    const items = rows.map(({ ackedAt, archivedAt: _, authorNickname, authorFullName, ...p }) => ({
+      ...p,
+      author: authorLabel({ author: p.author, authorNickname, authorFullName }),
+      due: dueDateFor(p, startsOn),
+      acked: !!ackedAt,
+    }));
     return feedOrder(items.map((p) => ({ ...p, createdAt: p.createdAt.toISOString() })));
   },
   async setAck(viewer: Viewer, id: number, acked: boolean) {

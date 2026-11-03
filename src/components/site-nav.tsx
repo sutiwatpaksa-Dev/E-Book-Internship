@@ -72,7 +72,7 @@ export function SiteNav({ onNavigate }: { onNavigate?: () => void }) {
   }, [pathname]);
 
   return (
-    <div ref={root} className="flex flex-col gap-5">
+    <div ref={root} className="flex flex-col gap-5 pb-6">
       <Group title="งานของฉัน">
         <nav aria-label="งานของฉัน" className="flex flex-col gap-0.5 text-sm">
           {MY_WORK.map((slot, n) => {
