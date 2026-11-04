@@ -107,7 +107,7 @@ function Topic({ item, side, done, locked, onToggle }: TopicProps) {
           <span className="text-xs text-fd-muted-foreground/80">{item.time}</span>
         </span>
       </Link>
-      {!item.extra && (
+      {!item.extra && item.link !== "/starter" && (
         <button
           type="button"
           aria-pressed={done}

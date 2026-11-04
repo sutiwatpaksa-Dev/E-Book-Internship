@@ -11,6 +11,9 @@ export function AssignmentNotice({ list }: { list: Assignment[] }) {
       <DocsTitle>โจทย์ฝึกงานของรุ่นคุณ</DocsTitle>
       <DocsDescription>หน้านี้เขียนสำหรับโจทย์ STARTER ซึ่งรุ่นของคุณไม่ได้ทำ อ่านโจทย์ของรุ่นตัวเองจากเอกสารด้านล่าง</DocsDescription>
       <DocsBody>
+        <p>
+          <a href="/projects">ดูโจทย์ทั้งหมดของรุ่นคุณ</a>
+        </p>
         {list.length === 0 ? (
           <p>รุ่นของคุณยังไม่มีโจทย์ ติดต่อพี่เลี้ยงประจำรุ่น</p>
         ) : (

@@ -8,6 +8,9 @@ const codeBox = "[&_pre]:overflow-x-auto [&_pre]:rounded-xl [&_pre]:border [&_pr
 // ขึ้นบรรทัดเดียวใน Markdown ปกติถูกยุบเป็นช่องว่าง แต่คนเขียนในหลังบ้านตั้งใจให้ขึ้นบรรทัดใหม่ (แบบคอมเมนต์ GitHub) จึงให้ <p> แสดงตามบรรทัดที่พิมพ์
 const lineBreaks = "[&_p]:whitespace-pre-line";
 
+// รูป (ภาพหน้าจอ): ไม่กว้างเกินคอลัมน์ ย่อสัดส่วนตามจอ มีกรอบ เพราะภาพพื้นขาวบนหน้าขาวจะไม่เห็นขอบ
+const images = "[&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-lg [&_img]:border [&_img]:border-fd-border";
+
 export function MarkdownBody({ md, className = "" }: { md: string; className?: string }) {
-  return <div className={`prose max-w-none ${codeBox} ${lineBreaks} ${className}`} dangerouslySetInnerHTML={{ __html: renderMarkdown(md) }} />;
+  return <div className={`prose max-w-none ${codeBox} ${lineBreaks} ${images} ${className}`} dangerouslySetInnerHTML={{ __html: renderMarkdown(md) }} />;
 }

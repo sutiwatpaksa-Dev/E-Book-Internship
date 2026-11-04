@@ -22,7 +22,10 @@ const clampWidth = (w: number) => Math.round(Math.min(Math.max(w, PANEL_MIN), Ma
 
 export function RequirementViewer() {
   // เอกสารนี้เป็นโจทย์ของ Mini Project แผงจึงแสดงเฉพาะหน้า STARTER ออกไปบทอื่นแล้วซ่อน กลับมาแล้วแสดงต่อ
-  const onStarter = usePathname().startsWith("/starter");
+  const pathname = usePathname();
+  const onStarter = /^\/(starter|projects\/[^/]+)(\/|$)/.test(pathname);
+  // โจทย์ของหน้านี้: /projects/<slug> = ชิ้นนั้น · /starter/* = STARTER (ลิงก์ ?sec= ในเนื้อหาจึงเปิดถูกชิ้นแม้รุ่นมีหลายโจทย์)
+  const pageSlug = pathname.match(/^\/projects\/([^/]+)/)?.[1] ?? (pathname.startsWith("/starter") ? "starter" : undefined);
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(1);
   // เปลี่ยน key เพื่อโหลด iframe ใหม่ เพราะตัวอ่าน PDF ของเบราว์เซอร์ไม่สนใจการเปลี่ยน #page ทีหลัง
@@ -33,8 +36,10 @@ export function RequirementViewer() {
   // โจทย์ที่น้องดูได้ (ของรุ่นตัวเอง ชิ้นแรก = ชิ้นที่ควรเปิด) และชิ้นที่เปิดอยู่ · หัวข้อและเลขหน้ามาจากโจทย์นั้น
   const [list, setList] = useState<Assignment[]>([]);
   const [slug, setSlug] = useState<string>();
-  const current = list.find((a) => a.slug === slug) ?? list[0];
+  const current = list.find((a) => a.slug === (slug ?? pageSlug)) ?? list[0];
   const visible = open && onStarter;
+  // ย้ายไปหน้าโจทย์อื่น = กลับไปใช้โจทย์ของหน้านั้น (ไม่ค้างชิ้นที่เลือกจากแผงไว้)
+  useEffect(() => setSlug(undefined), [pageSlug]);
 
   useEffect(() => {
     if (!onStarter || list.length) return;

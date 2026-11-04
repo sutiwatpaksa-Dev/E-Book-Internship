@@ -15,6 +15,7 @@ export type AuditAction =
   | "assignment.update"
   | "assignment.cards"
   | "assignment.pdf"
+  | "image.upload"
   | "cohort.assignments"
   | "submission.review"
   | "thread.status"

@@ -1,10 +1,20 @@
 import { describe, expect, test } from "bun:test";
-import { DEFAULT_ROUNDS } from "../../src/lib/submission";
+import { DEFAULT_ROUNDS, OVERVIEW_MAX } from "../../src/lib/submission";
 import { assignmentSchema, cohortAssignmentsSchema, newAssignmentSchema, postSchema } from "./assignment.validator";
 
 const ok = { slug: "clinic", name: "คลินิกสัตว์", brief: "", sections: [{ key: "api", label: "API", page: 8 }], rounds: DEFAULT_ROUNDS };
 
 describe("assignment validator", () => {
+  test("ภาพรวมโจทย์: ไม่ส่ง = ไม่แตะของเดิม · ส่งว่าง = ล้าง · ยาวเกินเพดานไม่ผ่าน", () => {
+    const parsed = assignmentSchema.parse(ok);
+    expect("overview" in parsed && parsed.overview !== undefined).toBe(false);
+    expect(assignmentSchema.parse({ ...ok, overview: "" }).overview).toBe("");
+    expect(assignmentSchema.safeParse({ ...ok, overview: "ก".repeat(OVERVIEW_MAX) }).success).toBe(true);
+    expect(assignmentSchema.safeParse({ ...ok, overview: "ก".repeat(OVERVIEW_MAX + 1) }).success).toBe(false);
+  });
+  test("ภาพรวมโจทย์เก็บตามที่พิมพ์ (ไม่ trim: ย่อหน้าและบรรทัดว่างมีความหมายใน Markdown)", () => {
+    expect(assignmentSchema.parse({ ...ok, overview: "\n## หัวข้อ\n\n- ข้อ 1\n" }).overview).toBe("\n## หัวข้อ\n\n- ข้อ 1\n");
+  });
   test("slug ใช้ได้เฉพาะ a-z 0-9 -", () => {
     expect(newAssignmentSchema.safeParse(ok).success).toBe(true);
     expect(newAssignmentSchema.safeParse({ ...ok, slug: "Clinic 2" }).success).toBe(false);

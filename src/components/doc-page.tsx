@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { ReactNode } from "react";
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/layouts/docs/page";
 import { cardByUrl, steps, stepUrl } from "@/data/learn";
 import { requiredLinks } from "@/data/roadmap";
@@ -12,8 +13,12 @@ import { getMDXComponents } from "./mdx";
 import { PageNotes } from "./page-notes";
 import { StepHeader, StepPager } from "./step-frame";
 
+// หน้าในหมวดโจทย์ (/starter และหน้าย่อย)
+const isProjectPage = (url: string) => url === "/starter" || url.startsWith("/starter/");
+
 // วางหน้าเนื้อหาหนึ่งหน้าจากไฟล์ .mdx (ใช้ทั้งหน้าทั่วไปและหน้าที่ล็อก)
-export function DocPage({ slugs }: { slugs: string[] | undefined }) {
+// top = ชิ้นที่วางใต้หัวเรื่อง (แถบสถานะของหน้าโจทย์)
+export function DocPage({ slugs, top }: { slugs: string[] | undefined; top?: ReactNode }) {
   const page = source.getPage(slugs);
   if (!page) notFound();
 
@@ -27,8 +32,9 @@ export function DocPage({ slugs }: { slugs: string[] | undefined }) {
     <DocsPage toc={page.data.toc} full={page.data.full} breadcrumb={{ enabled: !card }} tableOfContentPopover={{ enabled: page.data.toc.length >= 3 }}>
       {!page.data.hideTitle && <DocsTitle>{page.data.title}</DocsTitle>}
       {page.data.description && <DocsDescription>{page.data.description}</DocsDescription>}
-      {/* เฉพาะบทหลักที่นับในความคืบหน้า (บทเสริมและหน้าอ้างอิงไม่มีปุ่มนี้) */}
-      {requiredLinks.includes(page.url) && <MarkDoneButton link={page.url} />}
+      {top}
+      {/* เฉพาะบทหลักที่นับในความคืบหน้า (บทเสริมและหน้าอ้างอิงไม่มีปุ่มนี้) · หน้าโจทย์ไม่มี: ผ่านหรือไม่ดูจากผลตรวจของพี่เลี้ยง ไม่ใช่การติ๊กเอง */}
+      {requiredLinks.includes(page.url) && !isProjectPage(page.url) && <MarkDoneButton link={page.url} />}
       {card && <CardHeader card={card} />}
       {step && <StepHeader step={step} />}
       <DocsBody>

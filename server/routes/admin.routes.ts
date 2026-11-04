@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { requireRole, type AuthVars } from "../middleware/require-role";
 import { adminCohortRoutes } from "./admin-cohort.routes";
+import { adminImageRoutes } from "./admin-image.routes";
 import { adminPostRoutes } from "./admin-post.routes";
 import { adminAssignmentRoutes } from "./admin-assignment.routes";
 import { adminContentRoutes } from "./admin-content.routes";
@@ -21,6 +22,7 @@ adminRoutes.route("/cohorts", adminCohortRoutes);
 adminRoutes.route("/assignments", adminAssignmentRoutes);
 adminRoutes.route("/submissions", adminSubmissionRoutes);
 adminRoutes.route("/posts", adminPostRoutes);
+adminRoutes.route("/images", adminImageRoutes);
 
 adminRoutes.get("/users", async (c) => c.json(await userService.list()));
 // หน้า admin ใช้ซ่อนปุ่มที่ทำไม่ได้ (server ตรวจซ้ำทุกคำสั่งอยู่แล้ว ซ่อนปุ่มไม่ใช่ตัวกันสิทธิ์)

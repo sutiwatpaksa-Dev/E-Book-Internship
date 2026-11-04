@@ -7,6 +7,8 @@
 export type TaskLink = { label: string; url: string };
 export type RoundDef = { id: string; label: string; day: number; what: string; deploy: boolean; body?: string; links?: TaskLink[]; postedBy?: string; postedAt?: string; editedAt?: string };
 export const BODY_MAX = 8000;
+// ภาพรวมโจทย์ (Markdown ในหลังบ้าน) ที่น้องอ่านบนหน้าโจทย์
+export const OVERVIEW_MAX = 20_000;
 export const LINKS_MAX = 6;
 export const DEFAULT_ROUNDS: RoundDef[] = [
   { id: "review-1", label: "ตรวจรอบ 1", day: 5, what: "ตาราง + API", deploy: false },

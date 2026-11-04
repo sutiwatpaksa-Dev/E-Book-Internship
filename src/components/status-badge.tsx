@@ -1,5 +1,6 @@
 import { VERDICT_LABEL } from "@/lib/submission";
 import { BLUE, GRAY, GREEN, ORANGE, RED, STATUS_LABEL, STATUS_TONE } from "@/lib/thread-labels";
+import { PROJECT_STATE_LABEL, type ProjectState } from "@/lib/project-status";
 import { WORK_STATE_LABEL, type WorkState } from "@/lib/work-plan";
 import type { ThreadStatus } from "@/types";
 
@@ -20,4 +21,10 @@ const WORK_TONE: Record<WorkState, string> = { todo: GRAY, late: RED, waiting: B
 export function WorkBadge({ state, daysLeft }: { state: WorkState; daysLeft?: number | null }) {
   const late = state === "late" && daysLeft != null && daysLeft < 0;
   return <span className={`shrink-0 rounded-md px-2 py-0.5 text-sm font-semibold ${WORK_TONE[state]}`}>{late ? `เลยกำหนด ${-daysLeft} วัน` : WORK_STATE_LABEL[state]}</span>;
+}
+
+// ป้ายสถานะรวมของโจทย์ (หน้ารายการโจทย์ และแถบสถานะบนหน้าโจทย์) · มีคำเสมอ ไม่ใช้สีอย่างเดียว
+const PROJECT_TONE: Record<ProjectState, string> = { empty: GRAY, notstarted: GRAY, progress: BLUE, waiting: BLUE, revise: ORANGE, late: RED, pass: GREEN, closed: GRAY };
+export function ProjectBadge({ state }: { state: ProjectState }) {
+  return <span className={`shrink-0 rounded-md px-2 py-0.5 text-sm font-semibold ${PROJECT_TONE[state]}`}>{PROJECT_STATE_LABEL[state]}</span>;
 }

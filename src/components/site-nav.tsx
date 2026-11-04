@@ -18,19 +18,20 @@ import { BookProgress, SidebarNav } from "./sidebar-nav";
 // ใช้ทั้ง sidebar จอกว้าง (site-sidebar.tsx) และลิ้นชักมือถือ
 // 6 ช่องที่ตำแหน่งคงที่: ช่อง 3 และ 6 ขึ้นกับ role (น้อง = กระดานงาน/โปรไฟล์ · พี่เลี้ยง = หลังบ้าน/โปรไฟล์)
 // น้องกับพี่เลี้ยงจึงมี 5 แถวเท่ากัน · ตอนโหลดหน้ายังไม่รู้ role ช่องเหล่านี้เป็นแถบจองที่สูงเท่ากัน เมนูไม่ขยับตอนรู้ role
-type Item = { href: string; label: string; icon: LucideIcon };
+type Item = { href: string; label: string; icon: LucideIcon; also?: string[] };
 type Slot = Item | ((role: Role | null) => Item | null);
 const MY_WORK: Slot[] = [
   { href: DASHBOARD_URL, label: "ภาพรวม", icon: LayoutDashboard },
   { href: "/feed", label: "งานและประกาศ", icon: Newspaper },
   (r) => (r === "intern" ? { href: "/work", label: "กระดานงาน", icon: ClipboardList } : r === "dev" ? { href: "/dev/admin", label: "หลังบ้านพี่เลี้ยง", icon: Settings } : null),
-  { href: "/starter", label: "โจทย์ฝึกงาน", icon: FolderKanban },
+  // เนื้อหา STARTER ยังอยู่ที่ /starter/* (แผน 10 วัน เกณฑ์ ฯลฯ) จึงไฮไลต์เมนูนี้ด้วย
+  { href: "/projects", label: "โจทย์ฝึกงาน", icon: FolderKanban, also: ["/starter"] },
   { href: "/questions", label: "ข้อความถึงพี่เลี้ยง", icon: MessageCircle },
   (r) => (r ? { href: "/profile", label: "โปรไฟล์", icon: UserRound } : null),
 ];
 
 // หน้าที่อยู่นอกหมวด "งานของฉัน" และ "เรียนรู้" = บทเดิม/อ้างอิง (บท 00–23, ศัพท์, cheat sheet, มีอะไรใหม่)
-const APP_PATHS = [DASHBOARD_URL, "/feed", "/work", "/starter", "/questions", "/profile", "/dev", LEARN_BASE];
+const APP_PATHS = [DASHBOARD_URL, "/feed", "/work", "/projects", "/starter", "/questions", "/profile", "/dev", LEARN_BASE];
 export const isReferencePage = (pathname: string) => pathname !== "/" && !APP_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
 const isActive = (pathname: string, href: string) => pathname === href || pathname.startsWith(`${href}/`);
@@ -79,7 +80,7 @@ export function SiteNav({ onNavigate }: { onNavigate?: () => void }) {
             if (typeof slot === "function" && !known) return <span key={n} aria-hidden className="mx-2.5 my-[11px] block h-[22px] animate-pulse rounded bg-fd-muted" />;
             const i = typeof slot === "function" ? slot(role) : slot;
             if (!i) return null;
-            const active = isActive(pathname, i.href);
+            const active = isActive(pathname, i.href) || (i.also ?? []).some((p) => isActive(pathname, p));
             const locked = gate(i.href, role) === "login";
             return (
               <Link

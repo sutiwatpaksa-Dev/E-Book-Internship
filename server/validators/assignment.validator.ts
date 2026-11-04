@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { cards } from "../../src/data/learn";
 import { COMMENT_KINDS, criteriaProblem, templatesProblem } from "../../src/lib/rubric";
-import { BODY_MAX, LINKS_MAX, linksProblem, roundsProblem } from "../../src/lib/submission";
+import { BODY_MAX, LINKS_MAX, linksProblem, OVERVIEW_MAX, roundsProblem } from "../../src/lib/submission";
 
 // key ใช้ในลิงก์ของคู่มือ (?sec=api) จึงเป็นตัวพิมพ์เล็กล้วน
 const section = z.object({
@@ -31,6 +31,8 @@ const template = z.object({ id: z.string().max(30), kind: z.enum(COMMENT_KINDS),
 export const assignmentSchema = z.object({
   name: z.string().trim().min(2).max(80),
   brief: z.string().trim().max(500),
+  // ภาพรวมโจทย์ (Markdown) · ไม่ส่ง = ไม่แตะของเดิม (ฟอร์มรุ่นเก่ายังใช้ได้ ไม่ล้างเนื้อหาทิ้ง) · ส่งว่าง = ล้าง
+  overview: z.string().max(OVERVIEW_MAX, { error: `ภาพรวมโจทย์ไม่เกิน ${OVERVIEW_MAX.toLocaleString("en-US")} ตัวอักษร` }).optional(),
   // รอบส่งงานของโจทย์นี้ (กฎเดียวกับฟอร์มหลังบ้าน)
   rounds: z.array(round).superRefine((r, ctx) => {
     const problem = roundsProblem(r);

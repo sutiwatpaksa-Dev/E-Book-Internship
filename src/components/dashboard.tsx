@@ -260,7 +260,7 @@ function StarterTask({ step }: { step: LearnStep }) {
         <Link href={stepUrl(step.slug)} className="inline-flex min-h-11 items-center rounded-xl bg-fd-primary px-4 text-sm font-semibold text-fd-primary-foreground hover:brightness-110">
           เปิดโจทย์เต็ม
         </Link>
-        <Link href="/starter" className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-fd-border px-4 text-sm font-semibold hover:bg-fd-accent">
+        <Link href="/projects" className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-fd-border px-4 text-sm font-semibold hover:bg-fd-accent">
           <FileText className="size-4" />
           Requirement ของโจทย์
         </Link>

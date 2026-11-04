@@ -95,7 +95,7 @@ export function sectionOf(model: NavModel, url: string): NavSection | null {
   if (url === DASHBOARD_URL) return "dashboard";
   if (url === CARDS_URL || url.startsWith(`${CARDS_URL}/`)) return "cards";
   if (url === "/learn" || url.startsWith("/learn/")) return "path";
-  if (url === PROJECT_URL || url.startsWith(`${PROJECT_URL}/`)) return "project";
+  if (url === PROJECT_URL || url.startsWith(`${PROJECT_URL}/`) || url === "/projects" || url.startsWith("/projects/")) return "project";
   if (model.refs.some((r) => r.url === url)) return "cards";
   if (model.extras.some((x) => x.url === url) || model.stages.some((s) => s.items.some((i) => i.url === url))) return "cards";
   return null;

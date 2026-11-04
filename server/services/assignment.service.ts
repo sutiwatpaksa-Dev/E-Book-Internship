@@ -37,7 +37,7 @@ export const assignmentService = {
     const rows = await assignmentRepository.findManyBySlug(sorted);
     return sorted.flatMap((slug) => {
       const a = rows.find((r) => r.slug === slug);
-      return a ? [{ slug: a.slug, name: a.name, brief: a.brief, sections: a.sections, rounds: a.rubric.rounds }] : [];
+      return a ? [{ slug: a.slug, name: a.name, brief: a.brief, overview: a.overview, sections: a.sections, rounds: a.rubric.rounds }] : [];
     });
   },
 
@@ -78,20 +78,20 @@ export const assignmentService = {
     return (await assignmentRepository.list()).map(({ rubric, ...a }) => ({ ...a, rounds: rubric.rounds, criteria: rubric.criteria ?? [], templates: rubric.templates ?? [] }));
   },
 
-  async create(devId: number, slug: string, { rounds, criteria, templates, ...f }: AssignmentInput) {
+  async create(devId: number, slug: string, { rounds, criteria, templates, overview, ...f }: AssignmentInput) {
     if (await assignmentRepository.findBySlug(slug)) throw new Error("ASSIGNMENT_SLUG_TAKEN");
-    const a = await assignmentRepository.create({ ...f, rubric: { rounds: byDay(rounds), criteria: criteria ?? DEFAULT_CRITERIA, templates: templates ?? [] }, slug, pdfKey: `requirement:${slug}` });
+    const a = await assignmentRepository.create({ ...f, overview: overview ?? "", rubric: { rounds: byDay(rounds), criteria: criteria ?? DEFAULT_CRITERIA, templates: templates ?? [] }, slug, pdfKey: `requirement:${slug}` });
     await auditService.log(devId, "assignment.create", f.name, slug);
     return a;
   },
-  async update(devId: number, id: number, { rounds, criteria, templates, ...f }: AssignmentInput) {
+  async update(devId: number, id: number, { rounds, criteria, templates, overview, ...f }: AssignmentInput) {
     const a = await assignmentRepository.findById(id);
     if (!a) throw new Error("ASSIGNMENT_NOT_FOUND");
     // รอบที่มีคนส่งแล้วลบไม่ได้ (ประวัติต้องยังบอกชื่อรอบได้) · แก้ชื่อ วัน คำอธิบายได้เสมอ
     const used = await submissionRepository.roundsUsed(id);
     if (used.some((r) => r !== "start" && !rounds.some((x) => x.id === r))) throw new Error("ROUND_IN_USE");
-    await assignmentRepository.update(id, { ...f, rubric: { ...a.rubric, rounds: byDay(rounds), ...(criteria ? { criteria } : {}), ...(templates ? { templates } : {}) } });
-    await auditService.log(devId, "assignment.update", f.name, `${a.slug}${criteria ? " · เกณฑ์คะแนน" : ""}${templates ? " · template" : ""}`);
+    await assignmentRepository.update(id, { ...f, ...(overview !== undefined ? { overview } : {}), rubric: { ...a.rubric, rounds: byDay(rounds), ...(criteria ? { criteria } : {}), ...(templates ? { templates } : {}) } });
+    await auditService.log(devId, "assignment.update", f.name, `${a.slug}${criteria ? " · เกณฑ์คะแนน" : ""}${templates ? " · template" : ""}${overview !== undefined && overview !== a.overview ? " · ภาพรวม" : ""}`);
   },
   // ---- โพสต์งาน = เพิ่ม/แก้/ลบ 1 รอบของโจทย์ (ไม่ต้องส่งทั้งโจทย์ ลดโอกาสสองคนแก้ทับกัน) ----
   async addPost(devId: number, id: number, input: PostInput) {

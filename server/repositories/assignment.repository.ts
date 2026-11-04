@@ -3,7 +3,7 @@ import { db } from "../db/client";
 import { assignmentCards, assignments, cohortAssignments, files, users } from "../db/schema";
 
 type NewAssignment = typeof assignments.$inferInsert;
-export type AssignmentFields = Pick<NewAssignment, "name" | "brief" | "sections" | "rubric">;
+export type AssignmentFields = Pick<NewAssignment, "name" | "brief" | "sections" | "rubric"> & { overview?: string };
 
 export const assignmentRepository = {
   // หลังบ้าน: ทุกโจทย์ + ไฟล์ PDF (ขนาด เวลา) + รุ่นที่ใช้ · ไม่ดึงตัวไฟล์ (bytea) มา

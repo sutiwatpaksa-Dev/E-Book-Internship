@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { env } from "../config/env";
 import { requireRole, type AuthVars } from "../middleware/require-role";
 import { assignmentService, pageOf } from "../services/assignment.service";
+import { imageService } from "../services/image.service";
 
 export const fileRoutes = new Hono<AuthVars>();
 fileRoutes.use("*", requireRole("intern", "dev"));
@@ -24,6 +25,16 @@ fileRoutes.get("/requirement.pdf", async (c) => {
     "Content-Disposition": `inline; filename="${a.slug}-requirement.pdf"`,
     // ไฟล์ส่วนตัว ห้าม CDN หรือเครื่องกลางเก็บสำเนาไว้แจกคนอื่น
     "Cache-Control": "private, no-store",
+  });
+});
+
+// รูปในเนื้อหา Markdown (ภาพหน้าจอที่พี่เลี้ยงอัปโหลด) · ต้อง login · ชื่อรูปไม่ซ้ำและแก้ไม่ได้ จึงให้เบราว์เซอร์เก็บไว้ได้ (private = ไม่ให้ CDN เก็บ)
+fileRoutes.get("/img/:id", async (c) => {
+  const f = await imageService.read(c.req.param("id"));
+  return c.body(new Uint8Array(f.data), 200, {
+    "Content-Type": f.contentType,
+    "X-Content-Type-Options": "nosniff",
+    "Cache-Control": "private, max-age=31536000, immutable",
   });
 });
 

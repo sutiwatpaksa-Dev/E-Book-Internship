@@ -22,6 +22,8 @@ export const adminApi = {
   setAssignmentCards: (id: number, cards: { slug: string; note: string }[]) => request<null>(`/admin/assignments/${id}/cards`, jsonBody("PUT", { cards })),
   uploadAssignmentPdf: (id: number, file: File) =>
     request<FileInfo>(`/admin/assignments/${id}/pdf`, { method: "PUT", headers: { "Content-Type": "application/pdf" }, body: file }),
+  // อัปโหลดรูปใส่ Markdown (ย่อให้ ≤ 2 MB ก่อนเรียก) · ตอบ url ให้ใส่ใน ![คำอธิบาย](url)
+  uploadImage: (file: Blob) => request<{ url: string }>("/admin/images", { method: "POST", headers: { "Content-Type": file.type }, body: file }),
   setCohortAssignments: (id: number, assignmentIds: number[]) => request<null>(`/admin/cohorts/${id}/assignments`, jsonBody("PUT", { assignmentIds })),
   listThreads: () => request<ThreadSummary[]>("/admin/threads"),
   // cohorts = ผลจาก cohortQuery() ใน src/lib/cohort.ts · ไม่ส่ง = ทุกเรื่อง

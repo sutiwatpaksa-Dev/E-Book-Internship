@@ -7,11 +7,12 @@ import { cards as learnCards } from "@/data/learn";
 import type { AdminState } from "@/hooks/use-admin";
 import { COHORT_STATUS_LABEL, cohortStatus } from "@/lib/cohort";
 import { COMMENT_KIND_LABEL, COMMENT_KINDS, criteriaProblem, DEFAULT_CRITERIA, templatesProblem, type CommentKind, type CommentTemplate, type Criterion } from "@/lib/rubric";
-import { DEFAULT_ROUNDS, roundsProblem, type RoundDef } from "@/lib/submission";
+import { DEFAULT_ROUNDS, OVERVIEW_MAX, roundsProblem, type RoundDef } from "@/lib/submission";
 import type { AdminAssignment, AssignmentInput, AssignmentSection, Cohort } from "@/types";
 import { Button } from "./button";
 import { ConfirmBox } from "./confirm-box";
 import { Field, Input, inputClass } from "./field";
+import { MarkdownEditor } from "./markdown-editor";
 import { thDateTime } from "@/lib/date-format";
 
 const fmt = thDateTime;
@@ -57,7 +58,7 @@ export function AdminFiles({ admin }: { admin: AdminState }) {
 
       {creating && (
         <AssignmentForm
-          initial={{ name: "", brief: "", sections: template, rounds: roundsTemplate, criteria: DEFAULT_CRITERIA, templates: [] }}
+          initial={{ name: "", brief: "", overview: "", sections: template, rounds: roundsTemplate, criteria: DEFAULT_CRITERIA, templates: [] }}
           onCancel={() => setCreating(false)}
           onSave={async (slug, input) => {
             if (await admin.saveAssignment(null, slug, input)) setCreating(false);
@@ -156,6 +157,7 @@ function AssignmentForm({ initial, slug: fixedSlug, onSave, onCancel }: { initia
   const [slug, setSlug] = useState(fixedSlug ?? "");
   const [name, setName] = useState(initial.name);
   const [brief, setBrief] = useState(initial.brief);
+  const [overview, setOverview] = useState(initial.overview ?? "");
   const [sections, setSections] = useState(toText(initial.sections));
   // งานของโจทย์จัดที่แท็บโพสต์งาน ฟอร์มนี้ส่งค่าเดิมกลับไปเฉย ๆ (ไม่แก้ ไม่ทำให้โพสต์หาย)
   const [rounds] = useState<RoundDef[]>(initial.rounds);
@@ -172,6 +174,7 @@ function AssignmentForm({ initial, slug: fixedSlug, onSave, onCancel }: { initia
     onSave(slug, {
       name: name.trim(),
       brief: brief.trim(),
+      overview,
       sections: parsed,
       rounds: rounds.map((r) => ({ ...r, label: r.label.trim(), what: r.what.trim() })),
       criteria: criteria.map((c) => ({ ...c, label: c.label.trim() })),
@@ -198,6 +201,10 @@ function AssignmentForm({ initial, slug: fixedSlug, onSave, onCancel }: { initia
         <Field label="สรุปโจทย์ 1–2 ประโยค (น้องเห็นในแผงเอกสาร)">
           <textarea className={`${inputClass} min-h-20`} value={brief} onChange={(e) => setBrief(e.target.value)} maxLength={500} />
         </Field>
+      </div>
+      <div className="sm:col-span-2">
+        {/* ภาพรวมโจทย์: น้องอ่านบนหน้าโจทย์ของรุ่น (โจทย์ที่ไม่ใช่ STARTER ใช้ช่องนี้เป็นเนื้อหาหลักของหน้า) · ใส่รูปภาพหน้าจอได้ */}
+        <MarkdownEditor label="ภาพรวมโจทย์ (น้องอ่านบนหน้าโจทย์)" value={overview} onChange={setOverview} max={OVERVIEW_MAX} minHeight="min-h-56" />
       </div>
       <div className="sm:col-span-2">
         <Field label="หัวข้อใน PDF" hint='บรรทัดละหัวข้อ "key | ชื่อหัวข้อ | เลขหน้า" · key ใช้ชุดเดียวกับ STARTER ลิงก์ในคู่มือจะพาไปหน้าที่ถูกของโจทย์นี้'>

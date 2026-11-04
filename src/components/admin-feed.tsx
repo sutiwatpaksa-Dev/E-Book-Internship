@@ -1,7 +1,7 @@
 "use client";
 
 import { Archive, Pencil, Pin, PinOff, Plus, Trash2, Users } from "lucide-react";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { adminPostsApi } from "@/api/posts.api";
 import type { AdminState } from "@/hooks/use-admin";
 import { toast } from "@/hooks/use-toast";
@@ -15,20 +15,11 @@ import { ConfirmBox } from "./confirm-box";
 import { EmptyState } from "./empty-state";
 import { ErrorText } from "./error-text";
 import { inputClass } from "./field";
-import { MarkdownBody } from "./markdown-body";
+import { MarkdownEditor } from "./markdown-editor";
 import { SkeletonList } from "./skeleton";
 
 // แท็บ "งานและประกาศ": โพสต์ลงฟีดของน้อง (งาน / ประกาศ / แหล่งเรียนรู้) เลือกรุ่นที่เห็นทุกครั้ง
 // งานที่ผูกโจทย์ใหญ่ = งานย่อย กำหนดส่งเป็นวันทำงานที่ N ของรุ่น · งานเดี่ยวใช้วันที่จริง · กฎอยู่ใน src/lib/post.ts
-const TOOLS: { label: string; snippet: string }[] = [
-  { label: "หัวข้อ", snippet: "\n## หัวข้อ\n" },
-  { label: "รายการ", snippet: "\n- รายการ\n" },
-  { label: "ติ๊กได้", snippet: "\n- [ ] สิ่งที่ต้องทำ\n" },
-  { label: "โค้ด", snippet: "\n```bash\nคำสั่ง\n```\n" },
-  { label: "ตาราง", snippet: "\n| ข้อ | รายละเอียด |\n|---|---|\n| 1 | … |\n" },
-  { label: "กล่องเตือน", snippet: "\n> [!CAUTION]\n> เรื่องที่ต้องทำก่อนข้ออื่น\n" },
-  { label: "ระดับ", snippet: "\n### 🔴 ต้องแก้ทันที · หัวข้อ\n### 🟠 ควรแก้ · หัวข้อ\n### ⚪ เก็บกวาด · หัวข้อ\n" },
-];
 
 const EMPTY: PostInput = { kind: "task", assignmentId: null, title: "", body: "", links: [], allCohorts: false, cohortIds: [], dueDay: null, dueAt: null, pinned: false };
 const inputOf = (p: AdminPost): PostInput => ({
@@ -211,9 +202,7 @@ function PostRow({ admin, post: p, onEdit, onPin, onArchive }: { admin: AdminSta
 
 function Composer({ admin, edit, onDone }: { admin: AdminState; edit: AdminPost | null; onDone: (saved: boolean) => void }) {
   const [p, setP] = useState<PostInput>(edit ? inputOf(edit) : EMPTY);
-  const [preview, setPreview] = useState(false);
   const [saving, setSaving] = useState(false);
-  const area = useRef<HTMLTextAreaElement>(null);
   const set = (patch: Partial<PostInput>) => setP((x) => ({ ...x, ...patch }));
   const links = p.links.filter((l) => l.label.trim() || l.url.trim()).map((l) => ({ label: l.label.trim(), url: l.url.trim() }));
   const clean: PostInput = { ...p, links };
@@ -228,17 +217,6 @@ function Composer({ admin, edit, onDone }: { admin: AdminState; edit: AdminPost 
     set({ assignmentId: id, dueDay: null, dueAt: null });
   };
   const toggleCohort = (id: number) => set({ cohortIds: p.cohortIds.includes(id) ? p.cohortIds.filter((x) => x !== id) : [...p.cohortIds, id] });
-  const insert = (snippet: string) => {
-    const el = area.current;
-    if (!el) return set({ body: p.body + snippet });
-    const { selectionStart: a, selectionEnd: b } = el;
-    set({ body: p.body.slice(0, a) + snippet + p.body.slice(b) });
-    requestAnimationFrame(() => {
-      el.focus();
-      el.selectionStart = el.selectionEnd = a + snippet.length;
-    });
-  };
-
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (problem) return void toast.error(problem);
@@ -272,32 +250,7 @@ function Composer({ admin, edit, onDone }: { admin: AdminState; edit: AdminPost 
         <input className={`${inputClass} text-base font-semibold`} value={p.title} onChange={(e) => set({ title: e.target.value })} maxLength={TITLE_MAX} required autoFocus placeholder={p.kind === "task" ? "เช่น ตรวจรอบ 1: ตาราง + API" : p.kind === "announcement" ? "เช่น ศุกร์นี้ประชุมรวม 15:00" : p.kind === "review" ? "เช่น ผลรีวิว deploy Vercel: web-com" : "เช่น เกณฑ์คุณภาพโค้ดของทีม"} />
       </label>
 
-      <div className="flex flex-col gap-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-sm font-medium">รายละเอียด (Markdown)</span>
-          <div role="tablist" aria-label="เขียนหรือดูตัวอย่าง" className="flex gap-1">
-            {[false, true].map((v) => (
-              <button key={String(v)} type="button" role="tab" aria-selected={preview === v} onClick={() => setPreview(v)} className={`min-h-11 rounded-lg px-3 text-sm font-medium ${preview === v ? "bg-fd-primary text-fd-primary-foreground" : "border border-fd-border hover:bg-fd-accent"}`}>
-                {v ? "ตัวอย่าง" : "เขียน"}
-              </button>
-            ))}
-          </div>
-        </div>
-        {preview ? (
-          <div className="min-h-32 rounded-lg border border-fd-border p-3">{p.body.trim() ? <MarkdownBody md={p.body} className="text-sm" /> : <p className="text-sm text-fd-muted-foreground">ยังไม่ได้เขียนอะไร</p>}</div>
-        ) : (
-          <>
-            <div className="flex flex-wrap gap-1.5">
-              {TOOLS.map((t) => (
-                <button key={t.label} type="button" onClick={() => insert(t.snippet)} className="min-h-9 rounded-lg border border-fd-border px-2.5 text-xs font-medium hover:bg-fd-accent">
-                  {t.label}
-                </button>
-              ))}
-            </div>
-            <textarea ref={area} className={`${inputClass} min-h-40 font-mono text-sm`} value={p.body} onChange={(e) => set({ body: e.target.value })} maxLength={POST_BODY_MAX} aria-label="รายละเอียด (Markdown)" />
-          </>
-        )}
-      </div>
+      <MarkdownEditor label="รายละเอียด" value={p.body} onChange={(body) => set({ body })} max={POST_BODY_MAX} />
 
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-1 text-sm font-medium">แนบลิงก์ (ไม่บังคับ)</legend>

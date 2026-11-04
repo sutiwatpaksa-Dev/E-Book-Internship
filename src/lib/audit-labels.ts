@@ -11,6 +11,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "assignment.create": "สร้างโจทย์",
   "assignment.update": "แก้โจทย์",
   "assignment.pdf": "อัปโหลด PDF โจทย์",
+  "image.upload": "อัปโหลดรูปใส่เนื้อหา",
   "cohort.assignments": "ตั้งโจทย์ของรุ่น",
   "submission.review": "ตรวจงานที่ส่ง",
   "thread.status": "เปลี่ยนสถานะเรื่อง",
@@ -50,7 +51,7 @@ export const AUDIT_GROUPS = [
   { id: "user", label: "บัญชี", prefixes: ["user", "cohort"] },
   { id: "content", label: "เนื้อหา", prefixes: ["card", "note", "announcement", "post"] },
   { id: "thread", label: "แชทและงานที่ส่ง", prefixes: ["thread", "submission"] },
-  { id: "file", label: "ไฟล์", prefixes: ["file", "assignment"] },
+  { id: "file", label: "ไฟล์", prefixes: ["file", "assignment", "image"] },
 ] as const;
 
 export type AuditGroup = (typeof AUDIT_GROUPS)[number]["id"];
