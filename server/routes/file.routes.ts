@@ -9,6 +9,9 @@ fileRoutes.use("*", requireRole("intern", "dev"));
 // โจทย์ที่บัญชีนี้ดูได้ (น้อง = ของรุ่นตัวเอง ชิ้นแรกคือชิ้นที่ควรเปิด · พี่เลี้ยง = ทุกโจทย์)
 fileRoutes.get("/assignments", async (c) => c.json(await assignmentService.listFor(c.get("user"))));
 
+// กล่องโจทย์ในหัวการ์ด: โจทย์ที่ดูได้ + โน้ตของการ์ด <slug> ในแต่ละโจทย์ (ขอบเขตสิทธิ์เดียวกับ /assignments)
+fileRoutes.get("/assignments/card/:slug", async (c) => c.json(await assignmentService.cardBox(c.get("user"), c.req.param("slug"))));
+
 // ?a=<slug> เลือกโจทย์ (ไม่ใส่ = ชิ้นหลักของรุ่น) · ?sec=<key> = ลิงก์จากคู่มือที่ชี้หัวข้อ เช่น "api"
 // หัวข้อเดียวกันอยู่คนละหน้าในแต่ละโจทย์ จึงให้ server แปลงเป็นเลขหน้าของโจทย์ที่น้องได้ แล้วส่งต่อไป #page=N
 fileRoutes.get("/requirement.pdf", async (c) => {

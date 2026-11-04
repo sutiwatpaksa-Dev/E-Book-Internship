@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { cards } from "../../src/data/learn";
 import { COMMENT_KINDS, criteriaProblem, templatesProblem } from "../../src/lib/rubric";
 import { BODY_MAX, LINKS_MAX, linksProblem, roundsProblem } from "../../src/lib/submission";
 
@@ -77,3 +78,19 @@ export const postSchema = z
       }),
   });
 export type PostInput = z.infer<typeof postSchema>;
+
+// การ์ดที่โจทย์ใช้: ส่งมาทั้งรายการ (แทนของเดิมทั้งชุด) · slug ต้องเป็นการ์ดที่มีจริง ไม่ซ้ำ
+const CARD_SLUGS = new Set(cards.map((c) => c.slug));
+export const NOTE_MAX = 300;
+export const assignmentCardsSchema = z.object({
+  cards: z
+    .array(
+      z.object({
+        slug: z.string().refine((s) => CARD_SLUGS.has(s), "ไม่รู้จักการ์ดนี้"),
+        note: z.string().trim().max(NOTE_MAX, `โน้ตไม่เกิน ${NOTE_MAX} ตัวอักษร`),
+      }),
+    )
+    .max(200)
+    .refine((list) => new Set(list.map((c) => c.slug)).size === list.length, "มีการ์ดซ้ำในรายการ"),
+});
+export type AssignmentCardsInput = z.infer<typeof assignmentCardsSchema>;

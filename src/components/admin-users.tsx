@@ -290,7 +290,7 @@ export function AdminUsers({ admin, nav }: { admin: AdminState; nav: AdminNav })
                         ปลดล็อก
                       </Button>
                     )}
-                    {u.resetRequestedAt && (canManage(u) || isMe(u)) && (
+                    {u.resetRequestedAt && !u.disabled && (canManage(u) || isMe(u)) && (
                       <Button className="relative z-10" onClick={() => setPending({ kind: "reset", user: u })}>
                         ออก PIN ใหม่
                       </Button>
@@ -307,6 +307,8 @@ export function AdminUsers({ admin, nav }: { admin: AdminState; nav: AdminNav })
                       items={[
                         ...(u.role === "intern" && !u.disabled ? [{ label: "ส่งข้อความ", onSelect: () => nav.compose({ kind: "user", user: u }) }] : []),
                         ...((canManage(u) || isMe(u)) && !u.resetRequestedAt ? [{ label: "ออก PIN ใหม่", onSelect: () => setPending({ kind: "reset", user: u }) }] : []),
+                        // น้องกดขอรีเซ็ตผิด: ล้างแค่สถานะ ไม่แตะรหัส ไม่ต้องถามซ้ำเพราะน้องขอใหม่ได้ทุกเมื่อ
+                        ...((canManage(u) || isMe(u)) && u.resetRequestedAt ? [{ label: "ปิดคำขอรีเซ็ต (กดผิด)", onSelect: () => admin.updateUser(u, { dismissReset: true }) }] : []),
                         ...(!isMe(u) && canManage(u)
                           ? [u.disabled ? { label: "เปิดบัญชี", onSelect: () => admin.updateUser(u, { disabled: false }) } : { label: "ปิดบัญชี", danger: true, onSelect: () => setPending({ kind: "disable", user: u }) }]
                           : []),

@@ -102,7 +102,7 @@ export const userService = {
     return { user, pin };
   },
 
-  async update(actor: Actor, id: number, changes: { role?: Role; disabled?: boolean; unlock?: true }) {
+  async update(actor: Actor, id: number, changes: { role?: Role; disabled?: boolean; unlock?: true; dismissReset?: true }) {
     const actorId = actor.id;
     // กันพี่เลี้ยงปิดหรือลดสิทธิ์ตัวเองจนไม่มีใครเข้าหน้า admin ได้
     if (actorId === id && (changes.disabled === true || changes.role === "intern")) throw new Error("CANNOT_CHANGE_SELF");
@@ -110,10 +110,17 @@ export const userService = {
     // ปลดล็อกอย่างเดียวไม่ต้อง: แค่ให้เจ้าของบัญชีลองใส่ PIN ของตัวเองใหม่ ไม่ได้ให้สิทธิ์ใคร
     const touchesDev = changes.role === "dev" || ((changes.role !== undefined || changes.disabled !== undefined) && (await userRepository.findById(id))?.role === "dev");
     if (touchesDev) needSuper(actor);
-    const { unlock, ...rest } = changes;
-    const user: PublicUser | undefined = await userRepository.update(id, { ...rest, ...(unlock ? { failedCount: 0, lockedUntil: null } : {}) });
+    // ปิดคำขอรีเซ็ตของพี่เลี้ยงคนอื่น ใช้กติกาเดียวกับการออก PIN ให้เขา (Super admin เท่านั้น)
+    if (changes.dismissReset && actorId !== id && (await userRepository.findById(id))?.role === "dev") needSuper(actor);
+    const { unlock, dismissReset, ...rest } = changes;
+    const user: PublicUser | undefined = await userRepository.update(id, {
+      ...rest,
+      ...(unlock ? { failedCount: 0, lockedUntil: null } : {}),
+      ...(dismissReset ? { resetRequestedAt: null } : {}),
+    });
     if (!user) throw new Error("NOT_FOUND");
     if (unlock) await auditService.log(actorId, "user.unlock", user.username);
+    if (dismissReset) await auditService.log(actorId, "user.reset_dismiss", user.username);
     if (changes.disabled !== undefined) await auditService.log(actorId, changes.disabled ? "user.disable" : "user.enable", user.username);
     if (changes.role) await auditService.log(actorId, "user.role", user.username, changes.role);
     return user;

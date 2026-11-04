@@ -132,6 +132,21 @@ export const cohortAssignments = pgTable(
   (t) => [primaryKey({ columns: [t.cohortId, t.assignmentId] })],
 );
 
+// การ์ดความรู้ที่โจทย์นี้ใช้ + โน้ต "การ์ดนี้ใช้ตอนไหนของโจทย์นี้" (พี่เลี้ยงผูกเองในหลังบ้าน)
+// card_slug = slug ใน src/data/learn.ts (ตรวจตอนบันทึก ไม่มี FK เพราะการ์ดอยู่ในไฟล์ ไม่ใช่ตาราง)
+// STARTER ที่ยังไม่มีแถวใช้ข้อความ starter ใน learn.ts เป็นค่าสำรอง
+export const assignmentCards = pgTable(
+  "assignment_cards",
+  {
+    assignmentId: integer("assignment_id")
+      .notNull()
+      .references(() => assignments.id, { onDelete: "cascade" }),
+    cardSlug: text("card_slug").notNull(),
+    note: text("note").notNull().default(""),
+  },
+  (t) => [primaryKey({ columns: [t.assignmentId, t.cardSlug] }), index("assignment_cards_card_idx").on(t.cardSlug)],
+);
+
 // การส่งงาน: โค้ดอยู่บน GitHub ของน้อง ที่นี่เก็บแค่ลิงก์ repo + tag/commit ที่ส่ง (ไม่เก็บไฟล์)
 // ส่งซ้ำ = แถวใหม่ (ประวัติไม่หาย พี่เลี้ยงเทียบรอบก่อนได้) · หน้าเว็บโชว์แถวล่าสุดของแต่ละรอบ
 // round = review-1 | review-2 | final · verdict = pass | revise (กฎอยู่ใน src/lib/submission.ts)

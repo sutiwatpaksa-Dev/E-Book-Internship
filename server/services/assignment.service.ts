@@ -1,12 +1,13 @@
 import type { AssignmentSection, Role } from "../db/schema";
 import { DEFAULT_CRITERIA } from "../../src/lib/rubric";
-import { pickAssignment, visibleAssignments } from "../lib/assignment-access";
+import { cards } from "../../src/data/learn";
+import { DEFAULT_ASSIGNMENT, pickAssignment, visibleAssignments } from "../lib/assignment-access";
 import { userRepository } from "../repositories/user.repository";
 import { assignmentRepository } from "../repositories/assignment.repository";
 import { cohortRepository } from "../repositories/cohort.repository";
 import { fileRepository } from "../repositories/file.repository";
 import { submissionRepository } from "../repositories/submission.repository";
-import type { AssignmentInput, PostInput } from "../validators/assignment.validator";
+import type { AssignmentCardsInput, AssignmentInput, PostInput } from "../validators/assignment.validator";
 import { auditService } from "./audit.service";
 import { checkPdf } from "./file.service";
 
@@ -38,6 +39,29 @@ export const assignmentService = {
       const a = rows.find((r) => r.slug === slug);
       return a ? [{ slug: a.slug, name: a.name, brief: a.brief, sections: a.sections, rounds: a.rubric.rounds }] : [];
     });
+  },
+
+  // กล่องโจทย์ในหัวการ์ด: โจทย์ที่บัญชีนี้ดูได้ (ชิ้นหลักก่อน) + โน้ตว่าการ์ดนี้ใช้ตอนไหนของโจทย์นั้น
+  // bound = พี่เลี้ยงผูกการ์ดนี้ไว้แล้ว · STARTER ที่ยังไม่มีใครผูก ใช้ข้อความ starter ใน learn.ts เป็นค่าสำรอง
+  async cardBox(user: Viewer, cardSlug: string) {
+    const rows = await this.listFor(user);
+    const found = await assignmentRepository.findManyBySlug(rows.map((r) => r.slug));
+    const notes = await assignmentRepository.cardNotes(cardSlug, found.map((a) => a.id));
+    const fallback = cards.find((c) => c.slug === cardSlug)?.starter ?? null;
+    return rows.map((r) => {
+      const id = found.find((a) => a.slug === r.slug)?.id;
+      const saved = id === undefined ? undefined : notes.get(id);
+      const useFallback = saved === undefined && r.slug === DEFAULT_ASSIGNMENT && fallback !== null;
+      return { slug: r.slug, name: r.name, brief: r.brief, bound: saved !== undefined || useFallback, note: saved ?? (useFallback ? fallback : "") };
+    });
+  },
+
+  // หลังบ้าน: ผูกการ์ดกับโจทย์ (แทนทั้งชุด) · บันทึกลงประวัติ
+  async setCards(devId: number, id: number, { cards: rows }: AssignmentCardsInput) {
+    const a = await assignmentRepository.findById(id);
+    if (!a) throw new Error("ASSIGNMENT_NOT_FOUND");
+    await assignmentRepository.replaceCards(id, rows);
+    await auditService.log(devId, "assignment.cards", a.name, String(rows.length));
   },
 
   // PDF ของโจทย์ที่ขอ (หรือชิ้นหลักของรุ่น) · ไม่มีสิทธิ์และไม่มีจริงตอบเหมือนกัน

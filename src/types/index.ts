@@ -89,7 +89,9 @@ export type FileInfo = { size: number; updatedAt: string };
 export type AssignmentSection = { key: string; label: string; page: number };
 export type Assignment = { slug: string; name: string; brief: string; sections: AssignmentSection[]; rounds: RoundDef[] };
 // หลังบ้าน: + PDF ปัจจุบัน และรุ่นที่ใช้โจทย์นี้
-export type AdminAssignment = Assignment & { id: number; pdf: FileInfo | null; cohortIds: number[]; criteria: Criterion[]; templates: CommentTemplate[] };
+export type AdminAssignment = Assignment & { id: number; pdf: FileInfo | null; cohortIds: number[]; criteria: Criterion[]; templates: CommentTemplate[]; cards: { slug: string; note: string }[] };
+// กล่องโจทย์ในหัวการ์ด (GET /api/files/assignments/card/:slug)
+export type CardAssignment = { slug: string; name: string; brief: string; bound: boolean; note: string };
 export type AssignmentInput = Pick<Assignment, "name" | "brief" | "sections" | "rounds"> & { criteria?: Criterion[]; templates?: CommentTemplate[] };
 
 // เรื่องที่น้องคุยกับพี่เลี้ยง (รูปร่างตรงกับ server/routes/thread.routes.ts)

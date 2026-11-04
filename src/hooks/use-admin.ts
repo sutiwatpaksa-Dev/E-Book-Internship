@@ -99,6 +99,10 @@ export function useAdmin() {
       run(async () => {
         await adminApi.updateUser(u.id, changes);
         await reload();
+        if (changes.dismissReset) {
+          toast.success(`ปิดคำขอรีเซ็ตรหัสผ่านของ ${u.username} แล้ว รหัสเดิมยังใช้ได้ ถ้าลืมจริงให้เขากดขอใหม่`);
+          return;
+        }
         const what = changes.unlock ? "ปลดล็อก" : changes.disabled === true ? "ปิด" : changes.disabled === false ? "เปิดใช้" : "เปลี่ยนบทบาทของ";
         toast.success(`${what}บัญชี ${u.username} แล้ว`);
       }),
@@ -164,6 +168,17 @@ export function useAdmin() {
         else await adminApi.createAssignment(slug, input);
         await reload();
         toast.success(id ? "บันทึกโจทย์แล้ว" : `สร้างโจทย์ ${input.name} แล้ว อัปโหลด PDF ต่อได้เลย`);
+        ok = true;
+      });
+      return ok;
+    },
+    // ผูกการ์ดกับโจทย์: คืน true เมื่อสำเร็จ
+    saveAssignmentCards: async (a: AdminAssignment, rows: { slug: string; note: string }[]) => {
+      let ok = false;
+      await run(async () => {
+        await adminApi.setAssignmentCards(a.id, rows);
+        await reload();
+        toast.success(`บันทึกการ์ดของ ${a.name} แล้ว (${rows.length} ใบ)`);
         ok = true;
       });
       return ok;

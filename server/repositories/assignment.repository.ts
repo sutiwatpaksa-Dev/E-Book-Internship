@@ -1,6 +1,6 @@
 import { and, asc, count, desc, eq, inArray, notInArray } from "drizzle-orm";
 import { db } from "../db/client";
-import { assignments, cohortAssignments, files, users } from "../db/schema";
+import { assignmentCards, assignments, cohortAssignments, files, users } from "../db/schema";
 
 type NewAssignment = typeof assignments.$inferInsert;
 export type AssignmentFields = Pick<NewAssignment, "name" | "brief" | "sections" | "rubric">;
@@ -8,13 +8,16 @@ export type AssignmentFields = Pick<NewAssignment, "name" | "brief" | "sections"
 export const assignmentRepository = {
   // หลังบ้าน: ทุกโจทย์ + ไฟล์ PDF (ขนาด เวลา) + รุ่นที่ใช้ · ไม่ดึงตัวไฟล์ (bytea) มา
   async list() {
-    const [rows, pdfs, links] = await Promise.all([
+    const [rows, pdfs, links, cardRows] = await Promise.all([
       db.select().from(assignments).orderBy(asc(assignments.id)),
       db.select({ key: files.key, size: files.size, updatedAt: files.updatedAt }).from(files),
       db.select().from(cohortAssignments),
+      db.select().from(assignmentCards).orderBy(asc(assignmentCards.cardSlug)),
     ]);
     const pdf = new Map(pdfs.map((p) => [p.key, { size: p.size, updatedAt: p.updatedAt }]));
-    return rows.map((a) => ({ ...a, pdf: pdf.get(a.pdfKey) ?? null, cohortIds: links.filter((l) => l.assignmentId === a.id).map((l) => l.cohortId) }));
+    return rows.map((a) => ({ ...a, pdf: pdf.get(a.pdfKey) ?? null, cohortIds: links.filter((l) => l.assignmentId === a.id).map((l) => l.cohortId),
+      cards: cardRows.filter((c) => c.assignmentId === a.id).map((c) => ({ slug: c.cardSlug, note: c.note })),
+    }));
   },
   slugs: async () => (await db.select({ slug: assignments.slug }).from(assignments).orderBy(asc(assignments.id))).map((r) => r.slug),
   async findBySlug(slug: string) {
@@ -52,6 +55,21 @@ export const assignmentRepository = {
     ).map((r) => r.slug),
   idsOfCohort: async (cohortId: number) =>
     (await db.select({ id: cohortAssignments.assignmentId }).from(cohortAssignments).where(eq(cohortAssignments.cohortId, cohortId))).map((r) => r.id),
+  // โน้ต "การ์ดนี้ใช้ในโจทย์นี้ยังไง" ของการ์ดใบเดียว ในโจทย์ที่ระบุ (มีแถว = ผูกแล้ว แม้โน้ตว่าง)
+  async cardNotes(cardSlug: string, assignmentIds: number[]) {
+    if (assignmentIds.length === 0) return new Map<number, string>();
+    const rows = await db
+      .select({ id: assignmentCards.assignmentId, note: assignmentCards.note })
+      .from(assignmentCards)
+      .where(and(eq(assignmentCards.cardSlug, cardSlug), inArray(assignmentCards.assignmentId, assignmentIds)));
+    return new Map(rows.map((r) => [r.id, r.note]));
+  },
+  // แทนชุดการ์ดของโจทย์ทั้งชุดใน transaction เดียว (ส่งมาทั้งรายการ ไม่ใช่ทีละใบ)
+  replaceCards: (assignmentId: number, rows: { slug: string; note: string }[]) =>
+    db.transaction(async (tx) => {
+      await tx.delete(assignmentCards).where(eq(assignmentCards.assignmentId, assignmentId));
+      if (rows.length) await tx.insert(assignmentCards).values(rows.map((r) => ({ assignmentId, cardSlug: r.slug, note: r.note })));
+    }),
   async usageCount(assignmentId: number) {
     const [r] = await db.select({ n: count() }).from(cohortAssignments).where(eq(cohortAssignments.assignmentId, assignmentId));
     return r?.n ?? 0;

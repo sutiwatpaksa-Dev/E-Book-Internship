@@ -3,6 +3,7 @@
 import { FileUp, Lock, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { requirementUrl } from "@/api/files.api";
+import { cards as learnCards } from "@/data/learn";
 import type { AdminState } from "@/hooks/use-admin";
 import { COHORT_STATUS_LABEL, cohortStatus } from "@/lib/cohort";
 import { COMMENT_KIND_LABEL, COMMENT_KINDS, criteriaProblem, DEFAULT_CRITERIA, templatesProblem, type CommentKind, type CommentTemplate, type Criterion } from "@/lib/rubric";
@@ -93,6 +94,7 @@ export function AdminFiles({ admin }: { admin: AdminState }) {
           )}
 
           <CohortPicker admin={admin} assignment={a} />
+          <CardPicker admin={admin} assignment={a} />
           <Pdf admin={admin} assignment={a} />
         </section>
       ))}
@@ -377,5 +379,83 @@ function CohortPicker({ admin, assignment: a }: { admin: AdminState; assignment:
         </div>
       )}
     </fieldset>
+  );
+}
+
+// ผูกการ์ดความรู้กับโจทย์ + เขียนโน้ตว่า "การ์ดนี้ใช้ตอนไหนของโจทย์นี้" น้องเห็นในกล่องโจทย์ที่หัวการ์ด (พับไว้ 1 บรรทัด)
+// STARTER ที่ยังไม่เคยบันทึก: ใส่ข้อความเดิมจาก learn.ts ให้ก่อน แก้แล้วบันทึกจะเก็บเป็นของระบบ
+const NOTE_MAX = 300;
+function CardPicker({ admin, assignment: a }: { admin: AdminState; assignment: AdminAssignment }) {
+  const baseline = (): Record<string, string> =>
+    a.cards.length || a.slug !== "starter"
+      ? Object.fromEntries(a.cards.map((c) => [c.slug, c.note]))
+      : Object.fromEntries(learnCards.filter((c) => c.starter).map((c) => [c.slug, c.starter!]));
+  const [notes, setNotes] = useState<Record<string, string>>(baseline);
+  const [find, setFind] = useState("");
+  const [saving, setSaving] = useState(false);
+  const base = baseline();
+  const picked = Object.keys(notes);
+  const same = picked.length === Object.keys(base).length && picked.every((s) => s in base && notes[s].trim() === base[s].trim());
+  const shown = learnCards.filter((c) => !find.trim() || c.title.toLowerCase().includes(find.trim().toLowerCase()) || c.slug.includes(find.trim().toLowerCase()));
+  const toggle = (slug: string) =>
+    setNotes((n) => {
+      const next = { ...n };
+      if (slug in next) delete next[slug];
+      else next[slug] = "";
+      return next;
+    });
+  const save = async () => {
+    setSaving(true);
+    const rows = learnCards.filter((c) => c.slug in notes).map((c) => ({ slug: c.slug, note: notes[c.slug].trim() }));
+    await admin.saveAssignmentCards(a, rows);
+    setSaving(false);
+  };
+
+  return (
+    <details className="rounded-lg border border-fd-border px-3">
+      <summary className="cursor-pointer py-3 text-sm font-semibold marker:text-fd-muted-foreground">
+        การ์ดที่ใช้ในโจทย์นี้ · {picked.length} ใบ
+      </summary>
+      <div className="flex flex-col gap-2 pb-3">
+        <p className="text-xs text-fd-muted-foreground">
+          ติ๊กการ์ดที่โจทย์นี้ใช้ แล้วเขียนสั้นๆ ว่าใช้ตอนไหน (เช่น &quot;วันที่ 3 · ทำหน้ารายการสินค้า&quot;) น้องเห็นในกล่อง &quot;โจทย์ฝึกงาน&quot; ที่หัวการ์ด การ์ดที่ไม่ได้ติ๊กจะไม่มีกล่องของโจทย์นี้
+          {a.slug === "starter" && !a.cards.length && " · ใส่ข้อความเดิมของ STARTER ให้แล้ว แก้แล้วกดบันทึกเพื่อเก็บในระบบ"}
+        </p>
+        <Input value={find} onChange={(e) => setFind(e.target.value)} placeholder="ค้นหาการ์ด" aria-label={`ค้นหาการ์ดของ ${a.name}`} />
+        <ul className="flex max-h-96 flex-col gap-1 overflow-y-auto">
+          {shown.map((c) => (
+            <li key={c.slug} className="rounded-lg px-2 hover:bg-fd-accent/50">
+              <label className="flex min-h-11 cursor-pointer items-center gap-2.5">
+                <input type="checkbox" className="size-5 shrink-0" checked={c.slug in notes} disabled={saving} onChange={() => toggle(c.slug)} />
+                <span className="min-w-0 flex-1 break-words">{c.title}</span>
+              </label>
+              {c.slug in notes && (
+                <textarea
+                  rows={2}
+                  maxLength={NOTE_MAX}
+                  value={notes[c.slug]}
+                  disabled={saving}
+                  onChange={(e) => setNotes((n) => ({ ...n, [c.slug]: e.target.value }))}
+                  aria-label={`ใช้ตอนไหน: ${c.title}`}
+                  placeholder="ใช้ตอนไหนของโจทย์นี้ (ไม่เขียนก็ได้)"
+                  className={`${inputClass} mb-2 w-full`}
+                />
+              )}
+            </li>
+          ))}
+          {shown.length === 0 && <li className="py-2 text-fd-muted-foreground">ไม่พบการ์ดที่ตรงกับคำค้น</li>}
+        </ul>
+        {!same && (
+          <div className="flex flex-wrap items-center gap-2">
+            <Button disabled={saving} onClick={() => void save()} className="min-h-11">
+              {saving ? "กำลังบันทึก…" : `บันทึก (${picked.length} ใบ)`}
+            </Button>
+            <Button variant="ghost" disabled={saving} onClick={() => setNotes(baseline())} className="min-h-11">
+              ยกเลิก
+            </Button>
+          </div>
+        )}
+      </div>
+    </details>
   );
 }

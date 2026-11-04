@@ -53,7 +53,11 @@ export const authService = {
 
     // PIN ที่ออกใหม่หมดอายุแล้ว: บอกตรงๆ ได้ เพราะคนที่เห็นข้อความนี้ต้องรู้ PIN ที่ถูกอยู่แล้ว
     if (user.secretKind === "pin" && user.pinExpiresAt && user.pinExpiresAt < now) throw new Error("PIN_EXPIRED");
-    await userRepository.update(user.id, { failedCount: 0, lockedUntil: null, lastLoginAt: now });
+    // เข้าด้วยรหัสผ่านเดิมได้ = ไม่ได้ลืม คำขอรีเซ็ตที่ค้างอยู่เป็นของที่กดผิด (หรือมีคนอื่นกรอกชื่อนี้) จึงล้างทิ้ง
+    // ไม่ล้างเมื่อเข้าด้วย PIN: PIN ใหม่เกิดจากการออก PIN ซึ่งล้างสถานะให้อยู่แล้ว
+    const clearReset = user.secretKind === "password" && !!user.resetRequestedAt;
+    await userRepository.update(user.id, { failedCount: 0, lockedUntil: null, lastLoginAt: now, ...(clearReset ? { resetRequestedAt: null } : {}) });
+    if (clearReset) await auditService.log(user.id, "user.reset_cleared", user.username);
     // tmp: เข้าด้วย PIN ชั่วคราว → บัตรนี้ใช้ได้แค่ตั้งรหัสผ่าน (ด่านหน้าเว็บและ API ตรวจทั้งคู่)
     return { id: user.id, username: user.username, role: user.role, ver: user.sessionVersion, tmp: user.secretKind === "pin" };
   },

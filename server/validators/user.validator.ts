@@ -19,5 +19,7 @@ export const updateUserSchema = z
     role: z.enum(ROLES).optional(),
     disabled: z.boolean().optional(),
     unlock: z.literal(true).optional(),
+    // ปิดคำขอรีเซ็ตรหัสผ่าน (น้องกดผิด): ล้างแค่สถานะ ไม่แตะรหัสและ session
+    dismissReset: z.literal(true).optional(),
   })
-  .refine((v) => v.role !== undefined || v.disabled !== undefined || v.unlock !== undefined);
+  .refine((v) => v.role !== undefined || v.disabled !== undefined || v.unlock !== undefined || v.dismissReset !== undefined);
