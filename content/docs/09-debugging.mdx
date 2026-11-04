@@ -221,7 +221,7 @@ Uncaught TypeError: Cannot read properties of undefined (reading 'brand')
 | `X is not defined` | ใช้ตัวแปรที่ยังไม่ได้ประกาศ / ลืม import | ตัวสะกด, บรรทัด import บนสุดของไฟล์ |
 | `Cannot find module 'x'` | ยังไม่ได้ติดตั้ง หรือ path ที่ import ผิด | รัน `npm install` / `bun install`, ตรวจ path |
 | `ECONNREFUSED 127.0.0.1:5432` | DB ยังไม่เปิด หรือ host/port ผิด (ใน Docker ใช้ชื่อ service!) | `docker compose ps`, ค่า `DATABASE_URL` |
-| `EADDRINUSE :::3000` | มีโปรแกรมอื่นใช้ port 3000 อยู่ (อาจเป็นตัวเดิมที่ยังไม่ปิด) | Mac/Linux: `lsof -i :3000` · Windows: `netstat -ano \| findstr :3000` แล้ว `taskkill /PID <เลข> /F` (ใน PowerShell/CMD) แล้วปิด process นั้น หรือเปลี่ยน port |
+| `EADDRINUSE :::3000` | มีโปรแกรมอื่นใช้ port 3000 อยู่ (อาจเป็นตัวเดิมที่ยังไม่ปิด) | Mac/Linux: `lsof -i :3000` · Windows (Git Bash): `netstat -ano \| findstr :3000` แล้ว `MSYS_NO_PATHCONV=1 taskkill /PID <เลข> /F` (ถ้าไม่ใส่ `MSYS_NO_PATHCONV=1` Git Bash จะแปลง `/PID` เป็น path ของ Windows แล้วคำสั่งล้ม) แล้วปิด process นั้น หรือเปลี่ยน port |
 | `relation "x" does not exist` | ยังไม่ได้รัน migration หรือต่อผิด DB | รัน migration, ตรวจว่าต่อ DB ตัวไหน |
 | `Unexpected token < in JSON` (Node รุ่นใหม่: `"<html>" is not valid JSON`) | ได้ HTML (หน้า error) กลับมาแทน JSON | DevTools > Network > Response ของ request นั้น |
 | `401 Unauthorized` | ยังไม่ได้ login / token หมดอายุ / ไม่ได้แนบ token | Network > Headers ดูว่าส่ง cookie/`Authorization` ไปไหม |

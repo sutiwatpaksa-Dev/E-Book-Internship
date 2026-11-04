@@ -327,7 +327,7 @@ pkg-demo@1.0.0 /.../pkg-demo
 ```
 จากนั้นจำลองว่าเรา clone โปรเจกต์มาใหม่ (มีแต่ `package.json` กับ lock file ไม่มี `node_modules`):
 ```bash
-rm -rf node_modules          # Windows PowerShell: Remove-Item -Recurse -Force node_modules
+rm -rf node_modules          # ใช้ได้ทั้ง Mac และ Git Bash
 npm ci
 ```
 ควรเห็น: `added 1 package, and audited 2 packages ...` และโฟลเดอร์ `node_modules/` กลับมาพร้อมเวอร์ชันเดิมเป๊ะ
@@ -340,7 +340,7 @@ npm ci
 ```bash
 # Mac / Linux
 curl -fsSL https://bun.sh/install | bash
-# Windows (PowerShell)
+# Windows: พิมพ์ใน Git Bash ได้เลย (คำสั่งนี้เรียก PowerShell มารันตัวติดตั้งให้เอง)
 powershell -c "irm bun.sh/install.ps1 | iex"
 ```
 ปิดแล้วเปิด Terminal ใหม่ แล้วเช็ค:
@@ -637,7 +637,7 @@ bun.lock  node_modules  package-lock.json  package.json
 npx yarn@1 --version
 # Bun: Mac / Linux
 curl -fsSL https://bun.sh/install | bash
-# Bun: Windows (PowerShell)
+# Bun: Windows พิมพ์ใน Git Bash ได้เลย (เรียก PowerShell มารันตัวติดตั้งให้เอง)
 powershell -c "irm bun.sh/install.ps1 | iex"
 ```
 ปิดเปิด Terminal ใหม่ เช็ค `npx yarn@1 --version` (ควรได้ `1.22.22` หรือใกล้เคียง) และ `bun --version`
@@ -656,7 +656,7 @@ cd race-npm  && time npm install express zod dayjs drizzle-orm pg
 cd ../race-yarn && time npx yarn@1 add express zod dayjs drizzle-orm pg
 cd ../race-bun  && time bun add express zod dayjs drizzle-orm pg
 ```
-(PowerShell ใช้ `Measure-Command { npm install ... }` แทน `time`)
+(`time` ใช้ได้ทั้ง Mac และ Git Bash บน Windows)
 
 ควรเห็น: แต่ละคำสั่งจบด้วยบรรทัดเวลา หน้าตาขึ้นกับ shell ที่ใช้ (ตัวเลขขึ้นกับเน็ตและเครื่อง):
 ```

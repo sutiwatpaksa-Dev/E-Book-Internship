@@ -259,7 +259,9 @@ docker compose exec -T db psql -U postgres -c "CREATE DATABASE restore_check"
 docker compose exec -T db psql -q -U postgres restore_check < backup-2026-10-28.sql
 ```
 
-กู้ลงฐานใหม่ชื่ออื่นก่อน ตรวจว่าข้อมูลครบด้วย `docker compose exec -T db psql -U postgres restore_check -c "SELECT count(*) FROM books"` แล้วค่อยตัดสินใจกับพี่เลี้ยงว่าจะสลับยังไง ห้ามกู้ทับฐานจริงตรงๆ
+กู้ลงฐานใหม่ชื่ออื่นก่อน ตรวจว่าข้อมูลครบด้วย `docker compose exec -T db psql -U postgres restore_check -c "SELECT count(*) FROM books"` แล้วค่อยตัดสินใจกับพี่เลี้ยงว่าจะสลับยังไง ห้ามกู้ทับฐานจริงตรงๆ ซ้อมเสร็จลบฐานทิ้งด้วย `docker compose exec -T db dropdb -U postgres restore_check` (การ์ด [Backup และกู้คืน](/learn/cards/backup-restore) ก็ใช้ชื่อนี้ ถ้าค้างไว้จะซ้อมรอบนั้นไม่ได้)
+
+ไฟล์ `backup-*.sql` ที่สร้างตรงนี้อยู่ที่ root ของโปรเจกต์ ห้ามขึ้น GitHub (มีข้อมูลสมาชิกและ hash รหัสผ่าน) เพิ่ม `backup-*.sql` ใน `.gitignore` ก่อน `git add .` หรือใช้สคริปต์ของการ์ด Backup ที่เก็บใน `backups/` ซึ่ง ignore ไว้แล้ว
 
 ## ทริคที่แนะนำ
 

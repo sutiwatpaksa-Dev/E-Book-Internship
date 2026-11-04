@@ -105,10 +105,10 @@ export const cards: LearnCard[] = [
   { slug: "docker-compose", title: "Docker Compose: ทั้งระบบในคำสั่งเดียว", step: "deploy", topic: "ops", minutes: 15, needs: ["production-build", "migration"], starter: "Bonus · Docker Compose รัน Postgres + server + client ในคำสั่งเดียว" },
   { slug: "vps-deployment", title: "ขึ้นเว็บจริง: VPS, โดเมนย่อย และ https", step: "deploy", topic: "ops", minutes: 20, needs: ["docker-compose"], starter: "Bonus · Deploy ขึ้น server จริงพร้อมโดเมนย่อย" },
   { slug: "vercel-deployment", title: "ขึ้นเว็บด้วย Vercel + Neon: ไม่ต้องดูแลเครื่องเอง", step: "deploy", topic: "ops", minutes: 25, needs: ["production-build", "migration"], starter: "Bonus · ขึ้นเว็บจริงด้วยบริการสำเร็จรูป (ทางเลือกของ VPS)" },
-  { slug: "log-monitoring", title: "Log และเฝ้าเว็บ: รู้ก่อนลูกค้าว่าระบบพัง", step: "maintenance", topic: "ops", minutes: 12, alsoIn: ["deploy"], needs: ["production-build", "error-handling"], starter: "วันที่ 9 · error 500 ไม่หลุด stack trace (รายละเอียดอยู่ใน log) · Bonus หลังขึ้นเว็บจริง" },
+  { slug: "log-monitoring", title: "Log และเฝ้าเว็บ: รู้ก่อนลูกค้าว่าระบบพัง", step: "maintenance", topic: "ops", minutes: 12, alsoIn: ["deploy"], needs: ["error-handling"], starter: "วันที่ 9 · error 500 ไม่หลุด stack trace (รายละเอียดอยู่ใน log) · Bonus หลังขึ้นเว็บจริง" },
   { slug: "backup-restore", title: "Backup และกู้คืน: ซ้อมกู้จริงก่อนวันที่ต้องใช้", step: "maintenance", topic: "ops", minutes: 15, alsoIn: ["deploy"], needs: ["migration"], starter: "Bonus · หลังขึ้นเว็บจริง (ข้อมูลที่ลูกค้ากรอกต้องไม่หาย)" },
   { slug: "dependency-updates", title: "อัปเดต library และอุดช่องโหว่ โดยเว็บไม่พัง", step: "maintenance", topic: "ops", minutes: 12, needs: ["unit-testing"], starter: "วันที่ 10 · bun audit ก่อนส่งงาน" },
-  { slug: "feedback-loop", title: "Feedback และเว็บล่ม: จากเสียงผู้ใช้กลับเป็นงานใหม่", step: "maintenance", topic: "plan", minutes: 12, alsoIn: ["testing"], needs: ["user-stories", "log-monitoring"], starter: "วันที่ 5 และ 9 Review · จดทุกข้อที่เพื่อนและพี่เลี้ยงเจอเป็น issue" },
+  { slug: "feedback-loop", title: "Feedback และเว็บล่ม: จากเสียงผู้ใช้กลับเป็นงานใหม่", step: "maintenance", topic: "plan", minutes: 12, alsoIn: ["testing"], needs: ["user-stories"], starter: "วันที่ 5 และ 9 Review · จดทุกข้อที่เพื่อนและพี่เลี้ยงเจอเป็น issue" },
 ];
 
 export const legacy: LegacyLink[] = [

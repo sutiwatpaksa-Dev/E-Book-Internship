@@ -62,6 +62,9 @@ echo "สำรองเสร็จ: $file ($(du -h "$file" | cut -f1))"
 - **`-T`** ส่งผลออกมาตรงๆ ไม่ผ่านจอ (ไม่ใส่จะมีตัวอักษรควบคุมปนในไฟล์ ใช้กู้ไม่ได้)
 - **`gzip`** ไฟล์ SQL เป็นตัวอักษรล้วน บีบแล้วเล็กลงหลายเท่า
 - **`find ... -mtime +14 -delete`** ลบไฟล์ที่เก่ากว่า 14 วัน ไม่งั้นดิสก์เต็มสักวัน
+- **`cd "$(dirname "$0")/.."`**: `$0` คือที่อยู่ของสคริปต์เอง `dirname` ตัดเหลือแค่โฟลเดอร์ (`deploy`) แล้ว `/..` ขึ้นไปหนึ่งชั้นเป็นโฟลเดอร์โปรเจกต์ ส่วน `$( ... )` คือ "รันคำสั่งข้างในก่อน แล้วเอาผลมาแทนที่ตรงนี้" (ใช้ใน `$(date +%F-%H%M)` ด้วย)
+- **`trap '...' EXIT`**: ตั้งงานเก็บกวาดให้ทำเสมอเมื่อสคริปต์จบ (ไม่ว่าสำเร็จหรือล้ม) ที่นี่คือลบไฟล์ `.part` ถ้าถึงบรรทัด `mv` แล้ว `.part` ไม่มีอยู่ `rm -f` ก็ไม่ทำอะไร
+- **ชื่อฐาน `postgres` ท้ายบรรทัด `pg_dump`** คือชื่อฐานที่สำรอง (ตรงกับ `DATABASE_URL` ใน `compose.yaml`) ถ้าวันหนึ่งสลับไปใช้ฐานชื่ออื่น (ดูหัวข้อ "ถ้าวันหนึ่งต้องกู้จริง") ต้องแก้ชื่อนี้ในสคริปต์ด้วย ไม่งั้น cron สำรองฐานเก่าต่อไปเงียบๆ
 
 เพิ่ม `backups/` ใน `.gitignore` ก่อน (ไฟล์ backup มีข้อมูลสมาชิกและ hash รหัสผ่าน ห้ามขึ้น GitHub เด็ดขาด) แล้ว commit สคริปต์ ดึงลง VPS ด้วย `git pull` และลองรันบน VPS:
 
@@ -70,7 +73,7 @@ cd ~/library
 bash deploy/backup.sh
 ```
 
-**ควรเห็น:** `สำรองเสร็จ: backups/library-2026-11-03-0200.sql.gz (4.0K)` ขนาดขึ้นกับข้อมูล ถ้ามีแค่ข้อมูลจาก seed จะได้ราว `4.0K` (ลองแล้ว) (ลองแล้วกับข้อมูลสมาชิก 2,000 หนังสือ 5,000 การยืม 20,000 แถว ได้ `144K`)
+**ควรเห็น:** `สำรองเสร็จ: backups/library-2026-11-03-0200.sql.gz (4.0K)` (ชื่อไฟล์จะเป็นวันเวลาที่เรารันจริง) ขนาดขึ้นกับข้อมูล ถ้ามีแค่ข้อมูลจาก seed จะได้ราว `4.0K` ลองแล้วกับข้อมูลสมาชิก 2,000 หนังสือ 5,000 การยืม 20,000 แถว ได้ `144K`
 
 **ลองให้มันพัง:** `docker compose stop db` แล้วรันสคริปต์อีกครั้ง ต้องเห็น `service "db" is not running` และ `echo $?` ได้ `1` (`echo $?` พิมพ์ผลของคำสั่งล่าสุด เรียกว่า **exit code**: `0` = สำเร็จ เลขอื่น = ล้ม) ใน `backups/` ต้องไม่มีไฟล์ใหม่ (ลองแล้ว) จากนั้น `docker compose start db`
 
@@ -115,6 +118,7 @@ scp "root@203.0.113.10:/root/library/backups/library-*.sql.gz" ~/library-backups
 ```bash
 cd ~/library
 date                                                              # จดเวลาเริ่ม
+docker compose exec -T db dropdb --if-exists -U postgres restore_check   # กันค้างจากการซ้อมรอบก่อน
 docker compose exec -T db createdb -U postgres restore_check
 gunzip -c backups/library-2026-11-03-0200.sql.gz \
   | docker compose exec -T db psql -q -v ON_ERROR_STOP=1 -U postgres -d restore_check
@@ -123,11 +127,24 @@ docker compose exec -T db psql -U postgres -d restore_check \
 date                                                              # จดเวลาจบ
 ```
 
+แทน `library-2026-11-03-0200.sql.gz` ด้วยชื่อไฟล์จริงจาก `ls backups`
+
 `-v ON_ERROR_STOP=1` ให้ `psql` หยุดทันทีที่เจอ error แรก (ค่าเริ่มต้นคือข้ามแล้วทำต่อ ได้ฐานครึ่งๆ กลางๆ ที่ดูเหมือนสำเร็จ)
 
 **ควรเห็น:** ตัวเลข 3 ตัวตรงกับฐานจริง (เปิดเทียบใน pgAdmin หรือรันคำสั่งเดียวกันกับ `-d postgres`) ลองแล้วข้อมูลราว 27,000 แถวกู้เสร็จใน 1 วินาที ฐานจริงที่ใหญ่ขึ้นจะนานขึ้น ตัวเลขนี้แหละคือ RTO จดลง README ส่วน "ดูแลระบบ" ซ้อมเสร็จลบทิ้งด้วย `docker compose exec -T db dropdb -U postgres restore_check`
 
-**ถ้าวันหนึ่งต้องกู้จริง:** ทำเหมือนการซ้อมทุกขั้น (กู้ลงฐานใหม่ชื่อ เช่น `library_restored` แล้วนับแถว) จากนั้นแก้ `DATABASE_URL` ใน `compose.yaml` ให้ชี้ `.../library_restored` แล้ว `docker compose up -d app` ฐานเก่ายังอยู่ ถ้ากู้ผิดไฟล์ก็สลับกลับได้ ก่อนเริ่มให้ backup ฐานที่พังเก็บไว้อีกชุดด้วย เผื่อต้องดึงข้อมูลบางส่วนที่เกิดหลัง backup ล่าสุด
+**ถ้าวันหนึ่งต้องกู้จริง:** ทำเหมือนการซ้อมทุกขั้น (กู้ลงฐานใหม่ชื่อ เช่น `library_restored` แล้วนับแถว) จากนั้นแก้ `DATABASE_URL` ใน `compose.yaml` ให้ชี้ `.../library_restored` แล้ว `docker compose up -d app` แล้วแก้ชื่อฐานท้ายบรรทัด `pg_dump` ใน `deploy/backup.sh` เป็นชื่อใหม่ด้วย (ไม่งั้น cron ยังสำรองฐานเก่าที่ไม่มีใครใช้แล้ว) ฐานเก่ายังอยู่ ถ้ากู้ผิดไฟล์ก็สลับกลับได้ ก่อนเริ่มให้ backup ฐานที่พังเก็บไว้อีกชุดด้วย เผื่อต้องดึงข้อมูลบางส่วนที่เกิดหลัง backup ล่าสุด
+
+**ถ้ายังไม่มี `compose.yaml` และไม่ได้ใช้ Neon** (มีแค่กล่อง `pg` จากการ์ด [Postgres](/learn/cards/postgres) บนเครื่องเรา) ฝึกด้วยกล่องนั้นได้เลย คำสั่งชุดเดียวกับท้ายข้อ 5 แต่ dump จากกล่อง `pg` แทน Neon (ต้องมีข้อมูลในกล่องอยู่ก่อน เช่นจากการ์ด [Drizzle](/learn/cards/drizzle-orm)):
+
+```bash
+mkdir -p ~/library-backups
+set -o pipefail
+docker exec pg pg_dump -U postgres postgres | gzip > ~/library-backups/local-$(date +%F).sql.gz
+echo $?    # ต้องได้ 0
+```
+
+แล้วกู้ลงฐานใหม่ด้วย 3 บรรทัดท้ายข้อ 5 (เปลี่ยนชื่อไฟล์เป็น `local-....sql.gz`)
 
 ### 5. ทาง Vercel + Neon
 
@@ -156,6 +173,7 @@ echo $?                         # ต้องได้ 0
 ซ้อมกู้ลงกล่อง Postgres ที่ใช้ตอนพัฒนา (กล่อง `pg` จากการ์ด [Postgres](/learn/cards/postgres)) ลงฐานใหม่ ไม่ใช่ฐานที่ใช้พัฒนา:
 
 ```bash
+docker exec pg dropdb --if-exists -U postgres restore_check
 docker exec pg createdb -U postgres restore_check
 gunzip -c ~/library-backups/neon-2026-11-03.sql.gz | docker exec -i pg psql -q -v ON_ERROR_STOP=1 -U postgres -d restore_check
 docker exec pg psql -U postgres -d restore_check -c "select (select count(*) from members) as members, (select count(*) from books) as books, (select count(*) from loans) as loans;"
@@ -165,13 +183,14 @@ docker exec pg psql -U postgres -d restore_check -c "select (select count(*) fro
 
 ## ทริคที่แนะนำ
 
-1. **backup ก่อนทุกครั้งที่ migrate บนฐานจริง:** migration คือจังหวะที่ข้อมูลหายบ่อยที่สุด รัน `bash deploy/backup.sh` (หรือ `pg_dump` ของ Neon) ก่อน `drizzle-kit migrate` ทุกครั้ง แค่ 1 บรรทัด แต่ช่วยได้ทั้งวัน
+1. **backup ก่อนทุกครั้งที่ขึ้นรุ่นใหม่ที่มี migration:** migration คือจังหวะที่ข้อมูลหายบ่อยที่สุด และเราไม่ได้พิมพ์ `drizzle-kit migrate` เอง (VPS: รันในกล่องตอนเปิดหลัง `docker compose up -d --build` · Vercel: รันตอน build หลัง push เข้า `main`) จึงรัน `bash deploy/backup.sh` (หรือ `pg_dump` ของ Neon) **ก่อนสั่ง up หรือก่อน push** ทุกครั้ง แค่ 1 บรรทัด แต่ช่วยได้ทั้งวัน
 2. **ใส่ซ้อมกู้ในปฏิทิน:** ตั้งเตือนเดือนละครั้ง "ซ้อมกู้ backup ล่าสุด" สคริปต์ backup ที่เคยทำงานอาจพังเงียบๆ ได้ (รหัสเปลี่ยน ดิสก์เต็ม cron ไม่ทำงาน) ซ้อมจะเจอก่อนวันที่ต้องใช้จริง
 3. **ไฟล์ backup คือข้อมูลลูกค้า:** มีชื่อสมาชิกและ hash รหัสผ่านอยู่ข้างใน อย่าส่งในแชท อย่าใส่ในโฟลเดอร์ที่แชร์ทั้งบริษัท อย่าขึ้น GitHub (`backups/` อยู่ใน `.gitignore`) เก็บนอกเครื่องในที่ที่ต้อง login
+4. **เก็บ `.env` ไว้นอกเครื่องด้วย:** ไฟล์ backup มีแค่ข้อมูล ไม่มีรหัสฐานและ `JWT_SECRET` ถ้า VPS หายทั้งเครื่อง กู้ข้อมูลได้แต่ตั้งระบบใหม่ไม่ได้ เก็บค่าเหล่านี้ไว้ใน password manager
 
 ## ปรับไปใช้จริง
 
-**ในโจทย์ฝึกงาน:** [Requirement หน้า 1](/api/files/requirement.pdf?sec=overview) (ต้อง login) บอกว่างานนี้คือ "งานที่ต้องส่งมอบให้ลูกค้าใช้ต่อได้จริง" ถ้าทำ Bonus ขึ้นเว็บจริง ([หน้า 13](/api/files/requirement.pdf?sec=bonus)) ข้อมูลที่ลูกค้ากรอก (ข้อความติดต่อ ข้อมูลร้าน) คือของที่ลูกค้าจะโกรธที่สุดถ้าหาย งานของขั้นนี้: ตั้ง backup อัตโนมัติ ซ้อมกู้ 1 ครั้ง แล้วเขียนใน README ส่วน "ดูแลระบบ" ว่า backup อยู่ไหน ทุกกี่ชั่วโมง เก็บนอกเครื่องที่ไหน และซ้อมกู้แล้วใช้เวลาเท่าไหร่ ถ้ายังไม่ได้ขึ้นเว็บจริง ซ้อมกับฐานใน Docker บนเครื่องเรา
+**ในโจทย์ฝึกงาน (ตัวอย่างจาก STARTER):** [Requirement หน้า 1](/api/files/requirement.pdf?sec=overview) (ต้อง login) บอกว่างานนี้คือ "งานที่ต้องส่งมอบให้ลูกค้าใช้ต่อได้จริง" ถ้าทำ Bonus ขึ้นเว็บจริง ([หน้า 13](/api/files/requirement.pdf?sec=bonus)) ข้อมูลที่ลูกค้ากรอก (ข้อความติดต่อ ข้อมูลร้าน) คือของที่ลูกค้าจะโกรธที่สุดถ้าหาย งานของขั้นนี้: ตั้ง backup อัตโนมัติ ซ้อมกู้ 1 ครั้ง แล้วเขียนใน README ส่วน "ดูแลระบบ" (หน้าตาดูที่การ์ด [Feedback](/learn/cards/feedback-loop)) ว่า backup อยู่ไหน ทุกกี่ชั่วโมง เก็บนอกเครื่องที่ไหน และซ้อมกู้แล้วใช้เวลาเท่าไหร่ ถ้ายังไม่ได้ขึ้นเว็บจริง ซ้อมกับฐานใน Docker บนเครื่องเรา
 
 **เว็บคู่มือนี้:** ฐานอยู่บน Neon และ Vercel รัน migrate ก่อน build ทุกครั้งที่ขึ้น `main` ([vercel.json](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/vercel.json)) แปลว่าทุก deploy แตะฐานจริง migration จึงเขียนแบบ "เพิ่มอย่างเดียว" เช่น [0021_post_feed.sql](https://github.com/sutiwatpaksa-Dev/E-Book-Internship/blob/main/server/db/migrations/0021_post_feed.sql) มีแต่ `CREATE TABLE` กับ `ADD COLUMN` ไม่มีการลบ ถ้าพังยังย้อนโค้ดได้โดยข้อมูลไม่หาย
 
