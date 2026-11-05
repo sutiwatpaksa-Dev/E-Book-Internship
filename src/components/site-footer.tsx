@@ -13,7 +13,7 @@ export function SiteFooter({ version }: { version: string }) {
           <div className="flex items-center gap-2.5">
             {/* พื้นขาวทั้งสองโหมด จึงใช้โลโก้แบบสว่างเสมอ */}
             <span className="rounded-lg bg-white p-1">
-              <Image src="/brand/mark.png" alt="" width={24} height={24} />
+              <Image src="/brand/mark.png" alt="" width={24} height={24} className="size-6 object-contain" />
             </span>
             <span className="font-bold text-white">คู่มือฝึกงาน Blicktech</span>
           </div>
