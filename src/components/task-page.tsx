@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowLeft, ExternalLink, GitCommitHorizontal, Link2, Send } from "lucide-react";
+import { ArrowLeft, ExternalLink, FileText, GitCommitHorizontal, Link2, Send } from "lucide-react";
+import { requirementUrl } from "@/api/files.api";
 import Link from "next/link";
 import { useCallback } from "react";
 import { submissionsApi } from "@/api/submissions.api";
@@ -65,7 +66,7 @@ export function TaskPage({ assignment, round }: { assignment: string; round: str
             )}
           </header>
 
-          {(!!item.round.body || !!item.round.links?.length) && (
+          {(!!item.round.body || !!item.round.links?.length || item.round.pdf !== "none" || !!item.round.overview?.trim()) && (
             <section aria-labelledby="brief-title" className="flex flex-col gap-3 rounded-2xl border border-fd-border bg-fd-card p-4 sm:p-5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 id="brief-title" className="text-lg font-bold">
@@ -79,6 +80,17 @@ export function TaskPage({ assignment, round }: { assignment: string; round: str
                 )}
               </div>
               {item.round.body && <MarkdownBody md={item.round.body} className="text-sm" />}
+              {item.round.pdf !== "none" && (
+                <a href={`${requirementUrl(assignment)}&r=${encodeURIComponent(item.round.id)}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 w-fit items-center gap-1.5 rounded-lg border border-fd-border px-3 text-sm text-fd-primary hover:bg-fd-accent">
+                  <FileText className="size-4" /> เปิด PDF ของงานนี้
+                </a>
+              )}
+              {item.round.overview?.trim() && (
+                <details className="rounded-lg border border-fd-border p-3">
+                  <summary className="min-h-11 cursor-pointer content-center text-sm font-semibold text-fd-primary">ภาพรวม</summary>
+                  <MarkdownBody md={item.round.overview} className="text-sm" />
+                </details>
+              )}
               {item.round.links && item.round.links.length > 0 && (
                 <ul className="flex flex-wrap gap-2">
                   {item.round.links.map((l) => (
@@ -98,7 +110,7 @@ export function TaskPage({ assignment, round }: { assignment: string; round: str
               ที่ส่งไปแล้ว
             </h2>
             {subs.length === 0 ? (
-              <p className="text-fd-muted-foreground">ยังไม่ได้ส่งงานรอบนี้ ส่งเป็น tag บน GitHub แล้วกรอกที่หน้าการส่งงาน</p>
+              <p className="text-fd-muted-foreground">ยังไม่ได้ส่งงานรอบนี้ push โค้ดขึ้น GitHub แล้วกด "ส่งงาน" ด้านบน</p>
             ) : (
               <ol className="relative flex flex-col gap-4 ps-6 before:absolute before:start-[7px] before:top-2 before:bottom-2 before:w-0.5 before:bg-fd-border">
                 {subs.map((s) => (

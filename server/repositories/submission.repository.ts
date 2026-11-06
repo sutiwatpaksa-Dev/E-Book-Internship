@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNotNull } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "../db/client";
 import { assignments, submissions, users } from "../db/schema";
@@ -39,6 +39,11 @@ export const submissionRepository = {
   // หลังบ้าน: ทุกแถว ใหม่สุดก่อน (รุ่นหนึ่งไม่กี่สิบคน × 3 รอบ ดึงทั้งหมดแล้วกรองในหน้าเว็บได้)
   all: (limit = 500) => base().orderBy(desc(submissions.createdAt), desc(submissions.id)).limit(limit),
   // รหัสรอบที่มีคนส่งแล้วของโจทย์นี้ (ใช้กันไม่ให้ลบรอบที่มีประวัติ)
+  // มีงานที่ตรวจแล้วในกล่องงานนี้ไหม (ตรวจแล้ว = ล็อก % คะแนนของโพสต์)
+  async anyReviewed(assignmentId: number) {
+    const [r] = await db.select({ id: submissions.id }).from(submissions).where(and(eq(submissions.assignmentId, assignmentId), isNotNull(submissions.reviewedAt))).limit(1);
+    return !!r;
+  },
   async roundsUsed(assignmentId: number) {
     const rows = await db.selectDistinct({ round: submissions.round }).from(submissions).where(eq(submissions.assignmentId, assignmentId));
     return rows.map((r) => r.round);

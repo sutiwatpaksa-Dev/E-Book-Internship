@@ -1,4 +1,3 @@
-import { DEFAULT_ASSIGNMENT } from "../lib/assignment-access";
 import { hashInvite, newInviteCode } from "../lib/invite";
 import { assignmentRepository } from "../repositories/assignment.repository";
 import { cohortRepository, type CohortFields, type SignupFields } from "../repositories/cohort.repository";
@@ -22,10 +21,11 @@ export const cohortService = {
   async create(devId: number, f: CohortFields) {
     checkPeriod(f);
     const c = await cohortRepository.create(f);
-    // รุ่นใหม่ได้ STARTER ไว้ก่อน (เปลี่ยนหรือเพิ่มโจทย์ได้ในหน้ารุ่น) น้องที่สมัครเข้ามาจะได้ไม่เจอหน้าโจทย์ว่าง
-    const starter = await assignmentRepository.findBySlug(DEFAULT_ASSIGNMENT);
-    if (starter) await assignmentRepository.setForCohort(c.id, [starter.id]);
-    await auditService.log(devId, "cohort.create", f.name, `${f.startsOn} – ${f.endsOn}`);
+    // รุ่นใหม่ได้สำเนาโจทย์ (กล่องโพสต์งาน) ของรุ่นล่าสุดไว้ก่อน น้องที่สมัครเข้ามาจะได้ไม่เจอหน้างานว่าง
+    // เป็นสำเนาของรุ่นนี้เอง แก้แล้วไม่กระทบรุ่นต้นทาง
+    const source = await assignmentRepository.latestCohortWithAssignments(c.id);
+    const copied = source === null ? 0 : await assignmentRepository.copyToCohort((await assignmentRepository.ofCohort(source)).map((a) => a.id), c.id);
+    await auditService.log(devId, "cohort.create", f.name, `${f.startsOn} – ${f.endsOn}${copied ? ` · คัดลอกโจทย์ ${copied} ชิ้น` : ""}`);
     return c;
   },
   async update(devId: number, id: number, f: CohortFields) {

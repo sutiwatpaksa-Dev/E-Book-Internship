@@ -172,26 +172,18 @@ export function useAdmin() {
       });
       return ok;
     },
-    // ผูกการ์ดกับโจทย์: คืน true เมื่อสำเร็จ
-    saveAssignmentCards: async (a: AdminAssignment, rows: { slug: string; note: string }[]) => {
-      let ok = false;
-      await run(async () => {
-        await adminApi.setAssignmentCards(a.id, rows);
-        await reload();
-        toast.success(`บันทึกการ์ดของ ${a.name} แล้ว (${rows.length} ใบ)`);
-        ok = true;
-      });
-      return ok;
-    },
     // โพสต์งาน: คืน true เมื่อสำเร็จ (ให้ฟอร์มปิดตัวเอง) · ข้อผิดพลาดขึ้นเป็น toast เพราะฟอร์มอยู่ไกลจากแถบ error ด้านบน
-    savePost: async (assignmentId: number, roundId: string | null, input: PostSend) => {
+    // pdf = ไฟล์ที่แนบกับโพสต์นี้ (อัปโหลดหลังบันทึกโพสต์ เพราะโพสต์ใหม่ต้องมี id ก่อน)
+    savePost: async (assignmentId: number, roundId: string | null, input: PostSend, pdf?: File | null) => {
       try {
+        const id = roundId ?? (await adminApi.addPost(assignmentId, input)).id;
         if (roundId) await adminApi.updatePost(assignmentId, roundId, input);
-        else await adminApi.addPost(assignmentId, input);
+        if (pdf) await adminApi.uploadPostPdf(assignmentId, id, pdf);
         await reload();
-        toast.success(roundId ? "บันทึกโพสต์แล้ว" : "โพสต์งานแล้ว น้องในรุ่นที่ใช้โจทย์นี้เห็นทันที");
+        toast.success(roundId ? "บันทึกโพสต์แล้ว" : "โพสต์งานแล้ว น้องในรุ่นนี้เห็นทันที");
         return true;
       } catch (e) {
+        await reload();
         toast.error(`${roundId ? "บันทึก" : "โพสต์"}ไม่สำเร็จ: ${(e as Error).message}`);
         return false;
       }
@@ -213,16 +205,6 @@ export function useAdmin() {
         await reload();
         toast.success(`อัปโหลด PDF ของ ${a.name} แล้ว น้องเปิดฉบับใหม่ได้ทันที`);
       }),
-    setCohortAssignments: async (c: Cohort, ids: number[]) => {
-      let ok = false;
-      await run(async () => {
-        await adminApi.setCohortAssignments(c.id, ids);
-        await reload();
-        toast.success(`บันทึกโจทย์ของ ${c.name} แล้ว`);
-        ok = true;
-      });
-      return ok;
-    },
   };
 }
 

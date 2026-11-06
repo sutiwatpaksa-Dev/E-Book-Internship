@@ -6,8 +6,12 @@ import type { AdminState } from "@/hooks/use-admin";
 import { toast } from "@/hooks/use-toast";
 import { dayOfDate, isWeekend, thaiDayMonth, workdayDate } from "@/lib/cohort";
 import { timeAgo } from "@/lib/thread-labels";
-import { BODY_MAX, latestOnly, LINKS_MAX, linksProblem, type RoundDef, type TaskLink } from "@/lib/submission";
+import { BODY_MAX, latestOnly, LINKS_MAX, linksProblem, OVERVIEW_MAX, criteriaOf, weightOf, weightTotal, type PostPdf, type RoundDef, type TaskLink } from "@/lib/submission";
 import type { AdminAssignment, Cohort, PostSend } from "@/types";
+import { criteriaProblem, type Criterion } from "@/lib/rubric";
+import { CriteriaEditor } from "./criteria-editor";
+import { MarkdownEditor } from "./markdown-editor";
+import { inCohort, type CohortFilter } from "@/lib/cohort";
 import type { AdminNav } from "./admin-panel";
 import { useSubmissions } from "./admin-submissions";
 import { Button } from "./button";
@@ -31,18 +35,22 @@ const STARTER_BODY = `## เป้าหมาย
 - commit เป็นช่วง ข้อความชัด
 `;
 
-export function AdminBoard({ admin, nav }: { admin: AdminState; nav: AdminNav }) {
+// โจทย์เป็นของรุ่นเดียว (0023) แต่ละรุ่นมีสำเนาของตัวเอง หน้านี้จึงแสดงตามรุ่นที่เลือกในแถบเลือกรุ่นด้านบน
+const ownerOf = (a: AdminAssignment) => a.cohortIds[0] ?? null;
+
+export function AdminBoard({ admin, nav, cohort, mine }: { admin: AdminState; nav: AdminNav; cohort: CohortFilter; mine: readonly number[] }) {
   const { items: subs } = useSubmissions();
   const [editing, setEditing] = useState<{ a: AdminAssignment; r: RoundDef } | "new" | null>(null);
   const [removing, setRemoving] = useState<{ a: AdminAssignment; r: RoundDef } | null>(null);
 
   // ทุกโพสต์ของทุกโจทย์ เรียงใหม่สุดก่อน (รอบเก่าที่ไม่มีเวลาโพสต์ไว้ท้ายตามวันที่)
+  const scoped = useMemo(() => admin.assignments.filter((a) => inCohort(ownerOf(a), cohort, mine)), [admin.assignments, cohort, mine]);
   const posts = useMemo(
     () =>
-      admin.assignments
+      scoped
         .flatMap((a) => a.rounds.map((r) => ({ a, r })))
         .sort((x, y) => (y.r.postedAt ?? "").localeCompare(x.r.postedAt ?? "") || x.r.day - y.r.day),
-    [admin.assignments],
+    [scoped],
   );
 
   return (
@@ -51,6 +59,7 @@ export function AdminBoard({ admin, nav }: { admin: AdminState; nav: AdminNav })
         <PostComposer
           key={editing === "new" ? "new" : `${editing.a.id}/${editing.r.id}`}
           admin={admin}
+          scoped={scoped}
           edit={editing === "new" ? null : editing}
           onClose={() => setEditing(null)}
         />
@@ -86,12 +95,10 @@ export function AdminBoard({ admin, nav }: { admin: AdminState; nav: AdminNav })
           icon={Megaphone}
           title="ยังไม่มีโพสต์งาน"
           action={
-            admin.assignments.length === 0 ? (
-              <Button onClick={() => nav.goTab("files")}>ไปสร้างโจทย์ก่อน</Button>
-            ) : undefined
+            scoped.length === 0 ? <Button onClick={() => nav.goTab("cohorts")}>ไปที่หน้ารุ่น</Button> : undefined
           }
         >
-          {admin.assignments.length === 0 ? "ต้องมีโจทย์ก่อนจึงโพสต์งานได้ สร้างโจทย์ (อัปโหลด PDF + ตั้งเกณฑ์) ที่แท็บ \"โจทย์ PDF และเกณฑ์\"" : "กดช่องด้านบนเพื่อโพสต์งานแรก"}
+          {scoped.length === 0 ? "รุ่นที่เลือกยังไม่มีกล่องงาน รุ่นใหม่ได้สำเนาจากรุ่นล่าสุดตอนสร้างรุ่น · ถ้าเลือก \"ทุกรุ่น\" อยู่ ลองเลือกรุ่นเดียว" : "กดช่องด้านบนเพื่อโพสต์งานแรก"}
         </EmptyState>
       ) : (
         posts.map(({ a, r }) => (
@@ -119,7 +126,7 @@ function PostCard({ admin, a, r, subs, onEdit, onRemove, onSubs }: { admin: Admi
   const sent = ofInterns.length;
   const waiting = ofInterns.filter((s) => !s.reviewedAt).length;
   const passed = ofInterns.filter((s) => s.verdict === "pass").length;
-  const total = a.criteria.reduce((n, c) => n + c.max, 0);
+  const total = criteriaOf(r, a.criteria).reduce((n, c) => n + c.max, 0);
   const who = r.postedBy ?? a.name;
 
   return (
@@ -189,8 +196,10 @@ function PostCard({ admin, a, r, subs, onEdit, onRemove, onSubs }: { admin: Admi
             )}
           </>
         )}
-        <span className="rounded-md bg-fd-muted px-2 py-1">{total ? `คะแนนเต็ม ${total}` : "ตรวจ ผ่าน/แก้"}</span>
-        {r.deploy && <span className="rounded-md bg-fd-muted px-2 py-1">แนบลิงก์เว็บได้</span>}
+        <span className="rounded-md bg-fd-muted px-2 py-1">{weightOf(r) ? `นับ ${weightOf(r)}% ของคะแนนงาน` : "ไม่นับคะแนน"}</span>
+        <span className="rounded-md bg-fd-muted px-2 py-1">{total ? `เกณฑ์เต็ม ${total}` : "ตรวจ ผ่าน/แก้"}</span>
+        {r.pdf !== "none" && (r.pdf === "own" || a.pdf) && <span className="rounded-md bg-fd-muted px-2 py-1">{r.pdf === "own" ? "PDF ของโพสต์นี้" : "PDF ของรุ่น"}</span>}
+        {r.deploy && <span className="rounded-md bg-fd-muted px-2 py-1">ต้องส่งลิงก์เว็บ</span>}
       </div>
 
       {interns.length > 0 && (
@@ -221,9 +230,12 @@ const TOOLS: { label: string; snippet: string }[] = [
   { label: "ตาราง", snippet: "\n| ข้อ | รายละเอียด |\n|---|---|\n| 1 | … |\n" },
 ];
 
-function PostComposer({ admin, edit, onClose }: { admin: AdminState; edit: { a: AdminAssignment; r: RoundDef } | null; onClose: () => void }) {
+function PostComposer({ admin, scoped, edit, onClose }: { admin: AdminState; scoped: AdminAssignment[]; edit: { a: AdminAssignment; r: RoundDef } | null; onClose: () => void }) {
+  // โพสต์ได้เฉพาะกล่องงานของรุ่นที่ยังไม่จบ ในรุ่นที่เลือกอยู่
+  const open = scoped.filter((a) => !admin.cohorts.find((c) => c.id === ownerOf(a))?.endedAt);
+  const cohortName = (a: AdminAssignment) => admin.cohorts.find((c) => c.id === ownerOf(a))?.name ?? "ไม่มีรุ่น";
   const firstActive = (a: AdminAssignment) => usingCohorts(admin, a).find((c) => !c.endedAt) ?? usingCohorts(admin, a)[0];
-  const [assignmentId, setAssignmentId] = useState<number>(edit?.a.id ?? admin.assignments.find((a) => a.slug === "starter")?.id ?? admin.assignments[0]?.id ?? 0);
+  const [assignmentId, setAssignmentId] = useState<number>(edit?.a.id ?? open[0]?.id ?? 0);
   const asg = admin.assignments.find((a) => a.id === assignmentId);
   const cohorts = asg ? usingCohorts(admin, asg) : [];
   const [cohortId, setCohortId] = useState<number | null>(asg ? (firstActive(asg)?.id ?? null) : null);
@@ -234,6 +246,13 @@ function PostComposer({ admin, edit, onClose }: { admin: AdminState; edit: { a: 
   const [body, setBody] = useState(edit?.r.body ?? "");
   const [links, setLinks] = useState<TaskLink[]>(edit?.r.links ?? []);
   const [deploy, setDeploy] = useState(edit?.r.deploy ?? false);
+  // แนบกับโพสต์ (6 พ.ย. 2569): PDF เกณฑ์ ภาพรวม % คะแนน · ไม่ตั้ง = ใช้ของกล่องงาน (โพสต์เก่าทำงานเหมือนเดิม)
+  const [pdfMode, setPdfMode] = useState<PostPdf>(edit?.r.pdf ?? "shared");
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [critMode, setCritMode] = useState<"same" | "new" | "none">(edit?.r.criteria === undefined ? "same" : edit.r.criteria.length ? "new" : "none");
+  const [criteria, setCriteria] = useState<Criterion[]>(edit?.r.criteria?.length ? edit.r.criteria : (asg?.criteria ?? []));
+  const [overview, setOverview] = useState(edit?.r.overview ?? "");
+  const [weightText, setWeightText] = useState(edit ? String(weightOf(edit.r)) : "");
   const [preview, setPreview] = useState(false);
   // กำหนดส่ง: เลือกวันที่บนปฏิทินของรุ่นอ้างอิง (ถนัดแบบ Classroom) หรือกรอกเป็น "วันที่ N ของรุ่น" ตรงๆ
   const [date, setDate] = useState(() => (edit && ref ? (workdayDate(ref.startsOn, edit.r.day) ?? "") : ""));
@@ -245,7 +264,13 @@ function PostComposer({ admin, edit, onClose }: { admin: AdminState; edit: { a: 
   const day = date && ref ? fromDate : dayText.trim() ? Number(dayText) : null;
   const dayOk = day !== null && Number.isInteger(day) && day >= 1 && day <= 60;
   const linkErr = linksProblem(links.filter((l) => l.label.trim() || l.url.trim()).map((l) => ({ label: l.label.trim(), url: l.url.trim() })));
-  const canPost = !!asg && label.trim().length > 0 && dayOk && !linkErr && !saving;
+  const critErr = critMode === "new" ? (criteria.length ? criteriaProblem(criteria.map((c) => ({ ...c, label: c.label.trim() }))) : "เพิ่มเกณฑ์อย่างน้อย 1 ข้อ หรือเลือก \"ไม่ให้คะแนน\"") : null;
+  const weight = critMode === "none" ? 0 : weightText.trim() === "" ? undefined : Number(weightText);
+  const others = asg ? weightTotal(asg.rounds.filter((r) => r.id !== edit?.r.id)) : 0;
+  const after = others + (weight ?? 0);
+  const weightErr = weight !== undefined && (!Number.isInteger(weight) || weight < 0 || weight > 100) ? "% ต้องเป็นจำนวนเต็ม 0–100" : after > 100 ? `รวมทุกโพสต์ได้ ${after}% เกิน 100 ลดลง ${after - 100}%` : null;
+  const pdfErr = pdfMode === "own" && !pdfFile && edit?.r.pdf !== "own" ? "เลือกไฟล์ PDF ของโพสต์นี้" : null;
+  const canPost = !!asg && label.trim().length > 0 && dayOk && !linkErr && !critErr && !weightErr && !pdfErr && !saving;
 
   const insert = (snippet: string) => {
     const el = area.current;
@@ -265,6 +290,7 @@ function PostComposer({ admin, edit, onClose }: { admin: AdminState; edit: { a: 
     if (!label.trim()) return void toast.error("ใส่ชื่องานก่อน");
     if (!dayOk) return void toast.error("เลือกกำหนดส่ง (วันที่บนปฏิทิน หรือวันที่ N ของรุ่น)");
     if (linkErr) return void toast.error(linkErr);
+    if (critErr || weightErr || pdfErr) return void toast.error((critErr ?? weightErr ?? pdfErr)!);
     setSaving(true);
     const input: PostSend = {
       label: label.trim(),
@@ -273,8 +299,13 @@ function PostComposer({ admin, edit, onClose }: { admin: AdminState; edit: { a: 
       deploy,
       body,
       links: links.filter((l) => l.label.trim() || l.url.trim()).map((l) => ({ label: l.label.trim(), url: l.url.trim() })),
+      // "own" ตั้งให้ตอนอัปโหลดไฟล์สำเร็จ (server) · ยังไม่มีไฟล์ใช้ของกล่องงานไปก่อน
+      pdf: pdfMode === "own" && edit?.r.pdf !== "own" ? "shared" : pdfMode,
+      criteria: critMode === "same" ? undefined : critMode === "none" ? [] : criteria.map((c) => ({ ...c, label: c.label.trim() })),
+      overview,
+      weight,
     };
-    const ok = await admin.savePost(asg.id, edit?.r.id ?? null, input);
+    const ok = await admin.savePost(asg.id, edit?.r.id ?? null, input, pdfMode === "own" ? pdfFile : null);
     setSaving(false);
     if (ok) onClose();
   };
@@ -287,22 +318,23 @@ function PostComposer({ admin, edit, onClose }: { admin: AdminState; edit: { a: 
           <Plus className="size-5" />
         </span>
         <strong>{edit ? "แก้โพสต์งาน" : "โพสต์งานใหม่"}</strong>
-        <label className="ms-auto flex items-center gap-2 text-sm">
-          ในโจทย์
+        <label className="ms-auto flex items-center gap-2 whitespace-nowrap text-sm">
+          ของรุ่น
           <select
             className={`${inputClass} w-auto`}
             value={assignmentId}
             disabled={!!edit}
             onChange={(e) => {
-              const next = admin.assignments.find((a) => a.id === Number(e.target.value));
+              const next = open.find((a) => a.id === Number(e.target.value));
               setAssignmentId(Number(e.target.value));
               setCohortId(next ? (firstActive(next)?.id ?? null) : null);
               setDate("");
             }}
           >
-            {admin.assignments.map((a) => (
+            {(edit ? [edit.a] : open).map((a) => (
               <option key={a.id} value={a.id}>
-                {a.name}
+                {cohortName(a)}
+                {open.filter((x) => ownerOf(x) === ownerOf(a)).length > 1 ? ` · ${a.name}` : ""}
               </option>
             ))}
           </select>
@@ -388,7 +420,7 @@ function PostComposer({ admin, edit, onClose }: { admin: AdminState; edit: { a: 
             </label>
           </>
         ) : (
-          <p className="text-sm text-fd-muted-foreground sm:col-span-2">ยังไม่มีรุ่นใช้โจทย์นี้ กรอกเป็นวันที่ N ของรุ่นได้เลย (เพิ่มรุ่นให้โจทย์ที่แท็บ &quot;โจทย์ PDF และเกณฑ์&quot;)</p>
+          <p className="text-sm text-fd-muted-foreground sm:col-span-2">ไม่พบรุ่นของกล่องงานนี้ กรอกเป็นวันที่ N ของรุ่นได้เลย</p>
         )}
         <label className={field}>
           หรือกรอกเป็นวันที่ N ของรุ่น
@@ -416,18 +448,62 @@ function PostComposer({ admin, edit, onClose }: { admin: AdminState; edit: { a: 
 
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
         <label className="flex min-h-11 items-center gap-2">
-          <input type="checkbox" checked={deploy} onChange={(e) => setDeploy(e.target.checked)} /> ให้น้องแนบลิงก์เว็บที่ deploy แล้ว
+          <input type="checkbox" checked={deploy} onChange={(e) => setDeploy(e.target.checked)} /> น้องต้องส่งลิงก์เว็บที่ deploy แล้ว (บังคับ)
         </label>
         <label className="flex min-w-0 flex-1 items-center gap-2">
           สรุปสั้น
           <input className={inputClass} value={what} onChange={(e) => setWhat(e.target.value)} maxLength={60} placeholder="เช่น ตาราง + API (ไม่บังคับ)" />
         </label>
       </div>
-      {asg && (
-        <p className="text-xs text-fd-muted-foreground">
-          คะแนน: {asg.criteria.length ? `ตรวจตามเกณฑ์ของโจทย์ ${asg.name} (เต็ม ${asg.criteria.reduce((n, c) => n + c.max, 0)})` : "โจทย์นี้ยังไม่มีเกณฑ์คะแนน ตรวจแบบ ผ่าน/แก้"} · แก้เกณฑ์ที่แท็บ &quot;โจทย์ PDF และเกณฑ์&quot;
-        </p>
+      <fieldset className="flex flex-col gap-1 rounded-xl border border-fd-border p-3 text-sm">
+        <legend className="px-1 font-medium">PDF แนบ</legend>
+        <label className="flex min-h-11 items-center gap-2">
+          <input type="radio" name="pdf" checked={pdfMode === "shared"} onChange={() => setPdfMode("shared")} />
+          ใช้ PDF ของรุ่น{asg?.pdf ? ` (${Math.round(asg.pdf.size / 1024)} KB)` : " (ยังไม่มีไฟล์)"}
+        </label>
+        <label className="flex min-h-11 flex-wrap items-center gap-2">
+          <input type="radio" name="pdf" checked={pdfMode === "own"} onChange={() => setPdfMode("own")} />
+          ไฟล์ของโพสต์นี้{edit?.r.pdf === "own" && !pdfFile ? " (มีไฟล์แล้ว เลือกใหม่เพื่อแทนที่)" : ""}
+          {pdfMode === "own" && <input type="file" accept="application/pdf" className="text-sm" aria-label="เลือกไฟล์ PDF ของโพสต์นี้" onChange={(e) => setPdfFile(e.target.files?.[0] ?? null)} />}
+        </label>
+        <label className="flex min-h-11 items-center gap-2">
+          <input type="radio" name="pdf" checked={pdfMode === "none"} onChange={() => setPdfMode("none")} /> ไม่แนบ
+        </label>
+        {pdfErr && <p role="alert" className="text-red-700 dark:text-red-400">{pdfErr}</p>}
+        <span className="text-xs text-fd-muted-foreground">PDF เท่านั้น ไม่เกิน 4 MB</span>
+      </fieldset>
+
+      <fieldset className="flex flex-col gap-1 rounded-xl border border-fd-border p-3 text-sm">
+        <legend className="px-1 font-medium">เกณฑ์คะแนน</legend>
+        <label className="flex min-h-11 items-center gap-2">
+          <input type="radio" name="crit" checked={critMode === "same"} onChange={() => setCritMode("same")} />
+          ใช้เกณฑ์ของรุ่น{asg?.criteria.length ? ` (${asg.criteria.length} ข้อ รวม ${asg.criteria.reduce((n, c) => n + c.max, 0)})` : " (ยังไม่มี ตรวจแบบ ผ่าน/แก้)"}
+        </label>
+        <label className="flex min-h-11 items-center gap-2">
+          <input type="radio" name="crit" checked={critMode === "new"} onChange={() => setCritMode("new")} /> ตั้งเกณฑ์ของโพสต์นี้
+        </label>
+        {critMode === "new" && <CriteriaEditor criteria={criteria} onChange={setCriteria} error={critErr} />}
+        <label className="flex min-h-11 items-center gap-2">
+          <input type="radio" name="crit" checked={critMode === "none"} onChange={() => setCritMode("none")} /> ไม่ให้คะแนน แค่เช็กว่าส่งแล้ว
+        </label>
+      </fieldset>
+
+      {critMode !== "none" && (
+        <label className={field}>
+          นับเป็นกี่ % ของคะแนนงาน
+          <span className="flex flex-wrap items-center gap-3">
+            <input type="number" inputMode="numeric" min={0} max={100} className={`${inputClass} w-28`} value={weightText} onChange={(e) => setWeightText(e.target.value)} placeholder="0" aria-describedby="weight-after" />
+            <span id="weight-after" className={`text-sm font-normal ${weightErr ? "text-red-700 dark:text-red-400" : after === 100 ? "text-green-800 dark:text-green-400" : "text-amber-800 dark:text-amber-300"}`}>
+              {weightErr ?? (after === 100 ? "รวมทุกโพสต์ครบ 100%" : `รวมทุกโพสต์ ${after}% ยังขาด ${100 - after}%`)}
+            </span>
+          </span>
+          <span className="text-xs font-normal text-fd-muted-foreground">ว่าง = ไม่นับคะแนน · แก้ได้จนกว่าจะตรวจงานชิ้นแรกของรุ่น หลังจากนั้นล็อก</span>
+        </label>
       )}
+
+      <div className="flex flex-col gap-1">
+        <MarkdownEditor label="ภาพรวม (ไม่บังคับ)" value={overview} onChange={setOverview} max={OVERVIEW_MAX} minHeight="min-h-24" />
+      </div>
 
       <div className="flex gap-2">
         <Button type="button" variant="ghost" onClick={() => (toast.info("ยกเลิกแล้ว ยังไม่ได้โพสต์"), onClose())} className="min-h-11">

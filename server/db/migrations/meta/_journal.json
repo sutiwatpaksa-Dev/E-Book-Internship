@@ -162,6 +162,13 @@
       "when": 1793780338518,
       "tag": "0022_assignment_cards",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1793941214532,
+      "tag": "0023_cohort_assignments_tracks",
+      "breakpoints": true
     }
   ]
 }

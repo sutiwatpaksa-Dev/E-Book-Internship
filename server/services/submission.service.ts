@@ -1,13 +1,13 @@
 import type { Role } from "../db/schema";
 import type { RoundDef } from "../../src/lib/submission";
 import { buildScores } from "../../src/lib/rubric";
-import { hasRound, isReviewable, roundLabel, START_ROUND, takesDeploy, VERDICT_LABEL, waitingOf } from "../../src/lib/submission";
+import { criteriaOf, hasRound, isReviewable, roundLabel, START_REF, START_ROUND, takesDeploy, VERDICT_LABEL, waitingOf } from "../../src/lib/submission";
 import { assignmentRepository } from "../repositories/assignment.repository";
 import { submissionRepository } from "../repositories/submission.repository";
 import { taskCommentRepository } from "../repositories/task-comment.repository";
 import { userRepository } from "../repositories/user.repository";
 import type { CommentInput, ReviewInput, SubmitInput } from "../validators/submission.validator";
-import { assignmentService } from "./assignment.service";
+import { assignmentFor, assignmentService } from "./assignment.service";
 import { auditService } from "./audit.service";
 import { cohortService } from "./cohort.service";
 import { notificationService } from "./notification.service";
@@ -33,15 +33,16 @@ export const submissionService = {
   async submit(user: Viewer, input: SubmitInput) {
     if (await cohortService.endedFor(user.id)) throw new Error("COHORT_ENDED_SUBMIT");
     // ส่งได้เฉพาะโจทย์ของรุ่นตัวเอง · โจทย์ของรุ่นอื่นตอบเหมือนไม่มี
-    const allowed = await assignmentService.listFor(user);
-    if (!allowed.some((a) => a.slug === input.assignment)) throw new Error("ASSIGNMENT_NOT_FOUND");
-    const a = (await assignmentRepository.findBySlug(input.assignment))!;
+    const a = await assignmentFor(user, input.assignment);
+    if (!a) throw new Error("ASSIGNMENT_NOT_FOUND");
     // รอบและช่องลิงก์เว็บเป็นของโจทย์ ตั้งจากหลังบ้าน
     if (!hasRound(a.rubric.rounds, input.round)) throw new Error("ROUND_NOT_FOUND");
     if (input.deployUrl && !takesDeploy(a.rubric.rounds, input.round)) throw new Error("DEPLOY_NOT_ALLOWED");
+    // รอบที่ติ๊ก "ต้องส่งลิงก์เว็บ" ไว้ ส่งไม่ได้ถ้าไม่มีลิงก์
+    if (!input.deployUrl && takesDeploy(a.rubric.rounds, input.round)) throw new Error("DEPLOY_REQUIRED");
     const s = await submissionRepository.create({ userId: user.id, assignmentId: a.id, round: input.round, repoUrl: input.repoUrl, ref: input.ref, deployUrl: input.deployUrl, note: input.note });
     const who = (await userRepository.findById(user.id))?.username ?? "น้อง";
-    const title = input.round === START_ROUND ? `${who} ส่งลิงก์ repo แล้ว ตามดูโค้ดได้` : `${who} ส่งงาน ${roundLabel(input.round, a.rubric.rounds)} (${input.ref})`;
+    const title = input.round === START_ROUND ? `${who} ส่งลิงก์ repo แล้ว ตามดูโค้ดได้` : `${who} ส่งงาน ${roundLabel(input.round, a.rubric.rounds)}${input.ref === START_REF ? "" : ` (${input.ref})`}`;
     await notificationService.toMentorsOf(user.id, { kind: "submission", title, link: DEV_LINK });
     return s;
   },
@@ -61,7 +62,7 @@ export const submissionService = {
     // คะแนน: เทียบกับเกณฑ์ของโจทย์ ณ ตอนนี้ แล้วเก็บสำเนา (แก้เกณฑ์ทีหลังคะแนนที่ตรวจไปแล้วไม่เปลี่ยน)
     let scores = null;
     if (input.scores) {
-      const criteria = a?.rubric.criteria ?? [];
+      const criteria = criteriaOf(a?.rubric.rounds.find((r) => r.id === s.round), a?.rubric.criteria ?? []);
       if (criteria.length === 0) throw new Error("SCORES_NO_CRITERIA");
       scores = buildScores(criteria, input.scores);
       if (!scores) throw new Error("SCORES_INVALID");
@@ -76,15 +77,15 @@ export const submissionService = {
   // ---- ความเห็นใต้งาน (เห็นเฉพาะน้องเจ้าของงานกับพี่เลี้ยง) ----
   // งาน = รอบหนึ่งของโจทย์หนึ่ง · น้องเปิดได้เฉพาะโจทย์ของรุ่นตัวเอง · ที่เหลือตอบเหมือนไม่มี
   async commentsMine(user: Viewer, assignment: string, round: string) {
-    await assertOwnTask(user, assignment, round);
+    await assertTask(user.id, assignment, round);
     return taskCommentRepository.forTask(user.id, taskKey(assignment, round));
   },
   async commentMine(user: Viewer, assignment: string, round: string, input: CommentInput) {
-    await assertOwnTask(user, assignment, round);
+    await assertTask(user.id, assignment, round);
     if (input.kind !== "review") throw new Error("COMMENT_KIND_FORBIDDEN");
     const c = await taskCommentRepository.create({ userId: user.id, task: taskKey(assignment, round), authorId: user.id, kind: "review", ref: null, body: input.body });
     const who = (await userRepository.findById(user.id))?.username ?? "น้อง";
-    await notificationService.toMentorsOf(user.id, { kind: "submission", title: `${who} เขียนความเห็นใต้งาน ${await labelOf(assignment, round)}`, link: DEV_LINK });
+    await notificationService.toMentorsOf(user.id, { kind: "submission", title: `${who} เขียนความเห็นใต้งาน ${await labelOf(user.id, assignment, round)}`, link: DEV_LINK });
     return c;
   },
   async commentsOf(userId: number, assignment: string, round: string) {
@@ -94,23 +95,21 @@ export const submissionService = {
   async commentTo(devId: number, userId: number, assignment: string, round: string, input: CommentInput) {
     await assertTask(userId, assignment, round);
     const c = await taskCommentRepository.create({ userId, task: taskKey(assignment, round), authorId: devId, kind: input.kind, ref: input.ref || null, body: input.body });
-    await notificationService.toUser(userId, { kind: "submission_review", title: `พี่เลี้ยงเขียนความเห็นใต้งาน ${await labelOf(assignment, round)}`, link: INTERN_LINK });
+    await notificationService.toUser(userId, { kind: "submission_review", title: `พี่เลี้ยงเขียนความเห็นใต้งาน ${await labelOf(userId, assignment, round)}`, link: INTERN_LINK });
     return c;
   },
 };
 
 const taskKey = (assignment: string, round: string) => `${assignment}/${round}`;
-async function labelOf(assignment: string, round: string) {
-  const a = await assignmentRepository.findBySlug(assignment);
+// งานของน้องคนหนึ่ง: slug หาในรุ่นของน้องคนนั้น (slug ซ้ำข้ามรุ่นได้ตั้งแต่ 0023) ไม่ใช่ของคนที่เปิดดู
+const internsAssignment = (userId: number, slug: string) => assignmentFor({ id: userId, role: "intern" }, slug);
+async function labelOf(userId: number, assignment: string, round: string) {
+  const a = await internsAssignment(userId, assignment);
   return `${a?.name ?? assignment} · ${roundLabel(round, a?.rubric.rounds ?? [])}`;
 }
-// งานต้องมีจริง: โจทย์มี และรอบอยู่ในโจทย์ (รอบ "start" ของลงทะเบียน repo ไม่ใช่งานให้คุยใต้)
+// งานต้องมีจริง: น้องมีจริง โจทย์อยู่ในรุ่นของน้อง และรอบอยู่ในโจทย์ (รอบ "start" ของลงทะเบียน repo ไม่ใช่งานให้คุยใต้)
 async function assertTask(userId: number, assignment: string, round: string) {
-  const a = await assignmentRepository.findBySlug(assignment);
-  if (!a || !isReviewable(round) || !hasRound(a.rubric.rounds, round) || !(await userRepository.findById(userId))) throw new Error("TASK_NOT_FOUND");
-}
-async function assertOwnTask(user: Viewer, assignment: string, round: string) {
-  const allowed = await assignmentService.listFor(user);
-  if (!allowed.some((a) => a.slug === assignment)) throw new Error("TASK_NOT_FOUND");
-  await assertTask(user.id, assignment, round);
+  const u = await userRepository.findById(userId);
+  const a = u ? await internsAssignment(userId, assignment) : undefined;
+  if (!a || !isReviewable(round) || !hasRound(a.rubric.rounds, round)) throw new Error("TASK_NOT_FOUND");
 }

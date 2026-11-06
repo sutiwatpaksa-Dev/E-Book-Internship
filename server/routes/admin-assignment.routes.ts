@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { AuthVars } from "../middleware/require-role";
 import { assignmentService } from "../services/assignment.service";
-import { assignmentCardsSchema, assignmentSchema, newAssignmentSchema, postSchema } from "../validators/assignment.validator";
+import { assignmentSchema, newAssignmentSchema, postSchema } from "../validators/assignment.validator";
 
 // หลังบ้าน: โจทย์ฝึกงาน · ต่ออยู่ใต้ admin.routes.ts จึงผ่านด่าน requireRole("dev") ของที่นั่นแล้ว
 export const adminAssignmentRoutes = new Hono<AuthVars>();
@@ -18,8 +18,8 @@ adminAssignmentRoutes.get("/", async (c) => c.json(await assignmentService.list(
 adminAssignmentRoutes.post("/", async (c) => {
   const parsed = newAssignmentSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ error: BAD }, 400);
-  const { slug, ...f } = parsed.data;
-  return c.json(await assignmentService.create(c.get("user").id, slug, f), 201);
+  const { slug, cohortId, ...f } = parsed.data;
+  return c.json(await assignmentService.create(c.get("user").id, cohortId, slug, f), 201);
 });
 
 adminAssignmentRoutes.put("/:id", async (c) => {
@@ -29,18 +29,16 @@ adminAssignmentRoutes.put("/:id", async (c) => {
   return c.body(null, 204);
 });
 
-// การ์ดความรู้ที่โจทย์นี้ใช้ + โน้ตว่าใช้ตอนไหน (ส่งมาทั้งรายการ แทนของเดิมทั้งชุด)
-adminAssignmentRoutes.put("/:id/cards", async (c) => {
-  const parsed = assignmentCardsSchema.safeParse(await c.req.json().catch(() => null));
-  if (!parsed.success) return c.json({ error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" }, 400);
-  await assignmentService.setCards(c.get("user").id, id(c), parsed.data);
-  return c.body(null, 204);
-});
-
 // PDF ของโจทย์ = ไฟล์ชิ้นเดียวใต้โจทย์นั้น อัปโหลดใหม่ก็แทนที่ (PUT)
 adminAssignmentRoutes.put("/:id/pdf", async (c) => {
   if (c.req.header("content-type") !== "application/pdf") return c.json({ error: "ต้องเป็นไฟล์ PDF" }, 415);
   return c.json(await assignmentService.savePdf(c.get("user").id, id(c), Buffer.from(await c.req.arrayBuffer())));
+});
+
+// PDF ที่แนบกับโพสต์เดียว
+adminAssignmentRoutes.put("/:id/posts/:roundId/pdf", async (c) => {
+  if (c.req.header("content-type") !== "application/pdf") return c.json({ error: "ต้องเป็นไฟล์ PDF" }, 415);
+  return c.json(await assignmentService.savePostPdf(c.get("user").id, id(c), c.req.param("roundId"), Buffer.from(await c.req.arrayBuffer())));
 });
 
 // โพสต์งาน (= รอบส่งของโจทย์): สร้าง แก้ ลบ ทีละชิ้น

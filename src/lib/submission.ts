@@ -1,11 +1,23 @@
 // กฎของการส่งงาน ใช้ทั้งฟอร์มของน้อง (บอกผิดทันทีใต้ช่อง) และ server (ด่านจริง)
 // โค้ดของน้องอยู่บน GitHub ที่เดียว เว็บนี้เก็บแค่ "ลิงก์ repo + จุดที่ส่ง (tag หรือ commit)" ไม่เก็บไฟล์
 
+import type { Criterion } from "./rubric";
+
 // รอบส่งเป็นข้อมูลของโจทย์ (assignments.rubric.rounds) แก้ได้จากหลังบ้าน · นี่คือแม่แบบเริ่มต้น (แผน 10 วันของ STARTER)
 // ส่งซ้ำรอบเดิมได้ เก็บทุกครั้งไว้เป็นประวัติ · id ของรอบถูกเก็บไว้ในงานที่ส่งแล้ว จึงเปลี่ยนไม่ได้หลังสร้าง
 // body/links/postedBy/postedAt/editedAt = ส่วนของ "โพสต์งาน" (คำสั่งงานแบบ Markdown, ลิงก์แนบ, ใครโพสต์เมื่อไร) ไม่บังคับ รอบเก่าที่ไม่มีก็ใช้ได้เหมือนเดิม
 export type TaskLink = { label: string; url: string };
-export type RoundDef = { id: string; label: string; day: number; what: string; deploy: boolean; body?: string; links?: TaskLink[]; postedBy?: string; postedAt?: string; editedAt?: string };
+// โพสต์งาน 1 ชิ้น = 1 รอบ (6 พ.ย. 2569: เหลือแค่โพสต์งาน) · ค่าที่ไม่ตั้งใช้ของกล่องงาน (assignments) แทน โพสต์เก่าจึงทำงานเหมือนเดิม
+// deploy = รอบนี้ต้องส่งลิงก์เว็บ · pdf: shared = PDF ของกล่องงาน, own = ไฟล์ของโพสต์นี้, none = ไม่แนบ
+// criteria: ไม่ตั้ง = เกณฑ์ของกล่องงาน, [] = ไม่ให้คะแนน · weight = % ของคะแนนงาน (ไม่ตั้ง = ค่าตายตัวเดิม ดู DEFAULT_WEIGHT)
+export type PostPdf = "shared" | "own" | "none";
+export type RoundDef = { id: string; label: string; day: number; what: string; deploy: boolean; body?: string; links?: TaskLink[]; postedBy?: string; postedAt?: string; editedAt?: string; pdf?: PostPdf; criteria?: Criterion[]; overview?: string; weight?: number };
+// % เดิมก่อนตั้งในโพสต์ได้: รอบ 1 = 20, รอบ 2 = 30, ส่งงานจริง = 50 · รอบอื่นไม่นับ
+export const DEFAULT_WEIGHT: Record<string, number> = { "review-1": 20, "review-2": 30, final: 50 };
+export const weightOf = (r: Pick<RoundDef, "id" | "weight">) => r.weight ?? DEFAULT_WEIGHT[r.id] ?? 0;
+export const weightTotal = (rounds: Pick<RoundDef, "id" | "weight">[]) => rounds.reduce((n, r) => n + weightOf(r), 0);
+// เกณฑ์ที่ใช้ตรวจโพสต์นี้
+export const criteriaOf = (r: Pick<RoundDef, "criteria"> | undefined, fallback: Criterion[]) => r?.criteria ?? fallback;
 export const BODY_MAX = 8000;
 // ภาพรวมโจทย์ (Markdown ในหลังบ้าน) ที่น้องอ่านบนหน้าโจทย์
 export const OVERVIEW_MAX = 20_000;

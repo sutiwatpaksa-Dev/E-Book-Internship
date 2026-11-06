@@ -1,7 +1,6 @@
 import { Clock } from "lucide-react";
 import Link from "next/link";
 import { cards, cardUrl, stepBySlug, stepUrl, type LearnCard } from "@/data/learn";
-import { AssignmentBox } from "./assignment-box";
 import { CardStatus } from "./card-done";
 
 // หัวการ์ด: อยู่ขั้นไหน › ช่วงไหน, เวลาอ่าน, และขั้นอื่นที่ใช้การ์ดนี้ด้วย
@@ -31,7 +30,6 @@ export function CardHeader({ card }: { card: LearnCard }) {
         {card.alsoIn && <span>ใช้ในขั้น: {[card.step, ...card.alsoIn].map((s) => stepBySlug(s).name).join(", ")}</span>}
         <CardStatus link={cardUrl(card.slug)} />
       </p>
-      <AssignmentBox card={card.slug} />
       {card.needs && (
         <p className="flex flex-wrap items-center gap-x-2">
           อ่านก่อน:

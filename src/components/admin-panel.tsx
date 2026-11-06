@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ClipboardList, MessageSquareHeart, Newspaper, FilePlus2, FileText, FolderGit2, GraduationCap, History, Inbox, Layers, LayoutDashboard, Megaphone, MessageCircle, NotebookPen, Users, type LucideIcon } from "lucide-react";
+import { ChevronDown, ClipboardList, MessageSquareHeart, Newspaper, FilePlus2, FolderGit2, GraduationCap, History, Inbox, Layers, LayoutDashboard, Megaphone, MessageCircle, NotebookPen, Users, type LucideIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { useAdmin } from "@/hooks/use-admin";
@@ -18,7 +18,6 @@ import { AdminFeed } from "./admin-feed";
 import { AdminAnnouncements } from "./admin-announcements";
 import { AdminAudit } from "./admin-audit";
 import { AdminBuiltInCards, AdminMentorCards, AdminNotes } from "./admin-content";
-import { AdminFiles } from "./admin-files";
 import { AdminCohorts } from "./admin-cohorts";
 import { AdminInternDetail } from "./admin-intern-detail";
 import { AdminOverview } from "./admin-overview";
@@ -34,7 +33,7 @@ import { ErrorText } from "./error-text";
 import { MobileDrawer } from "./mobile-drawer";
 import { Skeleton, SkeletonList } from "./skeleton";
 
-type TabId = "overview" | "feed" | "questions" | "board" | "submissions" | "requests" | "feedback" | "cards" | "notes" | "builtin" | "announcements" | "cohorts" | "users" | "files" | "audit";
+type TabId = "overview" | "feed" | "questions" | "board" | "submissions" | "requests" | "feedback" | "cards" | "notes" | "builtin" | "announcements" | "cohorts" | "users" | "audit";
 type Tab = { id: TabId; label: string; icon: LucideIcon };
 // เมนูแบ่ง 3 กลุ่มตามความถี่ที่ใช้: งานประจำวัน (เปิดทุกวัน) → เนื้อหา (เขียน/ปรับคู่มือ) → ระบบ (นานๆ ครั้ง)
 const GROUPS: { label: string; tabs: Tab[] }[] = [
@@ -64,7 +63,6 @@ const GROUPS: { label: string; tabs: Tab[] }[] = [
     tabs: [
       { id: "cohorts", label: "รุ่นฝึกงาน", icon: GraduationCap },
       { id: "users", label: "บัญชีผู้ใช้", icon: Users },
-      { id: "files", label: "โจทย์ PDF และเกณฑ์", icon: FileText },
       { id: "audit", label: "บันทึกการกระทำ", icon: History },
     ],
   },
@@ -75,6 +73,8 @@ const CONTENT_TABS: TabId[] = ["cards", "notes", "builtin", "announcements"];
 function pickTab(tab: string | null, note: string | null, thread: number | null): TabId {
   if (note) return "notes";
   if (tab === "content") return "cards";
+  // แท็บ "โจทย์ PDF และเกณฑ์" เลิกใช้ (6 พ.ย. 2569): PDF เกณฑ์ ภาพรวม ตั้งในโพสต์งานแทน ลิงก์เก่าพามาที่นี่
+  if (tab === "files") return "board";
   if (!tab && thread) return "questions";
   return TABS.some((t) => t.id === tab) ? (tab as TabId) : "overview";
 }
@@ -286,7 +286,7 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
           </div>
         )}
 
-        {(tab === "questions" || tab === "submissions" || (tab === "overview" && !view.intern)) && admin.cohorts.length > 0 && (
+        {(tab === "questions" || tab === "submissions" || tab === "board" || (tab === "overview" && !view.intern)) && admin.cohorts.length > 0 && (
           <CohortFilterBar cohorts={admin.cohorts} mine={mine} value={cohort} onChange={setCohort} />
         )}
         {tab === "overview" &&
@@ -298,7 +298,7 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
         {/* key: สั่งเปิดเรื่องใหม่จากข้างนอก ให้แชทเริ่มใหม่ที่เรื่องนั้น (ดู chatKey ข้างบน) */}
         {tab === "questions" && <ChatPanel key={chatKey} side="dev" titles={titles} initialId={view.thread ?? null} owners={owners} ready={!admin.loading && !!admin.me} onSelect={onSelectThread} />}
         {tab === "feed" && <AdminFeed admin={admin} />}
-        {tab === "board" && <AdminBoard admin={admin} nav={nav} />}
+        {tab === "board" && <AdminBoard admin={admin} nav={nav} cohort={cohort} mine={mine} />}
         {tab === "submissions" && <AdminSubmissions admin={admin} onChange={countSubs} inScope={inScope} />}
         {tab === "requests" && <AdminRequests admin={admin} nav={nav} />}
         {tab === "feedback" && <AdminRequests admin={admin} nav={nav} kind="feedback" />}
@@ -314,7 +314,6 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
         )}
         {tab === "cohorts" && <AdminCohorts admin={admin} nav={nav} cohortId={view.cohort ?? null} />}
         {tab === "users" && <AdminUsers admin={admin} nav={nav} />}
-        {tab === "files" && <AdminFiles admin={admin} />}
         {tab === "audit" && <AdminAudit />}
         {composeTo && <AdminSendMessage target={composeTo} users={admin.users} onClose={() => { setComposeTo(null); admin.reload(); }} />}
       </section>

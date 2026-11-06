@@ -1,4 +1,4 @@
-import { type AnyPgColumn, boolean, customType, date, index, integer, jsonb, pgTable, primaryKey, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { type AnyPgColumn, boolean, customType, date, index, integer, jsonb, pgTable, primaryKey, serial, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import type { CommentKind, CommentTemplate, Criterion, Scores } from "../../src/lib/rubric";
 import type { PostKind, Requirement } from "../../src/lib/post";
 import { DEFAULT_ROUNDS, type RoundDef, type TaskLink } from "../../src/lib/submission";
@@ -59,11 +59,33 @@ export const users = pgTable("users", {
   cohortId: integer("cohort_id").references((): AnyPgColumn => cohorts.id, { onDelete: "set null" }),
 });
 
+// สายงาน (IT, Content Creator, ...): แม่แบบที่รุ่นคัดลอกไปตอนสร้าง · แก้แม่แบบแล้วรุ่นเดิมไม่เปลี่ยน
+// template_version เพิ่มทุกครั้งที่บันทึกแม่แบบ รุ่นจำไว้ว่าเริ่มจากฉบับไหน (cohorts.track_template_version)
+export type TrackKpi = { work: number; attendance: number; engagement: number; passPercent: number };
+export type SubmitKind = "repo" | "link" | "file";
+export const tracks = pgTable("tracks", {
+  id: serial("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  name: text("name").notNull(),
+  // ขั้นของแผนที่การเรียน (slug เรียงตามลำดับ) · ล็อกชื่อขั้นเมื่อสายมีรุ่นแล้ว (บังคับที่ API)
+  steps: jsonb("steps").$type<string[]>().notNull().default([]),
+  submitKinds: jsonb("submit_kinds").$type<SubmitKind[]>().notNull().default(["link"]),
+  criteria: jsonb("criteria").$type<Criterion[]>().notNull().default([]),
+  kpi: jsonb("kpi").$type<TrackKpi>().notNull().default({ work: 70, attendance: 20, engagement: 10, passPercent: 60 }),
+  templateVersion: integer("template_version").notNull().default(1),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 // รุ่นฝึกงาน: ช่วงเวลาที่น้องกลุ่มหนึ่งฝึกพร้อมกัน ใช้กรองภาพรวม แชท และประกาศในหลังบ้าน
 // วันเริ่ม/จบเป็น date (ไม่มีเวลา) เพราะนับเป็นวันทำงาน · สถานะคิดจากวันที่ + ended_at ไม่เก็บซ้ำ
 export const cohorts = pgTable("cohorts", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
+  // 1 รุ่น = 1 สาย · รุ่นเก่าทั้งหมดเป็นสาย IT (migration 0023)
+  trackId: integer("track_id")
+    .notNull()
+    .references((): AnyPgColumn => tracks.id, { onDelete: "restrict" }),
+  trackTemplateVersion: integer("track_template_version").notNull().default(1),
   startsOn: date("starts_on").notNull(),
   endsOn: date("ends_on").notNull(),
   // พี่เลี้ยงกด "จบรุ่น" แล้ว: น้องยังอ่านคู่มือได้ แต่เปิดเรื่องถามใหม่ไม่ได้ · กดเปิดรุ่นกลับได้ (ล้างค่า)
@@ -101,13 +123,20 @@ export type AssignmentRubric = { rounds: RoundDef[]; criteria?: Criterion[]; tem
 
 // โจทย์ฝึกงาน (เช่น STARTER) · โครงงาน 10 วัน เกณฑ์ และ stack เหมือนกันทุกโจทย์ ต่างกันที่ระบบทำให้ใคร
 // เก็บใน DB ไม่ใช่ MDX เพราะ repo นี้เปิดสาธารณะ โจทย์ของรุ่นถัดไปต้องไม่หลุดก่อนรุ่นเริ่ม
-export const assignments = pgTable("assignments", {
+// โจทย์เป็นของรุ่นเดียว (migration 0023): แก้โจทย์รุ่นนี้ไม่กระทบรุ่นอื่น · slug ซ้ำได้ข้ามรุ่น (น้องเปิด /projects/starter ระบบหาจากรุ่นของน้อง)
+export const assignments = pgTable(
+  "assignments",
+  {
   id: serial("id").primaryKey(),
-  slug: text("slug").notNull().unique(),
+  cohortId: integer("cohort_id")
+    .notNull()
+    .references((): AnyPgColumn => cohorts.id, { onDelete: "restrict" }),
+  slug: text("slug").notNull(),
   name: text("name").notNull(),
   brief: text("brief").notNull().default(""),
   // แถวในตาราง files ที่เก็บ PDF ของโจทย์นี้ (STARTER ใช้ key เดิม "starter-requirement" ไฟล์บนเว็บจริงจึงไม่ต้องย้าย)
-  pdfKey: text("pdf_key").notNull().unique(),
+  // ไม่ unique: สำเนาของรุ่นใหม่ใช้ไฟล์เดิมร่วมกันจนกว่ารุ่นนั้นจะอัปโหลดไฟล์ของตัวเอง
+  pdfKey: text("pdf_key").notNull(),
   sections: jsonb("sections").$type<AssignmentSection[]>().notNull().default([]),
   rubric: jsonb("rubric").$type<AssignmentRubric>().notNull().default({ rounds: DEFAULT_ROUNDS }),
   // ภาพรวมโจทย์ใหญ่ (Markdown) แทนหน้า MDX ใน repo · ว่าง = ยังไม่ได้เขียน
@@ -115,7 +144,9 @@ export const assignments = pgTable("assignments", {
   // เก็บโจทย์แล้ว: ไม่ให้เลือกใช้กับรุ่นใหม่ แต่งานและคะแนนเดิมยังเปิดดูได้
   archivedAt: timestamp("archived_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+  },
+  (t) => [uniqueIndex("assignments_cohort_slug_uq").on(t.cohortId, t.slug)],
+);
 
 // โจทย์ของแต่ละรุ่น: รุ่นหนึ่งเพิ่มได้หลายชิ้นจนกว่าจะจบรุ่น · ลบโจทย์ที่ยังมีรุ่นใช้อยู่ไม่ได้ (restrict)
 export const cohortAssignments = pgTable(

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { submitSchema } from "../../server/validators/submission.validator";
-import { deployProblem, normalizeDeploy, normalizeRepo, refProblem, repoOf, repoProblem, DEFAULT_ROUNDS, hasRound, roundLabel, roundsProblem, takesDeploy, treeUrl, waitingOf } from "./submission";
+import { deployProblem, normalizeDeploy, normalizeRepo, refProblem, repoOf, repoProblem, DEFAULT_ROUNDS, hasRound, roundLabel, roundsProblem, takesDeploy, treeUrl, waitingOf, weightOf, weightTotal, criteriaOf } from "./submission";
 
 describe("ลิงก์ repo", () => {
   test("แบบที่คนคัดลอกมาจริง จัดเป็นแบบเดียว", () => {
@@ -59,8 +59,17 @@ describe("ลงทะเบียน repo วันที่ 1", () => {
     expect(v.ref).toBe("HEAD");
     expect(v.repoUrl).toBe("https://github.com/ton/starter");
   });
-  test("รอบตรวจยังต้องมี tag", () => {
-    expect(submitSchema.safeParse({ ...base, round: "review-1" }).success).toBe(false);
+  test("รอบตรวจไม่ต้องมี tag แล้ว (6 พ.ย. 2569) ว่าง = HEAD · ใส่มาต้องถูกรูปแบบ", () => {
+    expect(submitSchema.parse({ ...base, round: "review-1" }).ref).toBe("HEAD");
+    expect(submitSchema.parse({ ...base, round: "review-1", ref: "review-1" }).ref).toBe("review-1");
+    expect(submitSchema.safeParse({ ...base, round: "review-1", ref: "a b" }).success).toBe(false);
+  });
+  test("% คะแนนของโพสต์: ไม่ตั้ง = ค่าเดิม 20/30/50 · ตั้งแล้วใช้ค่าที่ตั้ง", () => {
+    expect(weightTotal(DEFAULT_ROUNDS)).toBe(100);
+    expect(weightOf({ id: "p1" })).toBe(0);
+    expect(weightOf({ id: "final", weight: 40 })).toBe(40);
+    expect(criteriaOf({ criteria: [] }, [{ id: "a", label: "A", max: 10 }])).toEqual([]);
+    expect(criteriaOf({}, [{ id: "a", label: "A", max: 10 }])).toHaveLength(1);
   });
   test("ลงทะเบียน repo ไม่นับเป็นรอตรวจ", () => {
     expect(waitingOf([{ id: 1, userId: 1, assignment: "starter", round: "start", reviewedAt: null }])).toEqual([]);

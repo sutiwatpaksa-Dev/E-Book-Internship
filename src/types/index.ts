@@ -89,9 +89,7 @@ export type FileInfo = { size: number; updatedAt: string };
 export type AssignmentSection = { key: string; label: string; page: number };
 export type Assignment = { slug: string; name: string; brief: string; overview: string; sections: AssignmentSection[]; rounds: RoundDef[] };
 // หลังบ้าน: + PDF ปัจจุบัน และรุ่นที่ใช้โจทย์นี้
-export type AdminAssignment = Assignment & { id: number; pdf: FileInfo | null; cohortIds: number[]; criteria: Criterion[]; templates: CommentTemplate[]; cards: { slug: string; note: string }[] };
-// กล่องโจทย์ในหัวการ์ด (GET /api/files/assignments/card/:slug)
-export type CardAssignment = { slug: string; name: string; brief: string; bound: boolean; note: string };
+export type AdminAssignment = Assignment & { id: number; pdf: FileInfo | null; cohortIds: number[]; criteria: Criterion[]; templates: CommentTemplate[] };
 export type AssignmentInput = Pick<Assignment, "name" | "brief" | "sections" | "rounds"> & { overview?: string; criteria?: Criterion[]; templates?: CommentTemplate[] };
 
 // เรื่องที่น้องคุยกับพี่เลี้ยง (รูปร่างตรงกับ server/routes/thread.routes.ts)
@@ -199,7 +197,7 @@ export type TaskComment = { id: number; kind: CommentKind; ref: string | null; b
 export type CommentSend = { kind?: CommentKind; ref?: string; body: string };
 
 // โพสต์งาน (ฟอร์มของพี่เลี้ยง) · day = วันทำงานที่ N ของรุ่น
-export type PostSend = { label: string; what: string; day: number; deploy: boolean; body: string; links: { label: string; url: string }[] };
+export type PostSend = { label: string; what: string; day: number; deploy: boolean; body: string; links: { label: string; url: string }[]; pdf?: "shared" | "own" | "none"; criteria?: Criterion[]; overview?: string; weight?: number };
 
 // โพสต์ในฟีด (รูปร่างตรงกับ server/services/post.service.ts) · กฎอยู่ใน src/lib/post.ts
 export type FeedPost = {

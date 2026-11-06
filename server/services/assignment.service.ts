@@ -1,25 +1,41 @@
 import type { AssignmentSection, Role } from "../db/schema";
 import { DEFAULT_CRITERIA } from "../../src/lib/rubric";
-import { cards } from "../../src/data/learn";
 import { DEFAULT_ASSIGNMENT, pickAssignment, visibleAssignments } from "../lib/assignment-access";
 import { userRepository } from "../repositories/user.repository";
 import { assignmentRepository } from "../repositories/assignment.repository";
 import { cohortRepository } from "../repositories/cohort.repository";
 import { fileRepository } from "../repositories/file.repository";
 import { submissionRepository } from "../repositories/submission.repository";
-import type { AssignmentCardsInput, AssignmentInput, PostInput } from "../validators/assignment.validator";
+import type { AssignmentInput, PostInput } from "../validators/assignment.validator";
 import { auditService } from "./audit.service";
 import { checkPdf } from "./file.service";
+import { weightOf, weightTotal, type RoundDef } from "../../src/lib/submission";
 
 type Viewer = { id: number; role: Role };
 
-// โจทย์ที่บัญชีนี้มีสิทธิ์ดู (ชื่อ slug ตามลำดับ) · น้องเห็นของรุ่นตัวเอง พี่เลี้ยงเห็นทั้งหมด
-async function visibleSlugs(user: Viewer) {
-  const all = await assignmentRepository.slugs();
+// โจทย์ที่บัญชีนี้มีสิทธิ์ดู · น้องเห็นของรุ่นตัวเอง พี่เลี้ยงเห็นทุก slug (สำเนาของรุ่นที่กำลังดู)
+async function scope(user: Viewer) {
+  const all = await assignmentRepository.refs();
   const cohortId = user.role === "intern" ? await assignmentRepository.cohortOf(user.id) : null;
-  const cohortSlugs = cohortId === null ? null : await assignmentRepository.slugsOfCohort(cohortId);
-  return { all, cohortSlugs };
+  const focus = user.role === "dev" ? await cohortRepository.focusId() : null;
+  return { all, cohortId, focus };
 }
+// โจทย์ 1 ชิ้นจาก slug ตามสิทธิ์ของบัญชีนี้ (ไม่มีสิทธิ์ = undefined เหมือนไม่มี)
+export async function assignmentFor(user: Viewer, slug: string) {
+  const { all, cohortId, focus } = await scope(user);
+  const ref = pickAssignment(user.role, cohortId, all, focus, slug);
+  return ref ? assignmentRepository.findById(ref.id) : undefined;
+}
+
+// โจทย์ที่จะแก้: ต้องมีจริง และรุ่นเจ้าของยังไม่จบ (รุ่นที่จบแล้วล็อกโจทย์ไว้ตามฉบับที่น้องใช้จริง)
+async function editable(id: number) {
+  const a = await assignmentRepository.findById(id);
+  if (!a) throw new Error("ASSIGNMENT_NOT_FOUND");
+  if ((await cohortRepository.findById(a.cohortId))?.endedAt) throw new Error("COHORT_LOCKED");
+  return a;
+}
+
+const postPdfKey = (assignmentId: number, roundId: string) => `post:${assignmentId}:${roundId}`;
 
 // เรียงรอบตามวัน (วันเท่ากันคงลำดับที่กรอก)
 const byDay = <T extends { day: number }>(rounds: T[]) => [...rounds].sort((a, b) => a.day - b.day);
@@ -30,47 +46,28 @@ export const pageOf = (sections: AssignmentSection[], key: string) => sections.f
 export const assignmentService = {
   // แผงโจทย์ในหน้าเว็บ: ชิ้นแรก = ชิ้นที่ควรเปิดก่อน (ใหม่สุดของรุ่น)
   async listFor(user: Viewer) {
-    const { all, cohortSlugs } = await visibleSlugs(user);
-    const order = visibleAssignments(user.role, cohortSlugs, all);
-    const first = pickAssignment(user.role, cohortSlugs, all);
-    const sorted = first ? [first, ...order.filter((s) => s !== first)] : order;
-    const rows = await assignmentRepository.findManyBySlug(sorted);
-    return sorted.flatMap((slug) => {
-      const a = rows.find((r) => r.slug === slug);
-      return a ? [{ slug: a.slug, name: a.name, brief: a.brief, overview: a.overview, sections: a.sections, rounds: a.rubric.rounds }] : [];
+    const { all, cohortId, focus } = await scope(user);
+    const order = visibleAssignments(user.role, cohortId, all, focus);
+    const first = pickAssignment(user.role, cohortId, all, focus);
+    const sorted = first ? [first, ...order.filter((a) => a.id !== first.id)] : order;
+    const rows = await assignmentRepository.findManyById(sorted.map((a) => a.id));
+    return sorted.flatMap((ref) => {
+      const a = rows.find((r) => r.id === ref.id);
+      return a ? [{ id: a.id, slug: a.slug, name: a.name, brief: a.brief, overview: a.overview, sections: a.sections, rounds: a.rubric.rounds }] : [];
     });
-  },
-
-  // กล่องโจทย์ในหัวการ์ด: โจทย์ที่บัญชีนี้ดูได้ (ชิ้นหลักก่อน) + โน้ตว่าการ์ดนี้ใช้ตอนไหนของโจทย์นั้น
-  // bound = พี่เลี้ยงผูกการ์ดนี้ไว้แล้ว · STARTER ที่ยังไม่มีใครผูก ใช้ข้อความ starter ใน learn.ts เป็นค่าสำรอง
-  async cardBox(user: Viewer, cardSlug: string) {
-    const rows = await this.listFor(user);
-    const found = await assignmentRepository.findManyBySlug(rows.map((r) => r.slug));
-    const notes = await assignmentRepository.cardNotes(cardSlug, found.map((a) => a.id));
-    const fallback = cards.find((c) => c.slug === cardSlug)?.starter ?? null;
-    return rows.map((r) => {
-      const id = found.find((a) => a.slug === r.slug)?.id;
-      const saved = id === undefined ? undefined : notes.get(id);
-      const useFallback = saved === undefined && r.slug === DEFAULT_ASSIGNMENT && fallback !== null;
-      return { slug: r.slug, name: r.name, brief: r.brief, bound: saved !== undefined || useFallback, note: saved ?? (useFallback ? fallback : "") };
-    });
-  },
-
-  // หลังบ้าน: ผูกการ์ดกับโจทย์ (แทนทั้งชุด) · บันทึกลงประวัติ
-  async setCards(devId: number, id: number, { cards: rows }: AssignmentCardsInput) {
-    const a = await assignmentRepository.findById(id);
-    if (!a) throw new Error("ASSIGNMENT_NOT_FOUND");
-    await assignmentRepository.replaceCards(id, rows);
-    await auditService.log(devId, "assignment.cards", a.name, String(rows.length));
   },
 
   // PDF ของโจทย์ที่ขอ (หรือชิ้นหลักของรุ่น) · ไม่มีสิทธิ์และไม่มีจริงตอบเหมือนกัน
-  async pdfFor(user: Viewer, requested?: string) {
-    const { all, cohortSlugs } = await visibleSlugs(user);
-    const slug = pickAssignment(user.role, cohortSlugs, all, requested);
-    if (!slug) throw new Error(requested ? "ASSIGNMENT_NOT_FOUND" : "NO_ASSIGNMENT");
-    const a = (await assignmentRepository.findBySlug(slug))!;
-    return { assignment: a, file: await fileRepository.find(a.pdfKey) };
+  async pdfFor(user: Viewer, requested?: string, roundId?: string) {
+    const { all, cohortId, focus } = await scope(user);
+    const ref = pickAssignment(user.role, cohortId, all, focus, requested);
+    if (!ref) throw new Error(requested ? "ASSIGNMENT_NOT_FOUND" : "NO_ASSIGNMENT");
+    const a = (await assignmentRepository.findById(ref.id))!;
+    // ?r=<โพสต์> = PDF ที่แนบกับโพสต์นั้น (ไม่แนบ = ไม่มีไฟล์ · ไม่ตั้ง = PDF ของกล่องงาน)
+    const round = roundId ? a.rubric.rounds.find((r) => r.id === roundId) : undefined;
+    if (roundId && !round) throw new Error("ASSIGNMENT_NOT_FOUND");
+    if (round?.pdf === "none") return { assignment: a, file: undefined };
+    return { assignment: a, file: await fileRepository.find(round?.pdf === "own" ? postPdfKey(a.id, round.id) : a.pdfKey) };
   },
 
   // หลังบ้าน: แยก rubric ออกเป็น rounds / criteria / templates (ไม่ตั้ง = รายการว่าง)
@@ -78,71 +75,83 @@ export const assignmentService = {
     return (await assignmentRepository.list()).map(({ rubric, ...a }) => ({ ...a, rounds: rubric.rounds, criteria: rubric.criteria ?? [], templates: rubric.templates ?? [] }));
   },
 
-  async create(devId: number, slug: string, { rounds, criteria, templates, overview, ...f }: AssignmentInput) {
-    if (await assignmentRepository.findBySlug(slug)) throw new Error("ASSIGNMENT_SLUG_TAKEN");
-    const a = await assignmentRepository.create({ ...f, overview: overview ?? "", rubric: { rounds: byDay(rounds), criteria: criteria ?? DEFAULT_CRITERIA, templates: templates ?? [] }, slug, pdfKey: `requirement:${slug}` });
-    await auditService.log(devId, "assignment.create", f.name, slug);
+  // โจทย์เป็นของรุ่นเดียว · slug ซ้ำได้ข้ามรุ่น แต่ไม่ซ้ำในรุ่นเดียวกัน · ไฟล์ PDF แยกตามรุ่น
+  async create(devId: number, cohortId: number, slug: string, { rounds, criteria, templates, overview, ...f }: AssignmentInput) {
+    const c = await cohortRepository.findById(cohortId);
+    if (!c) throw new Error("COHORT_NOT_FOUND");
+    if (c.endedAt) throw new Error("COHORT_LOCKED");
+    if (await assignmentRepository.findInCohort(cohortId, slug)) throw new Error("ASSIGNMENT_SLUG_TAKEN");
+    const a = await assignmentRepository.create({ ...f, cohortId, overview: overview ?? "", rubric: { rounds: byDay(rounds), criteria: criteria ?? DEFAULT_CRITERIA, templates: templates ?? [] }, slug, pdfKey: `requirement:${slug}:c${cohortId}` });
+    await auditService.log(devId, "assignment.create", f.name, `${slug} · ${c.name}`);
     return a;
   },
   async update(devId: number, id: number, { rounds, criteria, templates, overview, ...f }: AssignmentInput) {
-    const a = await assignmentRepository.findById(id);
-    if (!a) throw new Error("ASSIGNMENT_NOT_FOUND");
+    const a = await editable(id);
     // รอบที่มีคนส่งแล้วลบไม่ได้ (ประวัติต้องยังบอกชื่อรอบได้) · แก้ชื่อ วัน คำอธิบายได้เสมอ
     const used = await submissionRepository.roundsUsed(id);
     if (used.some((r) => r !== "start" && !rounds.some((x) => x.id === r))) throw new Error("ROUND_IN_USE");
     await assignmentRepository.update(id, { ...f, ...(overview !== undefined ? { overview } : {}), rubric: { ...a.rubric, rounds: byDay(rounds), ...(criteria ? { criteria } : {}), ...(templates ? { templates } : {}) } });
     await auditService.log(devId, "assignment.update", f.name, `${a.slug}${criteria ? " · เกณฑ์คะแนน" : ""}${templates ? " · template" : ""}${overview !== undefined && overview !== a.overview ? " · ภาพรวม" : ""}`);
   },
+  // % คะแนนของโพสต์: รวมทุกโพสต์ไม่เกิน 100 · ตรวจงานของกล่องนี้แล้วแก้ % ไม่ได้ (โพสต์ใหม่ที่ไม่นับคะแนนยังเพิ่มได้)
+  async checkWeights(a: { id: number; rubric: { rounds: RoundDef[] } }, next: RoundDef[], changed: { before: number; after: number }) {
+    if (changed.before !== changed.after && (await submissionRepository.anyReviewed(a.id))) throw new Error("WEIGHT_LOCKED");
+    if (weightTotal(next) > 100) throw new Error("WEIGHT_OVER");
+  },
   // ---- โพสต์งาน = เพิ่ม/แก้/ลบ 1 รอบของโจทย์ (ไม่ต้องส่งทั้งโจทย์ ลดโอกาสสองคนแก้ทับกัน) ----
   async addPost(devId: number, id: number, input: PostInput) {
-    const a = await assignmentRepository.findById(id);
-    if (!a) throw new Error("ASSIGNMENT_NOT_FOUND");
+    const a = await editable(id);
     const who = (await userRepository.findById(devId))?.username ?? "พี่เลี้ยง";
-    const round = { id: `p${Date.now().toString(36)}`, ...input, postedBy: who, postedAt: new Date().toISOString() };
+    const round: RoundDef = { id: `p${Date.now().toString(36)}`, ...input, postedBy: who, postedAt: new Date().toISOString() };
+    await this.checkWeights(a, [...a.rubric.rounds, round], { before: 0, after: weightOf(round) });
     await assignmentRepository.update(id, { name: a.name, brief: a.brief, sections: a.sections, rubric: { ...a.rubric, rounds: byDay([...a.rubric.rounds, round]) } });
     await auditService.log(devId, "assignment.update", a.name, `โพสต์งาน: ${input.label}`);
     return { id: round.id };
   },
   async updatePost(devId: number, id: number, roundId: string, input: PostInput) {
-    const a = await assignmentRepository.findById(id);
-    const old = a?.rubric.rounds.find((r) => r.id === roundId);
-    if (!a || !old) throw new Error("ASSIGNMENT_NOT_FOUND");
-    const next = { ...old, ...input, editedAt: new Date().toISOString() };
+    const a = await editable(id);
+    const old = a.rubric.rounds.find((r) => r.id === roundId);
+    if (!old) throw new Error("ASSIGNMENT_NOT_FOUND");
+    const next: RoundDef = { ...old, ...input, editedAt: new Date().toISOString() };
+    await this.checkWeights(a, a.rubric.rounds.map((r) => (r.id === roundId ? next : r)), { before: weightOf(old), after: weightOf(next) });
     await assignmentRepository.update(id, { name: a.name, brief: a.brief, sections: a.sections, rubric: { ...a.rubric, rounds: byDay(a.rubric.rounds.map((r) => (r.id === roundId ? next : r))) } });
     await auditService.log(devId, "assignment.update", a.name, `แก้โพสต์งาน: ${input.label}`);
   },
   async removePost(devId: number, id: number, roundId: string) {
-    const a = await assignmentRepository.findById(id);
-    const old = a?.rubric.rounds.find((r) => r.id === roundId);
-    if (!a || !old) throw new Error("ASSIGNMENT_NOT_FOUND");
+    const a = await editable(id);
+    const old = a.rubric.rounds.find((r) => r.id === roundId);
+    if (!old) throw new Error("ASSIGNMENT_NOT_FOUND");
     // มีน้องส่งงานรอบนี้แล้วลบไม่ได้ (ประวัติต้องยังบอกชื่อรอบได้)
     if ((await submissionRepository.roundsUsed(id)).includes(roundId)) throw new Error("ROUND_IN_USE");
     if (a.rubric.rounds.length <= 1) throw new Error("LAST_ROUND");
     await assignmentRepository.update(id, { name: a.name, brief: a.brief, sections: a.sections, rubric: { ...a.rubric, rounds: a.rubric.rounds.filter((r) => r.id !== roundId) } });
     await auditService.log(devId, "assignment.update", a.name, `ลบโพสต์งาน: ${old.label}`);
   },
-  async savePdf(devId: number, id: number, data: Buffer) {
-    const a = await assignmentRepository.findById(id);
-    if (!a) throw new Error("ASSIGNMENT_NOT_FOUND");
+  // PDF ของโพสต์เดียว (ต่างจาก PDF ของกล่องงาน) · อัปโหลดแล้วโพสต์นี้ใช้ไฟล์ของตัวเอง
+  async savePostPdf(devId: number, id: number, roundId: string, data: Buffer) {
+    const a = await editable(id);
+    const round = a.rubric.rounds.find((r) => r.id === roundId);
+    if (!round) throw new Error("ASSIGNMENT_NOT_FOUND");
     checkPdf(data);
     const updatedAt = new Date();
-    await fileRepository.upsert({ key: a.pdfKey, data, contentType: "application/pdf", size: data.length, updatedBy: devId, updatedAt });
+    await fileRepository.upsert({ key: postPdfKey(a.id, roundId), data, contentType: "application/pdf", size: data.length, updatedBy: devId, updatedAt });
+    if (round.pdf !== "own") await assignmentRepository.update(id, { name: a.name, brief: a.brief, sections: a.sections, rubric: { ...a.rubric, rounds: a.rubric.rounds.map((r) => (r.id === roundId ? { ...r, pdf: "own" as const } : r)) } });
+    await auditService.log(devId, "assignment.pdf", a.name, `${round.label} · ${Math.round(data.length / 1024)} KB`);
+    return { size: data.length, updatedAt };
+  },
+  async savePdf(devId: number, id: number, data: Buffer) {
+    const a = await editable(id);
+    checkPdf(data);
+    const updatedAt = new Date();
+    // สำเนาที่ยังใช้ไฟล์ร่วมกับรุ่นอื่น: อัปโหลดแล้วได้ไฟล์ของตัวเอง (ไม่ทับไฟล์ของรุ่นอื่น)
+    let key = a.pdfKey;
+    if (await assignmentRepository.pdfShared(a.pdfKey, a.id)) {
+      key = `requirement:${a.slug}:c${a.cohortId}`;
+      await assignmentRepository.setPdfKey(a.id, key);
+    }
+    await fileRepository.upsert({ key, data, contentType: "application/pdf", size: data.length, updatedBy: devId, updatedAt });
     await auditService.log(devId, "assignment.pdf", a.name, `${Math.round(data.length / 1024)} KB`);
     return { size: data.length, updatedAt };
   },
 
-  // โจทย์ของรุ่น: เพิ่มหรือเอาออกได้จนกว่าจะจบรุ่น (จบแล้วต้องเปิดรุ่นกลับก่อน กันแก้ประวัติของรุ่นที่ปิดไปแล้ว)
-  async setForCohort(devId: number, cohortId: number, ids: number[]) {
-    const c = await cohortRepository.findById(cohortId);
-    if (!c) throw new Error("COHORT_NOT_FOUND");
-    if (c.endedAt) throw new Error("COHORT_LOCKED");
-    const unique = [...new Set(ids)];
-    const known = new Set((await assignmentRepository.list()).map((a) => a.id));
-    if (unique.some((id) => !known.has(id))) throw new Error("ASSIGNMENT_NOT_FOUND");
-    const before = new Set(await assignmentRepository.idsOfCohort(cohortId));
-    await assignmentRepository.setForCohort(cohortId, unique);
-    const added = unique.filter((id) => !before.has(id)).length;
-    const removed = [...before].filter((id) => !unique.includes(id)).length;
-    await auditService.log(devId, "cohort.assignments", c.name, `เพิ่ม ${added} · เอาออก ${removed} · รวม ${unique.length}`);
-  },
 };

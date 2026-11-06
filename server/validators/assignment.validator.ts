@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { cards } from "../../src/data/learn";
 import { COMMENT_KINDS, criteriaProblem, templatesProblem } from "../../src/lib/rubric";
 import { BODY_MAX, LINKS_MAX, linksProblem, OVERVIEW_MAX, roundsProblem } from "../../src/lib/submission";
 
@@ -57,11 +56,11 @@ export const assignmentSchema = z.object({
 });
 
 // slug อยู่ใน URL ของ PDF และเปลี่ยนไม่ได้หลังสร้าง (ลิงก์ที่ส่งไปแล้วต้องไม่พัง)
-export const newAssignmentSchema = assignmentSchema.extend({ slug: z.string().regex(/^[a-z0-9-]{2,40}$/) });
+// โจทย์เป็นของรุ่นเดียว (0023) จึงต้องบอกรุ่นตอนสร้าง
+export const newAssignmentSchema = assignmentSchema.extend({ slug: z.string().regex(/^[a-z0-9-]{2,40}$/), cohortId: z.number().int().positive() });
 
 export type AssignmentInput = z.infer<typeof assignmentSchema>;
 
-export const cohortAssignmentsSchema = z.object({ assignmentIds: z.array(z.number().int().positive()).max(20) });
 
 // โพสต์งาน 1 ชิ้น = 1 รอบของโจทย์ · id/ผู้โพสต์/เวลา server เป็นคนตั้ง
 export const postSchema = z
@@ -78,21 +77,19 @@ export const postSchema = z
         const problem = linksProblem(l);
         if (problem) ctx.addIssue({ code: "custom", message: problem });
       }),
+    // แนบกับโพสต์ (6 พ.ย. 2569) · ไม่ส่ง = ใช้ของกล่องงาน (ดู RoundDef ใน src/lib/submission.ts)
+    pdf: z.enum(["shared", "own", "none"]).optional(),
+    // [] = ไม่ให้คะแนน (เช็กแค่ส่งแล้ว) · ส่งมาต้องผ่านกฎเดียวกับเกณฑ์ของโจทย์
+    criteria: z
+      .array(criterion)
+      .max(10)
+      .superRefine((c, ctx) => {
+        const problem = c.length ? criteriaProblem(c) : null;
+        if (problem) ctx.addIssue({ code: "custom", message: problem });
+      })
+      .optional(),
+    overview: z.string().max(OVERVIEW_MAX, { error: `ภาพรวมไม่เกิน ${OVERVIEW_MAX.toLocaleString("en-US")} ตัวอักษร` }).optional(),
+    weight: z.number({ error: "% คะแนนต้องเป็นตัวเลข" }).int({ error: "% คะแนนต้องเป็นจำนวนเต็ม" }).min(0, { error: "% คะแนนต้องไม่ติดลบ" }).max(100, { error: "% คะแนนไม่เกิน 100" }).optional(),
   });
 export type PostInput = z.infer<typeof postSchema>;
 
-// การ์ดที่โจทย์ใช้: ส่งมาทั้งรายการ (แทนของเดิมทั้งชุด) · slug ต้องเป็นการ์ดที่มีจริง ไม่ซ้ำ
-const CARD_SLUGS = new Set(cards.map((c) => c.slug));
-export const NOTE_MAX = 300;
-export const assignmentCardsSchema = z.object({
-  cards: z
-    .array(
-      z.object({
-        slug: z.string().refine((s) => CARD_SLUGS.has(s), "ไม่รู้จักการ์ดนี้"),
-        note: z.string().trim().max(NOTE_MAX, `โน้ตไม่เกิน ${NOTE_MAX} ตัวอักษร`),
-      }),
-    )
-    .max(200)
-    .refine((list) => new Set(list.map((c) => c.slug)).size === list.length, "มีการ์ดซ้ำในรายการ"),
-});
-export type AssignmentCardsInput = z.infer<typeof assignmentCardsSchema>;

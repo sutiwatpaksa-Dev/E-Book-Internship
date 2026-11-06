@@ -1,6 +1,6 @@
-import { and, asc, count, desc, eq, inArray, isNotNull } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, isNotNull, isNull, lte } from "drizzle-orm";
 import { db } from "../db/client";
-import { cohortMentors, cohorts, users } from "../db/schema";
+import { cohortMentors, cohorts, tracks, users } from "../db/schema";
 
 type NewCohort = typeof cohorts.$inferInsert;
 export type CohortFields = Pick<NewCohort, "name" | "startsOn" | "endsOn">;
@@ -31,9 +31,20 @@ export const cohortRepository = {
     const [c] = await db.select().from(cohorts).where(eq(cohorts.id, id));
     return c;
   },
+  // รุ่นใหม่อยู่สาย IT ไปก่อน (ตอนนี้มีสายเดียว เลือกสายตอนสร้างรุ่นมาในเฟส 2) และจำฉบับแม่แบบที่ใช้
   async create(values: CohortFields) {
-    const [c] = await db.insert(cohorts).values(values).returning({ id: cohorts.id });
+    const [t] = await db.select({ id: tracks.id, v: tracks.templateVersion }).from(tracks).where(eq(tracks.slug, "it"));
+    if (!t) throw new Error("TRACK_NOT_FOUND");
+    const [c] = await db.insert(cohorts).values({ ...values, trackId: t.id, trackTemplateVersion: t.v }).returning({ id: cohorts.id });
     return c;
+  },
+  // รุ่นที่พี่เลี้ยงกำลังดูโดยปริยาย: รุ่นที่เริ่มแล้วและยังไม่จบ ล่าสุดก่อน · ไม่มีก็รุ่นที่ยังไม่จบล่าสุด · ไม่มีเลย = null
+  async focusId() {
+    const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Bangkok" });
+    const [running] = await db.select({ id: cohorts.id }).from(cohorts).where(and(isNull(cohorts.endedAt), lte(cohorts.startsOn, today))).orderBy(desc(cohorts.startsOn), desc(cohorts.id)).limit(1);
+    if (running) return running.id;
+    const [open] = await db.select({ id: cohorts.id }).from(cohorts).where(isNull(cohorts.endedAt)).orderBy(desc(cohorts.startsOn), desc(cohorts.id)).limit(1);
+    return open?.id ?? null;
   },
   async findByInviteHash(hash: string) {
     const [c] = await db.select().from(cohorts).where(eq(cohorts.inviteHash, hash));
