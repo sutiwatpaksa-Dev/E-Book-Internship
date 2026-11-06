@@ -317,6 +317,9 @@ function MyTasks({ work }: { work: Work }) {
   const repo = data?.items[0]?.repoUrl ?? null;
   const deploy = data?.items.find((s) => s.deployUrl)?.deployUrl ?? null;
   const dated = plan.some((p) => p.dueOn);
+  // ส่งงาน = ไปหน้างานรอบถัดไปที่ต้องทำ (กล่องส่งงานอยู่ในหน้านั้น) · ยังไม่มี repo = หน้าลงทะเบียน repo เดิม
+  const toSend = plan.find((p) => p.state === "revise" || p.state === "late" || p.state === "todo");
+  const sendHref = repo && toSend ? `/work/${toSend.assignment}/${toSend.round.id}` : SUBMIT_LINK;
 
   return (
     <section aria-labelledby="tasks-title" className={`${box} flex flex-col gap-4 lg:col-span-8 lg:self-start`}>
@@ -328,8 +331,8 @@ function MyTasks({ work }: { work: Work }) {
           กระดานงาน
         </Link>
         {!data?.locked && (
-          <Link href={SUBMIT_LINK} className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-fd-primary px-4 text-sm font-semibold text-fd-primary-foreground hover:brightness-110">
-            {repo ? "ส่งงาน / ดูผลตรวจ" : "ส่งลิงก์ repo"} <ArrowRight className="size-4" />
+          <Link href={sendHref} className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-fd-primary px-4 text-sm font-semibold text-fd-primary-foreground hover:brightness-110">
+            {!repo ? "ส่งลิงก์ repo" : toSend ? `ส่งงาน: ${toSend.round.label}` : "ดูผลตรวจ"} <ArrowRight className="size-4" />
           </Link>
         )}
       </div>

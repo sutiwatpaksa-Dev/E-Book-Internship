@@ -70,8 +70,8 @@ export const submissionService = {
     await submissionRepository.review(id, { verdict: input.verdict, review: input.review || null, reviewedBy: devId, reviewedAt: new Date(), scores });
     const who = (await userRepository.findById(s.userId))?.username ?? `#${s.userId}`;
     const label = roundLabel(s.round, a?.rubric.rounds ?? []);
-    await auditService.log(devId, "submission.review", who, `${label} ${s.ref} · ${VERDICT_LABEL[input.verdict]}${scores ? ` · ${scores.total}/${scores.max}` : ""}`);
-    await notificationService.toUser(s.userId, { kind: "submission_review", title: `ผล${label} (${s.ref}): ${VERDICT_LABEL[input.verdict]}`, link: INTERN_LINK });
+    await auditService.log(devId, "submission.review", who, `${label}${s.ref === START_REF ? "" : ` ${s.ref}`} · ${VERDICT_LABEL[input.verdict]}${scores ? ` · ${scores.total}/${scores.max}` : ""}`);
+    await notificationService.toUser(s.userId, { kind: "submission_review", title: `ผล${label}: ${VERDICT_LABEL[input.verdict]}`, link: a ? `/work/${a.slug}/${s.round}` : INTERN_LINK });
   },
 
   // ---- ความเห็นใต้งาน (เห็นเฉพาะน้องเจ้าของงานกับพี่เลี้ยง) ----

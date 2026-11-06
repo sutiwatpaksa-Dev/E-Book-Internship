@@ -1,24 +1,24 @@
 "use client";
 
-import { ArrowLeft, ExternalLink, FileText, GitCommitHorizontal, Link2, Send } from "lucide-react";
+import { ArrowLeft, ExternalLink, FileText, GitCommitHorizontal, Link2 } from "lucide-react";
 import { requirementUrl } from "@/api/files.api";
 import Link from "next/link";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { submissionsApi } from "@/api/submissions.api";
 import { useMyWork } from "@/hooks/use-my-work";
 import { thaiDayMonth } from "@/lib/cohort";
 import { percentOf } from "@/lib/rubric";
-import { commitsUrl, treeUrl, VERDICT_LABEL } from "@/lib/submission";
+import { commitsUrl, START_REF, treeUrl, VERDICT_LABEL } from "@/lib/submission";
 import { timeAgo } from "@/lib/thread-labels";
 import { dueLabel } from "@/lib/work-plan";
 import { ErrorText } from "./error-text";
 import { MarkdownBody } from "./markdown-body";
 import { VerdictBadge, WorkBadge } from "./status-badge";
+import { PostSubmitBox } from "./post-submit-box";
 import { TaskThread } from "./task-thread";
 import { thDateTime } from "@/lib/date-format";
 
 const fmt = thDateTime;
-const SUBMIT_LINK = "/starter/submission#ส่งงานของคุณ";
 
 // หน้างาน 1 ชิ้น (โจทย์ + รอบ) แบบ timeline: กำหนดส่ง → ที่ส่งไปทุกครั้ง → ผลตรวจและคะแนน → ความเห็น
 // ความเห็นเห็นได้เฉพาะเรากับพี่เลี้ยง
@@ -31,9 +31,14 @@ export function TaskPage({ assignment, round }: { assignment: string; round: str
   // ส่งรอบเดิมซ้ำได้ แสดงเก่า→ใหม่ให้อ่านเป็นเรื่องเล่า
   const subs = (work.data?.items ?? []).filter((s) => s.assignment === assignment && s.round === round).reverse();
   const repo = work.data?.items.find((s) => s.assignment === assignment)?.repoUrl ?? null;
+  const lastDeploy = subs.at(-1)?.deployUrl ?? "";
+  // ครั้งล่าสุดยังไม่ได้ตรวจ = รอตรวจ (ส่งใหม่แทนได้ ซ่อนฟอร์มไว้ก่อนกันกดส่งซ้ำโดยไม่ตั้งใจ)
+  const waitingReview = subs.length > 0 && !subs.at(-1)!.reviewedAt;
+  const [resendOpen, setResendOpen] = useState(false);
+  const sent = () => (setResendOpen(false), work.reload());
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-8 sm:px-6 sm:py-10">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-5 px-4 py-8 sm:px-6 sm:py-10">
       <Link href="/work" className="inline-flex min-h-11 w-fit items-center gap-1.5 text-sm font-medium text-fd-primary hover:underline">
         <ArrowLeft className="size-4" /> กระดานงาน
       </Link>
@@ -59,120 +64,139 @@ export function TaskPage({ assignment, round }: { assignment: string; round: str
               {item.dueOn ? `กำหนดส่ง ${thaiDayMonth(item.dueOn)}` : `กำหนดส่ง วันที่ ${item.round.day} ของรุ่น`}
               {dueLabel(item.daysLeft) && (item.state === "todo" || item.state === "revise") && item.daysLeft! >= 0 && <span className="text-fd-muted-foreground"> · {dueLabel(item.daysLeft)}</span>}
             </p>
-            {!work.data?.locked && (
-              <Link href={SUBMIT_LINK} className="inline-flex min-h-11 w-fit items-center gap-1.5 rounded-xl bg-fd-primary px-4 text-sm font-semibold text-fd-primary-foreground hover:brightness-110">
-                <Send className="size-4" /> {subs.length ? "ส่งงานอีกครั้ง" : "ส่งงาน"}
-              </Link>
-            )}
           </header>
 
-          {(!!item.round.body || !!item.round.links?.length || item.round.pdf !== "none" || !!item.round.overview?.trim()) && (
-            <section aria-labelledby="brief-title" className="flex flex-col gap-3 rounded-2xl border border-fd-border bg-fd-card p-4 sm:p-5">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 id="brief-title" className="text-lg font-bold">
-                  คำสั่งงาน
-                </h2>
-                {item.round.postedBy && (
-                  <span className="text-xs text-fd-muted-foreground">
-                    {item.round.postedBy} โพสต์{item.round.postedAt ? ` ${timeAgo(item.round.postedAt)}` : ""}
-                    {item.round.editedAt ? " · แก้ไขแล้ว" : ""}
-                  </span>
-                )}
-              </div>
-              {item.round.body && <MarkdownBody md={item.round.body} className="text-sm" />}
-              {item.round.pdf !== "none" && (
-                <a href={`${requirementUrl(assignment)}&r=${encodeURIComponent(item.round.id)}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 w-fit items-center gap-1.5 rounded-lg border border-fd-border px-3 text-sm text-fd-primary hover:bg-fd-accent">
-                  <FileText className="size-4" /> เปิด PDF ของงานนี้
-                </a>
+          <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
+            {/* กล่องส่งงาน: จอใหญ่อยู่ขวาติดตามตอนเลื่อน · มือถืออยู่ก่อนเนื้อหา กดส่งได้โดยไม่ต้องเลื่อนผ่านคำสั่งยาว */}
+            <aside className="flex flex-col gap-3 lg:sticky lg:top-20 lg:order-2">
+              {work.data?.locked ? (
+                <p className="rounded-2xl border border-fd-border bg-fd-card p-4 text-sm">รุ่นของคุณจบแล้ว ส่งงานเพิ่มไม่ได้ ประวัติการส่งยังดูได้ตามเดิม</p>
+              ) : waitingReview ? (
+                <div className="flex flex-col gap-2 rounded-2xl border border-fd-border bg-fd-card p-4 text-sm">
+                  <p className="font-semibold text-sky-800 dark:text-sky-300">ส่งแล้ว รอพี่เลี้ยงตรวจ</p>
+                  <p className="text-fd-muted-foreground">ผลตรวจจะขึ้นในหน้านี้และที่กระดิ่ง ลืมอะไรส่งใหม่แทนได้</p>
+                  <button type="button" onClick={() => setResendOpen(true)} className="min-h-11 w-fit rounded-xl border border-fd-border px-4 font-medium hover:bg-fd-accent" hidden={resendOpen}>
+                    ส่งใหม่แทน
+                  </button>
+                  {resendOpen && <PostSubmitBox assignment={assignment} round={item.round} lastRepo={repo ?? ""} lastDeploy={lastDeploy} resend onSent={sent} />}
+                </div>
+              ) : item.state === "pass" ? (
+                <p className="rounded-2xl border border-fd-border bg-fd-card p-4 text-sm font-semibold text-green-800 dark:text-green-300">ผ่านรอบนี้แล้ว</p>
+              ) : (
+                <PostSubmitBox assignment={assignment} round={item.round} lastRepo={repo ?? ""} lastDeploy={lastDeploy} resend={subs.length > 0} onSent={sent} />
               )}
-              {item.round.overview?.trim() && (
-                <details className="rounded-lg border border-fd-border p-3">
-                  <summary className="min-h-11 cursor-pointer content-center text-sm font-semibold text-fd-primary">ภาพรวม</summary>
-                  <MarkdownBody md={item.round.overview} className="text-sm" />
-                </details>
-              )}
-              {item.round.links && item.round.links.length > 0 && (
-                <ul className="flex flex-wrap gap-2">
-                  {item.round.links.map((l) => (
-                    <li key={l.url}>
-                      <a href={l.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-fd-border px-3 text-sm text-fd-primary hover:bg-fd-accent">
-                        <Link2 className="size-4" /> {l.label}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          )}
+            </aside>
+            <div className="flex min-w-0 flex-col gap-5 lg:order-1">
 
-          <section aria-labelledby="timeline-title" className="flex flex-col gap-3">
-            <h2 id="timeline-title" className="text-lg font-bold">
-              ที่ส่งไปแล้ว
-            </h2>
-            {subs.length === 0 ? (
-              <p className="text-fd-muted-foreground">ยังไม่ได้ส่งงานรอบนี้ push โค้ดขึ้น GitHub แล้วกด "ส่งงาน" ด้านบน</p>
-            ) : (
-              <ol className="relative flex flex-col gap-4 ps-6 before:absolute before:start-[7px] before:top-2 before:bottom-2 before:w-0.5 before:bg-fd-border">
-                {subs.map((s) => (
-                  <li key={s.id} className="relative flex flex-col gap-2 rounded-xl border border-fd-border bg-fd-card p-4 text-sm">
-                    <span aria-hidden className="absolute -start-[22px] top-5 size-3.5 rounded-full border-2 border-fd-primary bg-fd-card" />
-                    <div className="flex flex-wrap items-center gap-2">
-                      <a className="inline-flex items-center gap-1 font-mono font-semibold text-fd-primary underline" href={treeUrl(s.repoUrl, s.ref)} target="_blank" rel="noopener noreferrer">
-                        <GitCommitHorizontal className="size-4" /> {s.ref} <ExternalLink className="size-3" />
-                      </a>
-                      <span className="text-xs text-fd-muted-foreground">ส่ง {fmt(s.createdAt)}</span>
-                      <span className="ms-auto">
-                        <VerdictBadge verdict={s.verdict} />
+              {(!!item.round.body || !!item.round.links?.length || item.round.pdf !== "none" || !!item.round.overview?.trim()) && (
+                <section aria-labelledby="brief-title" className="flex flex-col gap-3 rounded-2xl border border-fd-border bg-fd-card p-4 sm:p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h2 id="brief-title" className="text-lg font-bold">
+                      คำสั่งงาน
+                    </h2>
+                    {item.round.postedBy && (
+                      <span className="text-xs text-fd-muted-foreground">
+                        {item.round.postedBy} โพสต์{item.round.postedAt ? ` ${timeAgo(item.round.postedAt)}` : ""}
+                        {item.round.editedAt ? " · แก้ไขแล้ว" : ""}
                       </span>
-                    </div>
-                    {s.deployUrl && (
-                      <a className="break-all text-fd-primary underline" href={s.deployUrl} target="_blank" rel="noopener noreferrer">
-                        เว็บที่ deploy: {s.deployUrl.replace("https://", "")}
-                      </a>
                     )}
-                    {s.note && <p className="whitespace-pre-wrap">ข้อความของฉัน: {s.note}</p>}
-                    {s.reviewedAt && (
-                      <div className="flex flex-col gap-2 rounded-lg bg-fd-muted px-3 py-2">
-                        <p className="whitespace-pre-wrap">
-                          <span className="font-semibold">{s.reviewer ?? "พี่เลี้ยง"}:</span> {s.review || VERDICT_LABEL[s.verdict!]} <span className="text-xs text-fd-muted-foreground">· {fmt(s.reviewedAt)}</span>
-                        </p>
-                        {s.scores && (
-                          <div className="flex flex-col gap-1">
-                            <p className="font-semibold">
-                              คะแนน {s.scores.total}/{s.scores.max} <span className="font-normal text-fd-muted-foreground">({percentOf(s.scores)}%)</span>
+                  </div>
+                  {item.round.body && <MarkdownBody md={item.round.body} className="text-sm" />}
+                  {item.round.pdf !== "none" && (
+                    <a href={`${requirementUrl(assignment)}&r=${encodeURIComponent(item.round.id)}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 w-fit items-center gap-1.5 rounded-lg border border-fd-border px-3 text-sm text-fd-primary hover:bg-fd-accent">
+                      <FileText className="size-4" /> เปิด PDF ของงานนี้
+                    </a>
+                  )}
+                  {item.round.overview?.trim() && (
+                    <details className="rounded-lg border border-fd-border p-3">
+                      <summary className="min-h-11 cursor-pointer content-center text-sm font-semibold text-fd-primary">ภาพรวม</summary>
+                      <MarkdownBody md={item.round.overview} className="text-sm" />
+                    </details>
+                  )}
+                  {item.round.links && item.round.links.length > 0 && (
+                    <ul className="flex flex-wrap gap-2">
+                      {item.round.links.map((l) => (
+                        <li key={l.url}>
+                          <a href={l.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-fd-border px-3 text-sm text-fd-primary hover:bg-fd-accent">
+                            <Link2 className="size-4" /> {l.label}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+              )}
+
+              <section aria-labelledby="timeline-title" className="flex flex-col gap-3">
+                <h2 id="timeline-title" className="text-lg font-bold">
+                  ที่ส่งไปแล้ว
+                </h2>
+                {subs.length === 0 ? (
+                  <p className="text-fd-muted-foreground">ยังไม่ได้ส่งงานรอบนี้ push โค้ดขึ้น GitHub แล้วกด "ส่งงาน" ในกล่องส่งงาน</p>
+                ) : (
+                  <ol className="relative flex flex-col gap-4 ps-6 before:absolute before:start-[7px] before:top-2 before:bottom-2 before:w-0.5 before:bg-fd-border">
+                    {subs.map((s) => (
+                      <li key={s.id} className="relative flex flex-col gap-2 rounded-xl border border-fd-border bg-fd-card p-4 text-sm">
+                        <span aria-hidden className="absolute -start-[22px] top-5 size-3.5 rounded-full border-2 border-fd-primary bg-fd-card" />
+                        <div className="flex flex-wrap items-center gap-2">
+                          <a className="inline-flex items-center gap-1 font-mono font-semibold text-fd-primary underline" href={treeUrl(s.repoUrl, s.ref)} target="_blank" rel="noopener noreferrer">
+                            <GitCommitHorizontal className="size-4" /> {s.ref === START_REF ? "โค้ดล่าสุดใน repo" : s.ref} <ExternalLink className="size-3" />
+                          </a>
+                          <span className="text-xs text-fd-muted-foreground">ส่ง {fmt(s.createdAt)}</span>
+                          <span className="ms-auto">
+                            <VerdictBadge verdict={s.verdict} />
+                          </span>
+                        </div>
+                        {s.deployUrl && (
+                          <a className="break-all text-fd-primary underline" href={s.deployUrl} target="_blank" rel="noopener noreferrer">
+                            เว็บที่ deploy: {s.deployUrl.replace("https://", "")}
+                          </a>
+                        )}
+                        {s.note && <p className="whitespace-pre-wrap">ข้อความของฉัน: {s.note}</p>}
+                        {s.reviewedAt && (
+                          <div className="flex flex-col gap-2 rounded-lg bg-fd-muted px-3 py-2">
+                            <p className="whitespace-pre-wrap">
+                              <span className="font-semibold">{s.reviewer ?? "พี่เลี้ยง"}:</span> {s.review || VERDICT_LABEL[s.verdict!]} <span className="text-xs text-fd-muted-foreground">· {fmt(s.reviewedAt)}</span>
                             </p>
-                            <ul className="grid gap-x-4 gap-y-0.5 sm:grid-cols-2">
-                              {s.scores.items.map((i) => (
-                                <li key={i.id} className="flex justify-between gap-2">
-                                  <span>{i.label}</span>
-                                  <span className="tabular-nums text-fd-muted-foreground">
-                                    {i.score}/{i.max}
-                                  </span>
-                                </li>
-                              ))}
-                            </ul>
+                            {s.scores && (
+                              <div className="flex flex-col gap-1">
+                                <p className="font-semibold">
+                                  คะแนน {s.scores.total}/{s.scores.max} <span className="font-normal text-fd-muted-foreground">({percentOf(s.scores)}%)</span>
+                                </p>
+                                <ul className="grid gap-x-4 gap-y-0.5 sm:grid-cols-2">
+                                  {s.scores.items.map((i) => (
+                                    <li key={i.id} className="flex justify-between gap-2">
+                                      <span>{i.label}</span>
+                                      <span className="tabular-nums text-fd-muted-foreground">
+                                        {i.score}/{i.max}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
                           </div>
                         )}
-                      </div>
-                    )}
-                  </li>
-                ))}
-              </ol>
-            )}
-            {repo && (
-              <a className="inline-flex min-h-11 w-fit items-center gap-1 text-sm text-fd-primary underline" href={commitsUrl(repo)} target="_blank" rel="noopener noreferrer">
-                <GitCommitHorizontal className="size-4" /> ดู commit ทั้งหมดบน GitHub
-              </a>
-            )}
-          </section>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+                {repo && (
+                  <a className="inline-flex min-h-11 w-fit items-center gap-1 text-sm text-fd-primary underline" href={commitsUrl(repo)} target="_blank" rel="noopener noreferrer">
+                    <GitCommitHorizontal className="size-4" /> ดู commit ทั้งหมดบน GitHub
+                  </a>
+                )}
+              </section>
 
-          <section aria-labelledby="talk-title" className="flex flex-col gap-3">
-            <h2 id="talk-title" className="text-lg font-bold">
-              ความเห็น
-            </h2>
-            <p className="text-sm text-fd-muted-foreground">เห็นแค่คุณกับพี่เลี้ยง เขียนถามหรือเล่าความคืบหน้าของงานนี้ได้ เรื่องนอกงานใช้ &quot;ถามพี่เลี้ยง&quot;</p>
-            <TaskThread load={load} send={send} />
-          </section>
+              <section aria-labelledby="talk-title" className="flex flex-col gap-3">
+                <h2 id="talk-title" className="text-lg font-bold">
+                  ความเห็น
+                </h2>
+                <p className="text-sm text-fd-muted-foreground">เห็นแค่คุณกับพี่เลี้ยง เขียนถามหรือเล่าความคืบหน้าของงานนี้ได้ เรื่องนอกงานใช้ &quot;ถามพี่เลี้ยง&quot;</p>
+                <TaskThread load={load} send={send} />
+              </section>
+            </div>
+          </div>
         </>
       )}
     </div>
