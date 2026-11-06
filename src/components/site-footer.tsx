@@ -15,7 +15,7 @@ export function SiteFooter({ version }: { version: string }) {
             <span className="rounded-lg bg-white p-1">
               <Image src="/brand/mark.png" alt="" width={24} height={24} className="size-6 object-contain" />
             </span>
-            <span className="font-bold text-white">คู่มือฝึกงาน Blicktech</span>
+            <span className="font-bold text-white">ระบบฝึกงาน Blicktech</span>
           </div>
           <nav aria-label="ลิงก์ท้ายเว็บ" className="flex flex-col gap-1 text-[13px]">
             <Link href="/changelog" className="flex min-h-11 items-center hover:text-white hover:underline">

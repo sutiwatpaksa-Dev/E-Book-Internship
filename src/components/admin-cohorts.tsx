@@ -350,7 +350,7 @@ function Signup({ admin, cohort: c }: { admin: AdminState; cohort: Cohort }) {
   }
   async function copy() {
     if (!link || !code) return;
-    await navigator.clipboard.writeText(`สมัครคู่มือฝึกงาน Blicktech (${c.name})\n${link}\nรหัสรุ่น: ${code}`);
+    await navigator.clipboard.writeText(`สมัครระบบฝึกงาน Blicktech (${c.name})\n${link}\nรหัสรุ่น: ${code}`);
     toast.success("คัดลอกข้อความแล้ว วางในกลุ่มของรุ่นได้เลย");
   }
 

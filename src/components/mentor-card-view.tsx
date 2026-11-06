@@ -26,7 +26,7 @@ export function MentorCardView({ slug }: { slug: string }) {
       .card(slug)
       .then((c) => {
         setCard(c);
-        document.title = `${c.title} | คู่มือฝึกงาน`;
+        document.title = `${c.title} | ระบบฝึกงาน`;
       })
       .catch((e: Error) => setError(e.message));
   }, [role, slug]);

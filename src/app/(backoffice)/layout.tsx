@@ -20,7 +20,7 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
           {/* มือถือ: เหลือคำว่า "หลังบ้าน" บรรทัดเดียว ปุ่มด้านขวาจะได้ไม่โดนบีบ */}
           <span className="flex min-w-0 flex-col leading-tight">
             <span className="truncate font-bold">
-              <span className="max-sm:hidden">คู่มือฝึกงาน · </span>หลังบ้าน
+              <span className="max-sm:hidden">ระบบฝึกงาน · </span>หลังบ้าน
             </span>
             <span className="text-xs text-fd-muted-foreground max-sm:hidden">สำหรับพี่เลี้ยง (Dev)</span>
           </span>

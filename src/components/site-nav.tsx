@@ -103,7 +103,7 @@ export function SiteNav({ onNavigate }: { onNavigate?: () => void }) {
         </nav>
       </Group>
 
-      <Group title="เรียนรู้">
+      <Group title="คู่มือ">
         <LearnNav onNavigate={onNavigate} />
       </Group>
 

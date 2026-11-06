@@ -22,7 +22,7 @@ export default async function SetPasswordPage({ searchParams }: Props) {
     <main className="flex min-h-screen items-center justify-center bg-fd-background px-4 py-10">
       <div className="flex w-full max-w-md flex-col gap-6 rounded-2xl border border-fd-border bg-fd-card p-6 sm:p-8">
         <span className="flex items-center gap-2.5 font-bold">
-          <BrandMark size={28} /> คู่มือฝึกงาน Blicktech
+          <BrandMark size={28} /> ระบบฝึกงาน Blicktech
         </span>
         <div className="flex flex-col gap-1.5">
           <h1 className="text-2xl font-bold">ตั้งรหัสผ่านของคุณ</h1>

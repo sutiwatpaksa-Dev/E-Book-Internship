@@ -29,7 +29,7 @@ export function SiteHeader({ menu = true }: { menu?: boolean }) {
         <Link href={DASHBOARD_URL} className="flex min-h-11 items-center gap-2.5 me-1">
           <BrandMark size={30} />
           <span className="flex flex-col leading-tight">
-            <span className="font-bold whitespace-nowrap">คู่มือฝึกงาน</span>
+            <span className="font-bold whitespace-nowrap">ระบบฝึกงาน</span>
             <span className="text-xs text-fd-muted-foreground max-xl:hidden">Blicktech · Full-stack</span>
           </span>
         </Link>
@@ -113,7 +113,7 @@ function WhereAmI() {
           ? "อ้างอิง"
           : section === "cards"
             ? "คลังการ์ด"
-            : "คู่มือฝึกงาน";
+            : "ระบบฝึกงาน";
   // "บทที่ 8 · 9/24" = เลขบท และลำดับในเล่ม (บทที่ 0 นับเป็นบทแรก)
   const position =
     chapterIndex >= 0
