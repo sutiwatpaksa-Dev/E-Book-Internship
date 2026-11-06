@@ -63,6 +63,7 @@ function CohortList({ admin, nav }: { admin: AdminState; nav: AdminNav }) {
 
       {creating && (
         <CohortForm
+          sources={copySources(admin)}
           onCancel={() => setCreating(false)}
           onSave={async (input) => {
             if (await admin.saveCohort(null, input)) setCreating(false);
@@ -128,8 +129,16 @@ function CohortList({ admin, nav }: { admin: AdminState; nav: AdminNav }) {
   );
 }
 
-function CohortForm({ initial, onSave, onCancel }: { initial?: CohortInput; onSave: (v: CohortInput) => void; onCancel: () => void }) {
-  const [v, setV] = useState<CohortInput>(initial ?? { name: "", startsOn: "", endsOn: "" });
+// รุ่นที่มีงานให้คัดลอก ล่าสุดก่อน (ค่าเริ่มต้น = รุ่นแรกของรายการ ตรงกับที่ server ใช้ถ้าไม่ระบุ)
+function copySources(admin: AdminState) {
+  return admin.cohorts
+    .map((c) => ({ id: c.id, name: c.name, posts: admin.assignments.filter((a) => a.cohortIds.includes(c.id)).reduce((n, a) => n + a.rounds.length, 0) }))
+    .filter((s) => s.posts > 0)
+    .sort((x, y) => y.id - x.id);
+}
+
+function CohortForm({ initial, sources, onSave, onCancel }: { initial?: CohortInput; sources?: { id: number; name: string; posts: number }[]; onSave: (v: CohortInput) => void; onCancel: () => void }) {
+  const [v, setV] = useState<CohortInput>(initial ?? { name: "", startsOn: "", endsOn: "", copyFrom: sources?.[0]?.id ?? null });
   const submit = (e: FormEvent) => {
     e.preventDefault();
     onSave({ ...v, name: v.name.trim() });
@@ -150,6 +159,23 @@ function CohortForm({ initial, onSave, onCancel }: { initial?: CohortInput; onSa
         <Input type="date" value={v.endsOn} min={v.startsOn || undefined} onChange={(e) => setV({ ...v, endsOn: e.target.value })} required />
       </Field>
       {badPeriod && <p className="text-sm text-red-700 sm:col-span-2 dark:text-red-400">วันจบต้องไม่ก่อนวันเริ่ม</p>}
+      {sources && (
+        <>
+          <Field label="สายงาน" hint="ตอนนี้มีสายเดียว สาย Content Creator เพิ่มเมื่อมีน้องสายนั้น">
+            <Input value="เทคโนโลยีสารสนเทศ (IT)" readOnly />
+          </Field>
+          <Field label="โพสต์งานของรุ่นนี้" hint="คัดลอกแล้วเป็นของรุ่นนี้เอง แก้ไม่กระทบรุ่นต้นทาง · PDF ใช้ไฟล์เดิมจนกว่าจะอัปโหลดใหม่">
+            <select className={inputClass} value={v.copyFrom ?? ""} onChange={(e) => setV({ ...v, copyFrom: e.target.value ? Number(e.target.value) : null })}>
+              {sources.map((s) => (
+                <option key={s.id} value={s.id}>
+                  คัดลอกจาก {s.name} ({s.posts} โพสต์)
+                </option>
+              ))}
+              <option value="">เริ่มว่าง (ยังไม่มีโพสต์งาน)</option>
+            </select>
+          </Field>
+        </>
+      )}
       <div className="flex gap-2 sm:col-span-2">
         <Button type="button" variant="ghost" onClick={onCancel} className="min-h-11">
           ยกเลิก

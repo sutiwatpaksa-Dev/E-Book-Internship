@@ -8,6 +8,9 @@ export const cohortSchema = z.object({
   endsOn: day,
 });
 
+// สร้างรุ่น: คัดลอกงาน (กล่องโพสต์งาน) จากรุ่นไหน · ไม่ส่ง = รุ่นล่าสุดที่มีงาน · null = เริ่มว่าง
+export const newCohortSchema = cohortSchema.extend({ copyFrom: z.number().int().positive().nullable().optional() });
+
 export const cohortMentorsSchema = z.object({ userIds: z.array(z.number().int().positive()).max(50) });
 
 // ตั้งค่ารับสมัคร: วันปิดรับ (null = ไม่กำหนด) และจำนวนที่ (null = ไม่จำกัด)

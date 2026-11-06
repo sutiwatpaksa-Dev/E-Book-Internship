@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { AuthVars } from "../middleware/require-role";
 import { cohortService } from "../services/cohort.service";
-import { cohortEndedSchema, cohortMentorsSchema, cohortSchema, cohortSignupSchema } from "../validators/cohort.validator";
+import { cohortEndedSchema, cohortMentorsSchema, cohortSchema, newCohortSchema, cohortSignupSchema } from "../validators/cohort.validator";
 
 // หลังบ้าน: รุ่นฝึกงาน · ต่ออยู่ใต้ admin.routes.ts จึงผ่านด่าน requireRole("dev") ของที่นั่นแล้ว
 export const adminCohortRoutes = new Hono<AuthVars>();
@@ -18,9 +18,10 @@ const BAD_COHORT = "ชื่อรุ่น 2–80 ตัวอักษร แ
 adminCohortRoutes.get("/", async (c) => c.json(await cohortService.list()));
 
 adminCohortRoutes.post("/", async (c) => {
-  const parsed = cohortSchema.safeParse(await json(c));
+  const parsed = newCohortSchema.safeParse(await json(c));
   if (!parsed.success) return c.json({ error: BAD_COHORT }, 400);
-  return c.json(await cohortService.create(c.get("user").id, parsed.data), 201);
+  const { copyFrom, ...f } = parsed.data;
+  return c.json(await cohortService.create(c.get("user").id, f, copyFrom), 201);
 });
 
 adminCohortRoutes.put("/:id", async (c) => {

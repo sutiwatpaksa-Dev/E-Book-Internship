@@ -80,7 +80,7 @@ export type RegisterInput = {
   major: string | null;
   eduLevel: EduLevel;
 };
-export type CohortInput = Pick<Cohort, "name" | "startsOn" | "endsOn">;
+export type CohortInput = Pick<Cohort, "name" | "startsOn" | "endsOn"> & { copyFrom?: number | null };
 
 export type IssuedPin = { user: User; pin: string };
 export type FileInfo = { size: number; updatedAt: string };
