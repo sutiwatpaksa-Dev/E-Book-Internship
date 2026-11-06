@@ -37,6 +37,10 @@ export const topics: { slug: TopicSlug; name: string }[] = [
   { slug: "ai", name: "ทำงานกับ AI" },
 ];
 
+// ชื่อช่วงย่อยในขั้น Coding: ข้อมูลเก็บเป็นคำสั้น (ใช้ผูกการ์ด) หน้าจอแสดงเป็นคำไทยที่น้องเข้าใจ (รีวิวรอบ 1)
+export const PART_LABEL: Record<string, string> = { DB: "ฐานข้อมูล", Login: "ระบบ login", Frontend: "หน้าเว็บ", หลังบ้าน: "หน้าแอดมิน" };
+export const partLabel = (p: string) => PART_LABEL[p] ?? p;
+
 export type LearnCard = {
   slug: string;
   title: string;

@@ -2,7 +2,7 @@
 
 import { ArrowRight, Check, RotateCcw } from "lucide-react";
 import Link from "next/link";
-import { cardUrl, cardsOf, nextUp, steps, stepUrl, type LearnCard } from "@/data/learn";
+import { cardUrl, cardsOf, nextUp, partLabel, steps, stepUrl, type LearnCard } from "@/data/learn";
 import { useCatalog } from "@/hooks/use-catalog";
 import { useProgress } from "@/hooks/use-progress";
 
@@ -10,10 +10,6 @@ import { useProgress } from "@/hooks/use-progress";
 // เส้นเวลาแนวตั้ง 7 ขั้น ขั้นที่อยู่กางออก (ช่วงย่อย งานในโจทย์ การ์ดถัดไป) ที่เหลือพับเป็นบรรทัดเดียว
 // สีมีหน้าที่เดียว: ปุ่ม/ลิงก์ = primary · ครบแล้ว = เขียว · ขั้นที่อยู่ = วงเข้ม (สีตัวอักษร) ไม่ใช้สีอย่างเดียว มีคำบอกด้วย
 // ตัวเลขทุกตัวนับจากรายการการ์ดชุดเดียวกับ /dashboard (useCatalog ตัดใบที่พี่เลี้ยงซ่อน) จึงตรงกันทุกหน้า
-
-// ชื่อช่วงย่อยในขั้น Coding: ข้อมูลเก็บเป็นคำสั้น (ใช้ผูกการ์ด) หน้าจอแสดงเป็นคำไทยที่น้องเข้าใจ
-export const PART_LABEL: Record<string, string> = { DB: "ฐานข้อมูล", Login: "ระบบ login", Frontend: "หน้าเว็บ", หลังบ้าน: "หน้าแอดมิน" };
-const partLabel = (p: string) => PART_LABEL[p] ?? p;
 
 export function LearnMap() {
   const { done } = useProgress();

@@ -4,11 +4,10 @@ import { useSearchContext } from "fumadocs-ui/contexts/search";
 import { Bot, ClipboardList, Database, LayoutTemplate, Lock, Monitor, Plug, Rocket, Search, ShieldCheck, TestTube, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
-import { cardUrl, mentorCardUrl, steps, topics, type LearnCard, type StepSlug, type TopicSlug } from "@/data/learn";
+import { cardUrl, mentorCardUrl, partLabel, steps, topics, type LearnCard, type StepSlug, type TopicSlug } from "@/data/learn";
 import { useCatalog } from "@/hooks/use-catalog";
 import { useProgress } from "@/hooks/use-progress";
 import { useSession } from "@/hooks/use-session";
-import { PART_LABEL } from "./learn-map";
 
 // การ์ด 1 ใบในคลัง: การ์ดในโค้ด (ปรับตามหลังบ้านแล้ว) หรือการ์ดของพี่เลี้ยง (มี author)
 type Item = Pick<LearnCard, "slug" | "title" | "step" | "topic" | "minutes" | "part" | "alsoIn"> & { href: string; author?: string };
@@ -169,7 +168,7 @@ function CardTile({ card: c, done, locked }: { card: Item; done: boolean; locked
           <span className="flex flex-wrap gap-1.5">
             <span className="rounded-full bg-fd-muted px-2.5 py-0.5 font-medium text-fd-foreground">
               ขั้น {s.num} {s.name}
-              {c.part ? ` › ${PART_LABEL[c.part] ?? c.part}` : ""}
+              {c.part ? ` › ${partLabel(c.part)}` : ""}
             </span>
             {c.author && <MentorBadge />}
           </span>

@@ -40,7 +40,7 @@ export function DocPage({ slugs, top }: { slugs: string[] | undefined; top?: Rea
       <DocsBody>
         <MDX components={getMDXComponents()} />
         {page.url !== "/" && <PageNotes pageUrl={page.url} />}
-        {card && <CardDone link={page.url} />}
+        {card && <CardDone link={page.url} title={card.title} />}
         {card && <CardPager card={card} />}
         {step && <StepPager step={step} />}
       </DocsBody>
