@@ -197,7 +197,7 @@ export type TaskComment = { id: number; kind: CommentKind; ref: string | null; b
 export type CommentSend = { kind?: CommentKind; ref?: string; body: string };
 
 // โพสต์งาน (ฟอร์มของพี่เลี้ยง) · day = วันทำงานที่ N ของรุ่น
-export type PostSend = { label: string; what: string; day: number; deploy: boolean; body: string; links: { label: string; url: string }[]; pdf?: "shared" | "own" | "none"; criteria?: Criterion[]; overview?: string; weight?: number };
+export type PostSend = { label: string; what: string; day: number; deploy: boolean; body: string; links: { label: string; url: string }[]; pdf?: "shared" | "own" | "none"; criteria?: Criterion[]; overview?: string; weight?: number; alsoOthers?: boolean };
 
 // โพสต์ในฟีด (รูปร่างตรงกับ server/services/post.service.ts) · กฎอยู่ใน src/lib/post.ts
 export type FeedPost = {

@@ -176,11 +176,12 @@ export function useAdmin() {
     // pdf = ไฟล์ที่แนบกับโพสต์นี้ (อัปโหลดหลังบันทึกโพสต์ เพราะโพสต์ใหม่ต้องมี id ก่อน)
     savePost: async (assignmentId: number, roundId: string | null, input: PostSend, pdf?: File | null) => {
       try {
-        const id = roundId ?? (await adminApi.addPost(assignmentId, input)).id;
+        const added = roundId ? null : await adminApi.addPost(assignmentId, input);
+        const id = roundId ?? added!.id;
         if (roundId) await adminApi.updatePost(assignmentId, roundId, input);
         if (pdf) await adminApi.uploadPostPdf(assignmentId, id, pdf);
         await reload();
-        toast.success(roundId ? "บันทึกโพสต์แล้ว" : "โพสต์งานแล้ว น้องในรุ่นนี้เห็นทันที");
+        toast.success(roundId ? "บันทึกโพสต์แล้ว" : `โพสต์งานแล้ว น้องในรุ่นนี้เห็นทันที${added?.copied ? ` · ใส่ให้รุ่นอื่นอีก ${added.copied} รุ่น` : input.alsoOthers ? " · ไม่มีรุ่นอื่นที่ใส่ได้" : ""}`);
         return true;
       } catch (e) {
         await reload();

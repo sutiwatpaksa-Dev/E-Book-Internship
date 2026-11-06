@@ -1,6 +1,6 @@
-import { and, asc, desc, eq, inArray, ne } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 import { db } from "../db/client";
-import { assignments, files, users } from "../db/schema";
+import { assignments, cohorts, files, users } from "../db/schema";
 
 type NewAssignment = typeof assignments.$inferInsert;
 export type AssignmentFields = Pick<NewAssignment, "name" | "brief" | "sections" | "rubric"> & { overview?: string };
@@ -60,6 +60,13 @@ export const assignmentRepository = {
       }
       return src.length;
     }),
+  // โจทย์ชื่อเดียวกันของรุ่นอื่นที่ยังไม่จบ (ใช้ตอนโพสต์งานพร้อมกันหลายรุ่น)
+  openSiblings: (slug: string, exceptId: number) =>
+    db
+      .select({ id: assignments.id, name: assignments.name, brief: assignments.brief, sections: assignments.sections, rubric: assignments.rubric })
+      .from(assignments)
+      .innerJoin(cohorts, eq(cohorts.id, assignments.cohortId))
+      .where(and(eq(assignments.slug, slug), ne(assignments.id, exceptId), isNull(cohorts.endedAt))),
   // ไฟล์ PDF นี้มีโจทย์อื่นใช้อยู่ด้วยไหม (สำเนาข้ามรุ่นใช้ไฟล์ร่วมกันจนกว่าจะอัปโหลดใหม่)
   async pdfShared(key: string, exceptId: number) {
     const [r] = await db.select({ id: assignments.id }).from(assignments).where(and(eq(assignments.pdfKey, key), ne(assignments.id, exceptId))).limit(1);

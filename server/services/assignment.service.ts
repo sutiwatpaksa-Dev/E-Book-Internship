@@ -99,14 +99,27 @@ export const assignmentService = {
     if (weightTotal(next) > 100) throw new Error("WEIGHT_OVER");
   },
   // ---- โพสต์งาน = เพิ่ม/แก้/ลบ 1 รอบของโจทย์ (ไม่ต้องส่งทั้งโจทย์ ลดโอกาสสองคนแก้ทับกัน) ----
-  async addPost(devId: number, id: number, input: PostInput) {
+  async addPost(devId: number, id: number, { alsoOthers, ...input }: PostInput) {
     const a = await editable(id);
     const who = (await userRepository.findById(devId))?.username ?? "พี่เลี้ยง";
     const round: RoundDef = { id: `p${Date.now().toString(36)}`, ...input, postedBy: who, postedAt: new Date().toISOString() };
     await this.checkWeights(a, [...a.rubric.rounds, round], { before: 0, after: weightOf(round) });
     await assignmentRepository.update(id, { name: a.name, brief: a.brief, sections: a.sections, rubric: { ...a.rubric, rounds: byDay([...a.rubric.rounds, round]) } });
     await auditService.log(devId, "assignment.update", a.name, `โพสต์งาน: ${input.label}`);
-    return { id: round.id };
+    // รุ่นอื่นที่ยังไม่จบและมีโจทย์ชื่อเดียวกัน: ได้สำเนาโพสต์ (id เดียวกัน) · PDF ของโพสต์ใช้ของรุ่นนั้นแทน (ไฟล์อัปโหลดเข้าโพสต์ต้นทางเท่านั้น)
+    // รุ่นที่ใส่ไม่ได้ (% เกิน หรือล็อกแล้ว) ข้ามไป แล้วบอกจำนวนกลับ
+    let copied = 0;
+    if (alsoOthers) {
+      for (const other of await assignmentRepository.openSiblings(a.slug, a.id)) {
+        const copy: RoundDef = { ...round, pdf: round.pdf === "own" ? "shared" : round.pdf };
+        const next = [...other.rubric.rounds, copy];
+        if (weightTotal(next) > 100 || (weightOf(copy) > 0 && (await submissionRepository.anyReviewed(other.id)))) continue;
+        await assignmentRepository.update(other.id, { name: other.name, brief: other.brief, sections: other.sections, rubric: { ...other.rubric, rounds: byDay(next) } });
+        await auditService.log(devId, "assignment.update", other.name, `โพสต์งาน (สำเนา): ${input.label}`);
+        copied++;
+      }
+    }
+    return { id: round.id, copied };
   },
   async updatePost(devId: number, id: number, roundId: string, input: PostInput) {
     const a = await editable(id);

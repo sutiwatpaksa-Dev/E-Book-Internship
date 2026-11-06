@@ -15,7 +15,7 @@ export const adminApi = {
   listAssignments: () => request<AdminAssignment[]>("/admin/assignments"),
   createAssignment: (slug: string, input: AssignmentInput) => request<{ id: number }>("/admin/assignments", jsonBody("POST", { slug, ...input })),
   updateAssignment: (id: number, input: AssignmentInput) => request<null>(`/admin/assignments/${id}`, jsonBody("PUT", input)),
-  addPost: (id: number, input: PostSend) => request<{ id: string }>(`/admin/assignments/${id}/posts`, jsonBody("POST", input)),
+  addPost: (id: number, input: PostSend) => request<{ id: string; copied: number }>(`/admin/assignments/${id}/posts`, jsonBody("POST", input)),
   updatePost: (id: number, roundId: string, input: PostSend) => request<null>(`/admin/assignments/${id}/posts/${roundId}`, jsonBody("PUT", input)),
   removePost: (id: number, roundId: string) => request<null>(`/admin/assignments/${id}/posts/${roundId}`, { method: "DELETE" }),
   // การ์ดที่โจทย์ใช้ + โน้ตว่าใช้ตอนไหน (ส่งทั้งรายการ แทนของเดิมทั้งชุด)

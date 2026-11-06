@@ -281,6 +281,7 @@ function PostComposer({ admin, scoped, edit, onClose }: { admin: AdminState; sco
   const [critMode, setCritMode] = useState<"same" | "new" | "none">(edit?.r.criteria === undefined ? "same" : edit.r.criteria.length ? "new" : "none");
   const [criteria, setCriteria] = useState<Criterion[]>(edit?.r.criteria?.length ? edit.r.criteria : (asg?.criteria ?? []));
   const [overview, setOverview] = useState(edit?.r.overview ?? "");
+  const [alsoOthers, setAlsoOthers] = useState(false);
   const [weightText, setWeightText] = useState(edit ? String(weightOf(edit.r)) : "");
   const [preview, setPreview] = useState(false);
   // กำหนดส่ง: เลือกวันที่บนปฏิทินของรุ่นอ้างอิง (ถนัดแบบ Classroom) หรือกรอกเป็น "วันที่ N ของรุ่น" ตรงๆ
@@ -333,6 +334,7 @@ function PostComposer({ admin, scoped, edit, onClose }: { admin: AdminState; sco
       criteria: critMode === "same" ? undefined : critMode === "none" ? [] : criteria.map((c) => ({ ...c, label: c.label.trim() })),
       overview,
       weight,
+      ...(edit ? {} : { alsoOthers }),
     };
     const ok = await admin.savePost(asg.id, edit?.r.id ?? null, input, pdfMode === "own" ? pdfFile : null);
     setSaving(false);
@@ -533,6 +535,16 @@ function PostComposer({ admin, scoped, edit, onClose }: { admin: AdminState; sco
       <div className="flex flex-col gap-1">
         <MarkdownEditor label="ภาพรวม (ไม่บังคับ)" value={overview} onChange={setOverview} max={OVERVIEW_MAX} minHeight="min-h-24" />
       </div>
+
+      {!edit && (
+        <label className="flex min-h-11 items-start gap-2 text-sm">
+          <input type="checkbox" className="mt-1 size-4" checked={alsoOthers} onChange={(e) => setAlsoOthers(e.target.checked)} />
+          <span>
+            ใส่โพสต์นี้ให้รุ่นอื่นที่กำลังฝึกด้วย
+            <span className="block text-xs text-fd-muted-foreground">แต่ละรุ่นได้สำเนาของตัวเอง แก้ทีหลังไม่กระทบกัน · รุ่นที่ % เกิน 100 หรือล็อกแล้วจะข้ามไป · PDF ของโพสต์ใส่ให้รุ่นนี้รุ่นเดียว</span>
+          </span>
+        </label>
+      )}
 
       <div className="flex gap-2">
         <Button type="button" variant="ghost" onClick={() => (toast.info("ยกเลิกแล้ว ยังไม่ได้โพสต์"), onClose())} className="min-h-11">

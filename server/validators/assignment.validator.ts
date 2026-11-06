@@ -89,6 +89,8 @@ export const postSchema = z
       })
       .optional(),
     overview: z.string().max(OVERVIEW_MAX, { error: `ภาพรวมไม่เกิน ${OVERVIEW_MAX.toLocaleString("en-US")} ตัวอักษร` }).optional(),
+    // โพสต์ใหม่: ใส่โพสต์เดียวกันให้รุ่นอื่นที่ยังไม่จบ (โจทย์ชื่อเดียวกัน) ด้วย · ค่าเริ่มต้นไม่ใส่
+    alsoOthers: z.boolean().optional(),
     weight: z.number({ error: "% คะแนนต้องเป็นตัวเลข" }).int({ error: "% คะแนนต้องเป็นจำนวนเต็ม" }).min(0, { error: "% คะแนนต้องไม่ติดลบ" }).max(100, { error: "% คะแนนไม่เกิน 100" }).optional(),
   });
 export type PostInput = z.infer<typeof postSchema>;
