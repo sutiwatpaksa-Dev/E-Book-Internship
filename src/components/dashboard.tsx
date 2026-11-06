@@ -328,7 +328,7 @@ function MyTasks({ work }: { work: Work }) {
           <FolderGit2 className="size-5 text-fd-primary" /> งานของฉัน
         </h2>
         <Link href="/work" className="inline-flex min-h-11 items-center text-sm font-medium text-fd-primary hover:underline">
-          กระดานงาน
+          งานที่ต้องส่ง
         </Link>
         {!data?.locked && (
           <Link href={sendHref} className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-fd-primary px-4 text-sm font-semibold text-fd-primary-foreground hover:brightness-110">

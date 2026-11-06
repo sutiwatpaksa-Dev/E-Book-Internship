@@ -40,7 +40,7 @@ export function TaskPage({ assignment, round }: { assignment: string; round: str
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-5 px-4 py-8 sm:px-6 sm:py-10">
       <Link href="/work" className="inline-flex min-h-11 w-fit items-center gap-1.5 text-sm font-medium text-fd-primary hover:underline">
-        <ArrowLeft className="size-4" /> กระดานงาน
+        <ArrowLeft className="size-4" /> งานที่ต้องส่ง
       </Link>
 
       {work.loading ? (
@@ -48,7 +48,7 @@ export function TaskPage({ assignment, round }: { assignment: string; round: str
       ) : work.failed ? (
         <ErrorText>โหลดงานไม่สำเร็จ ลองรีเฟรชหน้านี้อีกครั้ง</ErrorText>
       ) : !item ? (
-        <p>ไม่พบงานนี้ในโจทย์ของคุณ กลับไปเลือกที่กระดานงาน</p>
+        <p>ไม่พบงานนี้ในโจทย์ของคุณ กลับไปเลือกที่หน้างานที่ต้องส่ง</p>
       ) : (
         <>
           <header className="flex flex-col gap-2">

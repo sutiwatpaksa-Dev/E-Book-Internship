@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, ChevronRight, Newspaper, ClipboardList, FolderKanban, LayoutDashboard, Lock, MessageCircle, Settings, UserRound, type LucideIcon } from "lucide-react";
+import { BookOpen, ChevronRight, Newspaper, ClipboardList, LayoutDashboard, Lock, MessageCircle, Settings, UserRound, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, type ReactNode } from "react";
@@ -13,19 +13,18 @@ import type { Role } from "@/types";
 import { LearnNav } from "./learn-nav";
 import { BookProgress, SidebarNav } from "./sidebar-nav";
 
-// เมนูซ้ายชุดเดียวทุกหน้า (ภาพรวม กระดานงาน 7 ขั้น การ์ด บทเดิม ฯลฯ) โครงไม่เปลี่ยนตามหน้า เปลี่ยนแค่แถบที่ไฮไลต์
+// เมนูซ้ายชุดเดียวทุกหน้า (ภาพรวม งานที่ต้องส่ง 7 ขั้น การ์ด บทเดิม ฯลฯ) โครงไม่เปลี่ยนตามหน้า เปลี่ยนแค่แถบที่ไฮไลต์
 // เดิมแต่ละหมวดหน้ามีเมนูของตัวเอง กดไปบทเดิมแล้วเมนู 7 ขั้นหายทั้งชุด น้องสับสนว่าอยู่ที่ไหน
 // ใช้ทั้ง sidebar จอกว้าง (site-sidebar.tsx) และลิ้นชักมือถือ
-// 6 ช่องที่ตำแหน่งคงที่: ช่อง 3 และ 6 ขึ้นกับ role (น้อง = กระดานงาน/โปรไฟล์ · พี่เลี้ยง = หลังบ้าน/โปรไฟล์)
+// 5 ช่องที่ตำแหน่งคงที่: ช่อง 3 และ 5 ขึ้นกับ role (น้อง = งานที่ต้องส่ง/โปรไฟล์ · พี่เลี้ยง = หลังบ้าน/โปรไฟล์)
 // น้องกับพี่เลี้ยงจึงมี 5 แถวเท่ากัน · ตอนโหลดหน้ายังไม่รู้ role ช่องเหล่านี้เป็นแถบจองที่สูงเท่ากัน เมนูไม่ขยับตอนรู้ role
 type Item = { href: string; label: string; icon: LucideIcon; also?: string[] };
 type Slot = Item | ((role: Role | null) => Item | null);
 const MY_WORK: Slot[] = [
   { href: DASHBOARD_URL, label: "ภาพรวม", icon: LayoutDashboard },
   { href: "/feed", label: "งานและประกาศ", icon: Newspaper },
-  (r) => (r === "intern" ? { href: "/work", label: "กระดานงาน", icon: ClipboardList } : r === "dev" ? { href: "/dev/admin", label: "หลังบ้านพี่เลี้ยง", icon: Settings } : null),
-  // เนื้อหา STARTER ยังอยู่ที่ /starter/* (แผน 10 วัน เกณฑ์ ฯลฯ) จึงไฮไลต์เมนูนี้ด้วย
-  { href: "/projects", label: "โจทย์ฝึกงาน", icon: FolderKanban, also: ["/starter"] },
+  // 6 พ.ย. 2569: เหลือแค่โพสต์งาน เมนู "กระดานงาน" + "โจทย์ฝึกงาน" รวมเป็น "งานที่ต้องส่ง" · หน้าเอกสาร STARTER (/projects, /starter/*) ยังเปิดได้จากหน้านั้น จึงไฮไลต์เมนูนี้ด้วย
+  (r) => (r === "intern" ? { href: "/work", label: "งานที่ต้องส่ง", icon: ClipboardList, also: ["/projects", "/starter"] } : r === "dev" ? { href: "/dev/admin", label: "หลังบ้านพี่เลี้ยง", icon: Settings } : null),
   { href: "/questions", label: "ข้อความถึงพี่เลี้ยง", icon: MessageCircle },
   (r) => (r ? { href: "/profile", label: "โปรไฟล์", icon: UserRound } : null),
 ];

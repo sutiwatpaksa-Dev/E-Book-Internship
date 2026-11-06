@@ -20,7 +20,7 @@ export function BottomNav() {
   const on = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
   const tab = "relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium";
   const tone = (active: boolean) => (active ? "text-fd-primary" : "text-fd-muted-foreground");
-  const second = role === "intern" ? { href: "/work", label: "กระดานงาน", icon: ClipboardList } : { href: "/learn", label: "เส้นทาง", icon: Route };
+  const second = role === "intern" ? { href: "/work", label: "งานที่ต้องส่ง", icon: ClipboardList } : { href: "/learn", label: "เส้นทาง", icon: Route };
   const links = [{ href: DASHBOARD_URL, label: "ภาพรวม", icon: LayoutDashboard }, second, { href: "/questions", label: "ถามพี่เลี้ยง", icon: MessageCircle }];
 
   return (

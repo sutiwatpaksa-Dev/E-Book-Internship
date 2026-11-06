@@ -43,18 +43,47 @@ export function AdminBoard({ admin, nav, cohort, mine }: { admin: AdminState; na
   const [editing, setEditing] = useState<{ a: AdminAssignment; r: RoundDef } | "new" | null>(null);
   const [removing, setRemoving] = useState<{ a: AdminAssignment; r: RoundDef } | null>(null);
 
-  // ทุกโพสต์ของทุกโจทย์ เรียงใหม่สุดก่อน (รอบเก่าที่ไม่มีเวลาโพสต์ไว้ท้ายตามวันที่)
+  // ทุกโพสต์ของรุ่นที่เลือก เรียงตามวันส่ง (ลำดับเดียวกับที่น้องเห็นในหน้างานที่ต้องส่ง)
   const scoped = useMemo(() => admin.assignments.filter((a) => inCohort(ownerOf(a), cohort, mine)), [admin.assignments, cohort, mine]);
   const posts = useMemo(
     () =>
       scoped
         .flatMap((a) => a.rounds.map((r) => ({ a, r })))
-        .sort((x, y) => (y.r.postedAt ?? "").localeCompare(x.r.postedAt ?? "") || x.r.day - y.r.day),
+        .sort((x, y) => x.r.day - y.r.day || x.a.id - y.a.id),
     [scoped],
   );
 
+  // แถบ % คะแนน: เห็นได้เมื่อเลือกรุ่นเดียว (แต่ละรุ่นมีชุดโพสต์ของตัวเอง)
+  const single = scoped.length > 0 && new Set(scoped.map(ownerOf)).size === 1 ? scoped : null;
+  const weighted = single ? single.flatMap((a) => a.rounds).filter((r) => weightOf(r) > 0).sort((x, y) => x.day - y.day) : [];
+  const sum = weighted.reduce((n, r) => n + weightOf(r), 0);
+  const locked = !!single && (subs ?? []).some((s) => s.reviewedAt && single.some((a) => s.assignment === a.slug && s.cohortId === ownerOf(a)));
+
   return (
     <div className="flex max-w-3xl flex-col gap-4">
+      {single && (
+        <section aria-labelledby="weight-title" className="flex flex-col gap-2 rounded-2xl border border-fd-border bg-fd-card p-4 text-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 id="weight-title" className="font-semibold">
+              คะแนนงานของรุ่นนี้มาจากโพสต์ไหนบ้าง
+            </h2>
+            <span className={`ms-auto font-semibold ${locked ? "text-fd-muted-foreground" : sum === 100 ? "text-green-800 dark:text-green-400" : "text-amber-800 dark:text-amber-300"}`}>
+              {locked ? "ล็อกแล้ว (ตรวจงานไปแล้ว)" : sum === 100 ? "ครบ 100%" : `ยังขาด ${100 - sum}%`}
+            </span>
+          </div>
+          <div className="flex h-8 overflow-hidden rounded-lg bg-fd-muted" aria-hidden>
+            {weighted.map((r, i) => (
+              <span key={r.id} className={`flex items-center justify-center overflow-hidden whitespace-nowrap border-e-2 border-fd-card px-1 text-xs font-semibold text-white last:border-e-0 ${["bg-sky-700", "bg-sky-800", "bg-blue-900", "bg-indigo-900"][i % 4]}`} style={{ width: `${weightOf(r)}%` }}>
+                <span className="hidden truncate sm:inline">{r.label} ·&nbsp;</span>
+                {weightOf(r)}%
+              </span>
+            ))}
+          </div>
+          <p className="text-fd-muted-foreground">
+            {weighted.map((r) => `${r.label} ${weightOf(r)}%`).join(" · ") || "ยังไม่มีโพสต์ที่นับคะแนน"} · {locked ? "แก้ % ไม่ได้แล้ว ให้น้องทุกคนคิดคะแนนแบบเดียวกัน" : "แก้ % ได้ในโพสต์แต่ละชิ้น จนกว่าจะตรวจงานชิ้นแรก"}
+          </p>
+        </section>
+      )}
       {editing ? (
         <PostComposer
           key={editing === "new" ? "new" : `${editing.a.id}/${editing.r.id}`}
