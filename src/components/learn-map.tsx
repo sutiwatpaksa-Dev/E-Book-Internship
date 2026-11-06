@@ -12,7 +12,7 @@ import { useProgress } from "@/hooks/use-progress";
 // ตัวเลขทุกตัวนับจากรายการการ์ดชุดเดียวกับ /dashboard (useCatalog ตัดใบที่พี่เลี้ยงซ่อน) จึงตรงกันทุกหน้า
 
 // ชื่อช่วงย่อยในขั้น Coding: ข้อมูลเก็บเป็นคำสั้น (ใช้ผูกการ์ด) หน้าจอแสดงเป็นคำไทยที่น้องเข้าใจ
-const PART_LABEL: Record<string, string> = { DB: "ฐานข้อมูล", Login: "ระบบ login", Frontend: "หน้าเว็บ", หลังบ้าน: "หน้าแอดมิน" };
+export const PART_LABEL: Record<string, string> = { DB: "ฐานข้อมูล", Login: "ระบบ login", Frontend: "หน้าเว็บ", หลังบ้าน: "หน้าแอดมิน" };
 const partLabel = (p: string) => PART_LABEL[p] ?? p;
 
 export function LearnMap() {

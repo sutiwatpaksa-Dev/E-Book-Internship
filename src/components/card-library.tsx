@@ -1,13 +1,14 @@
 "use client";
 
 import { useSearchContext } from "fumadocs-ui/contexts/search";
-import { Bot, Check, ClipboardList, Database, LayoutTemplate, Lock, Monitor, Plug, Rocket, Search, ShieldCheck, TestTube, type LucideIcon } from "lucide-react";
+import { Bot, ClipboardList, Database, LayoutTemplate, Lock, Monitor, Plug, Rocket, Search, ShieldCheck, TestTube, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { cardUrl, mentorCardUrl, steps, topics, type LearnCard, type StepSlug, type TopicSlug } from "@/data/learn";
 import { useCatalog } from "@/hooks/use-catalog";
 import { useProgress } from "@/hooks/use-progress";
 import { useSession } from "@/hooks/use-session";
+import { PART_LABEL } from "./learn-map";
 
 // การ์ด 1 ใบในคลัง: การ์ดในโค้ด (ปรับตามหลังบ้านแล้ว) หรือการ์ดของพี่เลี้ยง (มี author)
 type Item = Pick<LearnCard, "slug" | "title" | "step" | "topic" | "minutes" | "part" | "alsoIn"> & { href: string; author?: string };
@@ -33,6 +34,8 @@ export function CardLibrary() {
   const [step, setStep] = useState<StepSlug | "all">("all");
   const [topic, setTopic] = useState<TopicSlug | "all">("all");
   const q = query.trim().toLowerCase();
+  const filtered = !!q || step !== "all" || topic !== "all";
+  const clear = () => (setQuery(""), setStep("all"), setTopic("all"));
   // ตัวเลขบนปุ่มหมวด นับจากชื่อและขั้นที่เลือกอยู่ กดแล้วจะได้จำนวนนั้นพอดี
   const inStep = all.filter((c) => (step === "all" || c.step === step || c.alsoIn?.includes(step)) && (!q || c.title.toLowerCase().includes(q)));
   const list = inStep.filter((c) => topic === "all" || c.topic === topic);
@@ -57,11 +60,15 @@ export function CardLibrary() {
       </div>
 
       <FilterRow label="ขั้น">
-        {[{ slug: "all" as const, label: "ทั้งหมด" }, ...steps.map((s) => ({ slug: s.slug, label: `${s.num} ${s.name}` }))].map((f) => (
-          <Chip key={f.slug} on={f.slug === step} onClick={() => setStep(f.slug)}>
-            {f.label}
-          </Chip>
-        ))}
+        {[{ slug: "all" as const, label: "ทั้งหมด" }, ...steps.map((s) => ({ slug: s.slug, label: `${s.num} ${s.name}` }))].map((f) => {
+          const n = all.filter((c) => (f.slug === "all" || c.step === f.slug || c.alsoIn?.includes(f.slug)) && (topic === "all" || c.topic === topic) && (!q || c.title.toLowerCase().includes(q))).length;
+          return (
+            <Chip key={f.slug} on={f.slug === step} dim={n === 0} onClick={() => setStep(f.slug)}>
+              {f.label}
+              <span className="tabular-nums opacity-70">{n}</span>
+            </Chip>
+          );
+        })}
       </FilterRow>
 
       <FilterRow label="หมวด">
@@ -81,14 +88,26 @@ export function CardLibrary() {
         })}
       </FilterRow>
 
-      <p className="text-sm text-fd-muted-foreground" aria-live="polite">
-        {list.length} การ์ด
-      </p>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+        <p className="text-sm text-fd-muted-foreground" aria-live="polite">
+          แสดง <span className="tabular-nums">{list.length}</span> จาก <span className="tabular-nums">{all.length}</span> การ์ด · อ่านแล้ว <span className="tabular-nums">{all.filter((c) => done.has(c.href)).length}</span>
+          {/* แผนที่ 7 ขั้นนับเฉพาะการ์ดหลัก บอกส่วนต่างไว้ ตัวเลขสองหน้าจะได้ไม่ดูขัดกัน */}
+          {all.some((c) => c.author) && ` (รวมการ์ดที่พี่เลี้ยงเขียน ${all.filter((c) => c.author).length} ใบ)`}
+        </p>
+        {filtered && (
+          <button type="button" onClick={clear} className="min-h-11 text-sm font-medium text-fd-primary hover:underline">
+            ล้างตัวกรอง
+          </button>
+        )}
+      </div>
 
       {list.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-fd-border p-6 text-center text-fd-muted-foreground">
-          {q ? `ยังไม่มีการ์ดชื่อ "${query.trim()}" ลองค้นในเนื้อหาทั้งเว็บด้วยปุ่มด้านบน` : "ยังไม่มีการ์ดตรงกับที่เลือก กำลังทยอยเพิ่ม ระหว่างนี้ดูบทเรียนฉบับเต็มด้านล่าง"}
-        </p>
+        <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-fd-border p-6 text-center">
+          <p className="text-fd-muted-foreground">{q ? `ไม่มีการ์ดที่ตรงกับ "${query.trim()}" ในตัวกรองนี้ ลองคำอื่น หรือดูทุกขั้นทุกหมวด` : "ยังไม่มีการ์ดตรงกับที่เลือก ลองดูทุกขั้นทุกหมวด"}</p>
+          <button type="button" onClick={clear} className="min-h-11 rounded-xl bg-fd-primary px-4 font-semibold text-fd-primary-foreground hover:brightness-110">
+            ล้างตัวกรองและคำค้น
+          </button>
+        </div>
       ) : (
         groups.map((g) => {
           const Icon = topicIcon[g.slug];
@@ -148,18 +167,13 @@ function CardTile({ card: c, done, locked }: { card: Item; done: boolean; locked
       <Link href={c.href} className="flex h-full min-h-32 flex-col gap-1.5 rounded-xl border border-fd-border bg-fd-card p-4 hover:border-fd-primary/50 hover:bg-fd-accent">
         <span className="flex flex-wrap items-center justify-between gap-2 text-xs">
           <span className="flex flex-wrap gap-1.5">
-            <span className="rounded-full bg-fd-primary/10 px-2.5 py-0.5 font-semibold text-fd-primary">
-              {s.name}
-              {c.part ? ` › ${c.part}` : ""}
+            <span className="rounded-full bg-fd-muted px-2.5 py-0.5 font-medium text-fd-foreground">
+              ขั้น {s.num} {s.name}
+              {c.part ? ` › ${PART_LABEL[c.part] ?? c.part}` : ""}
             </span>
             {c.author && <MentorBadge />}
           </span>
-          {done && (
-            <span className="inline-flex items-center gap-1 font-semibold text-fd-primary">
-              <Check className="size-3.5" strokeWidth={3} aria-hidden />
-              เข้าใจแล้ว
-            </span>
-          )}
+          {done && <span className="font-semibold text-green-800 dark:text-green-300">อ่านแล้ว</span>}
         </span>
         <span className="text-lg leading-snug font-bold">{c.title}</span>
         <span className="mt-auto inline-flex items-center gap-1 text-xs text-fd-muted-foreground tabular-nums">
@@ -174,7 +188,7 @@ function CardTile({ card: c, done, locked }: { card: Item; done: boolean; locked
 
 // ป้ายบอกว่าการ์ดนี้พี่เลี้ยงเขียนจากหลังบ้าน (ไม่ใช่เนื้อหาหลักของคู่มือ) ใช้ทั้งในคลัง หน้าขั้น และหัวการ์ด
 export function MentorBadge({ author }: { author?: string }) {
-  return <span className="rounded-full bg-(--mentor-badge-bg) px-2.5 py-0.5 font-semibold text-(--mentor-badge-fg)">จากพี่เลี้ยง{author ? ` · ${author}` : ""}</span>;
+  return <span className="rounded-full bg-(--mentor-badge-bg) px-2.5 py-0.5 font-semibold text-(--mentor-badge-fg)">เขียนโดยพี่เลี้ยง{author ? ` · ${author}` : ""}</span>;
 }
 
 function FullSearchHint() {
