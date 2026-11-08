@@ -15,6 +15,7 @@ adminSubmissionRoutes.get("/page", async (c) => {
   if (!parsed.success) return c.json({ error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" }, 400);
   return c.json(await submissionService.reviewPage(parsed.data));
 });
+adminSubmissionRoutes.get("/waiting", async (c) => c.json(await submissionService.waitingByCohort()));
 adminSubmissionRoutes.get("/summary", async (c) => {
   const parsed = reviewSummaryQuerySchema.safeParse(c.req.query());
   if (!parsed.success || parsed.data.cohort === undefined) return c.json({ error: parsed.success ? "เลือกรุ่นก่อน" : (parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง") }, 400);

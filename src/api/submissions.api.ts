@@ -14,6 +14,7 @@ export const submissionsApi = {
   // หลังบ้าน
   all: () => request<{ items: AdminSubmission[]; waiting: number }>("/admin/submissions"),
   // หน้าตรวจงานแบบเจาะลง: กรอง/นับ/แบ่งหน้าที่ server · ส่งเฉพาะค่าที่ตั้ง (ไม่ส่ง = ใช้ค่าเริ่มต้นของ server)
+  waitingByCohort: () => request<{ items: { cohortId: number | null; waiting: number }[] }>("/admin/submissions/waiting"),
   reviewPage: (q: ReviewQuery) => request<ReviewPage>(`/admin/submissions/page${queryOf(q)}`),
   reviewSummary: (cohort: number) => request<ReviewSummary>(`/admin/submissions/summary?cohort=${cohort}`),
   review: (id: number, verdict: "pass" | "revise", review: string, scores?: Record<string, number>) =>

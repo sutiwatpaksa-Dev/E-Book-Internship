@@ -10,8 +10,6 @@ import { useScopedUnread } from "@/hooks/use-unread";
 import { useCohortFilter } from "@/hooks/use-cohort-filter";
 import { cohortQuery, inCohort } from "@/lib/cohort";
 import { defaultReviewCohort } from "@/lib/review-url";
-import { waitingOf } from "@/lib/submission";
-import type { AdminSubmission } from "@/types";
 import { CohortFilterBar } from "./cohort-filter-bar";
 import { useContentAdmin } from "@/hooks/use-content-admin";
 import { AdminBoard } from "./admin-board";
@@ -144,12 +142,13 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
   const owners = cohort === "all" ? null : new Set(admin.users.filter((u) => u.role === "intern" && inScope(u.cohortId)).map((u) => u.username));
   const waiting = useScopedUnread(cohortQuery(cohort, mine));
   // จำนวนงานรอตรวจบนเมนู (ตามตัวกรองรุ่น) · โหลดใหม่หลังบันทึกผลตรวจ
-  const [subs, setSubs] = useState<AdminSubmission[]>([]);
-  const waitingSubs = waitingOf(subs.filter((s) => inScope(s.cohortId))).length;
+  // นับที่ server แยกตามรุ่น (ไม่ดึงรายการงานมานับเอง: รายการเดิมตัดที่ 500 แถว เลขบนเมนูจะต่ำกว่าจริงเมื่อมีงานเยอะ)
+  const [waitingBy, setWaitingBy] = useState<{ cohortId: number | null; waiting: number }[]>([]);
+  const waitingSubs = waitingBy.filter((r) => inScope(r.cohortId)).reduce((n, r) => n + r.waiting, 0);
   const countSubs = () =>
     submissionsApi
-      .all()
-      .then((r) => setSubs(r.items))
+      .waitingByCohort()
+      .then((r) => setWaitingBy(r.items))
       .catch(() => {});
   useEffect(() => {
     countSubs();

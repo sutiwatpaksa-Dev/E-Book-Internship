@@ -105,6 +105,15 @@ export const submissionRepository = {
       .innerJoin(users, eq(users.id, submissions.userId))
       .where(reviewable({ cohort, q: "" }))
       .groupBy(assignments.id, submissions.round),
+  // จำนวนงานรอตรวจแยกตามรุ่น (ป้ายเมนู) · นับที่ SQL ด้วยกฎ "ครั้งล่าสุดของแต่ละรอบ" เดียวกับหน้าตรวจ ไม่ดึงแถวมานับเอง (ของเดิมตัดที่ 500 แถว)
+  waitingByCohort: () =>
+    db
+      .select({ cohortId: users.cohortId, waiting: waitingCount })
+      .from(submissions)
+      .innerJoin(assignments, eq(assignments.id, submissions.assignmentId))
+      .innerJoin(users, eq(users.id, submissions.userId))
+      .where(and(reviewable({ q: "" }), isNull(submissions.reviewedAt)))
+      .groupBy(users.cohortId),
   // น้องที่ยังฝึกอยู่ในรุ่น (ตัวหารของ "ส่งแล้ว x จาก y คน")
   async internCount(cohort: number) {
     const [r] = await db

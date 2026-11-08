@@ -59,6 +59,11 @@ export const submissionService = {
     return { items: items.map(({ prevRepoUrl, ...s }) => ({ ...labeled(s), prevRepoUrl: repoChanged(prevRepoUrl, s.repoUrl) ? prevRepoUrl : null })), total, waiting, reviewed, offset: q.offset, limit: q.limit };
   },
 
+  // ป้ายเมนู "งานรอตรวจ": จำนวนแยกตามรุ่น (รุ่นที่ไม่มีงานรอตรวจไม่อยู่ในรายการ) หน้าเว็บรวมเฉพาะรุ่นที่อยู่ในตัวกรอง
+  async waitingByCohort() {
+    return { items: (await submissionRepository.waitingByCohort()).filter((r) => r.waiting > 0) };
+  },
+
   // หน้าตรวจงานชั้น "งาน": ทุกโพสต์ (โจทย์ × รอบ) ของรุ่นนี้ แม้ยังไม่มีใครส่ง (ขึ้น 0) · รอบ "ลงทะเบียน repo" ไม่ใช่โพสต์ที่ตรวจ
   async reviewSummary(cohort: number) {
     const [assignments, counted, interns] = await Promise.all([assignmentRepository.ofCohort(cohort), submissionRepository.summaryByPost(cohort), submissionRepository.internCount(cohort)]);
