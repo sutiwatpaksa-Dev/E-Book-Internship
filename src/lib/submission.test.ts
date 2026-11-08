@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { reviewListQuerySchema, reviewSummaryQuerySchema, submitSchema } from "../../server/validators/submission.validator";
-import { deployProblem, normalizeDeploy, normalizeRepo, refProblem, repoOf, repoProblem, DEFAULT_ROUNDS, hasRound, roundLabel, roundsProblem, takesDeploy, treeUrl, waitingOf, weightOf, weightTotal, criteriaOf, repoChanged, repoShort } from "./submission";
+import { deployProblem, normalizeDeploy, normalizeRepo, refProblem, repoOf, repoProblem, DEFAULT_ROUNDS, hasRound, roundLabel, roundsProblem, takesDeploy, treeUrl, waitingOf, weightOf, weightTotal, criteriaOf, repoChanged, repoShort, hasLink, hasRepo, linkProblem, linkShort, normalizeLink, normalizeSubmit, submitProblem, textProblem } from "./submission";
 
 describe("ลิงก์ repo", () => {
   test("แบบที่คนคัดลอกมาจริง จัดเป็นแบบเดียว", () => {
@@ -57,7 +57,8 @@ describe("ลงทะเบียน repo วันที่ 1", () => {
   test("ไม่ต้องมี tag · เก็บ ref เป็น HEAD (branch หลักของ repo)", () => {
     const v = submitSchema.parse({ ...base, round: "start" });
     expect(v.ref).toBe("HEAD");
-    expect(v.repoUrl).toBe("https://github.com/ton/starter");
+    // ลิงก์จัดรูปที่ submission.service ตามชนิดงาน (ดู normalizeSubmit) ไม่ใช่ที่ schema แล้ว
+    expect(normalizeSubmit("repo", v.repoUrl)).toBe("https://github.com/ton/starter");
   });
   test("รอบตรวจไม่ต้องมี tag แล้ว (6 พ.ย. 2569) ว่าง = HEAD · ใส่มาต้องถูกรูปแบบ", () => {
     expect(submitSchema.parse({ ...base, round: "review-1" }).ref).toBe("HEAD");
@@ -165,5 +166,48 @@ describe("repoChanged (ป้าย เปลี่ยน repo จากคร�
   });
   test("repoShort ตัดโดเมนออก", () => {
     expect(repoShort("https://github.com/somchai/starter.git")).toBe("somchai/starter");
+  });
+});
+
+describe("ชนิดของที่น้องส่ง (repo, ลิงก์ทั่วไป, ข้อความ)", () => {
+  test("repo: ใช้กฎ GitHub เดิม จัดรูปลิงก์เหมือนเดิม", () => {
+    expect(submitProblem("repo", "https://github.com/a/b", "")).toBeNull();
+    expect(submitProblem("repo", "https://figma.com/file/x", "")).not.toBeNull();
+    expect(normalizeSubmit("repo", "github.com/a/b.git")).toBe("https://github.com/a/b");
+  });
+  test("ลิงก์ทั่วไป: รับ https เว็บจริง (Figma, Drive) ไม่รับ http/localhost/เลข IP/javascript:/ช่องว่าง", () => {
+    for (const ok of ["https://www.figma.com/file/abc?node-id=1", "https://drive.google.com/file/d/1/view", "https://canva.com"]) expect(linkProblem(ok)).toBeNull();
+    for (const bad of ["", "http://figma.com/x", "https://localhost/x", "https://127.0.0.1/x", "javascript:alert(1)", "https://a b.com", "figma.com/x", "https://nodot"]) expect(linkProblem(bad)).not.toBeNull();
+  });
+  test("ลิงก์ทั่วไป: ตัด / ท้ายเมื่อเป็นแค่ชื่อเว็บ ไม่แตะ path จริง", () => {
+    expect(normalizeLink("https://canva.com/")).toBe("https://canva.com");
+    expect(normalizeLink("https://www.figma.com/file/abc/")).toBe("https://www.figma.com/file/abc/");
+    expect(normalizeLink("https://a.com/x"+"y".repeat(300))).toBeNull();
+  });
+  test("ข้อความอย่างเดียว: ไม่ต้องมีลิงก์ แต่ต้องเขียนสิ่งที่ทำ (อย่างน้อย 10 ตัว) และเก็บลิงก์เป็นค่าว่าง", () => {
+    expect(submitProblem("text", "", "ทำเสร็จแล้วครับ ดูได้เลย")).toBeNull();
+    expect(submitProblem("text", "", "สั้น")).not.toBeNull();
+    expect(textProblem("   ทำ   ")).not.toBeNull();
+    expect(normalizeSubmit("text", "https://github.com/a/b")).toBe("");
+  });
+  test("เฉพาะงานแบบ repo ที่มีรอบลงทะเบียน repo และ branch/tag", () => {
+    expect(hasRepo("repo")).toBe(true);
+    expect(hasRepo("link")).toBe(false);
+    expect(hasRepo("text")).toBe(false);
+    expect(hasLink("text")).toBe(false);
+    expect(hasLink("link")).toBe(true);
+  });
+  test("ชื่อสั้นของลิงก์ที่ส่ง", () => {
+    expect(linkShort("repo", "https://github.com/a/b")).toBe("a/b");
+    expect(linkShort("link", "https://www.figma.com/file/abc")).toBe("figma.com");
+  });
+  test("repoOf นับเฉพาะ repo: แถวงานแบบลิงก์ไม่ถูกนับเป็น repo ของน้อง · แถวเก่าไม่มีชนิด = repo", () => {
+    const rows = [
+      { userId: 1, repoUrl: "https://figma.com/x", submitKind: "link" as const },
+      { userId: 1, repoUrl: "https://github.com/a/b" },
+      { userId: 2, repoUrl: "", submitKind: "text" as const },
+    ];
+    expect(repoOf(rows, 1)).toBe("https://github.com/a/b");
+    expect(repoOf(rows, 2)).toBeNull();
   });
 });

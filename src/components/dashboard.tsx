@@ -314,12 +314,14 @@ const DUE_TONE = (daysLeft: number | null, state: PlanItem["state"]) =>
 function MyTasks({ work }: { work: Work }) {
   const { data, plan, cohort, loading, failed } = work;
   const next = nextWork(plan);
-  const repo = data?.items[0]?.repoUrl ?? null;
+  // ลงทะเบียน repo เฉพาะโจทย์แบบ repo · โจทย์ที่ส่งเป็นลิงก์ทั่วไปหรือข้อความไม่ต้องมี repo จึงไม่เตือนและไม่นับเป็น "ยังไม่ส่ง repo"
+  const needsRepo = data?.assignments.some((a) => a.submitKind === "repo") ?? true;
+  const repo = data?.items.find((s) => s.submitKind === "repo")?.repoUrl || null;
   const deploy = data?.items.find((s) => s.deployUrl)?.deployUrl ?? null;
   const dated = plan.some((p) => p.dueOn);
   // ส่งงาน = ไปหน้างานรอบถัดไปที่ต้องทำ (กล่องส่งงานอยู่ในหน้านั้น) · ยังไม่มี repo = หน้าลงทะเบียน repo เดิม
   const toSend = plan.find((p) => p.state === "revise" || p.state === "late" || p.state === "todo");
-  const sendHref = repo && toSend ? `/work/${toSend.assignment}/${toSend.round.id}` : SUBMIT_LINK;
+  const sendHref = (repo || !needsRepo) && toSend ? `/work/${toSend.assignment}/${toSend.round.id}` : SUBMIT_LINK;
 
   return (
     <section aria-labelledby="tasks-title" className={`${box} flex flex-col gap-4 lg:col-span-8 lg:self-start`}>
@@ -332,7 +334,7 @@ function MyTasks({ work }: { work: Work }) {
         </Link>
         {!data?.locked && (
           <Link href={sendHref} className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-fd-primary px-4 text-sm font-semibold text-fd-primary-foreground hover:brightness-110">
-            {!repo ? "ส่งลิงก์ repo" : toSend ? `ส่งงาน: ${toSend.round.label}` : "ดูผลตรวจ"} <ArrowRight className="size-4" />
+            {needsRepo && !repo ? "ส่งลิงก์ repo" : toSend ? `ส่งงาน: ${toSend.round.label}` : "ดูผลตรวจ"} <ArrowRight className="size-4" />
           </Link>
         )}
       </div>
@@ -348,7 +350,7 @@ function MyTasks({ work }: { work: Work }) {
       ) : (
         <>
           {!cohort && <p className="text-sm text-fd-muted-foreground">คุณยังไม่ได้อยู่ในรุ่นใด จึงยังไม่มีวันที่กำหนดส่ง บอกพี่เลี้ยงให้ใส่รุ่นให้</p>}
-          {!repo && !data?.locked && <p className="rounded-lg bg-fd-muted px-3 py-2 text-sm">ยังไม่ได้ส่งลิงก์ repo · สร้าง repo แล้ว push ครั้งแรก จากนั้นส่งลิงก์ให้พี่เลี้ยงตามดูโค้ดได้ทุกวัน</p>}
+          {needsRepo && !repo && !data?.locked && <p className="rounded-lg bg-fd-muted px-3 py-2 text-sm">ยังไม่ได้ส่งลิงก์ repo · สร้าง repo แล้ว push ครั้งแรก จากนั้นส่งลิงก์ให้พี่เลี้ยงตามดูโค้ดได้ทุกวัน</p>}
           <ul className="flex flex-col gap-2">
             {plan.map((p) => {
               const isNext = next === p;

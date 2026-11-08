@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { COMMENT_KINDS } from "../../src/lib/rubric";
 import { REVIEW_PAGE_MAX, REVIEW_PAGE_SIZE, REVIEW_SORTS, REVIEW_STATUSES } from "../../src/lib/review-url";
-import { deployProblem, normalizeDeploy, normalizeRepo, refProblem, repoProblem, ROUND_ID, START_REF, START_ROUND, VERDICTS } from "../../src/lib/submission";
+import { deployProblem, LINK_MAX, normalizeDeploy, refProblem, ROUND_ID, START_REF, START_ROUND, VERDICTS } from "../../src/lib/submission";
 
 // กฎของช่องอยู่ใน src/lib/submission.ts ใช้ร่วมกับฟอร์มของน้อง · ที่นี่คือด่านจริง (ยิง API ตรงก็ต้องผ่านกฎเดียวกัน)
 const check = (ctx: z.RefinementCtx, path: string, problem: string | null) => {
@@ -13,7 +13,8 @@ export const submitSchema = z
     assignment: z.string({ error: "เลือกโจทย์ที่ส่ง" }).regex(/^[a-z0-9-]{1,40}$/, { error: "เลือกโจทย์ที่ส่ง" }),
     // รอบที่ส่งได้ขึ้นกับโจทย์ ด่านนั้นอยู่ที่ submission.service
     round: z.string({ error: "เลือกรอบที่ส่งจากรายการ" }).regex(ROUND_ID, { error: "เลือกรอบที่ส่งจากรายการ" }),
-    repoUrl: z.string({ error: "ใส่ลิงก์ repo บน GitHub" }).max(300, { error: "ลิงก์ยาวเกินไป" }),
+    // ลิงก์ของงาน: ชนิด repo = GitHub, link = https ทั่วไป, text = ว่าง · กฎตามชนิดตรวจที่ submission.service (ต้องรู้โจทย์ก่อน)
+    repoUrl: z.string({ error: "ใส่ลิงก์งานที่ส่ง" }).max(LINK_MAX, { error: "ลิงก์ยาวเกินไป" }).default(""),
     // ไม่ต้องใส่ tag แล้ว (6 พ.ย. 2569) ว่าง = HEAD พี่เลี้ยงเปิดดูโค้ดล่าสุดตอนตรวจ · ใส่มาก็ยังรับ (ฟอร์มเก่า/API ตรง)
     ref: z.string().default(""),
     // ลิงก์เว็บที่ deploy แล้ว · รอบที่ต้องส่งลิงก์เว็บ บังคับที่ submission.service
@@ -21,12 +22,11 @@ export const submitSchema = z
     note: z.string().trim().max(1000, { error: "ข้อความถึงพี่เลี้ยงไม่เกิน 1,000 ตัว" }).default(""),
   })
   .superRefine((v, ctx) => {
-    check(ctx, "repoUrl", repoProblem(v.repoUrl));
     if (v.ref.trim()) check(ctx, "ref", refProblem(v.ref));
     check(ctx, "deployUrl", deployProblem(v.deployUrl));
   })
-  // เก็บลิงก์แบบเดียวกันเสมอ (ไม่มี .git, www, / ท้าย) หน้าเว็บจะได้เทียบว่า "repo เดิม" ได้ และพี่เลี้ยงกดเปิดได้ทุกแถว
-  .transform((v) => ({ ...v, repoUrl: normalizeRepo(v.repoUrl)!, ref: v.round === START_ROUND || !v.ref.trim() ? START_REF : v.ref.trim(), deployUrl: normalizeDeploy(v.deployUrl) }));
+  // ลิงก์จัดรูปที่ submission.service ตามชนิดงาน (repo ไม่มี .git, www, / ท้าย) หน้าเว็บจะได้เทียบว่า "repo เดิม" ได้ และพี่เลี้ยงกดเปิดได้ทุกแถว
+  .transform((v) => ({ ...v, ref: v.round === START_ROUND || !v.ref.trim() ? START_REF : v.ref.trim(), deployUrl: normalizeDeploy(v.deployUrl) }));
 
 export const reviewSchema = z
   .object({

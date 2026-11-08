@@ -1,3 +1,4 @@
+import type { DeliverableKind } from "@/lib/submission";
 import type { PostSend, AdminAssignment, AssignmentInput, AuditEntry, BulkResult, Cohort, CohortInput, SignupSettings, FileInfo, IssuedPin, ProgressEntry, Role, ThreadDetail, ThreadStatus, ThreadSummary, User } from "@/types";
 import { jsonBody, request } from "./client";
 
@@ -15,6 +16,7 @@ export const adminApi = {
   listAssignments: () => request<AdminAssignment[]>("/admin/assignments"),
   createAssignment: (slug: string, input: AssignmentInput) => request<{ id: number }>("/admin/assignments", jsonBody("POST", { slug, ...input })),
   updateAssignment: (id: number, input: AssignmentInput) => request<null>(`/admin/assignments/${id}`, jsonBody("PUT", input)),
+  setSubmitKind: (id: number, submitKind: DeliverableKind) => request<null>(`/admin/assignments/${id}/submit-kind`, jsonBody("PUT", { submitKind })),
   addPost: (id: number, input: PostSend) => request<{ id: string; copied: number }>(`/admin/assignments/${id}/posts`, jsonBody("POST", input)),
   updatePost: (id: number, roundId: string, input: PostSend) => request<null>(`/admin/assignments/${id}/posts/${roundId}`, jsonBody("PUT", input)),
   removePost: (id: number, roundId: string) => request<null>(`/admin/assignments/${id}/posts/${roundId}`, { method: "DELETE" }),

@@ -3,7 +3,7 @@ import { db } from "../db/client";
 import { assignments, cohorts, files, users } from "../db/schema";
 
 type NewAssignment = typeof assignments.$inferInsert;
-export type AssignmentFields = Pick<NewAssignment, "name" | "brief" | "sections" | "rubric"> & { overview?: string };
+export type AssignmentFields = Pick<NewAssignment, "name" | "brief" | "sections" | "rubric"> & { overview?: string; submitKind?: NewAssignment["submitKind"] };
 
 export const assignmentRepository = {
   // หลังบ้าน: ทุกโจทย์ + ไฟล์ PDF (ขนาด เวลา) + รุ่นเจ้าของ · ไม่ดึงตัวไฟล์ (bytea) มา
@@ -50,7 +50,7 @@ export const assignmentRepository = {
       for (const a of src) {
         const [n] = await tx
           .insert(assignments)
-          .values({ cohortId, slug: a.slug, name: a.name, brief: a.brief, pdfKey: a.pdfKey, sections: a.sections, rubric: a.rubric, overview: a.overview })
+          .values({ cohortId, slug: a.slug, name: a.name, brief: a.brief, pdfKey: a.pdfKey, sections: a.sections, rubric: a.rubric, overview: a.overview, submitKind: a.submitKind })
           .returning({ id: assignments.id });
         // PDF ที่แนบกับโพสต์ (key ผูกกับ id ของกล่องงาน) คัดลอกไฟล์ให้สำเนาด้วย
         for (const r of a.rubric.rounds.filter((x) => x.pdf === "own")) {

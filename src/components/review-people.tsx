@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRightLeft, ChevronLeft, ChevronRight, Code, FolderGit2, Search } from "lucide-react";
+import { ArrowRightLeft, ChevronLeft, ChevronRight, Code, ExternalLink, FolderGit2, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useReviewPage } from "@/hooks/use-review";
 import type { AdminState } from "@/hooks/use-admin";
@@ -260,15 +260,18 @@ function Row({ admin, s, open, active, onToggle, onReviewed }: { admin: AdminSta
           </span>
         </td>
         <td className="hidden px-3 py-2 sm:table-cell">
-          <a
-            href={treeUrl(s.repoUrl, s.ref)}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`เปิดโค้ดของ ${name} บน GitHub (แท็บใหม่)`}
-            className="inline-flex size-11 items-center justify-center rounded-lg text-fd-primary hover:bg-fd-accent"
-          >
-            <Code aria-hidden className="size-4" />
-          </a>
+          {/* ปุ่มเปิดงานที่น้องส่ง: repo = เปิดโค้ดบน GitHub · ลิงก์ทั่วไป = เปิดลิงก์นั้น · ข้อความ = ไม่มีลิงก์ให้เปิด (อ่านในแถวที่ขยาย) */}
+          {s.submitKind !== "text" && (
+            <a
+              href={s.submitKind === "link" ? s.repoUrl : treeUrl(s.repoUrl, s.ref)}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={s.submitKind === "link" ? `เปิดงานที่ ${name} ส่ง (แท็บใหม่)` : `เปิดโค้ดของ ${name} บน GitHub (แท็บใหม่)`}
+              className="inline-flex size-11 items-center justify-center rounded-lg text-fd-primary hover:bg-fd-accent"
+            >
+              {s.submitKind === "link" ? <ExternalLink aria-hidden className="size-4" /> : <Code aria-hidden className="size-4" />}
+            </a>
+          )}
         </td>
         <td className="px-3 py-2 text-end">
           <Button variant={open ? "ghost" : "primary"} aria-expanded={open} aria-label={`${open ? "ปิด" : s.reviewedAt ? "แก้ผลตรวจ" : "ตรวจงาน"} ${name}`} onClick={onToggle} className="min-h-11 whitespace-nowrap">

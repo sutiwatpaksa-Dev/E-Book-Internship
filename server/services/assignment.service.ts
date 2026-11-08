@@ -9,7 +9,7 @@ import { submissionRepository } from "../repositories/submission.repository";
 import type { AssignmentInput, PostInput } from "../validators/assignment.validator";
 import { auditService } from "./audit.service";
 import { checkPdf } from "./file.service";
-import { weightOf, weightTotal, type RoundDef } from "../../src/lib/submission";
+import { weightOf, weightTotal, type DeliverableKind, type RoundDef } from "../../src/lib/submission";
 
 type Viewer = { id: number; role: Role };
 
@@ -53,7 +53,7 @@ export const assignmentService = {
     const rows = await assignmentRepository.findManyById(sorted.map((a) => a.id));
     return sorted.flatMap((ref) => {
       const a = rows.find((r) => r.id === ref.id);
-      return a ? [{ id: a.id, slug: a.slug, name: a.name, brief: a.brief, overview: a.overview, sections: a.sections, rounds: a.rubric.rounds }] : [];
+      return a ? [{ id: a.id, slug: a.slug, name: a.name, brief: a.brief, overview: a.overview, sections: a.sections, rounds: a.rubric.rounds, submitKind: a.submitKind }] : [];
     });
   },
 
@@ -76,22 +76,32 @@ export const assignmentService = {
   },
 
   // โจทย์เป็นของรุ่นเดียว · slug ซ้ำได้ข้ามรุ่น แต่ไม่ซ้ำในรุ่นเดียวกัน · ไฟล์ PDF แยกตามรุ่น
-  async create(devId: number, cohortId: number, slug: string, { rounds, criteria, templates, overview, ...f }: AssignmentInput) {
+  async create(devId: number, cohortId: number, slug: string, { rounds, criteria, templates, overview, submitKind, ...f }: AssignmentInput) {
     const c = await cohortRepository.findById(cohortId);
     if (!c) throw new Error("COHORT_NOT_FOUND");
     if (c.endedAt) throw new Error("COHORT_LOCKED");
     if (await assignmentRepository.findInCohort(cohortId, slug)) throw new Error("ASSIGNMENT_SLUG_TAKEN");
-    const a = await assignmentRepository.create({ ...f, cohortId, overview: overview ?? "", rubric: { rounds: byDay(rounds), criteria: criteria ?? DEFAULT_CRITERIA, templates: templates ?? [] }, slug, pdfKey: `requirement:${slug}:c${cohortId}` });
+    const a = await assignmentRepository.create({ ...f, cohortId, submitKind: submitKind ?? "repo", overview: overview ?? "", rubric: { rounds: byDay(rounds), criteria: criteria ?? DEFAULT_CRITERIA, templates: templates ?? [] }, slug, pdfKey: `requirement:${slug}:c${cohortId}` });
     await auditService.log(devId, "assignment.create", f.name, `${slug} · ${c.name}`);
     return a;
   },
-  async update(devId: number, id: number, { rounds, criteria, templates, overview, ...f }: AssignmentInput) {
+  async update(devId: number, id: number, { rounds, criteria, templates, overview, submitKind, ...f }: AssignmentInput) {
     const a = await editable(id);
+    // เปลี่ยนชนิดที่ส่งได้เฉพาะตอนยังไม่มีใครส่ง (ไม่งั้นลิงก์เก่ากับชนิดใหม่ปนกัน)
+    if (submitKind && submitKind !== a.submitKind && (await submissionRepository.roundsUsed(id)).length > 0) throw new Error("SUBMIT_KIND_LOCKED");
     // รอบที่มีคนส่งแล้วลบไม่ได้ (ประวัติต้องยังบอกชื่อรอบได้) · แก้ชื่อ วัน คำอธิบายได้เสมอ
     const used = await submissionRepository.roundsUsed(id);
     if (used.some((r) => r !== "start" && !rounds.some((x) => x.id === r))) throw new Error("ROUND_IN_USE");
-    await assignmentRepository.update(id, { ...f, ...(overview !== undefined ? { overview } : {}), rubric: { ...a.rubric, rounds: byDay(rounds), ...(criteria ? { criteria } : {}), ...(templates ? { templates } : {}) } });
+    await assignmentRepository.update(id, { ...f, ...(submitKind ? { submitKind } : {}), ...(overview !== undefined ? { overview } : {}), rubric: { ...a.rubric, rounds: byDay(rounds), ...(criteria ? { criteria } : {}), ...(templates ? { templates } : {}) } });
     await auditService.log(devId, "assignment.update", f.name, `${a.slug}${criteria ? " · เกณฑ์คะแนน" : ""}${templates ? " · template" : ""}${overview !== undefined && overview !== a.overview ? " · ภาพรวม" : ""}`);
+  },
+  // ชนิดที่น้องส่ง (repo, ลิงก์ทั่วไป, ข้อความ) · เปลี่ยนได้เฉพาะตอนยังไม่มีใครส่ง
+  async setSubmitKind(devId: number, id: number, submitKind: DeliverableKind) {
+    const a = await editable(id);
+    if (submitKind === a.submitKind) return;
+    if ((await submissionRepository.roundsUsed(id)).length > 0) throw new Error("SUBMIT_KIND_LOCKED");
+    await assignmentRepository.update(id, { name: a.name, brief: a.brief, sections: a.sections, rubric: a.rubric, submitKind });
+    await auditService.log(devId, "assignment.update", a.name, `ชนิดที่ส่ง: ${a.submitKind} → ${submitKind}`);
   },
   // % คะแนนของโพสต์: รวมทุกโพสต์ไม่เกิน 100 · ตรวจงานของกล่องนี้แล้วแก้ % ไม่ได้ (โพสต์ใหม่ที่ไม่นับคะแนนยังเพิ่มได้)
   async checkWeights(a: { id: number; rubric: { rounds: RoundDef[] } }, next: RoundDef[], changed: { before: number; after: number }) {

@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { AuthVars } from "../middleware/require-role";
 import { assignmentService } from "../services/assignment.service";
-import { assignmentSchema, newAssignmentSchema, postSchema } from "../validators/assignment.validator";
+import { assignmentSchema, newAssignmentSchema, postSchema, submitKindSchema } from "../validators/assignment.validator";
 
 // หลังบ้าน: โจทย์ฝึกงาน · ต่ออยู่ใต้ admin.routes.ts จึงผ่านด่าน requireRole("dev") ของที่นั่นแล้ว
 export const adminAssignmentRoutes = new Hono<AuthVars>();
@@ -26,6 +26,13 @@ adminAssignmentRoutes.put("/:id", async (c) => {
   const parsed = assignmentSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ error: BAD }, 400);
   await assignmentService.update(c.get("user").id, id(c), parsed.data);
+  return c.body(null, 204);
+});
+
+adminAssignmentRoutes.put("/:id/submit-kind", async (c) => {
+  const parsed = submitKindSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: parsed.error.issues[0]?.message ?? BAD }, 400);
+  await assignmentService.setSubmitKind(c.get("user").id, id(c), parsed.data.submitKind);
   return c.body(null, 204);
 });
 

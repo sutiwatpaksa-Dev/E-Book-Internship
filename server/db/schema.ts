@@ -1,7 +1,8 @@
-import { type AnyPgColumn, boolean, customType, date, index, integer, jsonb, pgTable, primaryKey, serial, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { type AnyPgColumn, boolean, check, customType, date, index, integer, jsonb, pgTable, primaryKey, serial, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import type { CommentKind, CommentTemplate, Criterion, Scores } from "../../src/lib/rubric";
 import type { PostKind, Requirement } from "../../src/lib/post";
-import { DEFAULT_ROUNDS, type RoundDef, type TaskLink } from "../../src/lib/submission";
+import { DEFAULT_ROUNDS, type RoundDef, type DeliverableKind, type TaskLink } from "../../src/lib/submission";
 
 const bytea = customType<{ data: Buffer }>({ dataType: () => "bytea" });
 
@@ -143,9 +144,12 @@ export const assignments = pgTable(
   overview: text("overview").notNull().default(""),
   // เก็บโจทย์แล้ว: ไม่ให้เลือกใช้กับรุ่นใหม่ แต่งานและคะแนนเดิมยังเปิดดูได้
   archivedAt: timestamp("archived_at", { withTimezone: true }),
+  // ชนิดของที่น้องส่ง: repo = repo GitHub (ค่าเดิม) · link = ลิงก์ https ทั่วไป · text = ข้อความอย่างเดียว
+  // ลิงก์ของทุกชนิดเก็บในคอลัมน์ submissions.repo_url (ไม่เปลี่ยนชื่อเพื่อไม่ให้ทุก query ต้องแก้) · text เก็บ ""
+  submitKind: text("submit_kind").$type<DeliverableKind>().notNull().default("repo"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [uniqueIndex("assignments_cohort_slug_uq").on(t.cohortId, t.slug)],
+  (t) => [uniqueIndex("assignments_cohort_slug_uq").on(t.cohortId, t.slug), check("assignments_submit_kind_check", sql`${t.submitKind} in ('repo','link','text')`)],
 );
 
 // โจทย์ของแต่ละรุ่น: รุ่นหนึ่งเพิ่มได้หลายชิ้นจนกว่าจะจบรุ่น · ลบโจทย์ที่ยังมีรุ่นใช้อยู่ไม่ได้ (restrict)

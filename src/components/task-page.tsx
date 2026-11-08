@@ -8,7 +8,7 @@ import { submissionsApi } from "@/api/submissions.api";
 import { useMyWork } from "@/hooks/use-my-work";
 import { thaiDayMonth } from "@/lib/cohort";
 import { percentOf } from "@/lib/rubric";
-import { commitsUrl, START_REF, treeUrl, VERDICT_LABEL } from "@/lib/submission";
+import { commitsUrl, linkShort, START_REF, treeUrl, VERDICT_LABEL } from "@/lib/submission";
 import { timeAgo } from "@/lib/thread-labels";
 import { dueLabel } from "@/lib/work-plan";
 import { ErrorText } from "./error-text";
@@ -30,7 +30,9 @@ export function TaskPage({ assignment, round }: { assignment: string; round: str
   const item = work.plan.find((p) => p.assignment === assignment && p.round.id === round);
   // ส่งรอบเดิมซ้ำได้ แสดงเก่า→ใหม่ให้อ่านเป็นเรื่องเล่า
   const subs = (work.data?.items ?? []).filter((s) => s.assignment === assignment && s.round === round).reverse();
-  const repo = work.data?.items.find((s) => s.assignment === assignment)?.repoUrl ?? null;
+  // ชนิดของที่ส่งตั้งที่โจทย์ (repo, ลิงก์ทั่วไป, ข้อความ) · ลิงก์ล่าสุดของโจทย์นี้ใช้เติมช่องให้ครั้งต่อไป
+  const kind = work.data?.assignments.find((a) => a.slug === assignment)?.submitKind ?? "repo";
+  const repo = work.data?.items.find((s) => s.assignment === assignment)?.repoUrl || null;
   const lastDeploy = subs.at(-1)?.deployUrl ?? "";
   // ครั้งล่าสุดยังไม่ได้ตรวจ = รอตรวจ (ส่งใหม่แทนได้ ซ่อนฟอร์มไว้ก่อนกันกดส่งซ้ำโดยไม่ตั้งใจ)
   const waitingReview = subs.length > 0 && !subs.at(-1)!.reviewedAt;
@@ -78,12 +80,12 @@ export function TaskPage({ assignment, round }: { assignment: string; round: str
                   <button type="button" onClick={() => setResendOpen(true)} className="min-h-11 w-fit rounded-xl border border-fd-border px-4 font-medium hover:bg-fd-accent" hidden={resendOpen}>
                     ส่งใหม่แทน
                   </button>
-                  {resendOpen && <PostSubmitBox assignment={assignment} round={item.round} lastRepo={repo ?? ""} lastDeploy={lastDeploy} resend onSent={sent} />}
+                  {resendOpen && <PostSubmitBox assignment={assignment} kind={kind} round={item.round} lastRepo={repo ?? ""} lastDeploy={lastDeploy} resend onSent={sent} />}
                 </div>
               ) : item.state === "pass" ? (
                 <p className="rounded-2xl border border-fd-border bg-fd-card p-4 text-sm font-semibold text-green-800 dark:text-green-300">ผ่านรอบนี้แล้ว</p>
               ) : (
-                <PostSubmitBox assignment={assignment} round={item.round} lastRepo={repo ?? ""} lastDeploy={lastDeploy} resend={subs.length > 0} onSent={sent} />
+                <PostSubmitBox assignment={assignment} kind={kind} round={item.round} lastRepo={repo ?? ""} lastDeploy={lastDeploy} resend={subs.length > 0} onSent={sent} />
               )}
             </aside>
             <div className="flex min-w-0 flex-col gap-5 lg:order-1">
@@ -132,16 +134,24 @@ export function TaskPage({ assignment, round }: { assignment: string; round: str
                   ที่ส่งไปแล้ว
                 </h2>
                 {subs.length === 0 ? (
-                  <p className="text-fd-muted-foreground">ยังไม่ได้ส่งงานรอบนี้ push โค้ดขึ้น GitHub แล้วกด "ส่งงาน" ในกล่องส่งงาน</p>
+                  <p className="text-fd-muted-foreground">ยังไม่ได้ส่งงานรอบนี้ {kind === "repo" ? 'push โค้ดขึ้น GitHub แล้วกด "ส่งงาน" ในกล่องส่งงาน' : kind === "link" ? 'ใส่ลิงก์งานแล้วกด "ส่งงาน" ในกล่องส่งงาน' : 'เขียนสิ่งที่ทำแล้วกด "ส่งงาน" ในกล่องส่งงาน'}</p>
                 ) : (
                   <ol className="relative flex flex-col gap-4 ps-6 before:absolute before:start-[7px] before:top-2 before:bottom-2 before:w-0.5 before:bg-fd-border">
                     {subs.map((s) => (
                       <li key={s.id} className="relative flex flex-col gap-2 rounded-xl border border-fd-border bg-fd-card p-4 text-sm">
                         <span aria-hidden className="absolute -start-[22px] top-5 size-3.5 rounded-full border-2 border-fd-primary bg-fd-card" />
                         <div className="flex flex-wrap items-center gap-2">
-                          <a className="inline-flex items-center gap-1 font-mono font-semibold text-fd-primary underline" href={treeUrl(s.repoUrl, s.ref)} target="_blank" rel="noopener noreferrer">
-                            <GitCommitHorizontal className="size-4" /> {s.ref === START_REF ? "โค้ดล่าสุดใน repo" : s.ref} <ExternalLink className="size-3" />
-                          </a>
+                          {kind === "repo" ? (
+                            <a className="inline-flex items-center gap-1 font-mono font-semibold text-fd-primary underline" href={treeUrl(s.repoUrl, s.ref)} target="_blank" rel="noopener noreferrer">
+                              <GitCommitHorizontal className="size-4" /> {s.ref === START_REF ? "โค้ดล่าสุดใน repo" : s.ref} <ExternalLink className="size-3" />
+                            </a>
+                          ) : kind === "link" ? (
+                            <a className="inline-flex items-center gap-1 break-all font-semibold text-fd-primary underline" href={s.repoUrl} target="_blank" rel="noopener noreferrer">
+                              เปิดงานที่ส่ง: {linkShort(kind, s.repoUrl)} <ExternalLink className="size-3 shrink-0" />
+                            </a>
+                          ) : (
+                            <span className="font-semibold">ส่งเป็นข้อความ</span>
+                          )}
                           <span className="text-xs text-fd-muted-foreground">ส่ง {fmt(s.createdAt)}</span>
                           <span className="ms-auto">
                             <VerdictBadge verdict={s.verdict} />
@@ -181,7 +191,7 @@ export function TaskPage({ assignment, round }: { assignment: string; round: str
                     ))}
                   </ol>
                 )}
-                {repo && (
+                {kind === "repo" && repo && (
                   <a className="inline-flex min-h-11 w-fit items-center gap-1 text-sm text-fd-primary underline" href={commitsUrl(repo)} target="_blank" rel="noopener noreferrer">
                     <GitCommitHorizontal className="size-4" /> ดู commit ทั้งหมดบน GitHub
                   </a>

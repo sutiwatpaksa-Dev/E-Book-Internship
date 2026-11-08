@@ -6,7 +6,7 @@ import type { AdminState } from "@/hooks/use-admin";
 import { toast } from "@/hooks/use-toast";
 import { dayOfDate, isWeekend, thaiDayMonth, workdayDate } from "@/lib/cohort";
 import { timeAgo } from "@/lib/thread-labels";
-import { BODY_MAX, latestOnly, LINKS_MAX, linksProblem, OVERVIEW_MAX, criteriaOf, weightOf, weightTotal, type PostPdf, type RoundDef, type TaskLink } from "@/lib/submission";
+import { BODY_MAX, latestOnly, LINKS_MAX, linksProblem, OVERVIEW_MAX, criteriaOf, SUBMIT_KINDS, SUBMIT_KIND_LABEL, weightOf, weightTotal, type DeliverableKind, type PostPdf, type RoundDef, type TaskLink } from "@/lib/submission";
 import type { AdminAssignment, Cohort, PostSend } from "@/types";
 import { criteriaProblem, type Criterion } from "@/lib/rubric";
 import { CriteriaEditor } from "./criteria-editor";
@@ -371,6 +371,20 @@ function PostComposer({ admin, scoped, edit, onClose }: { admin: AdminState; sco
           </select>
         </label>
       </div>
+
+      {asg && (
+        <label className={field}>
+          น้องส่งอะไร (ตั้งทั้งกล่องงาน)
+          <select className={inputClass} value={asg.submitKind} onChange={(e) => admin.setSubmitKind(asg.id, e.target.value as DeliverableKind)}>
+            {SUBMIT_KINDS.map((k) => (
+              <option key={k} value={k}>
+                {SUBMIT_KIND_LABEL[k]}
+              </option>
+            ))}
+          </select>
+          <span className="text-xs font-normal text-fd-muted-foreground">เลือกแล้วบันทึกทันที · เปลี่ยนได้จนกว่าจะมีน้องส่งงานในกล่องนี้ แบบ "ข้อความ" น้องต้องเขียนสิ่งที่ทำ</span>
+        </label>
+      )}
 
       <label className={field}>
         ชื่องาน

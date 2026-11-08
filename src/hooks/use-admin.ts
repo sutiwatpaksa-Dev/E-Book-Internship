@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "@/api/admin.api";
 import { filesApi } from "@/api/files.api";
+import { SUBMIT_KIND_LABEL, type DeliverableKind } from "@/lib/submission";
 import type { PostSend, AdminAssignment, AssignmentInput, Cohort, CohortInput, ProgressEntry, Role, SignupSettings, ThreadSummary, User } from "@/types";
 import { toast } from "./use-toast";
 
@@ -160,6 +161,13 @@ export function useAdmin() {
       });
       return ok;
     },
+    // ชนิดที่น้องส่ง: เลือกแล้วบันทึกทันที · มีคนส่งแล้วเปลี่ยนไม่ได้ (server ปฏิเสธ แล้วขึ้นข้อความเป็นแถบ error)
+    setSubmitKind: (id: number, kind: DeliverableKind) =>
+      run(async () => {
+        await adminApi.setSubmitKind(id, kind);
+        await reload();
+        toast.success(`ตั้งให้น้องส่ง: ${SUBMIT_KIND_LABEL[kind]}`);
+      }),
     // คืน true เมื่อสำเร็จ ให้ฟอร์มปิดตัวเองได้
     saveAssignment: async (id: number | null, slug: string, input: AssignmentInput) => {
       let ok = false;

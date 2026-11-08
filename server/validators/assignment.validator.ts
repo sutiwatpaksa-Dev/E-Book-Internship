@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { COMMENT_KINDS, criteriaProblem, templatesProblem } from "../../src/lib/rubric";
-import { BODY_MAX, LINKS_MAX, linksProblem, OVERVIEW_MAX, roundsProblem } from "../../src/lib/submission";
+import { BODY_MAX, LINKS_MAX, linksProblem, OVERVIEW_MAX, roundsProblem, SUBMIT_KINDS } from "../../src/lib/submission";
 
 // key ใช้ในลิงก์ของคู่มือ (?sec=api) จึงเป็นตัวพิมพ์เล็กล้วน
 const section = z.object({
@@ -32,6 +32,8 @@ export const assignmentSchema = z.object({
   brief: z.string().trim().max(500),
   // ภาพรวมโจทย์ (Markdown) · ไม่ส่ง = ไม่แตะของเดิม (ฟอร์มรุ่นเก่ายังใช้ได้ ไม่ล้างเนื้อหาทิ้ง) · ส่งว่าง = ล้าง
   overview: z.string().max(OVERVIEW_MAX, { error: `ภาพรวมโจทย์ไม่เกิน ${OVERVIEW_MAX.toLocaleString("en-US")} ตัวอักษร` }).optional(),
+  // ชนิดของที่น้องส่ง · ไม่ส่ง = ไม่แตะของเดิม (ฟอร์มรุ่นเก่ายังใช้ได้) · เปลี่ยนไม่ได้เมื่อมีคนส่งแล้ว (ตรวจที่ assignment.service)
+  submitKind: z.enum(SUBMIT_KINDS, { error: "เลือกชนิดที่ส่ง: repo, ลิงก์ หรือข้อความ" }).optional(),
   // รอบส่งงานของโจทย์นี้ (กฎเดียวกับฟอร์มหลังบ้าน)
   rounds: z.array(round).superRefine((r, ctx) => {
     const problem = roundsProblem(r);
@@ -95,3 +97,6 @@ export const postSchema = z
   });
 export type PostInput = z.infer<typeof postSchema>;
 
+
+// ชนิดที่น้องส่ง ตั้งแยกจากฟอร์มโจทย์ (กดเลือกที่หน้าโพสต์งานแล้วบันทึกทันที) · เปลี่ยนไม่ได้เมื่อมีคนส่งแล้ว
+export const submitKindSchema = z.object({ submitKind: z.enum(SUBMIT_KINDS, { error: "เลือกชนิดที่ส่ง: repo, ลิงก์ หรือข้อความ" }) });

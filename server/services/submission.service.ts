@@ -1,7 +1,7 @@
 import type { Role } from "../db/schema";
 import type { RoundDef } from "../../src/lib/submission";
 import { buildScores } from "../../src/lib/rubric";
-import { criteriaOf, hasRound, repoChanged, isReviewable, roundLabel, START_REF, START_ROUND, takesDeploy, VERDICT_LABEL, waitingOf } from "../../src/lib/submission";
+import { criteriaOf, hasRepo, hasRound, normalizeSubmit, repoChanged, submitProblem, isReviewable, roundLabel, START_REF, START_ROUND, takesDeploy, VERDICT_LABEL, waitingOf } from "../../src/lib/submission";
 import { assignmentRepository } from "../repositories/assignment.repository";
 import { submissionRepository } from "../repositories/submission.repository";
 import { taskCommentRepository } from "../repositories/task-comment.repository";
@@ -27,7 +27,7 @@ export const submissionService = {
   // หน้าส่งงานของน้อง: โจทย์ที่ส่งได้ + ประวัติการส่ง + รุ่นจบแล้วหรือยัง (จบแล้วส่งไม่ได้ แต่ดูประวัติได้)
   async listMine(user: Viewer) {
     const [assignments, items, locked] = await Promise.all([assignmentService.listFor(user), mine(user.id), cohortService.endedFor(user.id)]);
-    return { assignments: assignments.map(({ slug, name, rounds }) => ({ slug, name, rounds })), items, locked };
+    return { assignments: assignments.map(({ slug, name, rounds, submitKind }) => ({ slug, name, rounds, submitKind })), items, locked };
   },
 
   async submit(user: Viewer, input: SubmitInput) {
@@ -37,12 +37,20 @@ export const submissionService = {
     if (!a) throw new Error("ASSIGNMENT_NOT_FOUND");
     // รอบและช่องลิงก์เว็บเป็นของโจทย์ ตั้งจากหลังบ้าน
     if (!hasRound(a.rubric.rounds, input.round)) throw new Error("ROUND_NOT_FOUND");
+    // ช่องส่งขึ้นกับชนิดงาน: repo = GitHub · link = https ทั่วไป · text = ข้อความ (ไม่มีลิงก์)
+    // รอบ "ลงทะเบียน repo" และ branch/tag ใช้ได้เฉพาะงานแบบ repo
+    const kind = a.submitKind;
+    if (input.round === START_ROUND && !hasRepo(kind)) throw new Error("ROUND_NOT_FOUND");
+    const problem = submitProblem(kind, input.repoUrl, input.note);
+    if (problem) throw Object.assign(new Error("SUBMIT_INVALID"), { detail: problem });
+    const repoUrl = normalizeSubmit(kind, input.repoUrl);
+    const ref = hasRepo(kind) ? input.ref : START_REF;
     if (input.deployUrl && !takesDeploy(a.rubric.rounds, input.round)) throw new Error("DEPLOY_NOT_ALLOWED");
     // รอบที่ติ๊ก "ต้องส่งลิงก์เว็บ" ไว้ ส่งไม่ได้ถ้าไม่มีลิงก์
     if (!input.deployUrl && takesDeploy(a.rubric.rounds, input.round)) throw new Error("DEPLOY_REQUIRED");
-    const s = await submissionRepository.create({ userId: user.id, assignmentId: a.id, round: input.round, repoUrl: input.repoUrl, ref: input.ref, deployUrl: input.deployUrl, note: input.note });
+    const s = await submissionRepository.create({ userId: user.id, assignmentId: a.id, round: input.round, repoUrl, ref, deployUrl: input.deployUrl, note: input.note });
     const who = (await userRepository.findById(user.id))?.username ?? "น้อง";
-    const title = input.round === START_ROUND ? `${who} ส่งลิงก์ repo แล้ว ตามดูโค้ดได้` : `${who} ส่งงาน ${roundLabel(input.round, a.rubric.rounds)}${input.ref === START_REF ? "" : ` (${input.ref})`}`;
+    const title = input.round === START_ROUND ? `${who} ส่งลิงก์ repo แล้ว ตามดูโค้ดได้` : `${who} ส่งงาน ${roundLabel(input.round, a.rubric.rounds)}${ref === START_REF ? "" : ` (${ref})`}`;
     await notificationService.toMentorsOf(user.id, { kind: "submission", title, link: DEV_LINK });
     return s;
   },
@@ -56,7 +64,7 @@ export const submissionService = {
   async reviewPage(q: ReviewListQuery) {
     const { items, waiting, reviewed } = await submissionRepository.reviewPage(q);
     const total = q.status === "waiting" ? waiting : q.status === "reviewed" ? reviewed : waiting + reviewed;
-    return { items: items.map(({ prevRepoUrl, ...s }) => ({ ...labeled(s), prevRepoUrl: repoChanged(prevRepoUrl, s.repoUrl) ? prevRepoUrl : null })), total, waiting, reviewed, offset: q.offset, limit: q.limit };
+    return { items: items.map(({ prevRepoUrl, ...s }) => ({ ...labeled(s), prevRepoUrl: hasRepo(s.submitKind) && repoChanged(prevRepoUrl, s.repoUrl) ? prevRepoUrl : null })), total, waiting, reviewed, offset: q.offset, limit: q.limit };
   },
 
   // ป้ายเมนู "งานรอตรวจ": จำนวนแยกตามรุ่น (รุ่นที่ไม่มีงานรอตรวจไม่อยู่ในรายการ) หน้าเว็บรวมเฉพาะรุ่นที่อยู่ในตัวกรอง

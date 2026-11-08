@@ -14,6 +14,7 @@ const row = {
   userId: submissions.userId,
   assignment: assignments.slug,
   assignmentName: assignments.name,
+  submitKind: assignments.submitKind,
   rubric: assignments.rubric,
   round: submissions.round,
   repoUrl: submissions.repoUrl,

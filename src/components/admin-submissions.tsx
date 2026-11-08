@@ -6,7 +6,7 @@ import { submissionsApi } from "@/api/submissions.api";
 import type { AdminState } from "@/hooks/use-admin";
 import { toast } from "@/hooks/use-toast";
 import { buildScores, percentOf, suggestVerdict, type Criterion, type CommentTemplate } from "@/lib/rubric";
-import { commitsUrl, isReviewable, latestOnly, repoOf, treeUrl, VERDICT_LABEL, waitingOf, type Verdict } from "@/lib/submission";
+import { commitsUrl, isReviewable, latestOnly, linkShort, repoOf, treeUrl, VERDICT_LABEL, waitingOf, type Verdict } from "@/lib/submission";
 import type { AdminSubmission } from "@/types";
 import { Button } from "./button";
 import { EmptyState } from "./empty-state";
@@ -163,10 +163,19 @@ export function SubmissionCard({ admin, s, who, history = 1, startOpen = false, 
       </div>
       <span className="text-fd-muted-foreground">
         {s.assignmentName} ·{" "}
-        <a className="inline-flex items-center gap-1 font-mono text-fd-primary underline" href={treeUrl(s.repoUrl, s.ref)} target="_blank" rel="noopener noreferrer">
-          {s.ref}
-          <ExternalLink className="size-3" />
-        </a>{" "}
+        {s.submitKind === "text" ? (
+          "ส่งเป็นข้อความ"
+        ) : s.submitKind === "link" ? (
+          <a className="inline-flex items-center gap-1 break-all text-fd-primary underline" href={s.repoUrl} target="_blank" rel="noopener noreferrer">
+            เปิดงานที่ส่ง: {linkShort("link", s.repoUrl)}
+            <ExternalLink className="size-3 shrink-0" />
+          </a>
+        ) : (
+          <a className="inline-flex items-center gap-1 font-mono text-fd-primary underline" href={treeUrl(s.repoUrl, s.ref)} target="_blank" rel="noopener noreferrer">
+            {s.ref}
+            <ExternalLink className="size-3" />
+          </a>
+        )}{" "}
         · ส่ง {fmt(s.createdAt)}
         {history > 1 && ` · ส่งรอบนี้ ${history} ครั้ง`}
       </span>

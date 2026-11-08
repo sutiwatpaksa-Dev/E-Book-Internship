@@ -169,6 +169,13 @@
       "when": 1793941214532,
       "tag": "0023_cohort_assignments_tracks",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1794134352062,
+      "tag": "0024_assignment_submit_kind",
+      "breakpoints": true
     }
   ]
 }

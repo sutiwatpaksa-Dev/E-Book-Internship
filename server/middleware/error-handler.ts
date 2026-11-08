@@ -59,6 +59,9 @@ const KNOWN: Record<string, [ContentfulStatusCode, string]> = {
   COMMENT_KIND_FORBIDDEN: [403, "น้องเขียนได้เฉพาะความเห็นงาน"],
   SUBMISSION_NOT_FOUND: [404, "ไม่พบงานที่ส่งนี้"],
   SUBMISSION_NOT_REVIEWABLE: [400, "ลิงก์ repo ไม่มีผลตรวจ ตรวจได้เฉพาะรอบที่ส่ง tag"],
+  // ข้อความผิดของช่องส่งงานขึ้นกับชนิดงาน (repo, ลิงก์, ข้อความ) service แนบมาใน detail แล้วแสดงเฉพาะข้อความนั้น
+  SUBMIT_INVALID: [400, ""],
+  SUBMIT_KIND_LOCKED: [409, "งานนี้มีคนส่งแล้ว เปลี่ยนชนิดที่ส่งไม่ได้ (สร้างงานใหม่แทน)"],
   COHORT_LOCKED: [403, "รุ่นนี้จบแล้ว งานของรุ่นถูกล็อกไว้ (กด \"เปิดรุ่นกลับ\" ก่อนถ้าจำเป็น)"],
   COHORT_ENDED: [403, "รุ่นของคุณจบแล้ว ยังอ่านคู่มือได้ แต่เปิดเรื่องถามใหม่ไม่ได้ ติดต่อพี่เลี้ยงทางกลุ่มแทน"],
 };
@@ -69,7 +72,7 @@ export function errorHandler(err: Error, c: Context) {
   const known = KNOWN[err.message];
   // detail = เหตุผลเฉพาะเรื่องที่ service แนบมา (เช่น รหัสผ่านสั้นไป) ต่อท้ายให้รู้ว่าต้องแก้อะไร
   const detail = (err as Error & { detail?: string }).detail;
-  if (known) return c.json({ error: detail ? `${known[1]}: ${detail}` : known[1] }, known[0]);
+  if (known) return c.json({ error: known[1] ? (detail ? `${known[1]}: ${detail}` : known[1]) : (detail ?? "ข้อมูลไม่ถูกต้อง") }, known[0]);
   console.error(err);
   return c.json({ error: "ระบบขัดข้อง" }, 500);
 }
