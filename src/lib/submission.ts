@@ -78,6 +78,15 @@ export function normalizeRepo(v: string): string | null {
   if (!m || m[2] === "." || m[2] === "..") return null;
   return `https://github.com/${m[1]}/${m[2]}`;
 }
+// น้องเปลี่ยน repo จากครั้งก่อนไหม (เทียบแบบจัดรูปแล้ว: www/.git/ตัวพิมพ์ ไม่นับว่าเปลี่ยน) · ครั้งแรก (ไม่มีครั้งก่อน) = ไม่นับ
+export function repoChanged(prev: string | null | undefined, now: string): boolean {
+  if (!prev) return false;
+  const norm = (v: string) => (normalizeRepo(v) ?? v.trim()).toLowerCase();
+  return norm(prev) !== norm(now);
+}
+export function repoShort(v: string): string {
+  return (normalizeRepo(v) ?? v).replace(/^https?:\/\/(?:www\.)?github\.com\//i, "");
+}
 export function repoProblem(v: string) {
   if (!v.trim()) return "ใส่ลิงก์ repo บน GitHub";
   return normalizeRepo(v) ? null : "ลิงก์ต้องเป็น repo บน GitHub เช่น https://github.com/somchai/starter (เปิด repo แล้วคัดลอกจากแถบที่อยู่)";

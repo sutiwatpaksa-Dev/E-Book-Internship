@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { reviewListQuerySchema, reviewSummaryQuerySchema, submitSchema } from "../../server/validators/submission.validator";
-import { deployProblem, normalizeDeploy, normalizeRepo, refProblem, repoOf, repoProblem, DEFAULT_ROUNDS, hasRound, roundLabel, roundsProblem, takesDeploy, treeUrl, waitingOf, weightOf, weightTotal, criteriaOf } from "./submission";
+import { deployProblem, normalizeDeploy, normalizeRepo, refProblem, repoOf, repoProblem, DEFAULT_ROUNDS, hasRound, roundLabel, roundsProblem, takesDeploy, treeUrl, waitingOf, weightOf, weightTotal, criteriaOf, repoChanged, repoShort } from "./submission";
 
 describe("ลิงก์ repo", () => {
   test("แบบที่คนคัดลอกมาจริง จัดเป็นแบบเดียว", () => {
@@ -148,5 +148,22 @@ describe("ตัวกรองหน้าตรวจงานแบบเจ�
   });
   test("สรุปรายงานใช้แค่รุ่น", () => {
     expect(reviewSummaryQuerySchema.safeParse({ cohort: "3", status: "all" }).data).toEqual({ cohort: 3 });
+  });
+});
+
+describe("repoChanged (ป้าย เปลี่ยน repo จากครั้งก่อน)", () => {
+  test("ครั้งแรก/ไม่มีครั้งก่อน = ไม่นับว่าเปลี่ยน", () => {
+    expect(repoChanged(null, "https://github.com/a/b")).toBe(false);
+    expect(repoChanged(undefined, "https://github.com/a/b")).toBe(false);
+  });
+  test("ลิงก์เดียวกันที่เขียนต่างรูป (www, .git, / ท้าย, ตัวพิมพ์) ไม่นับว่าเปลี่ยน", () => {
+    expect(repoChanged("https://www.github.com/Somchai/Starter.git", "https://github.com/somchai/starter/")).toBe(false);
+  });
+  test("คนละ repo = เปลี่ยน", () => {
+    expect(repoChanged("https://github.com/somchai/starter", "https://github.com/somchai/starter-v2")).toBe(true);
+    expect(repoChanged("https://github.com/somchai/starter", "https://github.com/other/starter")).toBe(true);
+  });
+  test("repoShort ตัดโดเมนออก", () => {
+    expect(repoShort("https://github.com/somchai/starter.git")).toBe("somchai/starter");
   });
 });

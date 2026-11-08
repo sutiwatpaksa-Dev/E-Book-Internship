@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, ilike, isNotNull, isNull, ne, notExists, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, ilike, isNotNull, isNull, ne, notExists, or, sql, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "../db/client";
 import { assignments, submissions, users } from "../db/schema";
@@ -27,9 +27,9 @@ const row = {
   scores: submissions.scores,
   reviewer: reviewer.username,
 };
-const base = () =>
+const base = <E extends Record<string, SQL | SQL.Aliased>>(extra?: E) =>
   db
-    .select({ ...row, username: users.username, nickname: users.nickname, cohortId: users.cohortId })
+    .select({ ...row, username: users.username, nickname: users.nickname, cohortId: users.cohortId, ...(extra ?? ({} as E)) })
     .from(submissions)
     .innerJoin(assignments, eq(assignments.id, submissions.assignmentId))
     .innerJoin(users, eq(users.id, submissions.userId))
@@ -52,6 +52,14 @@ const isLatest = notExists(
       ),
     ),
 );
+// repo ของการส่งครั้งก่อนหน้าของคนเดียวกันในโจทย์เดียวกัน (ทุกรอบ รวมรอบลงทะเบียน) · ไว้ติดป้าย "เปลี่ยน repo จากครั้งก่อน"
+// ลำดับ "ก่อนหน้า" ใช้กฎเดียวกับ isLatest (เวลา แล้วตามด้วย id)
+const prevRepoUrl = sql<string | null>`(
+  select p.repo_url from submissions p
+  where p.user_id = ${submissions.userId} and p.assignment_id = ${submissions.assignmentId}
+    and (p.created_at < ${submissions.createdAt} or (p.created_at = ${submissions.createdAt} and p.id < ${submissions.id}))
+  order by p.created_at desc, p.id desc limit 1
+)`;
 // % และ _ ในคำค้นต้องเป็นตัวอักษรธรรมดา ไม่งั้นพิมพ์ "%" แล้วได้ทุกคน
 const likeOf = (q: string) => `%${q.replace(/[\\%_]/g, "\\$&")}%`;
 const reviewable = (f: Pick<ReviewListQuery, "cohort" | "assignment" | "round" | "q">) =>
@@ -83,7 +91,7 @@ export const submissionRepository = {
     const order =
       f.sort === "name" ? [asc(users.username), desc(submissions.createdAt), desc(submissions.id)] : f.sort === "newest" ? [desc(submissions.createdAt), desc(submissions.id)] : [asc(submissions.createdAt), asc(submissions.id)];
     const [items, [c]] = await Promise.all([
-      base().where(where).orderBy(...order).limit(f.limit).offset(f.offset),
+      base({ prevRepoUrl }).where(where).orderBy(...order).limit(f.limit).offset(f.offset),
       counts().where(reviewable(f)),
     ]);
     return { items, waiting: c?.waiting ?? 0, reviewed: c?.reviewed ?? 0 };

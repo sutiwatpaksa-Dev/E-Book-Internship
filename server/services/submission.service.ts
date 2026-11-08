@@ -1,7 +1,7 @@
 import type { Role } from "../db/schema";
 import type { RoundDef } from "../../src/lib/submission";
 import { buildScores } from "../../src/lib/rubric";
-import { criteriaOf, hasRound, isReviewable, roundLabel, START_REF, START_ROUND, takesDeploy, VERDICT_LABEL, waitingOf } from "../../src/lib/submission";
+import { criteriaOf, hasRound, repoChanged, isReviewable, roundLabel, START_REF, START_ROUND, takesDeploy, VERDICT_LABEL, waitingOf } from "../../src/lib/submission";
 import { assignmentRepository } from "../repositories/assignment.repository";
 import { submissionRepository } from "../repositories/submission.repository";
 import { taskCommentRepository } from "../repositories/task-comment.repository";
@@ -56,7 +56,7 @@ export const submissionService = {
   async reviewPage(q: ReviewListQuery) {
     const { items, waiting, reviewed } = await submissionRepository.reviewPage(q);
     const total = q.status === "waiting" ? waiting : q.status === "reviewed" ? reviewed : waiting + reviewed;
-    return { items: items.map(labeled), total, waiting, reviewed, offset: q.offset, limit: q.limit };
+    return { items: items.map(({ prevRepoUrl, ...s }) => ({ ...labeled(s), prevRepoUrl: repoChanged(prevRepoUrl, s.repoUrl) ? prevRepoUrl : null })), total, waiting, reviewed, offset: q.offset, limit: q.limit };
   },
 
   // หน้าตรวจงานชั้น "งาน": ทุกโพสต์ (โจทย์ × รอบ) ของรุ่นนี้ แม้ยังไม่มีใครส่ง (ขึ้น 0) · รอบ "ลงทะเบียน repo" ไม่ใช่โพสต์ที่ตรวจ

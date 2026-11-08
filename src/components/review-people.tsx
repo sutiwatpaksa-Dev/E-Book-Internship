@@ -1,14 +1,14 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Code, FolderGit2, Search } from "lucide-react";
+import { ArrowRightLeft, ChevronLeft, ChevronRight, Code, FolderGit2, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useReviewPage } from "@/hooks/use-review";
 import type { AdminState } from "@/hooks/use-admin";
 import { thDateTime } from "@/lib/date-format";
 import { percentOf } from "@/lib/rubric";
 import { countOfStatus, offsetOf, pagesOf, rangeText, REVIEW_PAGE_SIZE, REVIEW_SORTS, SORT_LABEL, STATUS_LABEL, visibleStatuses, type ReviewSort, type ReviewUrl } from "@/lib/review-url";
-import { treeUrl } from "@/lib/submission";
-import type { AdminSubmission, ReviewPost } from "@/types";
+import { repoShort, treeUrl } from "@/lib/submission";
+import type { ReviewItem, ReviewPost } from "@/types";
 import { SubmissionCard } from "./admin-submissions";
 import { Button } from "./button";
 import { EmptyState } from "./empty-state";
@@ -233,7 +233,7 @@ export function ReviewPeople({ admin, url, post, onUrl, onChanged }: { admin: Ad
   );
 }
 
-function Row({ admin, s, open, active, onToggle, onReviewed }: { admin: AdminState; s: AdminSubmission; open: boolean; active: boolean; onToggle: () => void; onReviewed: () => void }) {
+function Row({ admin, s, open, active, onToggle, onReviewed }: { admin: AdminState; s: ReviewItem; open: boolean; active: boolean; onToggle: () => void; onReviewed: () => void }) {
   const name = s.nickname ? `${s.username} (${s.nickname})` : s.username;
   return (
     <>
@@ -242,6 +242,15 @@ function Row({ admin, s, open, active, onToggle, onReviewed }: { admin: AdminSta
           {name}
           {/* จอแคบ: วันที่ย้ายมาอยู่ใต้ชื่อ เพื่อให้ปุ่ม "ตรวจ" อยู่ในจอโดยไม่ต้องเลื่อนตาราง */}
           <span className="block text-xs font-normal text-fd-muted-foreground sm:hidden">{thDateTime(s.createdAt)}</span>
+          {/* เปลี่ยน repo จากครั้งก่อน: ป้ายมีข้อความ+ไอคอน (ไม่ใช้สีอย่างเดียว) และบอก repo เดิมให้เห็นเลยไม่ต้องเอาเมาส์ชี้ */}
+          {s.prevRepoUrl && (
+            <span className="mt-1 block text-xs font-normal text-amber-900 dark:text-amber-200">
+              <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-1.5 py-0.5 font-medium dark:bg-amber-950">
+                <ArrowRightLeft aria-hidden className="size-3" /> เปลี่ยน repo จากครั้งก่อน
+              </span>{" "}
+              <span className="break-all text-fd-muted-foreground">เดิม {repoShort(s.prevRepoUrl)} → ใหม่ {repoShort(s.repoUrl)}</span>
+            </span>
+          )}
         </td>
         <td className="hidden whitespace-nowrap px-3 py-2 text-fd-muted-foreground sm:table-cell">{thDateTime(s.createdAt)}</td>
         <td className="px-3 py-2">
