@@ -6,7 +6,7 @@ import { assignmentRepository } from "../repositories/assignment.repository";
 import { submissionRepository } from "../repositories/submission.repository";
 import { taskCommentRepository } from "../repositories/task-comment.repository";
 import { userRepository } from "../repositories/user.repository";
-import type { CommentInput, ReviewInput, SubmitInput } from "../validators/submission.validator";
+import type { CommentInput, ReviewInput, ReviewListQuery, SubmitInput } from "../validators/submission.validator";
 import { assignmentFor, assignmentService } from "./assignment.service";
 import { auditService } from "./audit.service";
 import { cohortService } from "./cohort.service";
@@ -51,6 +51,29 @@ export const submissionService = {
   async listAll() {
     const items = await submissionRepository.all();
     return { items: items.map(labeled), waiting: waitingOf(items).length };
+  },
+  // หน้าตรวจงานชั้น "คน": ครั้งล่าสุดของแต่ละรอบ กรอง/เรียง/แบ่งหน้าที่ server · total = จำนวนตามแท็บที่เลือก (ไว้คำนวณหน้า)
+  async reviewPage(q: ReviewListQuery) {
+    const { items, waiting, reviewed } = await submissionRepository.reviewPage(q);
+    const total = q.status === "waiting" ? waiting : q.status === "reviewed" ? reviewed : waiting + reviewed;
+    return { items: items.map(labeled), total, waiting, reviewed, offset: q.offset, limit: q.limit };
+  },
+
+  // หน้าตรวจงานชั้น "งาน": ทุกโพสต์ (โจทย์ × รอบ) ของรุ่นนี้ แม้ยังไม่มีใครส่ง (ขึ้น 0) · รอบ "ลงทะเบียน repo" ไม่ใช่โพสต์ที่ตรวจ
+  async reviewSummary(cohort: number) {
+    const [assignments, counted, interns] = await Promise.all([assignmentRepository.ofCohort(cohort), submissionRepository.summaryByPost(cohort), submissionRepository.internCount(cohort)]);
+    const count = new Map(counted.map((c) => [`${c.assignment}/${c.round}`, c]));
+    const posts = assignments
+      .filter((a) => !a.archivedAt)
+      .flatMap((a) =>
+        a.rubric.rounds.map((r) => {
+          const c = count.get(`${a.slug}/${r.id}`);
+          return { assignment: a.slug, assignmentName: a.name, round: r.id, roundLabel: r.label, day: r.day, waiting: c?.waiting ?? 0, reviewed: c?.reviewed ?? 0 };
+        }),
+      )
+      // รอตรวจเยอะสุดขึ้นก่อน ที่เท่ากันเรียงตามวันส่ง
+      .sort((x, y) => y.waiting - x.waiting || x.day - y.day);
+    return { interns, posts };
   },
   ofUser: async (userId: number) => (await submissionRepository.ofUser(userId)).map(labeled),
 

@@ -190,6 +190,14 @@ export type Submission = {
 };
 export type MySubmissions = { assignments: { slug: string; name: string; rounds: RoundDef[] }[]; items: Submission[]; locked: boolean };
 export type AdminSubmission = Submission & { userId: number; username: string; nickname: string | null; cohortId: number | null };
+// หน้าตรวจงานแบบเจาะลง (รุ่น → งาน → คน) · รูปร่างตรงกับ submissionService.reviewPage / reviewSummary
+export type { ReviewSort, ReviewStatus } from "@/lib/review-url";
+import type { ReviewSort, ReviewStatus } from "@/lib/review-url";
+export type ReviewQuery = { cohort?: number; assignment?: string; round?: string; status?: ReviewStatus; sort?: ReviewSort; q?: string; offset?: number; limit?: number };
+// total = จำนวนตามแท็บที่เลือก (ไว้คำนวณหน้า) · waiting/reviewed ไม่ขึ้นกับแท็บ (ไว้ทำป้ายบนแท็บ)
+export type ReviewPage = { items: AdminSubmission[]; total: number; waiting: number; reviewed: number; offset: number; limit: number };
+export type ReviewPost = { assignment: string; assignmentName: string; round: string; roundLabel: string; day: number; waiting: number; reviewed: number };
+export type ReviewSummary = { interns: number; posts: ReviewPost[] };
 export type SubmitInput = { assignment: string; round: string; repoUrl: string; ref: string; deployUrl?: string; note: string };
 
 // ความเห็นใต้งาน (เห็นเฉพาะน้องเจ้าของงานกับพี่เลี้ยง)

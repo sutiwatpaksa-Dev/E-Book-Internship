@@ -9,6 +9,7 @@ import { STATUS_LABEL } from "@/lib/thread-labels";
 import { useScopedUnread } from "@/hooks/use-unread";
 import { useCohortFilter } from "@/hooks/use-cohort-filter";
 import { cohortQuery, inCohort } from "@/lib/cohort";
+import { defaultReviewCohort } from "@/lib/review-url";
 import { waitingOf } from "@/lib/submission";
 import type { AdminSubmission } from "@/types";
 import { CohortFilterBar } from "./cohort-filter-bar";
@@ -24,7 +25,7 @@ import { AdminOverview } from "./admin-overview";
 import { AdminRequests } from "./admin-requests";
 import { AdminSearch, type SearchItem } from "./admin-search";
 import { AdminSendMessage, type ComposeTarget } from "./admin-send-message";
-import { AdminSubmissions } from "./admin-submissions";
+import { AdminReview } from "./admin-review";
 import { submissionsApi } from "@/api/submissions.api";
 import { AdminUsers } from "./admin-users";
 import { Button } from "./button";
@@ -286,7 +287,8 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
           </div>
         )}
 
-        {(tab === "questions" || tab === "submissions" || tab === "board" || (tab === "overview" && !view.intern)) && admin.cohorts.length > 0 && (
+        {/* แท็บ "ตรวจงานที่ส่ง" เลือกรุ่นในหน้าเอง (ชั้นแรกของการเจาะลง) ไม่ใช้แถบนี้ ไม่งั้นมีตัวเลือกรุ่น 2 ตัวที่บอกคนละค่า */}
+        {(tab === "questions" || tab === "board" || (tab === "overview" && !view.intern)) && admin.cohorts.length > 0 && (
           <CohortFilterBar cohorts={admin.cohorts} mine={mine} value={cohort} onChange={setCohort} />
         )}
         {tab === "overview" &&
@@ -299,7 +301,7 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
         {tab === "questions" && <ChatPanel key={chatKey} side="dev" titles={titles} initialId={view.thread ?? null} owners={owners} ready={!admin.loading && !!admin.me} onSelect={onSelectThread} />}
         {tab === "feed" && <AdminFeed admin={admin} />}
         {tab === "board" && <AdminBoard admin={admin} nav={nav} cohort={cohort} mine={mine} />}
-        {tab === "submissions" && <AdminSubmissions admin={admin} onChange={countSubs} inScope={inScope} />}
+        {tab === "submissions" && <AdminReview admin={admin} defaultCohort={defaultReviewCohort(cohort, mine, admin.cohorts)} onChange={countSubs} onGoBoard={() => nav.goTab("board")} />}
         {tab === "requests" && <AdminRequests admin={admin} nav={nav} />}
         {tab === "feedback" && <AdminRequests admin={admin} nav={nav} kind="feedback" />}
         {CONTENT_TABS.includes(tab) && content.loading ? (

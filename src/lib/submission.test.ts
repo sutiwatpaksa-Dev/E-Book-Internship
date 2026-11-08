@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { submitSchema } from "../../server/validators/submission.validator";
+import { reviewListQuerySchema, reviewSummaryQuerySchema, submitSchema } from "../../server/validators/submission.validator";
 import { deployProblem, normalizeDeploy, normalizeRepo, refProblem, repoOf, repoProblem, DEFAULT_ROUNDS, hasRound, roundLabel, roundsProblem, takesDeploy, treeUrl, waitingOf, weightOf, weightTotal, criteriaOf } from "./submission";
 
 describe("ลิงก์ repo", () => {
@@ -128,5 +128,25 @@ describe("รอบส่งงานของโจทย์", () => {
     expect(roundsProblem([{ ...r, day: 0 }])).not.toBeNull();
     expect(roundsProblem([{ ...r, day: 1.5 }])).not.toBeNull();
     expect(roundsProblem([{ ...r, label: "  " }])).not.toBeNull();
+  });
+});
+
+describe("ตัวกรองหน้าตรวจงานแบบเจาะลง", () => {
+  const parse = (q: Record<string, string>) => reviewListQuerySchema.safeParse(q);
+  test("ไม่ส่งอะไร = รอตรวจ เก่าสุดก่อน หน้าละ 20", () => {
+    const r = parse({});
+    expect(r.success && r.data).toMatchObject({ status: "waiting", sort: "oldest", q: "", offset: 0, limit: 20 });
+    expect(r.success && r.data.cohort).toBeUndefined();
+  });
+  test("ค่าที่ถูกแปลงเป็นตัวเลข/ตัดช่องว่าง", () => {
+    const r = parse({ cohort: "7", assignment: "starter", round: "review-1", status: "all", sort: "name", q: "  สม ", offset: "40", limit: "50" });
+    expect(r.success && r.data).toEqual({ cohort: 7, assignment: "starter", round: "review-1", status: "all", sort: "name", q: "สม", offset: 40, limit: 50 });
+  });
+  test("ค่าผิดตอบผิด ไม่ทิ้งเงียบ", () => {
+    const bads: Record<string, string>[] = [{ cohort: "0" }, { cohort: "-1" }, { cohort: "1e3" }, { cohort: "abc" }, { cohort: "" }, { assignment: "A B" }, { round: "x y" }, { status: "done" }, { sort: "random" }, { offset: "-1" }, { limit: "0" }, { limit: "51" }, { limit: "20; drop" }, { q: "x".repeat(61) }];
+    for (const bad of bads) expect(parse(bad).success).toBe(false);
+  });
+  test("สรุปรายงานใช้แค่รุ่น", () => {
+    expect(reviewSummaryQuerySchema.safeParse({ cohort: "3", status: "all" }).data).toEqual({ cohort: 3 });
   });
 });

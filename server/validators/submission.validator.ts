@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { COMMENT_KINDS } from "../../src/lib/rubric";
+import { REVIEW_PAGE_MAX, REVIEW_PAGE_SIZE, REVIEW_SORTS, REVIEW_STATUSES } from "../../src/lib/review-url";
 import { deployProblem, normalizeDeploy, normalizeRepo, refProblem, repoProblem, ROUND_ID, START_REF, START_ROUND, VERDICTS } from "../../src/lib/submission";
 
 // กฎของช่องอยู่ใน src/lib/submission.ts ใช้ร่วมกับฟอร์มของน้อง · ที่นี่คือด่านจริง (ยิง API ตรงก็ต้องผ่านกฎเดียวกัน)
@@ -36,6 +37,30 @@ export const reviewSchema = z
   })
   // ให้แก้ต้องบอกว่าแก้อะไร ไม่งั้นน้องส่งรอบใหม่แบบเดาสุ่ม
   .superRefine((v, ctx) => check(ctx, "review", v.verdict === "revise" && !v.review ? "ถ้าให้แก้ เขียนบอกน้องด้วยว่าต้องแก้อะไร" : null));
+
+// หน้าตรวจงานแบบเจาะลง (รุ่น → งาน → คน): ตัวกรองและหน้าอยู่ใน URL จึงต้องตรวจทุกค่าเหมือนรับจากคนนอก
+// ค่าผิด = 400 (ไม่ทิ้งเงียบ เพราะตัวกรองที่หายไปทำให้ผลกว้างกว่าที่ขอ) · ไม่ส่ง = ไม่กรองตามนั้น
+// ค่าคงที่ (สถานะ ลำดับ ขนาดหน้า) อยู่ใน src/lib/review-url.ts ใช้ร่วมกับหน้าเว็บ
+const intParam = (msg: string, max: number) =>
+  z
+    .string()
+    .regex(/^\d{1,9}$/, { error: msg })
+    .transform(Number)
+    .refine((n) => n <= max, { error: msg });
+export const reviewListQuerySchema = z.object({
+  cohort: intParam("รุ่นไม่ถูกต้อง", 2_000_000_000).refine((n) => n > 0, { error: "รุ่นไม่ถูกต้อง" }).optional(),
+  assignment: z.string().regex(/^[a-z0-9-]{1,40}$/, { error: "โจทย์ไม่ถูกต้อง" }).optional(),
+  round: z.string().regex(ROUND_ID, { error: "รอบไม่ถูกต้อง" }).optional(),
+  status: z.enum(REVIEW_STATUSES, { error: "สถานะไม่ถูกต้อง" }).default("waiting"),
+  sort: z.enum(REVIEW_SORTS, { error: "ลำดับไม่ถูกต้อง" }).default("oldest"),
+  // ค้นชื่อผู้ใช้/ชื่อเล่น · ช่องว่างหัวท้ายตัดทิ้ง
+  q: z.string().trim().max(60, { error: "คำค้นยาวเกินไป" }).default(""),
+  offset: intParam("หน้าไม่ถูกต้อง", 1_000_000).default(0),
+  limit: intParam("จำนวนต่อหน้าไม่ถูกต้อง", REVIEW_PAGE_MAX).refine((n) => n > 0, { error: "จำนวนต่อหน้าไม่ถูกต้อง" }).default(REVIEW_PAGE_SIZE),
+});
+export type ReviewListQuery = z.infer<typeof reviewListQuerySchema>;
+// สรุปราย "งาน" ของรุ่นเดียว (ชั้นที่ 2 ของหน้าเจาะลง) ใช้แค่ตัวกรองรุ่น
+export const reviewSummaryQuerySchema = reviewListQuerySchema.pick({ cohort: true });
 
 export type SubmitInput = z.infer<typeof submitSchema>;
 export type ReviewInput = z.infer<typeof reviewSchema>;
