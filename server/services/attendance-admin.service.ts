@@ -2,6 +2,7 @@ import { toCsv } from "../../src/lib/csv";
 import { atThai, dayState, describeDay, eachDate, monthRange, effectiveCheckOut, isLate, isWeekend, minutesWorked, rulesOn, type AttendanceRules, type DayRow, type DayView, type HolidayRow, type RulesView } from "../../src/lib/attendance";
 import { todayTH } from "../../src/lib/cohort";
 import { attendanceRepository } from "../repositories/attendance.repository";
+import { leaveRepository } from "../repositories/leave.repository";
 import { cohortRepository } from "../repositories/cohort.repository";
 import { auditService } from "./audit.service";
 
@@ -23,24 +24,29 @@ export const attendanceAdminService = {
     // กติกาของ "วันที่ดู" (วันเก่าใช้กติกาเก่า) ไม่ใช่กติกาปัจจุบัน
     const base: AttendanceRules = { workStart: cohort.workStart, workEnd: cohort.workEnd, lateGraceMinutes: cohort.lateGraceMinutes };
     const rules = rulesOn(d, base, await attendanceRepository.workRules(cohortId));
-    const [interns, records, holidays, trackingStart] = await Promise.all([
+    const [interns, records, holidays, trackingStart, leaves] = await Promise.all([
       attendanceRepository.internsOfCohort(cohortId),
       attendanceRepository.recordsOfCohort(cohortId, d, d),
       attendanceRepository.holidayDates(cohortId, d, d),
       attendanceRepository.firstRecordDate(cohortId),
+      leaveRepository.approvedOfCohort(cohortId, d, d),
     ]);
+    // ถ้าน้องมีทั้งลาและแจ้งสายวันเดียวกัน "ลา" มาก่อน
+    const leaveBy = new Map<number, "leave" | "late">();
+    for (const l of leaves) if (!leaveBy.has(l.userId) || l.kind === "leave") leaveBy.set(l.userId, l.kind);
     const byUser = new Map(records.map((r) => [r.userId, r]));
     const rows: DayRow[] = interns.map((u) => {
       const rec = byUser.get(u.id) ?? null;
       const out = rec ? effectiveCheckOut(rec, rules, now) : null;
+      const leave = leaveBy.get(u.id) ?? null;
       return {
         userId: u.id,
         name: u.fullName || u.nickname || u.username,
-        state: dayState({ date: d, cohort, rules, holiday: holidays.has(d), record: rec, now, trackingStart }),
+        state: dayState({ date: d, cohort, rules, holiday: holidays.has(d), record: rec, now, trackingStart, leave }),
         checkInAt: rec ? rec.checkInAt.toISOString() : null,
         checkOutAt: out ? out.at.toISOString() : null,
         checkOutAuto: out?.auto ?? false,
-        late: rec ? isLate(rec.checkInAt, d, rules) : false,
+        late: rec ? isLate(rec.checkInAt, d, rules) && leave !== "late" : false,
         minutes: rec && out ? minutesWorked(rec.checkInAt, out.at) : null,
         editReason: rec?.editReason ?? null,
       };
@@ -136,20 +142,26 @@ export const attendanceAdminService = {
     const header = ["ชื่อผู้ใช้", "ชื่อ", "วันที่", "สถานะ", "เวลาเข้า", "เวลาออก", "ออกโดยระบบนับให้", "ชั่วโมงทำงาน", "เข้างานหลังเวลา", "พี่เลี้ยงแก้เวลา", "เหตุผลที่แก้"];
     const rows: (string | number | boolean | null)[][] = [header];
     if (lo <= hi) {
-      const [interns, records, ruleList, holidayList, trackingStart] = await Promise.all([
+      const [interns, records, ruleList, holidayList, trackingStart, leaves] = await Promise.all([
         attendanceRepository.internsOfCohort(cohortId),
         attendanceRepository.recordsOfCohort(cohortId, lo, hi),
         attendanceRepository.workRules(cohortId),
         attendanceRepository.holidays(cohortId),
         attendanceRepository.firstRecordDate(cohortId),
+        leaveRepository.approvedOfCohort(cohortId, lo, hi),
       ]);
+      const leaveBy = new Map<string, "leave" | "late">();
+      for (const l of leaves) {
+        const k = `${l.userId}|${l.workDate}`;
+        if (!leaveBy.has(k) || l.kind === "leave") leaveBy.set(k, l.kind);
+      }
       const holidays = new Set(holidayList.map((h) => h.holidayDate));
       const byKey = new Map(records.map((r) => [`${r.userId}|${r.workDate}`, r]));
-      const STATE: Record<string, string> = { holiday: "วันหยุดของรุ่น", absent: "ไม่มีเช็คอิน", working: "กำลังทำงาน", waiting: "ยังไม่เช็คอิน", done: "เช็คอินแล้ว" };
+      const STATE: Record<string, string> = { holiday: "วันหยุดของรุ่น", leave: "ลา (อนุมัติแล้ว)", absent: "ไม่มีเช็คอิน", working: "กำลังทำงาน", waiting: "ยังไม่เช็คอิน", done: "เช็คอินแล้ว" };
       for (const u of interns) {
         for (const date of eachDate(lo, hi)) {
           const rec = byKey.get(`${u.id}|${date}`) ?? null;
-          const d = describeDay({ date, cohort, rules: rulesOn(date, base, ruleList), holiday: holidays.has(date), record: rec, now, trackingStart });
+          const d = describeDay({ date, cohort, rules: rulesOn(date, base, ruleList), holiday: holidays.has(date), record: rec, now, trackingStart, leave: leaveBy.get(`${u.id}|${date}`) ?? null });
           if (d.state === "off_day" || d.state === "outside" || d.state === "untracked") continue;
           rows.push([
             u.username,

@@ -87,6 +87,9 @@ export function TodayBoard() {
         <Link href="/checkin/history" className="inline-flex min-h-11 items-center text-sm font-medium text-fd-primary hover:underline">
           ดูประวัติเข้างานของฉัน
         </Link>
+        <Link href="/checkin/leave" className="inline-flex min-h-11 items-center text-sm font-medium text-fd-primary hover:underline">
+          ส่งใบลา / แจ้งมาสาย
+        </Link>
         <Link href="/dashboard" className="inline-flex min-h-11 items-center text-sm font-medium text-fd-primary hover:underline">
           ไปหน้าภาพรวมงานและคู่มือ
         </Link>
@@ -121,6 +124,8 @@ function Card({ v, now, busy, onIn, onOut }: { v: TodayView; now: number; busy: 
       </p>
 
       {rule && <p className="text-sm text-fd-muted-foreground">{rule}</p>}
+      {v.leaveToday === "leave" && <p className="rounded-lg bg-fd-muted px-3 py-2 text-sm">วันนี้คุณลา (พี่เลี้ยงอนุมัติแล้ว) ถ้ามาทำงานจริง เช็คอินได้ตามปกติ</p>}
+      {v.leaveToday === "late" && <p className="rounded-lg bg-fd-muted px-3 py-2 text-sm">วันนี้คุณแจ้งมาสายไว้และพี่เลี้ยงอนุมัติแล้ว เข้างานช้ากว่าเวลาปกติได้</p>}
       {/* พี่เลี้ยงตั้งเวลางานใหม่ไว้ล่วงหน้า: บอกน้องก่อนถึงวันเปลี่ยน ไม่ให้ไปเจอตอนเช็คอิน */}
       {v.nextRule && (
         <p className="rounded-lg bg-fd-muted px-3 py-2 text-sm">

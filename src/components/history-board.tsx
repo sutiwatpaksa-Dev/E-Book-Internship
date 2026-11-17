@@ -25,6 +25,7 @@ const shiftMonth = (m: string, by: number) => {
 
 const STATE_TEXT: Partial<Record<DayState, string>> = {
   holiday: "วันหยุดของรุ่น",
+  leave: "ลา (พี่เลี้ยงอนุมัติแล้ว)",
   absent: "ไม่มีเช็คอิน",
   working: "กำลังทำงาน",
   waiting: "ยังไม่เช็คอิน",
@@ -69,10 +70,11 @@ export function HistoryBoard() {
 
       {view && (
         <>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <Stat label="วันที่เช็คอิน" value={`${view.summary.workedDays}`} unit="วัน" />
             <Stat label="เข้างานหลังเวลา" value={`${view.summary.lateDays}`} unit="วัน" />
             <Stat label="วันที่ไม่มีเช็คอิน" value={`${view.summary.noCheckInDays}`} unit="วัน" />
+            <Stat label="วันลา" value={`${view.summary.leaveDays}`} unit="วัน" />
             <Stat label="ชั่วโมงทำงาน" value={view.summary.minutes ? `${Math.floor(view.summary.minutes / 60)}` : "0"} unit={view.summary.minutes % 60 ? `ชม. ${view.summary.minutes % 60} น.` : "ชม."} />
           </div>
 
@@ -105,6 +107,10 @@ export function HistoryBoard() {
           </section>
 
           <p className="text-sm">
+            <Link href="/checkin/leave" className="font-medium text-fd-primary hover:underline">
+              ส่งใบลา / แจ้งมาสาย
+            </Link>
+            {" · "}
             เวลาไม่ตรงกับที่ทำจริง?{" "}
             <Link href="/questions" className="font-medium text-fd-primary hover:underline">
               บอกพี่เลี้ยงให้ตรวจ
@@ -138,6 +144,7 @@ function Row({ r }: { r: HistoryRow }) {
         <td colSpan={3} className="px-2 py-3 text-fd-muted-foreground">
           {label}
           {r.holidayNote ? `: ${r.holidayNote}` : ""}
+          {r.state === "leave" && r.leave ? `: ${r.leave.reason}` : ""}
         </td>
       ) : (
         <>
@@ -151,6 +158,7 @@ function Row({ r }: { r: HistoryRow }) {
       )}
       <td className="px-2 py-3">
         {r.late && <span className="text-amber-800 dark:text-amber-300">เข้างานหลังเวลา</span>}
+        {r.leave?.kind === "late" && <span className="text-fd-muted-foreground">แจ้งมาสายไว้แล้ว (พี่เลี้ยงอนุมัติ): {r.leave.reason}</span>}
         {r.editReason && (
           <p className="mt-1 text-xs text-fd-muted-foreground">
             พี่เลี้ยงแก้เวลา: {r.editReason}

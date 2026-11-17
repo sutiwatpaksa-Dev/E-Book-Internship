@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarCheck, ChevronDown, ClipboardList, MessageSquareHeart, Newspaper, FilePlus2, FolderGit2, GraduationCap, History, Inbox, Layers, LayoutDashboard, Megaphone, MessageCircle, NotebookPen, Users, type LucideIcon } from "lucide-react";
+import { CalendarCheck, CalendarOff, ChevronDown, ClipboardList, MessageSquareHeart, Newspaper, FilePlus2, FolderGit2, GraduationCap, History, Inbox, Layers, LayoutDashboard, Megaphone, MessageCircle, NotebookPen, Users, type LucideIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { useAdmin } from "@/hooks/use-admin";
@@ -16,6 +16,8 @@ import { AdminBoard } from "./admin-board";
 import { AdminFeed } from "./admin-feed";
 import { AdminAnnouncements } from "./admin-announcements";
 import { AdminAttendance } from "./admin-attendance";
+import { AdminLeave } from "./admin-leave";
+import { adminLeaveApi } from "@/api/admin-leave.api";
 import { AdminAudit } from "./admin-audit";
 import { AdminBuiltInCards, AdminMentorCards, AdminNotes } from "./admin-content";
 import { AdminCohorts } from "./admin-cohorts";
@@ -33,7 +35,7 @@ import { ErrorText } from "./error-text";
 import { MobileDrawer } from "./mobile-drawer";
 import { Skeleton, SkeletonList } from "./skeleton";
 
-type TabId = "overview" | "attendance" | "feed" | "questions" | "board" | "submissions" | "requests" | "feedback" | "cards" | "notes" | "builtin" | "announcements" | "cohorts" | "users" | "audit";
+type TabId = "overview" | "attendance" | "leave" | "feed" | "questions" | "board" | "submissions" | "requests" | "feedback" | "cards" | "notes" | "builtin" | "announcements" | "cohorts" | "users" | "audit";
 type Tab = { id: TabId; label: string; icon: LucideIcon };
 // เมนูแบ่ง 3 กลุ่มตามความถี่ที่ใช้: งานประจำวัน (เปิดทุกวัน) → เนื้อหา (เขียน/ปรับคู่มือ) → ระบบ (นานๆ ครั้ง)
 const GROUPS: { label: string; tabs: Tab[] }[] = [
@@ -42,6 +44,7 @@ const GROUPS: { label: string; tabs: Tab[] }[] = [
     tabs: [
       { id: "overview", label: "ภาพรวม", icon: LayoutDashboard },
       { id: "attendance", label: "เช็คอินของน้อง", icon: CalendarCheck },
+      { id: "leave", label: "ใบลา / แจ้งสาย", icon: CalendarOff },
       { id: "feed", label: "งานและประกาศ", icon: Newspaper },
       { id: "questions", label: "แชทกับน้อง", icon: MessageCircle },
       { id: "board", label: "โพสต์งานให้น้อง", icon: ClipboardList },
@@ -155,6 +158,17 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
   useEffect(() => {
     countSubs();
   }, []);
+  // จำนวนใบลารออนุมัติบนเมนู (ตามตัวกรองรุ่น) · โหลดใหม่หลังตัดสินใบ
+  const [pendingLeave, setPendingLeave] = useState(0);
+  const countLeave = () =>
+    adminLeaveApi
+      .pendingCount(cohortQuery(cohort, mine) ?? undefined)
+      .then((r) => setPendingLeave(r.count))
+      .catch(() => {});
+  useEffect(() => {
+    countLeave();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cohort, admin.cohorts.length]);
   const intern = view.intern ? admin.users.find((u) => u.id === view.intern) : undefined;
 
   // แชทเลือกเรื่องเอง: จด id ลง URL แบบ replace (รีเฟรช/แชร์ลิงก์แล้วเปิดเรื่องเดิม แต่ไม่เพิ่มประวัติทุกคลิก)
@@ -207,7 +221,7 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
   };
   const newRequests = admin.threads.filter((t) => t.kind === "content_request" && t.status === "new").length;
   const newFeedback = admin.threads.filter((t) => t.kind === "feedback" && t.status === "new").length;
-  const badge = (id: TabId) => (id === "questions" ? waiting : id === "submissions" ? waitingSubs : id === "requests" ? newRequests : id === "feedback" ? newFeedback : 0);
+  const badge = (id: TabId) => (id === "questions" ? waiting : id === "submissions" ? waitingSubs : id === "requests" ? newRequests : id === "feedback" ? newFeedback : id === "leave" ? pendingLeave : 0);
   // เมนูชุดเดียว วางได้ 2 ที่: คอลัมน์ซ้ายบนจอกว้าง และลิ้นชักบนมือถือ
   const menuGroups = (
     <>
@@ -301,6 +315,7 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
         {/* key: สั่งเปิดเรื่องใหม่จากข้างนอก ให้แชทเริ่มใหม่ที่เรื่องนั้น (ดู chatKey ข้างบน) */}
         {tab === "questions" && <ChatPanel key={chatKey} side="dev" titles={titles} initialId={view.thread ?? null} owners={owners} ready={!admin.loading && !!admin.me} onSelect={onSelectThread} />}
         {tab === "attendance" && !admin.loading && <AdminAttendance admin={admin} mine={mine} />}
+        {tab === "leave" && !admin.loading && <AdminLeave admin={admin} mine={mine} onChanged={countLeave} />}
         {tab === "feed" && <AdminFeed admin={admin} />}
         {tab === "board" && <AdminBoard admin={admin} nav={nav} cohort={cohort} mine={mine} />}
         {tab === "submissions" && <AdminReview admin={admin} defaultCohort={defaultReviewCohort(cohort, mine, admin.cohorts)} onChange={countSubs} onGoBoard={() => nav.goTab("board")} />}

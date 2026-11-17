@@ -1,6 +1,7 @@
 import { describeDay, effectiveCheckOut, eachDate, isLate, minutesWorked, monthRange, rulesOn, todayState, type AttendanceRules, type HistoryRow, type HistoryView, type TodayView } from "../../src/lib/attendance";
 import { todayTH } from "../../src/lib/cohort";
 import { attendanceRepository } from "../repositories/attendance.repository";
+import { leaveRepository } from "../repositories/leave.repository";
 import { cohortRepository } from "../repositories/cohort.repository";
 import { userRepository } from "../repositories/user.repository";
 
@@ -21,7 +22,7 @@ async function load(userId: number): Promise<TodayView> {
   const user = await userRepository.findById(userId);
   const cohort = user?.cohortId ? await cohortRepository.findById(user.cohortId) : undefined;
   const record = (await attendanceRepository.findByDate(userId, workDate)) ?? null;
-  if (!cohort) return { now: now.toISOString(), workDate, state: "no_cohort", workStart: null, workEnd: null, lateGraceMinutes: null, checkInAt: null, checkOutAt: null, checkOutAuto: false, late: false, minutes: null, nextRule: null };
+  if (!cohort) return { now: now.toISOString(), workDate, state: "no_cohort", workStart: null, workEnd: null, lateGraceMinutes: null, checkInAt: null, checkOutAt: null, checkOutAuto: false, late: false, minutes: null, nextRule: null, leaveToday: null };
 
   // กติกาของ "วันนี้" (พี่เลี้ยงตั้งกติกาใหม่ล่วงหน้าได้ วันที่เริ่มมีผลถึงแล้วจึงเปลี่ยนเอง)
   const base: AttendanceRules = { workStart: cohort.workStart, workEnd: cohort.workEnd, lateGraceMinutes: cohort.lateGraceMinutes };
@@ -30,6 +31,8 @@ async function load(userId: number): Promise<TodayView> {
   // กติกาถัดไปที่ตั้งไว้ล่วงหน้า (ใกล้สุด) บอกน้องก่อนถึงวันเปลี่ยน
   const next = ruleList.find((r) => r.effectiveFrom > workDate);
   const holiday = await attendanceRepository.isHoliday(cohort.id, workDate);
+  // ใบลา/แจ้งสายที่อนุมัติแล้วของวันนี้ · ลาแล้วมาทำงานก็เช็คอินได้ตามปกติ (ไม่บล็อก) แจ้งสายที่อนุมัติแล้วไม่นับว่าเข้างานหลังเวลา
+  const leaveToday = (await leaveRepository.approvedOfUser(userId, workDate, workDate))[0]?.kind ?? null;
   const state = todayState({ cohort, rules, holiday, record, now });
   const out = record ? effectiveCheckOut(record, rules, now) : null;
   return {
@@ -42,8 +45,9 @@ async function load(userId: number): Promise<TodayView> {
     checkInAt: record ? record.checkInAt.toISOString() : null,
     checkOutAt: out ? out.at.toISOString() : null,
     checkOutAuto: out?.auto ?? false,
-    late: record ? isLate(record.checkInAt, workDate, rules) : false,
+    late: record ? isLate(record.checkInAt, workDate, rules) && leaveToday !== "late" : false,
     minutes: record && out ? minutesWorked(record.checkInAt, out.at) : null,
+    leaveToday,
     nextRule: next ? { effectiveFrom: next.effectiveFrom, workStart: next.workStart, workEnd: next.workEnd, lateGraceMinutes: next.lateGraceMinutes } : null,
   };
 }
@@ -54,7 +58,7 @@ const monthOf = (date: string) => date.slice(0, 7);
 async function history(userId: number, month: string): Promise<HistoryView> {
   const now = new Date();
   const today = todayTH(now);
-  const empty: HistoryView = { month, today, hasPrev: false, hasNext: false, rows: [], summary: { workedDays: 0, lateDays: 0, noCheckInDays: 0, minutes: 0 } };
+  const empty: HistoryView = { month, today, hasPrev: false, hasNext: false, rows: [], summary: { workedDays: 0, lateDays: 0, noCheckInDays: 0, leaveDays: 0, minutes: 0 } };
   const user = await userRepository.findById(userId);
   const cohort = user?.cohortId ? await cohortRepository.findById(user.cohortId) : undefined;
   if (!cohort) return empty;
@@ -68,14 +72,23 @@ async function history(userId: number, month: string): Promise<HistoryView> {
   if (lo > hi) return { ...empty, hasPrev, hasNext };
 
   const base: AttendanceRules = { workStart: cohort.workStart, workEnd: cohort.workEnd, lateGraceMinutes: cohort.lateGraceMinutes };
-  const [records, ruleList, holidayList, trackingStart] = await Promise.all([attendanceRepository.recordsOfUser(userId, lo, hi), attendanceRepository.workRules(cohort.id), attendanceRepository.holidays(cohort.id), attendanceRepository.firstRecordDate(cohort.id)]);
+  const [records, ruleList, holidayList, trackingStart, leaves] = await Promise.all([
+    attendanceRepository.recordsOfUser(userId, lo, hi),
+    attendanceRepository.workRules(cohort.id),
+    attendanceRepository.holidays(cohort.id),
+    attendanceRepository.firstRecordDate(cohort.id),
+    leaveRepository.approvedOfUser(userId, lo, hi),
+  ]);
+  // ใบที่อนุมัติแล้วของแต่ละวัน (ถ้ามีทั้งลาและแจ้งสาย ให้ "ลา" มาก่อน)
+  const leaveByDate = new Map<string, { kind: "leave" | "late"; reason: string }>();
+  for (const l of leaves) if (!leaveByDate.has(l.workDate) || l.kind === "leave") leaveByDate.set(l.workDate, { kind: l.kind, reason: l.reason });
   const byDate = new Map(records.map((r) => [r.workDate, r]));
   const notes = new Map(holidayList.map((h) => [h.holidayDate, h.note]));
 
   const rows: HistoryRow[] = [];
   for (const date of eachDate(lo, hi).reverse()) {
     const record = byDate.get(date) ?? null;
-    const d = describeDay({ date, cohort, rules: rulesOn(date, base, ruleList), holiday: notes.has(date), record, now, trackingStart });
+    const d = describeDay({ date, cohort, rules: rulesOn(date, base, ruleList), holiday: notes.has(date), record, now, trackingStart, leave: leaveByDate.get(date)?.kind ?? null });
     // เสาร์-อาทิตย์ที่ไม่มีเช็คอิน และวันก่อนเริ่มใช้ระบบ ไม่แสดง
     if (d.state === "off_day" || d.state === "untracked") continue;
     rows.push({
@@ -88,12 +101,14 @@ async function history(userId: number, month: string): Promise<HistoryView> {
       minutes: d.minutes,
       editReason: record?.editReason ?? null,
       holidayNote: d.state === "holiday" ? (notes.get(date) ?? "") : null,
+      leave: leaveByDate.get(date) ?? null,
     });
   }
   const summary = {
     workedDays: rows.filter((r) => r.checkInAt).length,
     lateDays: rows.filter((r) => r.late).length,
     noCheckInDays: rows.filter((r) => r.state === "absent").length,
+    leaveDays: rows.filter((r) => r.state === "leave").length,
     minutes: rows.reduce((n, r) => n + (r.minutes ?? 0), 0),
   };
   return { month, today, hasPrev, hasNext, rows, summary };

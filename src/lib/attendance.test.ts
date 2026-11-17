@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { atThai, dayState, describeDay, eachDate, isMonth, monthRange, rulesOn, effectiveCheckOut, isHHMM, isLate, isWeekend, minutesWorked, todayState, type AttendanceRules } from "./attendance";
+import { atThai, dayState, earliestLeaveDate, describeDay, eachDate, isMonth, monthRange, rulesOn, effectiveCheckOut, isHHMM, isLate, isWeekend, minutesWorked, todayState, type AttendanceRules } from "./attendance";
 
 const rules: AttendanceRules = { workStart: "09:00:00", workEnd: "18:00:00", lateGraceMinutes: 5 };
 const cohort = { startsOn: "2026-11-02", endsOn: "2026-12-30", endedAt: null };
@@ -207,5 +207,39 @@ describe("describeDay", () => {
   test("วันที่ผ่านมาไม่มีแถว = absent และไม่มีเวลา", () => {
     const d = describeDay({ date: "2026-11-13", cohort, rules, holiday: false, record: null, now: new Date("2026-11-17T03:00:00Z") });
     expect(d).toMatchObject({ state: "absent", checkInAt: null, minutes: null, late: false });
+  });
+});
+
+describe("ใบลา", () => {
+  test("earliestLeaveDate: ย้อนไม่เกิน 3 วันทำการ ข้ามเสาร์-อาทิตย์", () => {
+    // อังคาร 17 พ.ย. → จันทร์ 16, ศุกร์ 13, พฤหัส 12
+    expect(earliestLeaveDate("2026-11-17")).toBe("2026-11-12");
+    // จันทร์ 16 พ.ย. → ศุกร์ 13, พฤหัส 12, พุธ 11
+    expect(earliestLeaveDate("2026-11-16")).toBe("2026-11-11");
+    // เสาร์ 14 พ.ย. → ศุกร์ 13, พฤหัส 12, พุธ 11
+    expect(earliestLeaveDate("2026-11-14")).toBe("2026-11-11");
+  });
+  const cohort = { startsOn: "2026-10-14", endsOn: "2027-01-27" };
+  const rules = { workStart: "09:00:00", workEnd: "18:00:00", lateGraceMinutes: 5 };
+  const now = new Date("2026-11-17T03:00:00Z");
+  test("ลาที่อนุมัติแล้ว วันไม่มีเช็คอิน = leave ไม่ใช่ absent · แจ้งสายไม่เปลี่ยนสถานะวัน", () => {
+    const base = { cohort, rules, holiday: false, record: null, now, date: "2026-11-13" };
+    expect(dayState({ ...base, leave: "leave" })).toBe("leave");
+    expect(dayState({ ...base, leave: "late" })).toBe("absent");
+    expect(dayState({ ...base, leave: null })).toBe("absent");
+  });
+  test("วันหยุด/เสาร์-อาทิตย์ชนะใบลา · มีเช็คอินจริงแสดงของจริงก่อน", () => {
+    const base = { cohort, rules, record: null, now, leave: "leave" as const };
+    expect(dayState({ ...base, holiday: true, date: "2026-11-13" })).toBe("holiday");
+    expect(dayState({ ...base, holiday: false, date: "2026-11-15" })).toBe("off_day");
+    const record = { workDate: "2026-11-13", checkInAt: new Date("2026-11-13T02:00:00Z"), checkOutAt: null };
+    expect(dayState({ ...base, holiday: false, record, date: "2026-11-13" })).toBe("done");
+  });
+  test("แจ้งสายที่อนุมัติแล้ว: เข้า 09:40 ไม่นับว่าเข้างานหลังเวลา · ไม่มีใบแจ้งสายนับตามปกติ", () => {
+    const record = { workDate: "2026-11-13", checkInAt: new Date("2026-11-13T02:40:00Z"), checkOutAt: null };
+    const i = { date: "2026-11-13", cohort, rules, holiday: false, record, now };
+    expect(describeDay({ ...i, leave: "late" }).late).toBe(false);
+    expect(describeDay({ ...i, leave: null }).late).toBe(true);
+    expect(describeDay({ ...i, leave: "leave" }).late).toBe(true);
   });
 });

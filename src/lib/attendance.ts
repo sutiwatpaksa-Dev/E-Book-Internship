@@ -4,6 +4,8 @@ import { cohortStatus, todayTH } from "./cohort";
 // ไม่เก็บ "สาย" หรือ "ชั่วโมง" ลง DB: พี่เลี้ยงเปลี่ยนเวลาเริ่มงานทีหลังได้ ถ้าเก็บผลที่คิดแล้วไว้ ข้อมูลเก่ากับกฎใหม่จะขัดกันเอง
 // ใช้ได้ทั้งฝั่ง server (ตัดสินว่าเช็คอินได้ไหม) และหน้าเว็บ (แสดงข้อความ) จึงอยู่ที่ src/lib เป็นฟังก์ชันล้วน ไม่แตะ DB
 
+export type LeaveKind = "leave" | "late";
+
 export type AttendanceRules = {
   // "09:00" หรือ "09:00:00" (คอลัมน์ time ของ Postgres ส่งแบบมีวินาที)
   workStart: string;
@@ -90,6 +92,8 @@ export type TodayView = {
   minutes: number | null;
   // กติกาเวลาที่พี่เลี้ยงตั้งไว้ล่วงหน้าและยังไม่ถึงวัน (บอกน้องก่อนเปลี่ยน) · ไม่มี = null
   nextRule: { effectiveFrom: string; workStart: string; workEnd: string; lateGraceMinutes: number } | null;
+  // วันนี้มีใบลา/แจ้งสายที่อนุมัติแล้วไหม (ลาแล้วมาทำงานก็เช็คอินได้ตามปกติ)
+  leaveToday: LeaveKind | null;
 };
 
 // ---- มุมมองของพี่เลี้ยง: น้องแต่ละคนในวันที่เลือก ----
@@ -99,6 +103,7 @@ export type DayState =
   | "untracked" // ก่อนที่ใครในรุ่นจะเริ่มเช็คอินในระบบ (ระบบยังไม่ได้เริ่มใช้) ไม่นับเป็นขาด
   | "off_day" // เสาร์-อาทิตย์
   | "holiday" // วันหยุดที่พี่เลี้ยงประกาศ
+  | "leave" // ลาที่พี่เลี้ยงอนุมัติแล้ว (ไม่นับว่าไม่มีเช็คอิน)
   | "waiting" // วันนี้ ยังไม่ถึงเวลาเลิกงาน และยังไม่เช็คอิน
   | "absent" // ไม่มีแถวเช็คอิน และวันนั้นผ่านไป/เลยเวลาเลิกงานแล้ว (ถ้ามีใบลา เฟสถัดไปจะแยกเป็น "ลา")
   | "working"
@@ -114,16 +119,19 @@ export type DayInput = {
   // วันแรกที่มีการเช็คอินในรุ่นนี้ (ใครก็ได้) = วันที่เริ่มใช้ระบบ · วันก่อนหน้านั้นไม่ใช่ "ขาด" เพราะยังไม่มีระบบให้เช็คอิน
   // null = รุ่นนี้ยังไม่มีใครเช็คอินเลย · ไม่ส่ง (undefined) = ไม่ใช้กฎนี้
   trackingStart?: string | null;
+  // ใบลา/แจ้งสายที่ "อนุมัติแล้ว" ของวันนี้ (ที่รออนุมัติหรือไม่อนุมัติไม่มีผล) · leave = ไม่นับว่าไม่มีเช็คอิน, late = ไม่นับว่าเข้างานหลังเวลา
+  leave?: LeaveKind | null;
 };
 
 // คนละฟังก์ชันกับ todayState: ของน้องดูแค่ "วันนี้" และบล็อกเมื่อรุ่นจบ · ของพี่เลี้ยงดูย้อนหลังได้ รวมรุ่นที่จบแล้ว
 // มีแถวเช็คอินแล้วแสดงของจริงก่อนเสมอ (น้องมาทำงานวันหยุดก็ยังเห็นว่ามา)
-export function dayState({ date, cohort, rules, holiday, record, now, trackingStart }: DayInput): DayState {
+export function dayState({ date, cohort, rules, holiday, record, now, trackingStart, leave }: DayInput): DayState {
   if (record) return effectiveCheckOut(record, rules, now) ? "done" : "working";
   if (date < cohort.startsOn || date > cohort.endsOn) return "outside";
   if (trackingStart !== undefined && date < todayTH(now) && (trackingStart === null || date < trackingStart)) return "untracked";
   if (isWeekend(date)) return "off_day";
   if (holiday) return "holiday";
+  if (leave === "leave") return "leave";
   return date < todayTH(now) || now >= atThai(date, rules.workEnd) ? "absent" : "waiting";
 }
 
@@ -199,7 +207,8 @@ export function describeDay(input: DayInput): DayDetail {
     checkInAt: record ? record.checkInAt : null,
     checkOutAt: out ? out.at : null,
     checkOutAuto: out?.auto ?? false,
-    late: record ? isLate(record.checkInAt, date, rules) : false,
+    // แจ้งสายล่วงหน้าและอนุมัติแล้ว = ไม่นับว่าเข้างานหลังเวลา
+    late: record ? isLate(record.checkInAt, date, rules) && input.leave !== "late" : false,
     minutes: record && out ? minutesWorked(record.checkInAt, out.at) : null,
   };
 }
@@ -218,6 +227,8 @@ export type HistoryRow = {
   editReason: string | null;
   // ชื่อวันหยุดที่พี่เลี้ยงประกาศ (ถ้า state = holiday)
   holidayNote: string | null;
+  // ใบลา/แจ้งสายที่อนุมัติแล้วของวันนี้ และเหตุผลที่น้องเขียน
+  leave: { kind: LeaveKind; reason: string } | null;
 };
 
 // ข้อเท็จจริงของเดือน (จำนวนวัน/ชั่วโมง) ไม่คิดเป็นเปอร์เซ็นต์หรือคะแนน · ตัวคะแนนรวมมาทีหลังสุดตามคำแนะนำของกรรมการ
@@ -227,5 +238,35 @@ export type HistoryView = {
   hasPrev: boolean;
   hasNext: boolean;
   rows: HistoryRow[];
-  summary: { workedDays: number; lateDays: number; noCheckInDays: number; minutes: number };
+  summary: { workedDays: number; lateDays: number; noCheckInDays: number; leaveDays: number; minutes: number };
 };
+
+// ---- ใบลา ----
+
+export const LEAVE_BACK_WORKDAYS = 3;
+
+// วันย้อนหลังสุดที่ขอลา/แจ้งสายได้: ย้อนไม่เกิน 3 วันทำการจากวันนี้ (นับเสาร์-อาทิตย์ไม่เป็นวันทำการ) · เกินกว่านั้นให้บอกพี่เลี้ยงแล้วพี่เลี้ยงแก้เวลาให้
+export function earliestLeaveDate(today: string, workdaysBack = LEAVE_BACK_WORKDAYS) {
+  let d = new Date(`${today}T00:00:00Z`);
+  let n = 0;
+  while (n < workdaysBack) {
+    d = new Date(d.getTime() - 86_400_000);
+    if (!isWeekend(d.toISOString().slice(0, 10))) n++;
+  }
+  return d.toISOString().slice(0, 10);
+}
+
+export type LeaveStatus = "pending" | "approved" | "rejected";
+
+export type LeaveRow = {
+  id: number;
+  workDate: string;
+  kind: LeaveKind;
+  reason: string;
+  status: LeaveStatus;
+  decisionNote: string | null;
+  createdAt: string;
+};
+
+// มุมมองของพี่เลี้ยง: ใบลาของน้องทั้งรุ่น
+export type LeaveAdminRow = LeaveRow & { userId: number; name: string };

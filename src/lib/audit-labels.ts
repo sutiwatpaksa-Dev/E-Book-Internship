@@ -47,6 +47,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "attendance.edit": "แก้เวลาเข้างานให้น้อง",
   "holiday.add": "ประกาศวันหยุดของรุ่น",
   "holiday.remove": "ยกเลิกวันหยุดของรุ่น",
+  "leave.decide": "ตัดสินใบลา/แจ้งสาย",
   "attendance.export": "ดาวน์โหลดเช็คอิน (CSV)",
   "workrule.add": "ตั้งเวลางานของรุ่น (มีผลล่วงหน้า)",
   "workrule.remove": "ลบเวลางานที่ตั้งไว้ล่วงหน้า",
@@ -58,7 +59,7 @@ export const AUDIT_GROUPS = [
   { id: "content", label: "เนื้อหา", prefixes: ["card", "note", "announcement", "post"] },
   { id: "thread", label: "แชทและงานที่ส่ง", prefixes: ["thread", "submission"] },
   { id: "file", label: "ไฟล์", prefixes: ["file", "assignment", "image"] },
-  { id: "attendance", label: "เช็คอิน", prefixes: ["attendance", "holiday", "workrule"] },
+  { id: "attendance", label: "เช็คอิน", prefixes: ["attendance", "holiday", "workrule", "leave"] },
 ] as const;
 
 export type AuditGroup = (typeof AUDIT_GROUPS)[number]["id"];

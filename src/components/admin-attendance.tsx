@@ -24,12 +24,13 @@ const LABEL: Record<DayState, { text: string; tone: string }> = {
   untracked: { text: "ก่อนเริ่มใช้ระบบ", tone: "text-fd-muted-foreground" },
   off_day: { text: "วันหยุด", tone: "text-fd-muted-foreground" },
   holiday: { text: "วันหยุดของรุ่น", tone: "text-fd-muted-foreground" },
+  leave: { text: "ลา (อนุมัติแล้ว)", tone: "text-fd-muted-foreground" },
   waiting: { text: "ยังไม่เช็คอิน", tone: "text-amber-800 dark:text-amber-300" },
   absent: { text: "ไม่ได้เช็คอิน", tone: "font-semibold text-red-700 dark:text-red-300" },
   working: { text: "กำลังทำงาน", tone: "text-emerald-700 dark:text-emerald-300" },
   done: { text: "เลิกงานแล้ว", tone: "" },
 };
-const IS_WORKDAY = (s: DayState) => s !== "outside" && s !== "off_day" && s !== "holiday" && s !== "untracked";
+const IS_WORKDAY = (s: DayState) => s !== "outside" && s !== "off_day" && s !== "holiday" && s !== "untracked" && s !== "leave";
 
 export function AdminAttendance({ admin, mine }: { admin: AdminState; mine: readonly number[] }) {
   // รุ่นเริ่มต้น: รุ่นของเราที่กำลังฝึกอยู่ → รุ่นไหนก็ได้ที่กำลังฝึก → รุ่นที่ยังไม่จบ → รุ่นแรกที่มี
