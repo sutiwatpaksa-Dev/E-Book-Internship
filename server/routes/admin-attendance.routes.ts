@@ -76,3 +76,11 @@ adminAttendanceRoutes.get("/export", async (c) => {
   const csv = await attendanceAdminService.exportMonth(c.get("user").id, cohortId, month);
   return c.body(csv, 200, { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="checkin-${cohortId}-${month}.csv"`, "Cache-Control": "no-store" });
 });
+
+// สรุปรายเดือนของทั้งรุ่น: ?cohortId=1&month=2026-11
+adminAttendanceRoutes.get("/month", async (c) => {
+  const cohortId = positive(c.req.query("cohortId"));
+  const month = c.req.query("month") ?? "";
+  if (!cohortId || !isMonth(month)) return c.json({ error: "ต้องระบุรุ่น และเดือนเป็น YYYY-MM" }, 400);
+  return c.json(await attendanceAdminService.month(cohortId, month));
+});

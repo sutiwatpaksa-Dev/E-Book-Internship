@@ -270,3 +270,41 @@ export type LeaveRow = {
 
 // มุมมองของพี่เลี้ยง: ใบลาของน้องทั้งรุ่น
 export type LeaveAdminRow = LeaveRow & { userId: number; name: string };
+
+// ---- สรุปรายเดือนของพี่เลี้ยง (ส่วนอัตโนมัติ ยังไม่รวมเป็นคะแนน KPI) ----
+
+// เปอร์เซ็นต์ปัดเป็นจำนวนเต็ม · ตัวหารเป็น 0 = ไม่มีข้อมูลพอ (null) ไม่แสดง 0% หรือ 100% ที่หลอกตา
+export const percent = (n: number, d: number) => (d > 0 ? Math.round((n / d) * 100) : null);
+
+export type MonthRow = {
+  userId: number;
+  name: string;
+  // วันทำงานที่นับ (ไม่รวมเสาร์-อาทิตย์ วันหยุดรุ่น วันลา วันก่อนเริ่มใช้ระบบ และวันนี้ที่ยังไม่เลิกงานแล้วยังไม่เช็คอิน)
+  workdays: number;
+  checkedInDays: number;
+  lateDays: number;
+  leaveDays: number;
+  minutes: number;
+  attendancePct: number | null; // วันที่เช็คอิน ÷ วันทำงานที่นับ
+  onTimePct: number | null; // วันที่ไม่สาย ÷ วันที่เช็คอิน
+};
+
+export type MonthView = { month: string; cohortName: string; rows: MonthRow[] };
+
+// นับวันของน้อง 1 คนจากสถานะรายวันที่คิดไว้แล้ว (state ตอนยังไม่มีแถวเช็คอิน + มีแถวเช็คอินไหม + สายไหม + นาที)
+export function summarizeDays(days: { baseState: DayState; hasRecord: boolean; late: boolean; minutes: number | null }[]) {
+  let workdays = 0, checkedInDays = 0, lateDays = 0, leaveDays = 0, minutes = 0;
+  for (const d of days) {
+    if (d.baseState === "leave") leaveDays++;
+    if (d.hasRecord) minutes += d.minutes ?? 0;
+    // นับเป็นวันทำงาน: วันที่ผ่านมาแล้วไม่มีเช็คอิน (absent) หรือวันนี้ที่เช็คอินแล้ว (waiting + มีแถว) · เสาร์-อาทิตย์/วันหยุด/ลา/ก่อนเริ่ม ไม่นับ
+    const counted = d.baseState === "absent" || (d.baseState === "waiting" && d.hasRecord);
+    if (!counted) continue;
+    workdays++;
+    if (d.hasRecord) {
+      checkedInDays++;
+      if (d.late) lateDays++;
+    }
+  }
+  return { workdays, checkedInDays, lateDays, leaveDays, minutes, attendancePct: percent(checkedInDays, workdays), onTimePct: percent(checkedInDays - lateDays, checkedInDays) };
+}

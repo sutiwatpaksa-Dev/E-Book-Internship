@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { atThai, dayState, earliestLeaveDate, describeDay, eachDate, isMonth, monthRange, rulesOn, effectiveCheckOut, isHHMM, isLate, isWeekend, minutesWorked, todayState, type AttendanceRules } from "./attendance";
+import { atThai, dayState, earliestLeaveDate, describeDay, percent, summarizeDays, eachDate, isMonth, monthRange, rulesOn, effectiveCheckOut, isHHMM, isLate, isWeekend, minutesWorked, todayState, type AttendanceRules } from "./attendance";
 
 const rules: AttendanceRules = { workStart: "09:00:00", workEnd: "18:00:00", lateGraceMinutes: 5 };
 const cohort = { startsOn: "2026-11-02", endsOn: "2026-12-30", endedAt: null };
@@ -241,5 +241,32 @@ describe("ใบลา", () => {
     expect(describeDay({ ...i, leave: "late" }).late).toBe(false);
     expect(describeDay({ ...i, leave: null }).late).toBe(true);
     expect(describeDay({ ...i, leave: "leave" }).late).toBe(true);
+  });
+});
+
+describe("summarizeDays / percent", () => {
+  test("percent: ตัวหาร 0 = null", () => {
+    expect(percent(0, 0)).toBeNull();
+    expect(percent(9, 10)).toBe(90);
+    expect(percent(2, 3)).toBe(67);
+  });
+  test("นับวันทำงาน เช็คอิน สาย ลา และไม่นับวันหยุด/เสาร์-อาทิตย์/ก่อนเริ่มระบบ", () => {
+    const r = summarizeDays([
+      { baseState: "absent", hasRecord: true, late: false, minutes: 540 },
+      { baseState: "absent", hasRecord: true, late: true, minutes: 500 },
+      { baseState: "absent", hasRecord: false, late: false, minutes: null },
+      { baseState: "leave", hasRecord: false, late: false, minutes: null },
+      { baseState: "holiday", hasRecord: false, late: false, minutes: null },
+      { baseState: "off_day", hasRecord: true, late: false, minutes: 60 },
+      { baseState: "untracked", hasRecord: false, late: false, minutes: null },
+      { baseState: "waiting", hasRecord: true, late: false, minutes: null },
+      { baseState: "waiting", hasRecord: false, late: false, minutes: null },
+    ]);
+    expect(r).toMatchObject({ workdays: 4, checkedInDays: 3, lateDays: 1, leaveDays: 1, minutes: 1100, attendancePct: 75, onTimePct: 67 });
+  });
+  test("ยังไม่มีวันทำงานที่นับ = เปอร์เซ็นต์เป็น null", () => {
+    const r = summarizeDays([{ baseState: "waiting", hasRecord: false, late: false, minutes: null }]);
+    expect(r.attendancePct).toBeNull();
+    expect(r.onTimePct).toBeNull();
   });
 });

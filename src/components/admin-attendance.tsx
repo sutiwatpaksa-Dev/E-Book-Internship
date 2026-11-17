@@ -151,6 +151,7 @@ export function AdminAttendance({ admin, mine }: { admin: AdminState; mine: read
             )}
           </section>
 
+          <MonthSummary att={att} />
           <WorkRules att={att} />
           <Holidays att={att} cohort={day.cohort} />
         </>
@@ -375,6 +376,58 @@ function WorkRules({ att }: { att: ReturnType<typeof useAdminAttendance> }) {
             ))}
           </ul>
         </details>
+      )}
+    </section>
+  );
+}
+
+const pct = (v: number | null) => (v === null ? "-" : `${v}%`);
+
+// สรุปรายเดือน (ส่วนอัตโนมัติ): ตัวเลขสำหรับพี่เลี้ยงใช้ดู ไม่ใช่คะแนน KPI และน้องยังไม่เห็นเปอร์เซ็นต์ในหน้าของตัวเอง
+function MonthSummary({ att }: { att: ReturnType<typeof useAdminAttendance> }) {
+  const m = att.month;
+  if (!m) return null;
+  return (
+    <section aria-label="สรุปรายเดือน" className={`${box} flex flex-col gap-3 !p-3 sm:!p-5`}>
+      <div className="px-2">
+        <h2 className="text-lg font-semibold">สรุปเดือน {m.month}</h2>
+        <p className="mt-1 text-sm text-fd-muted-foreground">
+          เข้างาน % = วันที่เช็คอิน ÷ วันทำงาน · ตรงเวลา % = วันที่ไม่สาย ÷ วันที่เช็คอิน · วันทำงานไม่รวมเสาร์-อาทิตย์ วันหยุดรุ่น วันลา และวันก่อนที่ใครในรุ่นจะเริ่มเช็คอิน · ถึงวันนี้เท่านั้น
+        </p>
+      </div>
+      {m.rows.length === 0 ? (
+        <p className="px-2 text-sm text-fd-muted-foreground">เดือนนี้ยังไม่มีข้อมูลให้สรุป</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-fd-border text-left text-xs text-fd-muted-foreground">
+                <th className="px-2 py-2 font-semibold">ชื่อ</th>
+                <th className="px-2 py-2 font-semibold">เช็คอิน / วันทำงาน</th>
+                <th className="px-2 py-2 font-semibold">เข้างาน</th>
+                <th className="px-2 py-2 font-semibold">ตรงเวลา</th>
+                <th className="px-2 py-2 font-semibold">สาย</th>
+                <th className="px-2 py-2 font-semibold">ลา</th>
+                <th className="px-2 py-2 font-semibold">ชั่วโมง</th>
+              </tr>
+            </thead>
+            <tbody>
+              {m.rows.map((r) => (
+                <tr key={r.userId} className="border-b border-fd-border/60 last:border-0">
+                  <td className="px-2 py-3 font-medium">{r.name}</td>
+                  <td className="px-2 py-3 tabular-nums">
+                    {r.checkedInDays} / {r.workdays}
+                  </td>
+                  <td className="px-2 py-3 tabular-nums">{pct(r.attendancePct)}</td>
+                  <td className="px-2 py-3 tabular-nums">{pct(r.onTimePct)}</td>
+                  <td className="px-2 py-3 tabular-nums">{r.lateDays}</td>
+                  <td className="px-2 py-3 tabular-nums">{r.leaveDays}</td>
+                  <td className="px-2 py-3 tabular-nums">{Math.round((r.minutes / 60) * 10) / 10}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   );

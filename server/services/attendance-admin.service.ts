@@ -1,5 +1,5 @@
 import { toCsv } from "../../src/lib/csv";
-import { atThai, dayState, describeDay, eachDate, monthRange, effectiveCheckOut, isLate, isWeekend, minutesWorked, rulesOn, type AttendanceRules, type DayRow, type DayView, type HolidayRow, type RulesView } from "../../src/lib/attendance";
+import { atThai, dayState, describeDay, eachDate, monthRange, effectiveCheckOut, isLate, isWeekend, minutesWorked, rulesOn, type AttendanceRules, summarizeDays, type DayRow, type DayView, type HolidayRow, type MonthView, type RulesView } from "../../src/lib/attendance";
 import { todayTH } from "../../src/lib/cohort";
 import { attendanceRepository } from "../repositories/attendance.repository";
 import { leaveRepository } from "../repositories/leave.repository";
@@ -181,5 +181,48 @@ export const attendanceAdminService = {
     }
     await auditService.log(actorId, "attendance.export", cohort.name, `${month} · ${rows.length - 1} แถว`);
     return toCsv(rows);
+  },
+
+  // สรุปรายเดือนของน้องทั้งรุ่น (ส่วนอัตโนมัติ: เข้างาน % ตรงเวลา % ชั่วโมง) · พี่เลี้ยงใช้ดู ยังไม่ใช่คะแนน KPI
+  async month(cohortId: number, month: string): Promise<MonthView> {
+    const cohort = await cohortOrThrow(cohortId);
+    const now = new Date();
+    const today = todayTH(now);
+    const { from, to } = monthRange(month);
+    const lo = from > cohort.startsOn ? from : cohort.startsOn;
+    const hiCap = to < today ? to : today;
+    const hi = hiCap < cohort.endsOn ? hiCap : cohort.endsOn;
+    if (lo > hi) return { month, cohortName: cohort.name, rows: [] };
+    const base: AttendanceRules = { workStart: cohort.workStart, workEnd: cohort.workEnd, lateGraceMinutes: cohort.lateGraceMinutes };
+    const [interns, records, ruleList, holidayList, trackingStart, leaves] = await Promise.all([
+      attendanceRepository.internsOfCohort(cohortId),
+      attendanceRepository.recordsOfCohort(cohortId, lo, hi),
+      attendanceRepository.workRules(cohortId),
+      attendanceRepository.holidays(cohortId),
+      attendanceRepository.firstRecordDate(cohortId),
+      leaveRepository.approvedOfCohort(cohortId, lo, hi),
+    ]);
+    const holidays = new Set(holidayList.map((h) => h.holidayDate));
+    const byKey = new Map(records.map((r) => [`${r.userId}|${r.workDate}`, r]));
+    const leaveBy = new Map<string, "leave" | "late">();
+    for (const l of leaves) {
+      const k = `${l.userId}|${l.workDate}`;
+      if (!leaveBy.has(k) || l.kind === "leave") leaveBy.set(k, l.kind);
+    }
+    const dates = eachDate(lo, hi);
+    const rows = interns.map((u) => {
+      const days = dates.map((date) => {
+        const rec = byKey.get(`${u.id}|${date}`) ?? null;
+        const leave = leaveBy.get(`${u.id}|${date}`) ?? null;
+        const rules = rulesOn(date, base, ruleList);
+        const holiday = holidays.has(date);
+        // สถานะของวัน "ถ้ายังไม่มีเช็คอิน" ใช้แยกวันทำงานออกจากวันหยุด/ลา/ก่อนเริ่มระบบ
+        const baseState = dayState({ date, cohort, rules, holiday, record: null, now, trackingStart, leave });
+        const d = describeDay({ date, cohort, rules, holiday, record: rec, now, trackingStart, leave });
+        return { baseState, hasRecord: !!rec, late: d.late, minutes: d.minutes };
+      });
+      return { userId: u.id, name: u.fullName || u.nickname || u.username, ...summarizeDays(days) };
+    });
+    return { month, cohortName: cohort.name, rows };
   },
 };

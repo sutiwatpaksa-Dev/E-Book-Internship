@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { adminAttendanceApi, type EditTimeInput, type NewRuleInput } from "@/api/admin-attendance.api";
-import type { DayView, HolidayRow, RulesView } from "@/lib/attendance";
+import type { DayView, HolidayRow, MonthView, RulesView } from "@/lib/attendance";
 import { toast } from "./use-toast";
 
 // แท็บ "เช็คอิน" ของหลังบ้าน: น้องทั้งรุ่นในวันที่เลือก + วันหยุดของรุ่น
@@ -11,6 +11,7 @@ export function useAdminAttendance(cohortId: number | null, date: string) {
   const [day, setDay] = useState<DayView | null>(null);
   const [holidays, setHolidays] = useState<HolidayRow[]>([]);
   const [rules, setRules] = useState<RulesView | null>(null);
+  const [month, setMonth] = useState<MonthView | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const seq = useRef(0);
@@ -19,11 +20,12 @@ export function useAdminAttendance(cohortId: number | null, date: string) {
     if (!cohortId) return;
     const mine = ++seq.current;
     try {
-      const [d, h, r] = await Promise.all([adminAttendanceApi.day(cohortId, date), adminAttendanceApi.holidays(cohortId), adminAttendanceApi.rules(cohortId)]);
+      const [d, h, r, m] = await Promise.all([adminAttendanceApi.day(cohortId, date), adminAttendanceApi.holidays(cohortId), adminAttendanceApi.rules(cohortId), adminAttendanceApi.month(cohortId, date.slice(0, 7))]);
       if (mine !== seq.current) return;
       setDay(d);
       setHolidays(h);
       setRules(r);
+      setMonth(m);
       setError(null);
     } catch (e) {
       if (mine === seq.current) setError((e as Error).message);
@@ -54,6 +56,7 @@ export function useAdminAttendance(cohortId: number | null, date: string) {
     day,
     holidays,
     rules,
+    month,
     error,
     busy,
     reload: load,

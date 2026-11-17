@@ -1,4 +1,4 @@
-import type { DayView, HolidayRow, RulesView } from "@/lib/attendance";
+import type { DayView, HolidayRow, MonthView, RulesView } from "@/lib/attendance";
 import { jsonBody, request } from "./client";
 
 export type EditTimeInput = { userId: number; workDate: string; checkIn: string; checkOut: string | null; reason: string };
@@ -11,6 +11,7 @@ export const adminAttendanceApi = {
   holidays: (cohortId: number) => request<HolidayRow[]>(`/admin/attendance/holidays?cohortId=${cohortId}`),
   addHoliday: (cohortId: number, date: string, note: string) => request<null>("/admin/attendance/holidays", jsonBody("POST", { cohortId, date, note })),
   removeHoliday: (id: number) => request<null>(`/admin/attendance/holidays/${id}`, { method: "DELETE" }),
+  month: (cohortId: number, month: string) => request<MonthView>(`/admin/attendance/month?cohortId=${cohortId}&month=${month}`),
   rules: (cohortId: number) => request<RulesView>(`/admin/attendance/rules?cohortId=${cohortId}`),
   addRule: (input: NewRuleInput) => request<null>("/admin/attendance/rules", jsonBody("POST", input)),
   removeRule: (id: number) => request<null>(`/admin/attendance/rules/${id}`, { method: "DELETE" }),
