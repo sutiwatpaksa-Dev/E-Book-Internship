@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { reviewListQuerySchema, reviewSummaryQuerySchema, submitSchema } from "../../server/validators/submission.validator";
-import { deployProblem, normalizeDeploy, normalizeRepo, refProblem, repoOf, repoProblem, DEFAULT_ROUNDS, hasRound, roundLabel, roundsProblem, takesDeploy, treeUrl, waitingOf, weightOf, weightTotal, criteriaOf, repoChanged, repoShort, hasLink, hasRepo, linkProblem, linkShort, normalizeLink, normalizeSubmit, submitProblem, textProblem } from "./submission";
+import { submitSchema } from "../../server/validators/submission.validator";
+import { deployProblem, normalizeDeploy, normalizeRepo, refProblem, repoOf, repoProblem, DEFAULT_ROUNDS, hasRound, roundLabel, roundsProblem, takesDeploy, treeUrl, waitingOf } from "./submission";
 
 describe("ลิงก์ repo", () => {
   test("แบบที่คนคัดลอกมาจริง จัดเป็นแบบเดียว", () => {
@@ -57,20 +57,10 @@ describe("ลงทะเบียน repo วันที่ 1", () => {
   test("ไม่ต้องมี tag · เก็บ ref เป็น HEAD (branch หลักของ repo)", () => {
     const v = submitSchema.parse({ ...base, round: "start" });
     expect(v.ref).toBe("HEAD");
-    // ลิงก์จัดรูปที่ submission.service ตามชนิดงาน (ดู normalizeSubmit) ไม่ใช่ที่ schema แล้ว
-    expect(normalizeSubmit("repo", v.repoUrl)).toBe("https://github.com/ton/starter");
+    expect(v.repoUrl).toBe("https://github.com/ton/starter");
   });
-  test("รอบตรวจไม่ต้องมี tag แล้ว (6 พ.ย. 2569) ว่าง = HEAD · ใส่มาต้องถูกรูปแบบ", () => {
-    expect(submitSchema.parse({ ...base, round: "review-1" }).ref).toBe("HEAD");
-    expect(submitSchema.parse({ ...base, round: "review-1", ref: "review-1" }).ref).toBe("review-1");
-    expect(submitSchema.safeParse({ ...base, round: "review-1", ref: "a b" }).success).toBe(false);
-  });
-  test("% คะแนนของโพสต์: ไม่ตั้ง = ค่าเดิม 20/30/50 · ตั้งแล้วใช้ค่าที่ตั้ง", () => {
-    expect(weightTotal(DEFAULT_ROUNDS)).toBe(100);
-    expect(weightOf({ id: "p1" })).toBe(0);
-    expect(weightOf({ id: "final", weight: 40 })).toBe(40);
-    expect(criteriaOf({ criteria: [] }, [{ id: "a", label: "A", max: 10 }])).toEqual([]);
-    expect(criteriaOf({}, [{ id: "a", label: "A", max: 10 }])).toHaveLength(1);
+  test("รอบตรวจยังต้องมี tag", () => {
+    expect(submitSchema.safeParse({ ...base, round: "review-1" }).success).toBe(false);
   });
   test("ลงทะเบียน repo ไม่นับเป็นรอตรวจ", () => {
     expect(waitingOf([{ id: 1, userId: 1, assignment: "starter", round: "start", reviewedAt: null }])).toEqual([]);
@@ -129,85 +119,5 @@ describe("รอบส่งงานของโจทย์", () => {
     expect(roundsProblem([{ ...r, day: 0 }])).not.toBeNull();
     expect(roundsProblem([{ ...r, day: 1.5 }])).not.toBeNull();
     expect(roundsProblem([{ ...r, label: "  " }])).not.toBeNull();
-  });
-});
-
-describe("ตัวกรองหน้าตรวจงานแบบเจาะลง", () => {
-  const parse = (q: Record<string, string>) => reviewListQuerySchema.safeParse(q);
-  test("ไม่ส่งอะไร = รอตรวจ เก่าสุดก่อน หน้าละ 20", () => {
-    const r = parse({});
-    expect(r.success && r.data).toMatchObject({ status: "waiting", sort: "oldest", q: "", offset: 0, limit: 20 });
-    expect(r.success && r.data.cohort).toBeUndefined();
-  });
-  test("ค่าที่ถูกแปลงเป็นตัวเลข/ตัดช่องว่าง", () => {
-    const r = parse({ cohort: "7", assignment: "starter", round: "review-1", status: "all", sort: "name", q: "  สม ", offset: "40", limit: "50" });
-    expect(r.success && r.data).toEqual({ cohort: 7, assignment: "starter", round: "review-1", status: "all", sort: "name", q: "สม", offset: 40, limit: 50 });
-  });
-  test("ค่าผิดตอบผิด ไม่ทิ้งเงียบ", () => {
-    const bads: Record<string, string>[] = [{ cohort: "0" }, { cohort: "-1" }, { cohort: "1e3" }, { cohort: "abc" }, { cohort: "" }, { assignment: "A B" }, { round: "x y" }, { status: "done" }, { sort: "random" }, { offset: "-1" }, { limit: "0" }, { limit: "51" }, { limit: "20; drop" }, { q: "x".repeat(61) }];
-    for (const bad of bads) expect(parse(bad).success).toBe(false);
-  });
-  test("สรุปรายงานใช้แค่รุ่น", () => {
-    expect(reviewSummaryQuerySchema.safeParse({ cohort: "3", status: "all" }).data).toEqual({ cohort: 3 });
-  });
-});
-
-describe("repoChanged (ป้าย เปลี่ยน repo จากครั้งก่อน)", () => {
-  test("ครั้งแรก/ไม่มีครั้งก่อน = ไม่นับว่าเปลี่ยน", () => {
-    expect(repoChanged(null, "https://github.com/a/b")).toBe(false);
-    expect(repoChanged(undefined, "https://github.com/a/b")).toBe(false);
-  });
-  test("ลิงก์เดียวกันที่เขียนต่างรูป (www, .git, / ท้าย, ตัวพิมพ์) ไม่นับว่าเปลี่ยน", () => {
-    expect(repoChanged("https://www.github.com/Somchai/Starter.git", "https://github.com/somchai/starter/")).toBe(false);
-  });
-  test("คนละ repo = เปลี่ยน", () => {
-    expect(repoChanged("https://github.com/somchai/starter", "https://github.com/somchai/starter-v2")).toBe(true);
-    expect(repoChanged("https://github.com/somchai/starter", "https://github.com/other/starter")).toBe(true);
-  });
-  test("repoShort ตัดโดเมนออก", () => {
-    expect(repoShort("https://github.com/somchai/starter.git")).toBe("somchai/starter");
-  });
-});
-
-describe("ชนิดของที่น้องส่ง (repo, ลิงก์ทั่วไป, ข้อความ)", () => {
-  test("repo: ใช้กฎ GitHub เดิม จัดรูปลิงก์เหมือนเดิม", () => {
-    expect(submitProblem("repo", "https://github.com/a/b", "")).toBeNull();
-    expect(submitProblem("repo", "https://figma.com/file/x", "")).not.toBeNull();
-    expect(normalizeSubmit("repo", "github.com/a/b.git")).toBe("https://github.com/a/b");
-  });
-  test("ลิงก์ทั่วไป: รับ https เว็บจริง (Figma, Drive) ไม่รับ http/localhost/เลข IP/javascript:/ช่องว่าง", () => {
-    for (const ok of ["https://www.figma.com/file/abc?node-id=1", "https://drive.google.com/file/d/1/view", "https://canva.com"]) expect(linkProblem(ok)).toBeNull();
-    for (const bad of ["", "http://figma.com/x", "https://localhost/x", "https://127.0.0.1/x", "javascript:alert(1)", "https://a b.com", "figma.com/x", "https://nodot"]) expect(linkProblem(bad)).not.toBeNull();
-  });
-  test("ลิงก์ทั่วไป: ตัด / ท้ายเมื่อเป็นแค่ชื่อเว็บ ไม่แตะ path จริง", () => {
-    expect(normalizeLink("https://canva.com/")).toBe("https://canva.com");
-    expect(normalizeLink("https://www.figma.com/file/abc/")).toBe("https://www.figma.com/file/abc/");
-    expect(normalizeLink("https://a.com/x"+"y".repeat(300))).toBeNull();
-  });
-  test("ข้อความอย่างเดียว: ไม่ต้องมีลิงก์ แต่ต้องเขียนสิ่งที่ทำ (อย่างน้อย 10 ตัว) และเก็บลิงก์เป็นค่าว่าง", () => {
-    expect(submitProblem("text", "", "ทำเสร็จแล้วครับ ดูได้เลย")).toBeNull();
-    expect(submitProblem("text", "", "สั้น")).not.toBeNull();
-    expect(textProblem("   ทำ   ")).not.toBeNull();
-    expect(normalizeSubmit("text", "https://github.com/a/b")).toBe("");
-  });
-  test("เฉพาะงานแบบ repo ที่มีรอบลงทะเบียน repo และ branch/tag", () => {
-    expect(hasRepo("repo")).toBe(true);
-    expect(hasRepo("link")).toBe(false);
-    expect(hasRepo("text")).toBe(false);
-    expect(hasLink("text")).toBe(false);
-    expect(hasLink("link")).toBe(true);
-  });
-  test("ชื่อสั้นของลิงก์ที่ส่ง", () => {
-    expect(linkShort("repo", "https://github.com/a/b")).toBe("a/b");
-    expect(linkShort("link", "https://www.figma.com/file/abc")).toBe("figma.com");
-  });
-  test("repoOf นับเฉพาะ repo: แถวงานแบบลิงก์ไม่ถูกนับเป็น repo ของน้อง · แถวเก่าไม่มีชนิด = repo", () => {
-    const rows = [
-      { userId: 1, repoUrl: "https://figma.com/x", submitKind: "link" as const },
-      { userId: 1, repoUrl: "https://github.com/a/b" },
-      { userId: 2, repoUrl: "", submitKind: "text" as const },
-    ];
-    expect(repoOf(rows, 1)).toBe("https://github.com/a/b");
-    expect(repoOf(rows, 2)).toBeNull();
   });
 });

@@ -162,34 +162,6 @@
       "when": 1793780338518,
       "tag": "0022_assignment_cards",
       "breakpoints": true
-    },
-    {
-      "idx": 23,
-      "version": "7",
-      "when": 1793941214532,
-      "tag": "0023_cohort_assignments_tracks",
-      "breakpoints": true
-    },
-    {
-      "idx": 24,
-      "version": "7",
-      "when": 1794134352062,
-      "tag": "0024_assignment_submit_kind",
-      "breakpoints": true
-    },
-    {
-      "idx": 25,
-      "version": "7",
-      "when": 1794888250711,
-      "tag": "0025_kpi_attendance",
-      "breakpoints": true
-    },
-    {
-      "idx": 26,
-      "version": "7",
-      "when": 1794897139931,
-      "tag": "0026_work_rules",
-      "breakpoints": true
     }
   ]
 }

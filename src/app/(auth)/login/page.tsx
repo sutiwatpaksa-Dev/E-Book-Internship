@@ -26,7 +26,6 @@ export default function LoginPage() {
             src="/brand/login-bg.webp"
             alt=""
             fill
-            loading="eager"
             sizes="(min-width: 768px) 40vw, 100vw"
             className="object-cover object-right-bottom"
           />
@@ -39,7 +38,7 @@ export default function LoginPage() {
           <span className="rounded-lg bg-fd-background p-1">
             <BrandMark size={28} />
           </span>
-          ระบบฝึกงาน Blicktech
+          คู่มือฝึกงาน Blicktech
         </span>
         <h1 className="max-w-lg text-2xl leading-snug font-bold md:text-4xl md:leading-tight">
           ทำซอฟต์แวร์ 1 ระบบ ให้ครบ 7 ขั้น แบบที่ทีมจริงทำ

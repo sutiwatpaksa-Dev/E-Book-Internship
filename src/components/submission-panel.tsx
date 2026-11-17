@@ -8,12 +8,11 @@ import { useMyMentors } from "@/hooks/use-my-mentors";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "@/hooks/use-toast";
 import { sendToLine } from "@/lib/mentors";
-import { commitsUrl, deployProblem, hasLink, hasRepo, isReviewable, latestOnly, linkShort, repoProblem, START_REF, START_ROUND, takesDeploy, submitProblem, treeUrl, type DeliverableKind, type RoundDef } from "@/lib/submission";
+import { commitsUrl, deployProblem, isReviewable, latestOnly, refProblem, repoProblem, START_ROUND, takesDeploy, treeUrl, type RoundDef } from "@/lib/submission";
 import type { MySubmissions, Submission } from "@/types";
 import { Button } from "./button";
 import { ErrorText } from "./error-text";
 import { Field, Input, inputClass } from "./field";
-import { SubmitLinkField, SubmitNoteField } from "./submit-link-field";
 import { VerdictBadge } from "./status-badge";
 import { thDateTime } from "@/lib/date-format";
 
@@ -61,12 +60,8 @@ function SubmissionView({ data, reload }: { data: MySubmissions; reload: () => v
   const latest = latestOnly(items.map((s) => ({ ...s, userId: 0 })));
   const ofRound = (id: string) => latest.find((s) => s.round === id);
   // ลิงก์ repo ล่าสุดของโจทย์นี้ (จากการส่งครั้งไหนก็ได้) · ยังไม่มี = ยังไม่ได้ลงทะเบียน
-  const cur = data.assignments.find((a) => a.slug === assignment);
-  const kind: DeliverableKind = cur?.submitKind ?? "repo";
-  // ลงทะเบียน repo (รอบ start) มีเฉพาะงานแบบ repo · งานแบบอื่นส่งได้เลย
-  const repo = items[0]?.repoUrl || null;
-  const registered = !hasRepo(kind) || !!repo;
-  const rounds = cur?.rounds ?? [];
+  const repo = items[0]?.repoUrl ?? null;
+  const rounds = data.assignments.find((a) => a.slug === assignment)?.rounds ?? [];
 
   return (
     <div className="not-prose flex flex-col gap-4">
@@ -82,7 +77,7 @@ function SubmissionView({ data, reload }: { data: MySubmissions; reload: () => v
         </Field>
       )}
 
-      {hasRepo(kind) && <RepoBox assignment={assignment} repo={repo} locked={data.locked} onSent={reload} />}
+      <RepoBox assignment={assignment} repo={repo} locked={data.locked} onSent={reload} />
 
       <ol className="flex flex-col gap-2">
         {rounds.map((r) => {
@@ -95,7 +90,7 @@ function SubmissionView({ data, reload }: { data: MySubmissions; reload: () => v
                 </span>
                 {s ? <VerdictBadge verdict={s.verdict} /> : <span className="text-xs text-fd-muted-foreground">ยังไม่ส่ง</span>}
               </div>
-              {s && <SentLine s={s} kind={kind} />}
+              {s && <SentLine s={s} />}
             </li>
           );
         })}
@@ -103,17 +98,16 @@ function SubmissionView({ data, reload }: { data: MySubmissions; reload: () => v
 
       {data.locked ? (
         <p className={box}>รุ่นของคุณจบแล้ว ส่งงานเพิ่มไม่ได้ ประวัติการส่งด้านบนยังดูได้ตามเดิม</p>
-      ) : !registered ? (
+      ) : !repo ? (
         <p className={box}>ส่งลิงก์ repo ด้านบนก่อน แล้วฟอร์มส่งงานตรวจจะขึ้นตรงนี้</p>
       ) : (
         <SubmitForm
           assignment={assignment}
-          kind={kind}
           // รอบที่ควรส่งต่อ: รอบแรกที่ยังไม่ผ่าน
           rounds={rounds}
           defaultRound={rounds.find((r) => ofRound(r.id)?.verdict !== "pass")?.id ?? rounds.at(-1)?.id ?? ""}
           // ใส่ลิงก์ repo ครั้งเดียว ครั้งต่อไปเติมให้จากที่ส่งล่าสุด
-          lastRepo={repo ?? ""}
+          lastRepo={repo ?? data.items[0]?.repoUrl ?? ""}
           onSent={reload}
         />
       )}
@@ -127,7 +121,7 @@ function SubmissionView({ data, reload }: { data: MySubmissions; reload: () => v
                 <span className="flex flex-wrap items-center gap-2">
                   {s.roundLabel} {isReviewable(s.round) && <VerdictBadge verdict={s.verdict} />}
                 </span>
-                <SentLine s={s} kind={kind} />
+                <SentLine s={s} />
               </li>
             ))}
           </ul>
@@ -220,7 +214,7 @@ function RepoBox({ assignment, repo, locked, onSent }: { assignment: string; rep
 }
 
 // ส่งอะไรไป เมื่อไร + ผลตรวจของพี่เลี้ยง
-function SentLine({ s, kind }: { s: Submission; kind: DeliverableKind }) {
+function SentLine({ s }: { s: Submission }) {
   if (s.round === START_ROUND)
     return (
       <span className="break-all text-fd-muted-foreground">
@@ -231,19 +225,10 @@ function SentLine({ s, kind }: { s: Submission; kind: DeliverableKind }) {
     <div className="flex flex-col gap-1">
       <span className="text-fd-muted-foreground">
         ส่ง{" "}
-        {kind === "repo" ? (
-          <a className="inline-flex items-center gap-1 font-mono text-fd-primary underline" href={treeUrl(s.repoUrl, s.ref)} target="_blank" rel="noopener noreferrer">
-            {s.ref === START_REF ? "โค้ดล่าสุดใน repo" : s.ref}
-            <ExternalLink className="size-3" />
-          </a>
-        ) : kind === "link" ? (
-          <a className="inline-flex items-center gap-1 break-all text-fd-primary underline" href={s.repoUrl} target="_blank" rel="noopener noreferrer">
-            {linkShort(kind, s.repoUrl)}
-            <ExternalLink className="size-3" />
-          </a>
-        ) : (
-          "เป็นข้อความ"
-        )}{" "}
+        <a className="inline-flex items-center gap-1 font-mono text-fd-primary underline" href={treeUrl(s.repoUrl, s.ref)} target="_blank" rel="noopener noreferrer">
+          {s.ref}
+          <ExternalLink className="size-3" />
+        </a>{" "}
         เมื่อ {fmt(s.createdAt)}
       </span>
       {s.deployUrl && (
@@ -262,9 +247,10 @@ function SentLine({ s, kind }: { s: Submission; kind: DeliverableKind }) {
   );
 }
 
-function SubmitForm({ assignment, kind, rounds, defaultRound, lastRepo, onSent }: { assignment: string; kind: DeliverableKind; rounds: RoundDef[]; defaultRound: string; lastRepo: string; onSent: () => void }) {
+function SubmitForm({ assignment, rounds, defaultRound, lastRepo, onSent }: { assignment: string; rounds: RoundDef[]; defaultRound: string; lastRepo: string; onSent: () => void }) {
   const [round, setRound] = useState(defaultRound);
   const [repoUrl, setRepoUrl] = useState(lastRepo);
+  const [ref, setRef] = useState("");
   const [deployUrl, setDeployUrl] = useState("");
   const [note, setNote] = useState("");
   const [touched, setTouched] = useState(false);
@@ -274,23 +260,21 @@ function SubmitForm({ assignment, kind, rounds, defaultRound, lastRepo, onSent }
   useEffect(() => setRound(defaultRound), [defaultRound]);
 
   // บอกผิดใต้ช่องเมื่อพิมพ์แล้ว (ช่องว่างตอนเพิ่งเปิดหน้ายังไม่ขึ้นแดง)
-  const problem = submitProblem(kind, repoUrl, note);
-  const repoErr = hasLink(kind) && (touched || repoUrl) ? problem : null;
-  const noteErr = !hasLink(kind) && touched ? problem : null;
-  // รอบที่พี่เลี้ยงติ๊ก "ต้องส่งลิงก์เว็บ": ช่องลิงก์เว็บบังคับ (server ตรวจซ้ำ) · ไม่ต้องใส่ tag แล้ว พี่เลี้ยงเปิดโค้ดล่าสุดตอนตรวจ
+  const repoErr = touched || repoUrl ? repoProblem(repoUrl) : null;
+  const refErr = touched || ref ? refProblem(ref) : null;
   const showDeploy = takesDeploy(rounds, round);
-  const deployMissing = showDeploy && !deployUrl.trim() ? "รอบนี้ต้องส่งลิงก์เว็บที่ deploy แล้ว" : null;
-  const deployErr = showDeploy ? (deployUrl ? deployProblem(deployUrl) : touched ? deployMissing : null) : null;
+  const deployErr = showDeploy && deployUrl ? deployProblem(deployUrl) : null;
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setTouched(true);
-    if (problem || (showDeploy && (deployMissing || deployProblem(deployUrl)))) return void toast.error("ส่งไม่ได้ ตรวจช่องที่ขึ้นข้อความสีแดงก่อน");
+    if (repoProblem(repoUrl) || refProblem(ref) || (showDeploy && deployProblem(deployUrl))) return void toast.error("ส่งไม่ได้ ตรวจช่องที่ขึ้นข้อความสีแดงก่อน");
     setSending(true);
     setError(null);
     try {
-      await submissionsApi.submit({ assignment, round, repoUrl, ref: "", deployUrl: showDeploy ? deployUrl : "", note });
+      await submissionsApi.submit({ assignment, round, repoUrl, ref, deployUrl: showDeploy ? deployUrl : "", note });
       toast.success(to ? `ส่งงานแล้ว ${to.replace("ส่งถึง", "แจ้ง")} แล้ว` : "ส่งงานแล้ว พี่เลี้ยงได้รับแจ้งเตือน");
+      setRef("");
       setDeployUrl("");
       setNote("");
       setTouched(false);
@@ -315,18 +299,36 @@ function SubmitForm({ assignment, kind, rounds, defaultRound, lastRepo, onSent }
           ))}
         </select>
       </Field>
-      <SubmitLinkField kind={kind} value={repoUrl} onChange={setRepoUrl} error={repoErr} hint={kind === "repo" ? "ใส่ครั้งเดียว ครั้งต่อไประบบเติมให้ · push โค้ดล่าสุดก่อนกดส่ง พี่เลี้ยงเปิดดูโค้ดล่าสุดตอนตรวจ · repo แบบ private ต้องเชิญพี่เลี้ยงเป็น collaborator ก่อน" : undefined} />
+      <Field label="ลิงก์ repo บน GitHub" hint="ใส่ครั้งเดียว ครั้งต่อไประบบเติมให้ · repo แบบ private ต้องเชิญพี่เลี้ยงเป็น collaborator ก่อน">
+        <Input
+          value={repoUrl}
+          onChange={(e) => setRepoUrl(e.target.value)}
+          placeholder="https://github.com/somchai/starter"
+          inputMode="url"
+          autoCapitalize="none"
+          spellCheck={false}
+          maxLength={300}
+          aria-invalid={!!repoErr}
+        />
+      </Field>
+      {repoErr && <p role="alert" className="-mt-2 text-sm text-red-700 dark:text-red-400">{repoErr}</p>}
+      <Field label="tag หรือ commit ที่ส่ง" hint={<>push tag ขึ้น GitHub ก่อน เช่น <code>git tag review-1</code> แล้ว <code>git push origin review-1</code> · ส่งใหม่ใช้ชื่อใหม่ เช่น review-1-fix1</>}>
+        <Input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="review-1" autoCapitalize="none" spellCheck={false} maxLength={100} aria-invalid={!!refErr} />
+      </Field>
+      {refErr && <p role="alert" className="-mt-2 text-sm text-red-700 dark:text-red-400">{refErr}</p>}
       {showDeploy && (
         <>
-          <Field label="ลิงก์เว็บที่ deploy แล้ว" hint="เว็บที่เปิดใช้ได้จริงบน Vercel หรือที่อื่น เช่น https://starter-somchai.vercel.app · ต้องเปิดได้โดยไม่ต้อง login">
+          <Field label="ลิงก์เว็บที่ deploy แล้ว (ไม่บังคับ)" hint="เว็บที่เปิดใช้ได้จริงบน Vercel หรือที่อื่น เช่น https://starter-somchai.vercel.app · ต้องเปิดได้โดยไม่ต้อง login">
             <Input value={deployUrl} onChange={(e) => setDeployUrl(e.target.value)} placeholder="https://starter-somchai.vercel.app" inputMode="url" autoCapitalize="none" spellCheck={false} maxLength={300} aria-invalid={!!deployErr} />
           </Field>
           {deployErr && <p role="alert" className="-mt-2 text-sm text-red-700 dark:text-red-400">{deployErr}</p>}
         </>
       )}
-      <SubmitNoteField kind={kind} value={note} onChange={setNote} error={noteErr} />
+      <Field label="ข้อความถึงพี่เลี้ยง (ไม่บังคับ)" hint="รอบนี้ทำอะไรเสร็จ ยังค้างอะไร หรืออยากให้ดูตรงไหนเป็นพิเศษ">
+        <textarea className={`${inputClass} min-h-20`} value={note} onChange={(e) => setNote(e.target.value)} maxLength={1000} />
+      </Field>
       {error && <ErrorText>{error}</ErrorText>}
-      {kind === "repo" && <p className="text-xs text-fd-muted-foreground">เว็บนี้ไม่ได้เปิดดูโค้ดให้ พี่เลี้ยงกดลิงก์ไปดูบน GitHub เอง ลองกดลิงก์ของตัวเองหลังส่งว่าเปิดได้</p>}
+      <p className="text-xs text-fd-muted-foreground">เว็บนี้ไม่ได้เปิดดูโค้ดให้ พี่เลี้ยงกดลิงก์ไปดูบน GitHub เอง ลองกดลิงก์ของตัวเองหลังส่งว่าเปิดได้</p>
       {to && <p className="text-xs text-fd-muted-foreground">{to} ทันทีที่กดส่ง</p>}
       <Button type="submit" disabled={sending} className="min-h-11 w-fit">
         <Send className="size-4" /> {sending ? "กำลังส่ง…" : "ส่งงาน"}

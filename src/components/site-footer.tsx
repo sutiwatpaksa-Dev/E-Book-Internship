@@ -13,9 +13,9 @@ export function SiteFooter({ version }: { version: string }) {
           <div className="flex items-center gap-2.5">
             {/* พื้นขาวทั้งสองโหมด จึงใช้โลโก้แบบสว่างเสมอ */}
             <span className="rounded-lg bg-white p-1">
-              <Image src="/brand/mark.png" alt="" width={24} height={24} className="size-6 object-contain" />
+              <Image src="/brand/mark.png" alt="" width={24} height={24} />
             </span>
-            <span className="font-bold text-white">ระบบฝึกงาน Blicktech</span>
+            <span className="font-bold text-white">คู่มือฝึกงาน Blicktech</span>
           </div>
           <nav aria-label="ลิงก์ท้ายเว็บ" className="flex flex-col gap-1 text-[13px]">
             <Link href="/changelog" className="flex min-h-11 items-center hover:text-white hover:underline">

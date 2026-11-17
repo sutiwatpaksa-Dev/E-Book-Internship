@@ -1,8 +1,7 @@
-import { type AnyPgColumn, boolean, check, customType, date, index, integer, jsonb, pgTable, primaryKey, serial, text, time, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
+import { type AnyPgColumn, boolean, customType, date, index, integer, jsonb, pgTable, primaryKey, serial, text, timestamp } from "drizzle-orm/pg-core";
 import type { CommentKind, CommentTemplate, Criterion, Scores } from "../../src/lib/rubric";
 import type { PostKind, Requirement } from "../../src/lib/post";
-import { DEFAULT_ROUNDS, type RoundDef, type DeliverableKind, type TaskLink } from "../../src/lib/submission";
+import { DEFAULT_ROUNDS, type RoundDef, type TaskLink } from "../../src/lib/submission";
 
 const bytea = customType<{ data: Buffer }>({ dataType: () => "bytea" });
 
@@ -60,33 +59,11 @@ export const users = pgTable("users", {
   cohortId: integer("cohort_id").references((): AnyPgColumn => cohorts.id, { onDelete: "set null" }),
 });
 
-// สายงาน (IT, Content Creator, ...): แม่แบบที่รุ่นคัดลอกไปตอนสร้าง · แก้แม่แบบแล้วรุ่นเดิมไม่เปลี่ยน
-// template_version เพิ่มทุกครั้งที่บันทึกแม่แบบ รุ่นจำไว้ว่าเริ่มจากฉบับไหน (cohorts.track_template_version)
-export type TrackKpi = { work: number; attendance: number; engagement: number; passPercent: number };
-export type SubmitKind = "repo" | "link" | "file";
-export const tracks = pgTable("tracks", {
-  id: serial("id").primaryKey(),
-  slug: text("slug").notNull().unique(),
-  name: text("name").notNull(),
-  // ขั้นของแผนที่การเรียน (slug เรียงตามลำดับ) · ล็อกชื่อขั้นเมื่อสายมีรุ่นแล้ว (บังคับที่ API)
-  steps: jsonb("steps").$type<string[]>().notNull().default([]),
-  submitKinds: jsonb("submit_kinds").$type<SubmitKind[]>().notNull().default(["link"]),
-  criteria: jsonb("criteria").$type<Criterion[]>().notNull().default([]),
-  kpi: jsonb("kpi").$type<TrackKpi>().notNull().default({ work: 70, attendance: 20, engagement: 10, passPercent: 60 }),
-  templateVersion: integer("template_version").notNull().default(1),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
-
 // รุ่นฝึกงาน: ช่วงเวลาที่น้องกลุ่มหนึ่งฝึกพร้อมกัน ใช้กรองภาพรวม แชท และประกาศในหลังบ้าน
 // วันเริ่ม/จบเป็น date (ไม่มีเวลา) เพราะนับเป็นวันทำงาน · สถานะคิดจากวันที่ + ended_at ไม่เก็บซ้ำ
 export const cohorts = pgTable("cohorts", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  // 1 รุ่น = 1 สาย · รุ่นเก่าทั้งหมดเป็นสาย IT (migration 0023)
-  trackId: integer("track_id")
-    .notNull()
-    .references((): AnyPgColumn => tracks.id, { onDelete: "restrict" }),
-  trackTemplateVersion: integer("track_template_version").notNull().default(1),
   startsOn: date("starts_on").notNull(),
   endsOn: date("ends_on").notNull(),
   // พี่เลี้ยงกด "จบรุ่น" แล้ว: น้องยังอ่านคู่มือได้ แต่เปิดเรื่องถามใหม่ไม่ได้ · กดเปิดรุ่นกลับได้ (ล้างค่า)
@@ -98,12 +75,6 @@ export const cohorts = pgTable("cohorts", {
   signupUntil: date("signup_until"),
   // รับได้กี่คน (นับน้องที่อยู่ในรุ่นทั้งหมด) · null = ไม่จำกัด
   seatLimit: integer("seat_limit"),
-  // น้ำหนัก KPI ของรุ่น: คัดลอกจาก tracks.kpi ตอนสร้างรุ่น แล้วพี่เลี้ยงแก้เฉพาะรุ่นนี้ได้ (แม่แบบสายไม่เปลี่ยน) · ผลรวม 3 ส่วนต้องเป็น 100 (บังคับที่ API)
-  kpi: jsonb("kpi").$type<TrackKpi>().notNull().default({ work: 70, attendance: 20, engagement: 10, passPercent: 60 }),
-  // เวลางานของรุ่น (เวลาไทย): เกิน workStart + lateGraceMinutes = สาย · ถึง workEnd แล้วยังไม่เช็คเอาต์ = นับเลิกงานตามเวลานี้ (ติดป้าย "อัตโนมัติ")
-  workStart: time("work_start").notNull().default("09:00:00"),
-  workEnd: time("work_end").notNull().default("18:00:00"),
-  lateGraceMinutes: integer("late_grace_minutes").notNull().default(5),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -130,33 +101,21 @@ export type AssignmentRubric = { rounds: RoundDef[]; criteria?: Criterion[]; tem
 
 // โจทย์ฝึกงาน (เช่น STARTER) · โครงงาน 10 วัน เกณฑ์ และ stack เหมือนกันทุกโจทย์ ต่างกันที่ระบบทำให้ใคร
 // เก็บใน DB ไม่ใช่ MDX เพราะ repo นี้เปิดสาธารณะ โจทย์ของรุ่นถัดไปต้องไม่หลุดก่อนรุ่นเริ่ม
-// โจทย์เป็นของรุ่นเดียว (migration 0023): แก้โจทย์รุ่นนี้ไม่กระทบรุ่นอื่น · slug ซ้ำได้ข้ามรุ่น (น้องเปิด /projects/starter ระบบหาจากรุ่นของน้อง)
-export const assignments = pgTable(
-  "assignments",
-  {
+export const assignments = pgTable("assignments", {
   id: serial("id").primaryKey(),
-  cohortId: integer("cohort_id")
-    .notNull()
-    .references((): AnyPgColumn => cohorts.id, { onDelete: "restrict" }),
-  slug: text("slug").notNull(),
+  slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
   brief: text("brief").notNull().default(""),
   // แถวในตาราง files ที่เก็บ PDF ของโจทย์นี้ (STARTER ใช้ key เดิม "starter-requirement" ไฟล์บนเว็บจริงจึงไม่ต้องย้าย)
-  // ไม่ unique: สำเนาของรุ่นใหม่ใช้ไฟล์เดิมร่วมกันจนกว่ารุ่นนั้นจะอัปโหลดไฟล์ของตัวเอง
-  pdfKey: text("pdf_key").notNull(),
+  pdfKey: text("pdf_key").notNull().unique(),
   sections: jsonb("sections").$type<AssignmentSection[]>().notNull().default([]),
   rubric: jsonb("rubric").$type<AssignmentRubric>().notNull().default({ rounds: DEFAULT_ROUNDS }),
   // ภาพรวมโจทย์ใหญ่ (Markdown) แทนหน้า MDX ใน repo · ว่าง = ยังไม่ได้เขียน
   overview: text("overview").notNull().default(""),
   // เก็บโจทย์แล้ว: ไม่ให้เลือกใช้กับรุ่นใหม่ แต่งานและคะแนนเดิมยังเปิดดูได้
   archivedAt: timestamp("archived_at", { withTimezone: true }),
-  // ชนิดของที่น้องส่ง: repo = repo GitHub (ค่าเดิม) · link = ลิงก์ https ทั่วไป · text = ข้อความอย่างเดียว
-  // ลิงก์ของทุกชนิดเก็บในคอลัมน์ submissions.repo_url (ไม่เปลี่ยนชื่อเพื่อไม่ให้ทุก query ต้องแก้) · text เก็บ ""
-  submitKind: text("submit_kind").$type<DeliverableKind>().notNull().default("repo"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => [uniqueIndex("assignments_cohort_slug_uq").on(t.cohortId, t.slug), check("assignments_submit_kind_check", sql`${t.submitKind} in ('repo','link','text')`)],
-);
+});
 
 // โจทย์ของแต่ละรุ่น: รุ่นหนึ่งเพิ่มได้หลายชิ้นจนกว่าจะจบรุ่น · ลบโจทย์ที่ยังมีรุ่นใช้อยู่ไม่ได้ (restrict)
 export const cohortAssignments = pgTable(
@@ -499,126 +458,4 @@ export const notifications = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("notifications_user_idx").on(t.userId, t.readAt)],
-);
-
-// ---- KPI และเช็คอินของน้อง (v2.3) ----
-// เก็บแค่ข้อมูลดิบ (เวลาเข้า-ออก ใบลา คะแนนที่พี่ให้) ส่วน "สาย" "ขาด" "ชั่วโมงสะสม" "คะแนนรวม" คิดใหม่ทุกครั้งที่เปิดหน้า
-// เพราะพี่เลี้ยงแก้เวลาเริ่มงานหรือสูตรทีหลังได้ ถ้าเก็บผลที่คิดแล้วไว้ ข้อมูลเก่ากับกฎใหม่จะขัดกันเอง
-
-// เวลาเข้า-ออกงานของน้อง 1 แถวต่อ 1 วัน · เวลามาจาก server เสมอ (ไม่รับเวลาจากเครื่องน้อง)
-// workDate เป็นวันที่ตามเวลาไทย (date ไม่มีเวลา เหมือน cohorts.starts_on)
-export const attendanceRecords = pgTable(
-  "attendance_records",
-  {
-    id: serial("id").primaryKey(),
-    userId: integer("user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    workDate: date("work_date").notNull(),
-    checkInAt: timestamp("check_in_at", { withTimezone: true }).notNull(),
-    // ว่าง = ยังไม่เช็คเอาต์ · ถ้าวันนั้นผ่านไปแล้ว ตอนคำนวณนับเป็น cohorts.work_end และติดป้าย "อัตโนมัติ" (ไม่เขียนทับคอลัมน์นี้)
-    checkOutAt: timestamp("check_out_at", { withTimezone: true }),
-    // พี่เลี้ยงแก้เวลา: ต้องมีเหตุผลทุกครั้ง (บังคับที่ service) · เวลาเดิมอยู่ใน audit_logs
-    editedBy: integer("edited_by").references(() => users.id, { onDelete: "set null" }),
-    editedAt: timestamp("edited_at", { withTimezone: true }),
-    editReason: text("edit_reason"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => [
-    // กันแถวซ้ำเมื่อกดซ้ำหรือเปิดสองแท็บ
-    uniqueIndex("attendance_user_date_uniq").on(t.userId, t.workDate),
-    check("attendance_out_after_in", sql`${t.checkOutAt} is null or ${t.checkOutAt} >= ${t.checkInAt}`),
-  ],
-);
-
-export const LEAVE_KINDS = ["leave", "late"] as const;
-export type LeaveKind = (typeof LEAVE_KINDS)[number];
-export const LEAVE_STATUSES = ["pending", "approved", "rejected"] as const;
-export type LeaveStatus = (typeof LEAVE_STATUSES)[number];
-
-// ใบลา / แจ้งมาสายล่วงหน้า · อนุมัติแล้วเท่านั้นที่มีผลต่อ KPI (ลา = ไม่นับขาด, แจ้งสาย = ไม่นับสาย)
-export const leaveRequests = pgTable(
-  "leave_requests",
-  {
-    id: serial("id").primaryKey(),
-    userId: integer("user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    workDate: date("work_date").notNull(),
-    kind: text("kind").$type<LeaveKind>().notNull(),
-    reason: text("reason").notNull(),
-    status: text("status").$type<LeaveStatus>().notNull().default("pending"),
-    decidedBy: integer("decided_by").references(() => users.id, { onDelete: "set null" }),
-    decidedAt: timestamp("decided_at", { withTimezone: true }),
-    // คำตอบของพี่เลี้ยง (เช่น "ขอเอกสารประกอบ") น้องเห็น
-    decisionNote: text("decision_note"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => [
-    index("leave_user_date_idx").on(t.userId, t.workDate),
-    index("leave_status_idx").on(t.status),
-    check("leave_kind_chk", sql`${t.kind} in ('leave', 'late')`),
-    check("leave_status_chk", sql`${t.status} in ('pending', 'approved', 'rejected')`),
-  ],
-);
-
-// วันหยุดของรุ่นที่พี่เลี้ยงประกาศ · เสาร์-อาทิตย์ไม่ต้องเก็บ (คิดจากปฏิทิน)
-export const cohortHolidays = pgTable(
-  "cohort_holidays",
-  {
-    id: serial("id").primaryKey(),
-    cohortId: integer("cohort_id")
-      .notNull()
-      .references(() => cohorts.id, { onDelete: "cascade" }),
-    holidayDate: date("holiday_date").notNull(),
-    note: text("note").notNull().default(""),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => [uniqueIndex("cohort_holiday_uniq").on(t.cohortId, t.holidayDate)],
-);
-
-// เวลางานของรุ่นที่ "เริ่มมีผลตั้งแต่วันที่ X" (ไม่มีผลย้อนหลัง) · ค่าตั้งต้นของรุ่นอยู่ที่ cohorts.work_start/work_end/late_grace_minutes
-// กติกาของวัน D = แถวที่ effective_from ล่าสุดที่ไม่เกิน D ถ้าไม่มีแถวเลยใช้ค่าในตาราง cohorts
-// ตั้งวันที่ย้อนหลังไม่ได้ (บังคับที่ service) จึงเปลี่ยนผลสาย/ชั่วโมงของวันที่ผ่านมาไม่ได้
-export const cohortWorkRules = pgTable(
-  "cohort_work_rules",
-  {
-    id: serial("id").primaryKey(),
-    cohortId: integer("cohort_id")
-      .notNull()
-      .references(() => cohorts.id, { onDelete: "cascade" }),
-    effectiveFrom: date("effective_from").notNull(),
-    workStart: time("work_start").notNull(),
-    workEnd: time("work_end").notNull(),
-    lateGraceMinutes: integer("late_grace_minutes").notNull(),
-    createdBy: integer("created_by").references(() => users.id, { onDelete: "set null" }),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => [
-    uniqueIndex("cohort_work_rule_uniq").on(t.cohortId, t.effectiveFrom),
-    check("cohort_work_rule_order", sql`${t.workEnd} > ${t.workStart}`),
-    check("cohort_work_rule_grace", sql`${t.lateGraceMinutes} between 0 and 120`),
-  ],
-);
-
-// คะแนน KPI ที่พี่เลี้ยงให้ (ส่วน "มีส่วนร่วม" 1-5) 1 แถวต่อ น้อง × เดือน × หัวข้อ · period = วันที่ 1 ของเดือน
-export const kpiScores = pgTable(
-  "kpi_scores",
-  {
-    id: serial("id").primaryKey(),
-    userId: integer("user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    period: date("period").notNull(),
-    criterion: text("criterion").notNull(),
-    score: integer("score").notNull(),
-    // ความเห็นถึงน้อง (น้องเห็น)
-    comment: text("comment"),
-    scoredBy: integer("scored_by").references(() => users.id, { onDelete: "set null" }),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => [
-    uniqueIndex("kpi_scores_uniq").on(t.userId, t.period, t.criterion),
-    check("kpi_scores_range", sql`${t.score} between 1 and 5`),
-  ],
 );

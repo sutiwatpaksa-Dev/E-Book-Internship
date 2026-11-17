@@ -63,7 +63,6 @@ function CohortList({ admin, nav }: { admin: AdminState; nav: AdminNav }) {
 
       {creating && (
         <CohortForm
-          sources={copySources(admin)}
           onCancel={() => setCreating(false)}
           onSave={async (input) => {
             if (await admin.saveCohort(null, input)) setCreating(false);
@@ -129,16 +128,8 @@ function CohortList({ admin, nav }: { admin: AdminState; nav: AdminNav }) {
   );
 }
 
-// รุ่นที่มีงานให้คัดลอก ล่าสุดก่อน (ค่าเริ่มต้น = รุ่นแรกของรายการ ตรงกับที่ server ใช้ถ้าไม่ระบุ)
-function copySources(admin: AdminState) {
-  return admin.cohorts
-    .map((c) => ({ id: c.id, name: c.name, posts: admin.assignments.filter((a) => a.cohortIds.includes(c.id)).reduce((n, a) => n + a.rounds.length, 0) }))
-    .filter((s) => s.posts > 0)
-    .sort((x, y) => y.id - x.id);
-}
-
-function CohortForm({ initial, sources, onSave, onCancel }: { initial?: CohortInput; sources?: { id: number; name: string; posts: number }[]; onSave: (v: CohortInput) => void; onCancel: () => void }) {
-  const [v, setV] = useState<CohortInput>(initial ?? { name: "", startsOn: "", endsOn: "", copyFrom: sources?.[0]?.id ?? null });
+function CohortForm({ initial, onSave, onCancel }: { initial?: CohortInput; onSave: (v: CohortInput) => void; onCancel: () => void }) {
+  const [v, setV] = useState<CohortInput>(initial ?? { name: "", startsOn: "", endsOn: "" });
   const submit = (e: FormEvent) => {
     e.preventDefault();
     onSave({ ...v, name: v.name.trim() });
@@ -159,23 +150,6 @@ function CohortForm({ initial, sources, onSave, onCancel }: { initial?: CohortIn
         <Input type="date" value={v.endsOn} min={v.startsOn || undefined} onChange={(e) => setV({ ...v, endsOn: e.target.value })} required />
       </Field>
       {badPeriod && <p className="text-sm text-red-700 sm:col-span-2 dark:text-red-400">วันจบต้องไม่ก่อนวันเริ่ม</p>}
-      {sources && (
-        <>
-          <Field label="สายงาน" hint="ตอนนี้มีสายเดียว สาย Content Creator เพิ่มเมื่อมีน้องสายนั้น">
-            <Input value="เทคโนโลยีสารสนเทศ (IT)" readOnly />
-          </Field>
-          <Field label="โพสต์งานของรุ่นนี้" hint="คัดลอกแล้วเป็นของรุ่นนี้เอง แก้ไม่กระทบรุ่นต้นทาง · PDF ใช้ไฟล์เดิมจนกว่าจะอัปโหลดใหม่">
-            <select className={inputClass} value={v.copyFrom ?? ""} onChange={(e) => setV({ ...v, copyFrom: e.target.value ? Number(e.target.value) : null })}>
-              {sources.map((s) => (
-                <option key={s.id} value={s.id}>
-                  คัดลอกจาก {s.name} ({s.posts} โพสต์)
-                </option>
-              ))}
-              <option value="">เริ่มว่าง (ยังไม่มีโพสต์งาน)</option>
-            </select>
-          </Field>
-        </>
-      )}
       <div className="flex gap-2 sm:col-span-2">
         <Button type="button" variant="ghost" onClick={onCancel} className="min-h-11">
           ยกเลิก
@@ -321,29 +295,58 @@ function CohortDetail({ admin, nav, cohort: c }: { admin: AdminState; nav: Admin
   );
 }
 
-// งานของรุ่น: แต่ละรุ่นมีกล่องงานของตัวเอง (0023) รุ่นใหม่ได้สำเนาจากรุ่นล่าสุดตอนสร้าง · โพสต์และตั้งค่าที่หน้า "โพสต์งานให้น้อง"
+// โจทย์ของรุ่น: เพิ่มได้หลายชิ้นจนกว่าจะจบรุ่น · น้องเห็นทุกชิ้นในแผงเอกสาร ชิ้นที่เพิ่มล่าสุดเปิดก่อน
+// เอาโจทย์ออกจากรุ่นที่เริ่มฝึกแล้วต้องกดยืนยัน (น้องที่ทำโจทย์นั้นอยู่จะเปิด PDF ไม่ได้ทันที) · server ล็อกรุ่นที่จบแล้วซ้ำอีกชั้น
 function Assignments({ admin, nav, cohort: c }: { admin: AdminState; nav: AdminNav; cohort: Cohort }) {
-  const own = admin.assignments.filter((a) => a.cohortIds.includes(c.id));
-  const posts = own.reduce((n, a) => n + a.rounds.length, 0);
+  const current = admin.assignments.filter((a) => a.cohortIds.includes(c.id)).map((a) => a.id);
+  const [picked, setPicked] = useState<Set<number>>(new Set(current));
+  const [confirm, setConfirm] = useState(false);
+  const removed = admin.assignments.filter((a) => current.includes(a.id) && !picked.has(a.id));
+  const changed = picked.size !== current.length || current.some((id) => !picked.has(id));
+  const started = cohortStatus(c) !== "upcoming";
+  const toggle = (id: number) => setPicked((p) => (p.has(id) ? new Set([...p].filter((x) => x !== id)) : new Set([...p, id])));
+  const save = () => (setConfirm(false), admin.setCohortAssignments(c, [...picked]));
+
   return (
     <section aria-labelledby="asg-title" className="flex flex-col gap-2 rounded-xl border border-fd-border p-4">
       <h2 id="asg-title" className="text-base font-semibold">
-        งานของรุ่น
+        โจทย์ของรุ่น
       </h2>
-      {own.length === 0 ? (
-        <p className="text-sm text-fd-muted-foreground">รุ่นนี้ยังไม่มีกล่องงาน (สร้างก่อนมีรุ่นอื่นที่มีงาน) ติดต่อผู้ดูแลระบบให้คัดลอกจากรุ่นก่อน</p>
+      {c.endedAt ? (
+        <p className="text-sm text-fd-muted-foreground">รุ่นจบแล้ว เพิ่มหรือเอาโจทย์ออกไม่ได้ (ถ้าจำเป็นกด &quot;เปิดรุ่นกลับ&quot; ก่อน)</p>
       ) : (
-        <p className="text-sm">
-          โพสต์งาน {posts} ชิ้น
-          {own.some((a) => !a.pdf) && <span className="ms-2 text-amber-800 dark:text-amber-300">ยังไม่มี PDF</span>}
-          {c.endedAt && <span className="ms-2 text-fd-muted-foreground">รุ่นจบแล้ว งานถูกล็อกไว้ตามที่น้องใช้จริง</span>}
-        </p>
+        <p className="text-sm text-fd-muted-foreground">เลือกได้หลายโจทย์ น้องเห็นทุกโจทย์ที่เลือก โจทย์ที่เพิ่มล่าสุดเปิดเป็นชิ้นแรก · สร้างโจทย์ใหม่ได้ที่เมนู &quot;โจทย์ PDF และเกณฑ์&quot;</p>
       )}
-      <div>
-        <Button variant="ghost" onClick={() => nav.goTab("board")} className="min-h-11">
-          ไปที่โพสต์งานให้น้อง
-        </Button>
-      </div>
+      {admin.assignments.length === 0 ? (
+        <p className="text-sm text-fd-muted-foreground">ยังไม่มีโจทย์ในระบบ</p>
+      ) : (
+        <ul className="flex flex-col gap-1">
+          {admin.assignments.map((a) => (
+            <li key={a.id}>
+              <label className={`flex min-h-11 items-center gap-2.5 rounded-lg px-2 ${c.endedAt ? "opacity-70" : "cursor-pointer hover:bg-fd-accent"}`}>
+                <input type="checkbox" className="size-5" checked={picked.has(a.id)} disabled={!!c.endedAt} onChange={() => toggle(a.id)} />
+                <span className="font-medium">{a.name}</span>
+                {!a.pdf && <span className="text-xs text-amber-800 dark:text-amber-300">ยังไม่มี PDF</span>}
+              </label>
+            </li>
+          ))}
+        </ul>
+      )}
+      {confirm && (
+        <ConfirmBox title={`เอาโจทย์ออกจาก ${c.name}?`} confirmLabel="เอาออก" danger onCancel={() => setConfirm(false)} onConfirm={save}>
+          {removed.map((a) => a.name).join(", ")} จะหายจากแผงเอกสารของน้องทันที (งานที่น้องทำไปแล้วไม่หาย) · บันทึกลงประวัติการแก้ไข
+        </ConfirmBox>
+      )}
+      {!c.endedAt && (
+        <div className="flex flex-wrap gap-2">
+          <Button variant={changed ? "primary" : "ghost"} disabled={!changed} onClick={() => (removed.length && started ? setConfirm(true) : save())} className="min-h-11">
+            บันทึกโจทย์
+          </Button>
+          <Button variant="ghost" onClick={() => nav.goTab("files")} className="min-h-11">
+            จัดการโจทย์
+          </Button>
+        </div>
+      )}
     </section>
   );
 }
@@ -376,7 +379,7 @@ function Signup({ admin, cohort: c }: { admin: AdminState; cohort: Cohort }) {
   }
   async function copy() {
     if (!link || !code) return;
-    await navigator.clipboard.writeText(`สมัครระบบฝึกงาน Blicktech (${c.name})\n${link}\nรหัสรุ่น: ${code}`);
+    await navigator.clipboard.writeText(`สมัครคู่มือฝึกงาน Blicktech (${c.name})\n${link}\nรหัสรุ่น: ${code}`);
     toast.success("คัดลอกข้อความแล้ว วางในกลุ่มของรุ่นได้เลย");
   }
 
