@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { requireRole, type AuthVars } from "../middleware/require-role";
+import { adminAttendanceRoutes } from "./admin-attendance.routes";
 import { adminCohortRoutes } from "./admin-cohort.routes";
 import { adminImageRoutes } from "./admin-image.routes";
 import { adminPostRoutes } from "./admin-post.routes";
@@ -19,6 +20,7 @@ export const adminRoutes = new Hono<AuthVars>();
 adminRoutes.use("*", requireRole("dev"));
 adminRoutes.route("/content", adminContentRoutes);
 adminRoutes.route("/cohorts", adminCohortRoutes);
+adminRoutes.route("/attendance", adminAttendanceRoutes);
 adminRoutes.route("/assignments", adminAssignmentRoutes);
 adminRoutes.route("/submissions", adminSubmissionRoutes);
 adminRoutes.route("/posts", adminPostRoutes);

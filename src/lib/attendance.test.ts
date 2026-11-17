@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { atThai, effectiveCheckOut, isLate, isWeekend, minutesWorked, todayState, type AttendanceRules } from "./attendance";
+import { atThai, dayState, effectiveCheckOut, isHHMM, isLate, isWeekend, minutesWorked, todayState, type AttendanceRules } from "./attendance";
 
 const rules: AttendanceRules = { workStart: "09:00:00", workEnd: "18:00:00", lateGraceMinutes: 5 };
 const cohort = { startsOn: "2026-11-02", endsOn: "2026-12-30", endedAt: null };
-// จันทร์ 17 พ.ย. 2569 (ค.ศ. 2026) เวลาไทย
+// อังคาร 17 พ.ย. 2026 เวลาไทย (วันทำงาน)
 const at = (hm: string, date = "2026-11-17") => atThai(date, hm);
 
 describe("isLate", () => {
@@ -99,5 +99,37 @@ describe("todayState", () => {
   test("มีแถวเช็คอินอยู่แล้ว แสดงของจริงแม้เป็นวันหยุดที่เพิ่งประกาศ", () => {
     const record = { workDate: "2026-11-17", checkInAt: at("08:52:00"), checkOutAt: null };
     expect(todayState({ ...base, holiday: true, record, now: at("12:00:00") })).toBe("working");
+  });
+});
+
+describe("dayState (มุมมองพี่เลี้ยง)", () => {
+  const cohort = { startsOn: "2026-10-14", endsOn: "2027-01-27" };
+  const rules = { workStart: "09:00:00", workEnd: "18:00:00", lateGraceMinutes: 5 };
+  const base = { cohort, rules, holiday: false, record: null };
+  const at = (iso: string) => new Date(iso);
+
+  test("วันนี้ ก่อนเลิกงาน ยังไม่เช็คอิน = รอ · หลังเลิกงาน = ขาด", () => {
+    expect(dayState({ ...base, date: "2026-11-17", now: at("2026-11-17T03:00:00Z") })).toBe("waiting");
+    expect(dayState({ ...base, date: "2026-11-17", now: at("2026-11-17T11:30:00Z") })).toBe("absent");
+  });
+  test("วันที่ผ่านมาแล้วไม่มีแถว = ขาด · เสาร์อาทิตย์ = หยุด · ประกาศหยุด = หยุด", () => {
+    expect(dayState({ ...base, date: "2026-11-13", now: at("2026-11-17T03:00:00Z") })).toBe("absent");
+    expect(dayState({ ...base, date: "2026-11-15", now: at("2026-11-17T03:00:00Z") })).toBe("off_day");
+    expect(dayState({ ...base, holiday: true, date: "2026-11-13", now: at("2026-11-17T03:00:00Z") })).toBe("holiday");
+  });
+  test("นอกช่วงรุ่น = outside", () => {
+    expect(dayState({ ...base, date: "2026-10-01", now: at("2026-11-17T03:00:00Z") })).toBe("outside");
+  });
+  test("มีแถวเช็คอินแสดงของจริงก่อน แม้เป็นวันหยุด · ไม่มีเวลาออกและเลยเวลาเลิกงาน = เสร็จ (อัตโนมัติ)", () => {
+    const record = { workDate: "2026-11-15", checkInAt: at("2026-11-15T02:00:00Z"), checkOutAt: null };
+    expect(dayState({ ...base, record, date: "2026-11-15", now: at("2026-11-17T03:00:00Z") })).toBe("done");
+    expect(dayState({ ...base, record: { ...record, workDate: "2026-11-17" }, date: "2026-11-17", now: at("2026-11-17T05:00:00Z") })).toBe("working");
+  });
+});
+
+describe("isHHMM", () => {
+  test("รับ 24 ชม. เท่านั้น", () => {
+    expect(["00:00", "08:58", "23:59"].every(isHHMM)).toBe(true);
+    expect(["24:00", "9:00", "09:60", "09:00:00", ""].some(isHHMM)).toBe(false);
   });
 });
