@@ -1,6 +1,6 @@
 import { and, asc, eq, gte, isNull, lte } from "drizzle-orm";
 import { db } from "../db/client";
-import { attendanceRecords, cohortHolidays, users } from "../db/schema";
+import { attendanceRecords, cohortHolidays, cohortWorkRules, users } from "../db/schema";
 
 export const attendanceRepository = {
   async findByDate(userId: number, workDate: string) {
@@ -71,5 +71,19 @@ export const attendanceRepository = {
   },
   async removeHoliday(id: number) {
     await db.delete(cohortHolidays).where(eq(cohortHolidays.id, id));
+  },
+
+  // ---- กติกาเวลาของรุ่นตามวันที่เริ่มมีผล ----
+  workRules: (cohortId: number) => db.select().from(cohortWorkRules).where(eq(cohortWorkRules.cohortId, cohortId)).orderBy(asc(cohortWorkRules.effectiveFrom)),
+  async addWorkRule(v: { cohortId: number; effectiveFrom: string; workStart: string; workEnd: string; lateGraceMinutes: number; createdBy: number }) {
+    const rows = await db.insert(cohortWorkRules).values(v).onConflictDoNothing().returning({ id: cohortWorkRules.id });
+    return rows[0]?.id;
+  },
+  async findWorkRule(id: number) {
+    const [row] = await db.select().from(cohortWorkRules).where(eq(cohortWorkRules.id, id));
+    return row;
+  },
+  async removeWorkRule(id: number) {
+    await db.delete(cohortWorkRules).where(eq(cohortWorkRules.id, id));
   },
 };

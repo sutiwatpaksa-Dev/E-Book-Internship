@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { atThai, dayState, effectiveCheckOut, isHHMM, isLate, isWeekend, minutesWorked, todayState, type AttendanceRules } from "./attendance";
+import { atThai, dayState, rulesOn, effectiveCheckOut, isHHMM, isLate, isWeekend, minutesWorked, todayState, type AttendanceRules } from "./attendance";
 
 const rules: AttendanceRules = { workStart: "09:00:00", workEnd: "18:00:00", lateGraceMinutes: 5 };
 const cohort = { startsOn: "2026-11-02", endsOn: "2026-12-30", endedAt: null };
@@ -131,5 +131,32 @@ describe("isHHMM", () => {
   test("รับ 24 ชม. เท่านั้น", () => {
     expect(["00:00", "08:58", "23:59"].every(isHHMM)).toBe(true);
     expect(["24:00", "9:00", "09:60", "09:00:00", ""].some(isHHMM)).toBe(false);
+  });
+});
+
+describe("rulesOn (กติกาตามวันที่เริ่มมีผล)", () => {
+  const base = { workStart: "09:00:00", workEnd: "18:00:00", lateGraceMinutes: 5 };
+  const list = [
+    { effectiveFrom: "2026-12-01", workStart: "10:00:00", workEnd: "19:00:00", lateGraceMinutes: 10 },
+    { effectiveFrom: "2027-01-05", workStart: "08:30:00", workEnd: "17:30:00", lateGraceMinutes: 0 },
+  ];
+  test("ก่อนกติกาแรก ใช้ค่าตั้งต้นของรุ่น", () => {
+    expect(rulesOn("2026-11-30", base, list)).toEqual(base);
+    expect(rulesOn("2026-11-17", base, [])).toEqual(base);
+  });
+  test("วันที่เริ่มมีผลพอดี ใช้กติกานั้น และอยู่จนกว่าจะมีกติกาถัดไป", () => {
+    expect(rulesOn("2026-12-01", base, list).workStart).toBe("10:00:00");
+    expect(rulesOn("2027-01-04", base, list).lateGraceMinutes).toBe(10);
+    expect(rulesOn("2027-01-05", base, list).workEnd).toBe("17:30:00");
+  });
+  test("ลำดับในรายการไม่มีผล", () => {
+    expect(rulesOn("2027-02-01", base, [...list].reverse()).workStart).toBe("08:30:00");
+  });
+  test("เปลี่ยนกติกาทีหลัง ผลของวันก่อนวันที่เริ่มมีผลไม่เปลี่ยน (เข้า 09:20 สายตามกติกาเดิม)", () => {
+    const checkIn = atThai("2026-11-20", "09:20:00");
+    const before = isLate(checkIn, "2026-11-20", rulesOn("2026-11-20", base, []));
+    const after = isLate(checkIn, "2026-11-20", rulesOn("2026-11-20", base, list));
+    expect(before).toBe(true);
+    expect(after).toBe(before);
   });
 });

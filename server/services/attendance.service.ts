@@ -1,4 +1,4 @@
-import { effectiveCheckOut, isLate, minutesWorked, todayState, type AttendanceRules, type TodayView } from "../../src/lib/attendance";
+import { effectiveCheckOut, isLate, minutesWorked, rulesOn, todayState, type AttendanceRules, type TodayView } from "../../src/lib/attendance";
 import { todayTH } from "../../src/lib/cohort";
 import { attendanceRepository } from "../repositories/attendance.repository";
 import { cohortRepository } from "../repositories/cohort.repository";
@@ -23,7 +23,9 @@ async function load(userId: number): Promise<TodayView> {
   const record = (await attendanceRepository.findByDate(userId, workDate)) ?? null;
   if (!cohort) return { now: now.toISOString(), workDate, state: "no_cohort", workStart: null, workEnd: null, lateGraceMinutes: null, checkInAt: null, checkOutAt: null, checkOutAuto: false, late: false, minutes: null };
 
-  const rules: AttendanceRules = { workStart: cohort.workStart, workEnd: cohort.workEnd, lateGraceMinutes: cohort.lateGraceMinutes };
+  // กติกาของ "วันนี้" (พี่เลี้ยงตั้งกติกาใหม่ล่วงหน้าได้ วันที่เริ่มมีผลถึงแล้วจึงเปลี่ยนเอง)
+  const base: AttendanceRules = { workStart: cohort.workStart, workEnd: cohort.workEnd, lateGraceMinutes: cohort.lateGraceMinutes };
+  const rules = rulesOn(workDate, base, await attendanceRepository.workRules(cohort.id));
   const holiday = await attendanceRepository.isHoliday(cohort.id, workDate);
   const state = todayState({ cohort, rules, holiday, record, now });
   const out = record ? effectiveCheckOut(record, rules, now) : null;

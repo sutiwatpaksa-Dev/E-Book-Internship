@@ -18,3 +18,12 @@ export const holidaySchema = z.object({
   date: day,
   note: z.string().trim().max(80).default(""),
 });
+
+// กติกาเวลาใหม่ของรุ่น (เริ่มมีผลวันที่ effectiveFrom เป็นต้นไป)
+export const workRuleSchema = z.object({
+  cohortId: z.number().int().positive(),
+  effectiveFrom: day,
+  workStart: hhmm,
+  workEnd: hhmm,
+  lateGraceMinutes: z.number().int().min(0).max(120),
+});

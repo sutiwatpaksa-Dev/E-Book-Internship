@@ -144,3 +144,20 @@ export type DayView = {
 };
 
 export type HolidayRow = { id: number; date: string; note: string };
+
+// ---- กติกาเวลาที่เปลี่ยนตามวันที่เริ่มมีผล ----
+
+export type WorkRule = AttendanceRules & { effectiveFrom: string };
+
+// กติกาของวัน D = กติกาที่ effective_from ล่าสุดที่ไม่เกิน D · ไม่มีเลย (หรือ D ก่อนกติกาแรก) ใช้ค่าตั้งต้นของรุ่น
+// ฟังก์ชันล้วน: ผลสาย/ชั่วโมงของวันที่ผ่านมาจึงไม่เปลี่ยน ตราบใดที่ไม่มีใครตั้งกติกาย้อนหลัง (service ห้ามไว้)
+export function rulesOn(date: string, base: AttendanceRules, list: readonly WorkRule[]): AttendanceRules {
+  let best: WorkRule | null = null;
+  for (const r of list) if (r.effectiveFrom <= date && (!best || r.effectiveFrom > best.effectiveFrom)) best = r;
+  return best ? { workStart: best.workStart, workEnd: best.workEnd, lateGraceMinutes: best.lateGraceMinutes } : base;
+}
+
+export type WorkRuleRow = { id: number; effectiveFrom: string; workStart: string; workEnd: string; lateGraceMinutes: number };
+
+// กติกาเวลาของรุ่น: ตั้งต้น (ใช้กับวันก่อนกติกาแรก) + กติกาที่ตั้งไว้ล่วงหน้า/มีผลแล้ว
+export type RulesView = { today: string; base: AttendanceRules; rules: WorkRuleRow[] };

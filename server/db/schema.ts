@@ -577,6 +577,30 @@ export const cohortHolidays = pgTable(
   (t) => [uniqueIndex("cohort_holiday_uniq").on(t.cohortId, t.holidayDate)],
 );
 
+// เวลางานของรุ่นที่ "เริ่มมีผลตั้งแต่วันที่ X" (ไม่มีผลย้อนหลัง) · ค่าตั้งต้นของรุ่นอยู่ที่ cohorts.work_start/work_end/late_grace_minutes
+// กติกาของวัน D = แถวที่ effective_from ล่าสุดที่ไม่เกิน D ถ้าไม่มีแถวเลยใช้ค่าในตาราง cohorts
+// ตั้งวันที่ย้อนหลังไม่ได้ (บังคับที่ service) จึงเปลี่ยนผลสาย/ชั่วโมงของวันที่ผ่านมาไม่ได้
+export const cohortWorkRules = pgTable(
+  "cohort_work_rules",
+  {
+    id: serial("id").primaryKey(),
+    cohortId: integer("cohort_id")
+      .notNull()
+      .references(() => cohorts.id, { onDelete: "cascade" }),
+    effectiveFrom: date("effective_from").notNull(),
+    workStart: time("work_start").notNull(),
+    workEnd: time("work_end").notNull(),
+    lateGraceMinutes: integer("late_grace_minutes").notNull(),
+    createdBy: integer("created_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("cohort_work_rule_uniq").on(t.cohortId, t.effectiveFrom),
+    check("cohort_work_rule_order", sql`${t.workEnd} > ${t.workStart}`),
+    check("cohort_work_rule_grace", sql`${t.lateGraceMinutes} between 0 and 120`),
+  ],
+);
+
 // คะแนน KPI ที่พี่เลี้ยงให้ (ส่วน "มีส่วนร่วม" 1-5) 1 แถวต่อ น้อง × เดือน × หัวข้อ · period = วันที่ 1 ของเดือน
 export const kpiScores = pgTable(
   "kpi_scores",

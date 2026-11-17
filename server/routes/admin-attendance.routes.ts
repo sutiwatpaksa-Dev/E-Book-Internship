@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { AuthVars } from "../middleware/require-role";
 import { attendanceAdminService } from "../services/attendance-admin.service";
-import { editAttendanceSchema, holidaySchema } from "../validators/attendance.validator";
+import { editAttendanceSchema, holidaySchema, workRuleSchema } from "../validators/attendance.validator";
 
 // หลังบ้าน: เช็คอินของน้อง · ต่ออยู่ใต้ admin.routes.ts จึงผ่านด่าน requireRole("dev") ของที่นั่นแล้ว
 export const adminAttendanceRoutes = new Hono<AuthVars>();
@@ -44,5 +44,25 @@ adminAttendanceRoutes.delete("/holidays/:id", async (c) => {
   const id = positive(c.req.param("id"));
   if (!id) throw new Error("HOLIDAY_NOT_FOUND");
   await attendanceAdminService.removeHoliday(c.get("user").id, id);
+  return c.body(null, 204);
+});
+
+adminAttendanceRoutes.get("/rules", async (c) => {
+  const cohortId = positive(c.req.query("cohortId"));
+  if (!cohortId) return c.json({ error: "ต้องระบุรุ่น" }, 400);
+  return c.json(await attendanceAdminService.rules(cohortId));
+});
+
+adminAttendanceRoutes.post("/rules", async (c) => {
+  const parsed = workRuleSchema.safeParse(await json(c));
+  if (!parsed.success) return c.json({ error: "วันที่เป็น YYYY-MM-DD เวลาเป็น HH:MM และผ่อนผันสาย 0–120 นาที" }, 400);
+  await attendanceAdminService.addRule(c.get("user").id, parsed.data);
+  return c.body(null, 201);
+});
+
+adminAttendanceRoutes.delete("/rules/:id", async (c) => {
+  const id = positive(c.req.param("id"));
+  if (!id) throw new Error("RULE_NOT_FOUND");
+  await attendanceAdminService.removeRule(c.get("user").id, id);
   return c.body(null, 204);
 });

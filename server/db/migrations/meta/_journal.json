@@ -183,6 +183,13 @@
       "when": 1794888250711,
       "tag": "0025_kpi_attendance",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1794897139931,
+      "tag": "0026_work_rules",
+      "breakpoints": true
     }
   ]
 }

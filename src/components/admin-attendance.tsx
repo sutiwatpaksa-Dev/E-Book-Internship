@@ -4,7 +4,7 @@ import { CalendarOff, Pencil } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { AdminState } from "@/hooks/use-admin";
 import { useAdminAttendance } from "@/hooks/use-admin-attendance";
-import { hhmm, type DayRow, type DayState } from "@/lib/attendance";
+import { hhmm, rulesOn, type DayRow, type DayState } from "@/lib/attendance";
 import { cohortStatus, todayTH } from "@/lib/cohort";
 import { Button } from "./button";
 import { EmptyState } from "./empty-state";
@@ -143,6 +143,7 @@ export function AdminAttendance({ admin, mine }: { admin: AdminState; mine: read
             )}
           </section>
 
+          <WorkRules att={att} />
           <Holidays att={att} cohort={day.cohort} />
         </>
       )}
@@ -283,6 +284,89 @@ function Holidays({ att, cohort }: { att: ReturnType<typeof useAdminAttendance>;
             </li>
           ))}
         </ul>
+      )}
+    </section>
+  );
+}
+
+const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
+const shortDate = (d: string) => new Date(`${d}T12:00:00+07:00`).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric", timeZone: TZ });
+const ruleText = (r: { workStart: string; workEnd: string; lateGraceMinutes: number }) => `${hhmm(r.workStart)}–${hhmm(r.workEnd)} น. · ผ่อนผันสาย ${r.lateGraceMinutes} นาที`;
+
+// เวลางานของรุ่น: เปลี่ยนได้แต่ "เริ่มมีผลพรุ่งนี้เป็นต้นไป" ไม่มีผลย้อนหลัง ผลสาย/ชั่วโมงของวันที่ผ่านมาจึงไม่เปลี่ยน
+function WorkRules({ att }: { att: ReturnType<typeof useAdminAttendance> }) {
+  const v = att.rules;
+  const [from, setFrom] = useState("");
+  const [start, setStart] = useState("09:00");
+  const [end, setEnd] = useState("18:00");
+  const [grace, setGrace] = useState("5");
+  if (!v) return null;
+  const tomorrow = new Date(new Date(`${v.today}T00:00:00Z`).getTime() + 86_400_000).toISOString().slice(0, 10);
+  const current = rulesOn(v.today, v.base, v.rules);
+  const upcoming = v.rules.filter((r) => r.effectiveFrom > v.today);
+  const past = v.rules.filter((r) => r.effectiveFrom <= v.today);
+  const g = Number(grace);
+  const valid = !!from && HHMM.test(start) && HHMM.test(end) && end > start && Number.isInteger(g) && g >= 0 && g <= 120;
+
+  return (
+    <section aria-label="เวลางานของรุ่น" className={`${box} flex flex-col gap-4`}>
+      <div>
+        <h2 className="text-lg font-semibold">เวลางานของรุ่น</h2>
+        <p className="mt-1 text-sm text-fd-muted-foreground">กติกาใหม่เริ่มมีผลตั้งแต่พรุ่งนี้เป็นต้นไปเท่านั้น วันที่ผ่านมาแล้วยังคิดสาย/ชั่วโมงตามกติกาเดิม ไม่เปลี่ยนย้อนหลัง</p>
+      </div>
+      <p>
+        <span className="text-sm text-fd-muted-foreground">ใช้อยู่ตอนนี้: </span>
+        <strong>{ruleText(current)}</strong>
+      </p>
+      {upcoming.length > 0 && (
+        <ul className="flex flex-col divide-y divide-fd-border rounded-xl border border-fd-border px-3">
+          {upcoming.map((r) => (
+            <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 py-2">
+              <span>
+                <span className="font-medium">เริ่มมีผล {shortDate(r.effectiveFrom)}</span>
+                <span className="ms-2 text-sm text-fd-muted-foreground">{ruleText(r)}</span>
+              </span>
+              <Button variant="ghost" onClick={() => att.removeRule(r.id)} disabled={att.busy} aria-label={`ลบกติกาที่เริ่มมีผล ${shortDate(r.effectiveFrom)}`}>
+                ลบ
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          if (await att.addRule({ effectiveFrom: from, workStart: start, workEnd: end, lateGraceMinutes: g })) setFrom("");
+        }}
+        className="flex flex-wrap items-end gap-3"
+      >
+        <Field label="เริ่มมีผลวันที่">
+          <input type="date" value={from} min={tomorrow} onChange={(e) => setFrom(e.target.value)} className={`${inputClass} w-auto`} required />
+        </Field>
+        <Field label="เวลาเริ่มงาน">
+          <Input value={start} onChange={(e) => setStart(e.target.value)} inputMode="numeric" maxLength={5} placeholder="09:00" className={`${inputClass} !w-28`} />
+        </Field>
+        <Field label="เวลาเลิกงาน">
+          <Input value={end} onChange={(e) => setEnd(e.target.value)} inputMode="numeric" maxLength={5} placeholder="18:00" className={`${inputClass} !w-28`} />
+        </Field>
+        <Field label="ผ่อนผันสาย (นาที)">
+          <Input value={grace} onChange={(e) => setGrace(e.target.value)} inputMode="numeric" maxLength={3} className={`${inputClass} !w-28`} />
+        </Field>
+        <Button type="submit" disabled={!valid || att.busy}>
+          ตั้งเวลางานใหม่
+        </Button>
+      </form>
+      {past.length > 0 && (
+        <details className="text-sm">
+          <summary className="min-h-11 cursor-pointer py-2 text-fd-muted-foreground">ประวัติกติกาที่เคยตั้ง ({past.length})</summary>
+          <ul className="flex flex-col gap-1 ps-4">
+            {past.map((r) => (
+              <li key={r.id}>
+                ตั้งแต่ {shortDate(r.effectiveFrom)}: {ruleText(r)}
+              </li>
+            ))}
+          </ul>
+        </details>
       )}
     </section>
   );

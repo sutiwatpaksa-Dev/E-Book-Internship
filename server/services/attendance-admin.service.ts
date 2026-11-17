@@ -1,4 +1,4 @@
-import { atThai, dayState, effectiveCheckOut, isLate, isWeekend, minutesWorked, type AttendanceRules, type DayRow, type DayView, type HolidayRow } from "../../src/lib/attendance";
+import { atThai, dayState, effectiveCheckOut, isLate, isWeekend, minutesWorked, rulesOn, type AttendanceRules, type DayRow, type DayView, type HolidayRow, type RulesView } from "../../src/lib/attendance";
 import { todayTH } from "../../src/lib/cohort";
 import { attendanceRepository } from "../repositories/attendance.repository";
 import { cohortRepository } from "../repositories/cohort.repository";
@@ -19,7 +19,9 @@ export const attendanceAdminService = {
     const today = todayTH(now);
     const cohort = await cohortOrThrow(cohortId);
     const d = date ?? today;
-    const rules: AttendanceRules = { workStart: cohort.workStart, workEnd: cohort.workEnd, lateGraceMinutes: cohort.lateGraceMinutes };
+    // กติกาของ "วันที่ดู" (วันเก่าใช้กติกาเก่า) ไม่ใช่กติกาปัจจุบัน
+    const base: AttendanceRules = { workStart: cohort.workStart, workEnd: cohort.workEnd, lateGraceMinutes: cohort.lateGraceMinutes };
+    const rules = rulesOn(d, base, await attendanceRepository.workRules(cohortId));
     const [interns, records, holidays] = await Promise.all([
       attendanceRepository.internsOfCohort(cohortId),
       attendanceRepository.recordsOfCohort(cohortId, d, d),
@@ -87,5 +89,35 @@ export const attendanceAdminService = {
     const cohort = await cohortOrThrow(h.cohortId);
     await attendanceRepository.removeHoliday(id);
     await auditService.log(actorId, "holiday.remove", cohort.name, h.holidayDate);
+  },
+
+  async rules(cohortId: number): Promise<RulesView> {
+    const cohort = await cohortOrThrow(cohortId);
+    const list = await attendanceRepository.workRules(cohortId);
+    return {
+      today: todayTH(),
+      base: { workStart: cohort.workStart, workEnd: cohort.workEnd, lateGraceMinutes: cohort.lateGraceMinutes },
+      rules: list.map((r) => ({ id: r.id, effectiveFrom: r.effectiveFrom, workStart: r.workStart, workEnd: r.workEnd, lateGraceMinutes: r.lateGraceMinutes })),
+    };
+  },
+
+  // ตั้งกติกาเวลาใหม่: เริ่มมีผลพรุ่งนี้เป็นต้นไปเท่านั้น (ย้อนหลังและวันนี้ไม่ได้ ไม่งั้นผลสายของคนที่เช็คอินไปแล้วจะเปลี่ยน)
+  async addRule(actorId: number, input: { cohortId: number; effectiveFrom: string; workStart: string; workEnd: string; lateGraceMinutes: number }) {
+    const cohort = await cohortOrThrow(input.cohortId);
+    if (input.effectiveFrom <= todayTH()) throw new Error("RULE_NOT_FUTURE");
+    if (input.workEnd <= input.workStart) throw new Error("RULE_ORDER");
+    const id = await attendanceRepository.addWorkRule({ ...input, createdBy: actorId });
+    if (!id) throw new Error("RULE_EXISTS");
+    await auditService.log(actorId, "workrule.add", cohort.name, `มีผล ${input.effectiveFrom} · ${input.workStart}-${input.workEnd} · ผ่อนผัน ${input.lateGraceMinutes} นาที`);
+  },
+
+  // ลบได้เฉพาะกติกาที่ยังไม่ถึงวันเริ่มมีผล (ที่มีผลแล้วถูกใช้คิดผลของวันที่ผ่านมา ลบแล้วประวัติจะเปลี่ยน)
+  async removeRule(actorId: number, id: number) {
+    const r = await attendanceRepository.findWorkRule(id);
+    if (!r) throw new Error("RULE_NOT_FOUND");
+    if (r.effectiveFrom <= todayTH()) throw new Error("RULE_IN_EFFECT");
+    const cohort = await cohortOrThrow(r.cohortId);
+    await attendanceRepository.removeWorkRule(id);
+    await auditService.log(actorId, "workrule.remove", cohort.name, `มีผล ${r.effectiveFrom}`);
   },
 };
