@@ -90,6 +90,9 @@ export function TodayBoard() {
         <Link href="/checkin/leave" className="inline-flex min-h-11 items-center text-sm font-medium text-fd-primary hover:underline">
           ส่งใบลา / แจ้งมาสาย
         </Link>
+        <Link href="/checkin/about" className="inline-flex min-h-11 items-center text-sm font-medium text-fd-primary hover:underline">
+          ระบบนี้เก็บอะไร ใครเห็น
+        </Link>
         <Link href="/dashboard" className="inline-flex min-h-11 items-center text-sm font-medium text-fd-primary hover:underline">
           ไปหน้าภาพรวมงานและคู่มือ
         </Link>
