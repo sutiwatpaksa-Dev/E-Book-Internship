@@ -1,5 +1,5 @@
 import type { CommentKind, CommentTemplate, Criterion, Scores } from "@/lib/rubric";
-import type { RoundDef } from "@/lib/submission";
+import type { RoundDef, DeliverableKind } from "@/lib/submission";
 // type ที่หน้าเว็บใช้ร่วมกัน (รูปร่างตรงกับที่ API ใน server/ ตอบกลับ)
 export type Role = "intern" | "dev";
 
@@ -80,19 +80,17 @@ export type RegisterInput = {
   major: string | null;
   eduLevel: EduLevel;
 };
-export type CohortInput = Pick<Cohort, "name" | "startsOn" | "endsOn">;
+export type CohortInput = Pick<Cohort, "name" | "startsOn" | "endsOn"> & { copyFrom?: number | null };
 
 export type IssuedPin = { user: User; pin: string };
 export type FileInfo = { size: number; updatedAt: string };
 
 // โจทย์ฝึกงาน (รูปร่างตรงกับ server/db/schema.ts) · sections = หัวข้อกับเลขหน้าใน PDF ของโจทย์นั้น
 export type AssignmentSection = { key: string; label: string; page: number };
-export type Assignment = { slug: string; name: string; brief: string; overview: string; sections: AssignmentSection[]; rounds: RoundDef[] };
+export type Assignment = { slug: string; name: string; brief: string; overview: string; sections: AssignmentSection[]; rounds: RoundDef[]; submitKind: DeliverableKind };
 // หลังบ้าน: + PDF ปัจจุบัน และรุ่นที่ใช้โจทย์นี้
-export type AdminAssignment = Assignment & { id: number; pdf: FileInfo | null; cohortIds: number[]; criteria: Criterion[]; templates: CommentTemplate[]; cards: { slug: string; note: string }[] };
-// กล่องโจทย์ในหัวการ์ด (GET /api/files/assignments/card/:slug)
-export type CardAssignment = { slug: string; name: string; brief: string; bound: boolean; note: string };
-export type AssignmentInput = Pick<Assignment, "name" | "brief" | "sections" | "rounds"> & { overview?: string; criteria?: Criterion[]; templates?: CommentTemplate[] };
+export type AdminAssignment = Assignment & { id: number; pdf: FileInfo | null; cohortIds: number[]; criteria: Criterion[]; templates: CommentTemplate[] };
+export type AssignmentInput = Pick<Assignment, "name" | "brief" | "sections" | "rounds"> & { submitKind?: DeliverableKind; overview?: string; criteria?: Criterion[]; templates?: CommentTemplate[] };
 
 // เรื่องที่น้องคุยกับพี่เลี้ยง (รูปร่างตรงกับ server/routes/thread.routes.ts)
 export type ThreadKind = "question" | "content_request" | "feedback" | "mentor_message";
@@ -176,6 +174,7 @@ export type Submission = {
   id: number;
   assignment: string;
   assignmentName: string;
+  submitKind: DeliverableKind;
   round: string;
   roundLabel: string;
   repoUrl: string;
@@ -190,8 +189,18 @@ export type Submission = {
   // คะแนนรายข้อ ณ ตอนตรวจ · ว่าง = ตรวจแบบไม่ให้คะแนน
   scores: Scores | null;
 };
-export type MySubmissions = { assignments: { slug: string; name: string; rounds: RoundDef[] }[]; items: Submission[]; locked: boolean };
+export type MySubmissions = { assignments: { slug: string; name: string; rounds: RoundDef[]; submitKind: DeliverableKind }[]; items: Submission[]; locked: boolean };
 export type AdminSubmission = Submission & { userId: number; username: string; nickname: string | null; cohortId: number | null };
+// หน้าตรวจงานแบบเจาะลง (รุ่น → งาน → คน) · รูปร่างตรงกับ submissionService.reviewPage / reviewSummary
+export type { ReviewSort, ReviewStatus } from "@/lib/review-url";
+import type { ReviewSort, ReviewStatus } from "@/lib/review-url";
+export type ReviewQuery = { cohort?: number; assignment?: string; round?: string; status?: ReviewStatus; sort?: ReviewSort; q?: string; offset?: number; limit?: number };
+// total = จำนวนตามแท็บที่เลือก (ไว้คำนวณหน้า) · waiting/reviewed ไม่ขึ้นกับแท็บ (ไว้ทำป้ายบนแท็บ)
+// prevRepoUrl: repo ของการส่งครั้งก่อนหน้า เมื่อต่างจากครั้งนี้ (ไม่ต่าง/ครั้งแรก = null)
+export type ReviewItem = AdminSubmission & { prevRepoUrl: string | null };
+export type ReviewPage = { items: ReviewItem[]; total: number; waiting: number; reviewed: number; offset: number; limit: number };
+export type ReviewPost = { assignment: string; assignmentName: string; round: string; roundLabel: string; day: number; waiting: number; reviewed: number };
+export type ReviewSummary = { interns: number; posts: ReviewPost[] };
 export type SubmitInput = { assignment: string; round: string; repoUrl: string; ref: string; deployUrl?: string; note: string };
 
 // ความเห็นใต้งาน (เห็นเฉพาะน้องเจ้าของงานกับพี่เลี้ยง)
@@ -199,7 +208,7 @@ export type TaskComment = { id: number; kind: CommentKind; ref: string | null; b
 export type CommentSend = { kind?: CommentKind; ref?: string; body: string };
 
 // โพสต์งาน (ฟอร์มของพี่เลี้ยง) · day = วันทำงานที่ N ของรุ่น
-export type PostSend = { label: string; what: string; day: number; deploy: boolean; body: string; links: { label: string; url: string }[] };
+export type PostSend = { label: string; what: string; day: number; deploy: boolean; body: string; links: { label: string; url: string }[]; pdf?: "shared" | "own" | "none"; criteria?: Criterion[]; overview?: string; weight?: number; alsoOthers?: boolean };
 
 // โพสต์ในฟีด (รูปร่างตรงกับ server/services/post.service.ts) · กฎอยู่ใน src/lib/post.ts
 export type FeedPost = {

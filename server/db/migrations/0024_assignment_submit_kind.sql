@@ -1,0 +1,2 @@
+ALTER TABLE "assignments" ADD COLUMN "submit_kind" text DEFAULT 'repo' NOT NULL;--> statement-breakpoint
+ALTER TABLE "assignments" ADD CONSTRAINT "assignments_submit_kind_check" CHECK ("assignments"."submit_kind" in ('repo','link','text'));

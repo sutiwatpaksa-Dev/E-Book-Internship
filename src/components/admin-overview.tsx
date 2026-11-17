@@ -89,7 +89,7 @@ export function AdminOverview({ admin, content, nav, titles, cohort, mine, unrea
     { show: stale.length > 0, text: `น้องไม่ได้เข้ามาเกิน ${STALE_DAYS} วัน ${stale.length} คน ลองทักไปถาม`, go: toInterns },
     ...admin.assignments
       .filter((a) => !a.pdf && a.cohortIds.length > 0)
-      .map((a) => ({ show: true, text: `โจทย์ ${a.name} มีรุ่นใช้อยู่แต่ยังไม่มี PDF ให้น้องเปิด`, go: () => nav.goTab("files") })),
+      .map((a) => ({ show: true, text: `โจทย์ ${a.name} มีรุ่นใช้อยู่แต่ยังไม่มี PDF ให้น้องเปิด`, go: () => nav.goTab("board") })),
   ].filter((t) => t.show);
 
   const kpis = [

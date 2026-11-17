@@ -1,3 +1,4 @@
+import type { DeliverableKind } from "@/lib/submission";
 import type { PostSend, AdminAssignment, AssignmentInput, AuditEntry, BulkResult, Cohort, CohortInput, SignupSettings, FileInfo, IssuedPin, ProgressEntry, Role, ThreadDetail, ThreadStatus, ThreadSummary, User } from "@/types";
 import { jsonBody, request } from "./client";
 
@@ -15,16 +16,17 @@ export const adminApi = {
   listAssignments: () => request<AdminAssignment[]>("/admin/assignments"),
   createAssignment: (slug: string, input: AssignmentInput) => request<{ id: number }>("/admin/assignments", jsonBody("POST", { slug, ...input })),
   updateAssignment: (id: number, input: AssignmentInput) => request<null>(`/admin/assignments/${id}`, jsonBody("PUT", input)),
-  addPost: (id: number, input: PostSend) => request<{ id: string }>(`/admin/assignments/${id}/posts`, jsonBody("POST", input)),
+  setSubmitKind: (id: number, submitKind: DeliverableKind) => request<null>(`/admin/assignments/${id}/submit-kind`, jsonBody("PUT", { submitKind })),
+  addPost: (id: number, input: PostSend) => request<{ id: string; copied: number }>(`/admin/assignments/${id}/posts`, jsonBody("POST", input)),
   updatePost: (id: number, roundId: string, input: PostSend) => request<null>(`/admin/assignments/${id}/posts/${roundId}`, jsonBody("PUT", input)),
   removePost: (id: number, roundId: string) => request<null>(`/admin/assignments/${id}/posts/${roundId}`, { method: "DELETE" }),
   // การ์ดที่โจทย์ใช้ + โน้ตว่าใช้ตอนไหน (ส่งทั้งรายการ แทนของเดิมทั้งชุด)
-  setAssignmentCards: (id: number, cards: { slug: string; note: string }[]) => request<null>(`/admin/assignments/${id}/cards`, jsonBody("PUT", { cards })),
+  uploadPostPdf: (id: number, roundId: string, file: File) =>
+    request<FileInfo>(`/admin/assignments/${id}/posts/${roundId}/pdf`, { method: "PUT", headers: { "Content-Type": "application/pdf" }, body: file }),
   uploadAssignmentPdf: (id: number, file: File) =>
     request<FileInfo>(`/admin/assignments/${id}/pdf`, { method: "PUT", headers: { "Content-Type": "application/pdf" }, body: file }),
   // อัปโหลดรูปใส่ Markdown (ย่อให้ ≤ 2 MB ก่อนเรียก) · ตอบ url ให้ใส่ใน ![คำอธิบาย](url)
   uploadImage: (file: Blob) => request<{ url: string }>("/admin/images", { method: "POST", headers: { "Content-Type": file.type }, body: file }),
-  setCohortAssignments: (id: number, assignmentIds: number[]) => request<null>(`/admin/cohorts/${id}/assignments`, jsonBody("PUT", { assignmentIds })),
   listThreads: () => request<ThreadSummary[]>("/admin/threads"),
   // cohorts = ผลจาก cohortQuery() ใน src/lib/cohort.ts · ไม่ส่ง = ทุกเรื่อง
   unreadThreads: (cohorts?: string) => request<{ count: number }>(`/admin/threads/unread-count${cohorts ? `?cohorts=${encodeURIComponent(cohorts)}` : ""}`),

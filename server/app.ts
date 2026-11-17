@@ -5,6 +5,8 @@ import { env } from "./config/env";
 import { db } from "./db/client";
 import { errorHandler } from "./middleware/error-handler";
 import { adminRoutes } from "./routes/admin.routes";
+import { attendanceRoutes } from "./routes/attendance.routes";
+import { leaveRoutes } from "./routes/leave.routes";
 import { authRoutes } from "./routes/auth.routes";
 import { contentRoutes } from "./routes/content.routes";
 import { fileRoutes } from "./routes/file.routes";
@@ -45,6 +47,8 @@ app.route("/content", contentRoutes);
 app.route("/notifications", notificationRoutes);
 app.route("/submissions", submissionRoutes);
 app.route("/posts", postRoutes);
+app.route("/attendance", attendanceRoutes);
+app.route("/leave", leaveRoutes);
 
 // บอก path ที่ server เห็นด้วย ช่วยตรวจว่า rewrite ของ Vercel ส่ง path เดิมมาครบไหม
 app.notFound((c) => c.json({ error: "ไม่พบ", path: c.req.path }, 404));

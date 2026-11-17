@@ -14,7 +14,7 @@ const siteUrl = "https://e-book-internship.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: { default: "คู่มือฝึกงาน Blicktech", template: "%s · คู่มือฝึกงาน Blicktech" },
+  title: { default: "ระบบฝึกงาน Blicktech", template: "%s · ระบบฝึกงาน Blicktech" },
   description: "Basic Dev Fundamentals สำหรับน้องฝึกงาน บริษัท บลิคซ์เทค คอนซัลแทนท์ จำกัด",
   icons: {
     icon: [

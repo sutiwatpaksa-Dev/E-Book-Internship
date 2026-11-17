@@ -6,7 +6,7 @@ import { submissionsApi } from "@/api/submissions.api";
 import type { AdminState } from "@/hooks/use-admin";
 import { toast } from "@/hooks/use-toast";
 import { buildScores, percentOf, suggestVerdict, type Criterion, type CommentTemplate } from "@/lib/rubric";
-import { commitsUrl, isReviewable, latestOnly, repoOf, treeUrl, VERDICT_LABEL, waitingOf, type Verdict } from "@/lib/submission";
+import { commitsUrl, isReviewable, latestOnly, linkShort, repoOf, treeUrl, VERDICT_LABEL, waitingOf, type Verdict } from "@/lib/submission";
 import type { AdminSubmission } from "@/types";
 import { Button } from "./button";
 import { EmptyState } from "./empty-state";
@@ -78,7 +78,7 @@ export function AdminSubmissions({ admin, onChange, inScope }: { admin: AdminSta
 }
 
 // repo ของน้องทุกคนในรุ่นที่ยังไม่จบ: ตามดูโค้ดได้ตั้งแต่วันที่ 1 ไม่ต้องรอวันตรวจ · คนที่ยังไม่ส่งลิงก์ขึ้นให้เห็นจะได้ทัก
-function RepoList({ admin, items, inScope }: { admin: AdminState; items: AdminSubmission[]; inScope: (cohortId: number | null) => boolean }) {
+export function RepoList({ admin, items, inScope }: { admin: AdminState; items: AdminSubmission[]; inScope: (cohortId: number | null) => boolean }) {
   const running = new Set(admin.cohorts.filter((c) => !c.endedAt).map((c) => c.id));
   const interns = admin.users.filter((u) => u.role === "intern" && !u.disabled && u.cohortId !== null && running.has(u.cohortId) && inScope(u.cohortId));
   if (interns.length === 0) return null;
@@ -146,8 +146,9 @@ export function InternSubmissions({ admin, userId }: { admin: AdminState; userId
   );
 }
 
-function SubmissionCard({ admin, s, who, history = 1, onReviewed }: { admin: AdminState; s: AdminSubmission; who?: string; history?: number; onReviewed: () => void }) {
-  const [open, setOpen] = useState(false);
+// startOpen = เปิดฟอร์มตรวจให้เลย (หน้าตรวจแบบเจาะลง: กดแถวแล้วตรวจต่อได้ทันที ไม่ต้องกดซ้ำ)
+export function SubmissionCard({ admin, s, who, history = 1, startOpen = false, onReviewed }: { admin: AdminState; s: AdminSubmission; who?: string; history?: number; startOpen?: boolean; onReviewed: () => void }) {
+  const [open, setOpen] = useState(startOpen);
   const [talk, setTalk] = useState(false);
   const asg = admin.assignments.find((a) => a.slug === s.assignment);
   const vars = { ชื่อน้อง: s.nickname || s.username, รอบ: s.roundLabel, ref: s.ref };
@@ -162,10 +163,19 @@ function SubmissionCard({ admin, s, who, history = 1, onReviewed }: { admin: Adm
       </div>
       <span className="text-fd-muted-foreground">
         {s.assignmentName} ·{" "}
-        <a className="inline-flex items-center gap-1 font-mono text-fd-primary underline" href={treeUrl(s.repoUrl, s.ref)} target="_blank" rel="noopener noreferrer">
-          {s.ref}
-          <ExternalLink className="size-3" />
-        </a>{" "}
+        {s.submitKind === "text" ? (
+          "ส่งเป็นข้อความ"
+        ) : s.submitKind === "link" ? (
+          <a className="inline-flex items-center gap-1 break-all text-fd-primary underline" href={s.repoUrl} target="_blank" rel="noopener noreferrer">
+            เปิดงานที่ส่ง: {linkShort("link", s.repoUrl)}
+            <ExternalLink className="size-3 shrink-0" />
+          </a>
+        ) : (
+          <a className="inline-flex items-center gap-1 font-mono text-fd-primary underline" href={treeUrl(s.repoUrl, s.ref)} target="_blank" rel="noopener noreferrer">
+            {s.ref}
+            <ExternalLink className="size-3" />
+          </a>
+        )}{" "}
         · ส่ง {fmt(s.createdAt)}
         {history > 1 && ` · ส่งรอบนี้ ${history} ครั้ง`}
       </span>
@@ -275,7 +285,18 @@ function ReviewForm({ s, criteria, templates, vars, onDone, onCancel }: ReviewPr
     }
   };
   return (
-    <form onSubmit={save} aria-label="ผลตรวจ" className="flex flex-col gap-3 border-t border-fd-border pt-3">
+    <form
+      onSubmit={save}
+      onKeyDown={(e) => {
+        // Ctrl/⌘ + Enter = บันทึก (ในช่องความเห็น Enter เฉยๆ ยังขึ้นบรรทัดใหม่ตามปกติ)
+        if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !saving) {
+          e.preventDefault();
+          e.currentTarget.requestSubmit();
+        }
+      }}
+      aria-label="ผลตรวจ"
+      className="flex flex-col gap-3 border-t border-fd-border pt-3"
+    >
       {criteria.length > 0 ? (
         <fieldset className="flex flex-col gap-2">
           <legend className="mb-1 font-medium">

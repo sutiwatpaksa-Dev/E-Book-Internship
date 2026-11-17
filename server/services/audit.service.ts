@@ -45,7 +45,14 @@ export type AuditAction =
   | "post.create"
   | "post.update"
   | "post.pin"
-  | "post.archive";
+  | "post.archive"
+  | "attendance.edit"
+  | "holiday.add"
+  | "holiday.remove"
+  | "leave.decide"
+  | "attendance.export"
+  | "workrule.add"
+  | "workrule.remove";
 
 const LIMIT = 200;
 

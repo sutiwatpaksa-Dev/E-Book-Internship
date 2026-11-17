@@ -1,11 +1,23 @@
 // กฎของการส่งงาน ใช้ทั้งฟอร์มของน้อง (บอกผิดทันทีใต้ช่อง) และ server (ด่านจริง)
 // โค้ดของน้องอยู่บน GitHub ที่เดียว เว็บนี้เก็บแค่ "ลิงก์ repo + จุดที่ส่ง (tag หรือ commit)" ไม่เก็บไฟล์
 
+import type { Criterion } from "./rubric";
+
 // รอบส่งเป็นข้อมูลของโจทย์ (assignments.rubric.rounds) แก้ได้จากหลังบ้าน · นี่คือแม่แบบเริ่มต้น (แผน 10 วันของ STARTER)
 // ส่งซ้ำรอบเดิมได้ เก็บทุกครั้งไว้เป็นประวัติ · id ของรอบถูกเก็บไว้ในงานที่ส่งแล้ว จึงเปลี่ยนไม่ได้หลังสร้าง
 // body/links/postedBy/postedAt/editedAt = ส่วนของ "โพสต์งาน" (คำสั่งงานแบบ Markdown, ลิงก์แนบ, ใครโพสต์เมื่อไร) ไม่บังคับ รอบเก่าที่ไม่มีก็ใช้ได้เหมือนเดิม
 export type TaskLink = { label: string; url: string };
-export type RoundDef = { id: string; label: string; day: number; what: string; deploy: boolean; body?: string; links?: TaskLink[]; postedBy?: string; postedAt?: string; editedAt?: string };
+// โพสต์งาน 1 ชิ้น = 1 รอบ (6 พ.ย. 2569: เหลือแค่โพสต์งาน) · ค่าที่ไม่ตั้งใช้ของกล่องงาน (assignments) แทน โพสต์เก่าจึงทำงานเหมือนเดิม
+// deploy = รอบนี้ต้องส่งลิงก์เว็บ · pdf: shared = PDF ของกล่องงาน, own = ไฟล์ของโพสต์นี้, none = ไม่แนบ
+// criteria: ไม่ตั้ง = เกณฑ์ของกล่องงาน, [] = ไม่ให้คะแนน · weight = % ของคะแนนงาน (ไม่ตั้ง = ค่าตายตัวเดิม ดู DEFAULT_WEIGHT)
+export type PostPdf = "shared" | "own" | "none";
+export type RoundDef = { id: string; label: string; day: number; what: string; deploy: boolean; body?: string; links?: TaskLink[]; postedBy?: string; postedAt?: string; editedAt?: string; pdf?: PostPdf; criteria?: Criterion[]; overview?: string; weight?: number };
+// % เดิมก่อนตั้งในโพสต์ได้: รอบ 1 = 20, รอบ 2 = 30, ส่งงานจริง = 50 · รอบอื่นไม่นับ
+export const DEFAULT_WEIGHT: Record<string, number> = { "review-1": 20, "review-2": 30, final: 50 };
+export const weightOf = (r: Pick<RoundDef, "id" | "weight">) => r.weight ?? DEFAULT_WEIGHT[r.id] ?? 0;
+export const weightTotal = (rounds: Pick<RoundDef, "id" | "weight">[]) => rounds.reduce((n, r) => n + weightOf(r), 0);
+// เกณฑ์ที่ใช้ตรวจโพสต์นี้
+export const criteriaOf = (r: Pick<RoundDef, "criteria"> | undefined, fallback: Criterion[]) => r?.criteria ?? fallback;
 export const BODY_MAX = 8000;
 // ภาพรวมโจทย์ (Markdown ในหลังบ้าน) ที่น้องอ่านบนหน้าโจทย์
 export const OVERVIEW_MAX = 20_000;
@@ -66,9 +78,74 @@ export function normalizeRepo(v: string): string | null {
   if (!m || m[2] === "." || m[2] === "..") return null;
   return `https://github.com/${m[1]}/${m[2]}`;
 }
+// น้องเปลี่ยน repo จากครั้งก่อนไหม (เทียบแบบจัดรูปแล้ว: www/.git/ตัวพิมพ์ ไม่นับว่าเปลี่ยน) · ครั้งแรก (ไม่มีครั้งก่อน) = ไม่นับ
+export function repoChanged(prev: string | null | undefined, now: string): boolean {
+  if (!prev) return false;
+  const norm = (v: string) => (normalizeRepo(v) ?? v.trim()).toLowerCase();
+  return norm(prev) !== norm(now);
+}
+export function repoShort(v: string): string {
+  return (normalizeRepo(v) ?? v).replace(/^https?:\/\/(?:www\.)?github\.com\//i, "");
+}
 export function repoProblem(v: string) {
   if (!v.trim()) return "ใส่ลิงก์ repo บน GitHub";
   return normalizeRepo(v) ? null : "ลิงก์ต้องเป็น repo บน GitHub เช่น https://github.com/somchai/starter (เปิด repo แล้วคัดลอกจากแถบที่อยู่)";
+}
+
+// ---- ชนิดของที่น้องส่ง (ตั้งที่โจทย์ assignments.submit_kind) ----
+// repo = repo GitHub (ค่าเดิม ทุกโจทย์ก่อน v2.2.30) · link = ลิงก์ https ทั่วไป (Figma, Drive, สไลด์) · text = ข้อความอย่างเดียว (ไม่มีลิงก์)
+// ลิงก์เก็บในช่องเดียวกับ repo (repoUrl) ทุกชนิด · text เก็บ ""
+export const SUBMIT_KINDS = ["repo", "link", "text"] as const;
+export type DeliverableKind = (typeof SUBMIT_KINDS)[number];
+export const isSubmitKind = (v: unknown): v is DeliverableKind => (SUBMIT_KINDS as readonly string[]).includes(v as string);
+export const SUBMIT_KIND_LABEL: Record<DeliverableKind, string> = { repo: "repo บน GitHub", link: "ลิงก์ทั่วไป (Figma, Drive, สไลด์)", text: "ข้อความอย่างเดียว" };
+// รอบ "ลงทะเบียน repo" และ branch/tag มีความหมายเฉพาะงานแบบ repo
+export const hasRepo = (kind: DeliverableKind) => kind === "repo";
+export const hasLink = (kind: DeliverableKind) => kind !== "text";
+export const LINK_MAX = 300;
+// ลิงก์ทั่วไป: https เท่านั้น มีชื่อเว็บจริง ไม่มีช่องว่าง (ไม่รับ http, javascript:, localhost หรือเลข IP เพราะพี่เลี้ยงเปิดจากเครื่องตัวเองไม่ได้)
+export function normalizeLink(v: string): string | null {
+  const s = v.trim();
+  if (!/^https:\/\//i.test(s) || /\s/.test(s) || s.length > LINK_MAX) return null;
+  try {
+    const u = new URL(s);
+    const h = u.hostname;
+    if (!h.includes(".") || h === "localhost" || /^[\d.]+$/.test(h) || h.includes(":")) return null;
+    const out = u.toString();
+    return u.pathname === "/" && !u.search && !u.hash ? out.replace(/\/$/, "") : out;
+  } catch {
+    return null;
+  }
+}
+export function linkProblem(v: string) {
+  if (!v.trim()) return "ใส่ลิงก์งานที่ส่ง (ขึ้นต้นด้วย https://)";
+  return normalizeLink(v) ? null : "ลิงก์ต้องขึ้นต้นด้วย https:// และเป็นเว็บจริง (ไม่รับ http, localhost หรือเลข IP)";
+}
+// ข้อความถึงพี่เลี้ยงของงานแบบข้อความอย่างเดียว ต้องมีเนื้อหา ไม่งั้นพี่เลี้ยงไม่มีอะไรให้ตรวจ
+export const TEXT_MIN = 10;
+export function textProblem(note: string) {
+  return note.trim().length >= TEXT_MIN ? null : `เขียนสิ่งที่ทำมาในช่องข้อความอย่างน้อย ${TEXT_MIN} ตัวอักษร`;
+}
+// ด่านเดียวของช่องส่งทุกชนิด: คืนข้อความผิด หรือ null · ใช้ทั้งฟอร์มและ server
+export function submitProblem(kind: DeliverableKind, url: string, note: string): string | null {
+  if (kind === "repo") return repoProblem(url);
+  if (kind === "link") return linkProblem(url);
+  return textProblem(note);
+}
+// ค่าที่เก็บลงฐาน: repo = ลิงก์ GitHub แบบจัดรูป · link = ลิงก์จัดรูป · text = ""
+export function normalizeSubmit(kind: DeliverableKind, url: string): string {
+  if (kind === "repo") return normalizeRepo(url) ?? url.trim();
+  if (kind === "link") return normalizeLink(url) ?? url.trim();
+  return "";
+}
+// ชื่อสั้นของลิงก์ที่ส่ง ไว้แสดงในตาราง: repo = "ผู้ใช้/ชื่อ", link = ชื่อเว็บ
+export function linkShort(kind: DeliverableKind, v: string) {
+  if (kind === "repo") return repoShort(v);
+  try {
+    return new URL(v).hostname.replace(/^www\./, "");
+  } catch {
+    return v;
+  }
 }
 
 // ลิงก์เว็บที่ deploy แล้ว (Vercel หรือที่อื่น) ไม่บังคับ ส่งได้เฉพาะรอบที่ติ๊ก "รับลิงก์เว็บ"
@@ -124,6 +201,7 @@ export function latestOnly<T extends Row>(rows: T[]): T[] {
 export const waitingOf = <T extends Row>(rows: T[]) => latestOnly(rows).filter((r) => isReviewable(r.round) && !r.reviewedAt);
 
 // repo ล่าสุดของน้องแต่ละคน (จากแถวใหม่สุด ไม่ว่ารอบไหน) · ใช้ทั้งกล่อง repo ของน้องและรายชื่อในหลังบ้าน
-export function repoOf<T extends { userId: number; repoUrl: string }>(rows: T[], userId: number) {
-  return rows.find((r) => r.userId === userId)?.repoUrl ?? null;
+// repo ล่าสุดของน้อง: นับเฉพาะงานแบบ repo (งานแบบลิงก์ทั่วไป/ข้อความไม่มี repo) · ไม่มี submitKind = แถวเก่า = repo
+export function repoOf<T extends { userId: number; repoUrl: string; submitKind?: DeliverableKind }>(rows: T[], userId: number) {
+  return rows.find((r) => r.userId === userId && (r.submitKind ?? "repo") === "repo" && r.repoUrl)?.repoUrl ?? null;
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "@/api/admin.api";
 import { filesApi } from "@/api/files.api";
+import { SUBMIT_KIND_LABEL, type DeliverableKind } from "@/lib/submission";
 import type { PostSend, AdminAssignment, AssignmentInput, Cohort, CohortInput, ProgressEntry, Role, SignupSettings, ThreadSummary, User } from "@/types";
 import { toast } from "./use-toast";
 
@@ -160,6 +161,13 @@ export function useAdmin() {
       });
       return ok;
     },
+    // ชนิดที่น้องส่ง: เลือกแล้วบันทึกทันที · มีคนส่งแล้วเปลี่ยนไม่ได้ (server ปฏิเสธ แล้วขึ้นข้อความเป็นแถบ error)
+    setSubmitKind: (id: number, kind: DeliverableKind) =>
+      run(async () => {
+        await adminApi.setSubmitKind(id, kind);
+        await reload();
+        toast.success(`ตั้งให้น้องส่ง: ${SUBMIT_KIND_LABEL[kind]}`);
+      }),
     // คืน true เมื่อสำเร็จ ให้ฟอร์มปิดตัวเองได้
     saveAssignment: async (id: number | null, slug: string, input: AssignmentInput) => {
       let ok = false;
@@ -172,26 +180,19 @@ export function useAdmin() {
       });
       return ok;
     },
-    // ผูกการ์ดกับโจทย์: คืน true เมื่อสำเร็จ
-    saveAssignmentCards: async (a: AdminAssignment, rows: { slug: string; note: string }[]) => {
-      let ok = false;
-      await run(async () => {
-        await adminApi.setAssignmentCards(a.id, rows);
-        await reload();
-        toast.success(`บันทึกการ์ดของ ${a.name} แล้ว (${rows.length} ใบ)`);
-        ok = true;
-      });
-      return ok;
-    },
     // โพสต์งาน: คืน true เมื่อสำเร็จ (ให้ฟอร์มปิดตัวเอง) · ข้อผิดพลาดขึ้นเป็น toast เพราะฟอร์มอยู่ไกลจากแถบ error ด้านบน
-    savePost: async (assignmentId: number, roundId: string | null, input: PostSend) => {
+    // pdf = ไฟล์ที่แนบกับโพสต์นี้ (อัปโหลดหลังบันทึกโพสต์ เพราะโพสต์ใหม่ต้องมี id ก่อน)
+    savePost: async (assignmentId: number, roundId: string | null, input: PostSend, pdf?: File | null) => {
       try {
+        const added = roundId ? null : await adminApi.addPost(assignmentId, input);
+        const id = roundId ?? added!.id;
         if (roundId) await adminApi.updatePost(assignmentId, roundId, input);
-        else await adminApi.addPost(assignmentId, input);
+        if (pdf) await adminApi.uploadPostPdf(assignmentId, id, pdf);
         await reload();
-        toast.success(roundId ? "บันทึกโพสต์แล้ว" : "โพสต์งานแล้ว น้องในรุ่นที่ใช้โจทย์นี้เห็นทันที");
+        toast.success(roundId ? "บันทึกโพสต์แล้ว" : `โพสต์งานแล้ว น้องในรุ่นนี้เห็นทันที${added?.copied ? ` · ใส่ให้รุ่นอื่นอีก ${added.copied} รุ่น` : input.alsoOthers ? " · ไม่มีรุ่นอื่นที่ใส่ได้" : ""}`);
         return true;
       } catch (e) {
+        await reload();
         toast.error(`${roundId ? "บันทึก" : "โพสต์"}ไม่สำเร็จ: ${(e as Error).message}`);
         return false;
       }
@@ -213,16 +214,6 @@ export function useAdmin() {
         await reload();
         toast.success(`อัปโหลด PDF ของ ${a.name} แล้ว น้องเปิดฉบับใหม่ได้ทันที`);
       }),
-    setCohortAssignments: async (c: Cohort, ids: number[]) => {
-      let ok = false;
-      await run(async () => {
-        await adminApi.setCohortAssignments(c.id, ids);
-        await reload();
-        toast.success(`บันทึกโจทย์ของ ${c.name} แล้ว`);
-        ok = true;
-      });
-      return ok;
-    },
   };
 }
 

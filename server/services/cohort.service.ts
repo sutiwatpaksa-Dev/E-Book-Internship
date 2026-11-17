@@ -1,4 +1,5 @@
 import { DEFAULT_ASSIGNMENT } from "../lib/assignment-access";
+import { DEFAULT_CRITERIA } from "../../src/lib/rubric";
 import { hashInvite, newInviteCode } from "../lib/invite";
 import { assignmentRepository } from "../repositories/assignment.repository";
 import { cohortRepository, type CohortFields, type SignupFields } from "../repositories/cohort.repository";
@@ -19,13 +20,18 @@ function checkPeriod(f: CohortFields) {
 export const cohortService = {
   list: () => cohortRepository.list(),
 
-  async create(devId: number, f: CohortFields) {
+  // copyFrom: undefined = รุ่นล่าสุดที่มีงาน · null = เริ่มว่าง · id = รุ่นนั้น (ต้องมีจริง)
+  async create(devId: number, f: CohortFields, copyFrom?: number | null) {
     checkPeriod(f);
+    if (copyFrom) await found(copyFrom);
     const c = await cohortRepository.create(f);
-    // รุ่นใหม่ได้ STARTER ไว้ก่อน (เปลี่ยนหรือเพิ่มโจทย์ได้ในหน้ารุ่น) น้องที่สมัครเข้ามาจะได้ไม่เจอหน้าโจทย์ว่าง
-    const starter = await assignmentRepository.findBySlug(DEFAULT_ASSIGNMENT);
-    if (starter) await assignmentRepository.setForCohort(c.id, [starter.id]);
-    await auditService.log(devId, "cohort.create", f.name, `${f.startsOn} – ${f.endsOn}`);
+    // รุ่นใหม่ได้สำเนาโจทย์ (กล่องโพสต์งาน) ของรุ่นล่าสุดไว้ก่อน น้องที่สมัครเข้ามาจะได้ไม่เจอหน้างานว่าง
+    // เป็นสำเนาของรุ่นนี้เอง แก้แล้วไม่กระทบรุ่นต้นทาง
+    const source = copyFrom === undefined ? await assignmentRepository.latestCohortWithAssignments(c.id) : copyFrom;
+    const copied = source === null ? 0 : await assignmentRepository.copyToCohort((await assignmentRepository.ofCohort(source)).map((a) => a.id), c.id);
+    // เริ่มว่าง (หรือยังไม่มีรุ่นไหนมีงาน): สร้างกล่องโพสต์งานเปล่าให้ พี่เลี้ยงโพสต์งานแรกได้ทันที
+    if (copied === 0) await assignmentRepository.create({ cohortId: c.id, slug: DEFAULT_ASSIGNMENT, name: "งานของรุ่น", brief: "", pdfKey: `requirement:${DEFAULT_ASSIGNMENT}:c${c.id}`, sections: [], overview: "", rubric: { rounds: [], criteria: DEFAULT_CRITERIA, templates: [] } });
+    await auditService.log(devId, "cohort.create", f.name, `${f.startsOn} – ${f.endsOn}${copied ? ` · คัดลอกโจทย์ ${copied} ชิ้น` : ""}`);
     return c;
   },
   async update(devId: number, id: number, f: CohortFields) {

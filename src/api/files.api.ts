@@ -1,4 +1,4 @@
-import type { Assignment, CardAssignment } from "@/types";
+import type { Assignment } from "@/types";
 import { request } from "./client";
 
 // ไฟล์อยู่หลัง login (API ตรวจ role ก่อนส่ง) ไม่ได้อยู่ใน public/ เพราะ repo นี้เปิดสาธารณะ
@@ -10,6 +10,5 @@ export const filesApi = {
   // โจทย์ที่ดูได้ ชิ้นแรก = ชิ้นที่ควรเปิดก่อน
   assignments: () => request<Assignment[]>("/files/assignments"),
   // กล่องโจทย์ในหัวการ์ด: โจทย์ที่ดูได้ + โน้ตว่าการ์ด <slug> ใช้ตอนไหนของแต่ละโจทย์
-  cardBox: (slug: string) => request<CardAssignment[]>(`/files/assignments/card/${encodeURIComponent(slug)}`),
   links: () => request<{ exampleRepo: string | null }>("/files/links"),
 };

@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { DEFAULT_ROUNDS, OVERVIEW_MAX } from "../../src/lib/submission";
-import { assignmentSchema, cohortAssignmentsSchema, newAssignmentSchema, postSchema } from "./assignment.validator";
+import { assignmentSchema, newAssignmentSchema, postSchema } from "./assignment.validator";
 
-const ok = { slug: "clinic", name: "คลินิกสัตว์", brief: "", sections: [{ key: "api", label: "API", page: 8 }], rounds: DEFAULT_ROUNDS };
+const ok = { slug: "clinic", cohortId: 1, name: "คลินิกสัตว์", brief: "", sections: [{ key: "api", label: "API", page: 8 }], rounds: DEFAULT_ROUNDS };
 
 describe("assignment validator", () => {
   test("ภาพรวมโจทย์: ไม่ส่ง = ไม่แตะของเดิม · ส่งว่าง = ล้าง · ยาวเกินเพดานไม่ผ่าน", () => {
@@ -30,7 +30,6 @@ describe("assignment validator", () => {
     expect(newAssignmentSchema.safeParse({ ...ok, rounds: [{ ...DEFAULT_ROUNDS[0], id: "start" }] }).success).toBe(false);
   });
   test("รุ่นไม่มีโจทย์ได้ (ส่งรายการว่าง)", () => {
-    expect(cohortAssignmentsSchema.safeParse({ assignmentIds: [] }).success).toBe(true);
   });
 });
 

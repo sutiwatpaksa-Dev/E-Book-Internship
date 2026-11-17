@@ -1,31 +1,42 @@
 import { describe, expect, test } from "bun:test";
 import { canReadStarterPage, pickAssignment, visibleAssignments } from "./assignment-access";
 
-const all = ["starter", "clinic", "rental"];
+// รุ่น 1: starter (แถวเดิม id 1) · รุ่น 2: สำเนา starter (id 5) + rental (id 6) · รุ่น 3: clinic (id 7)
+const all = [
+  { id: 1, slug: "starter", cohortId: 1 },
+  { id: 5, slug: "starter", cohortId: 2 },
+  { id: 6, slug: "rental", cohortId: 2 },
+  { id: 7, slug: "clinic", cohortId: 3 },
+];
+const ids = (rows: { id: number }[]) => rows.map((r) => r.id);
 
 describe("โจทย์ที่แต่ละคนได้", () => {
-  test("น้องรุ่น A ได้โจทย์ของรุ่น A รุ่น B ได้ของรุ่น B", () => {
-    expect(pickAssignment("intern", ["starter"], all)).toBe("starter");
-    expect(pickAssignment("intern", ["clinic"], all)).toBe("clinic");
+  test("น้องได้สำเนาของรุ่นตัวเอง แม้ slug ซ้ำกับรุ่นอื่น", () => {
+    expect(pickAssignment("intern", 1, all)?.id).toBe(1);
+    expect(pickAssignment("intern", 2, all, null, "starter")?.id).toBe(5);
+    expect(pickAssignment("intern", 3, all)?.id).toBe(7);
   });
-  test("รุ่นที่เพิ่มโจทย์หลายชิ้น: ไม่ระบุ = ชิ้นใหม่สุด ระบุ = ชิ้นนั้น", () => {
-    expect(pickAssignment("intern", ["rental", "clinic"], all)).toBe("rental");
-    expect(pickAssignment("intern", ["rental", "clinic"], all, "clinic")).toBe("clinic");
+  test("รุ่นที่มีหลายชิ้น: ไม่ระบุ = ชิ้นใหม่สุด ระบุ = ชิ้นนั้น", () => {
+    expect(pickAssignment("intern", 2, all)?.id).toBe(6);
+    expect(ids(visibleAssignments("intern", 2, all))).toEqual([6, 5]);
   });
-  test("ไม่มีรุ่น = STARTER (บัญชีก่อนมีระบบรุ่นต้องเปิดได้เหมือนเดิม)", () => {
-    expect(pickAssignment("intern", null, all)).toBe("starter");
-    expect(visibleAssignments("intern", null, all)).toEqual(["starter"]);
+  test("ไม่มีรุ่น = STARTER แถวเดิม (บัญชีก่อนมีระบบรุ่นต้องเปิดได้เหมือนเดิม)", () => {
+    expect(ids(visibleAssignments("intern", null, all))).toEqual([1]);
+    expect(pickAssignment("intern", null, all)?.id).toBe(1);
   });
   test("ขอโจทย์ของรุ่นอื่น = ไม่พบ", () => {
-    expect(pickAssignment("intern", ["clinic"], all, "rental")).toBeNull();
-    expect(pickAssignment("intern", null, all, "clinic")).toBeNull();
+    expect(pickAssignment("intern", 3, all, null, "rental")).toBeNull();
+    expect(pickAssignment("intern", null, all, null, "clinic")).toBeNull();
   });
   test("รุ่นที่ยังไม่มีโจทย์ = ไม่พบ", () => {
-    expect(pickAssignment("intern", [], all)).toBeNull();
+    expect(pickAssignment("intern", 9, all)).toBeNull();
   });
-  test("พี่เลี้ยงเปิดได้ทุกโจทย์ ไม่ระบุ = STARTER", () => {
-    expect(pickAssignment("dev", null, all, "rental")).toBe("rental");
-    expect(pickAssignment("dev", null, all)).toBe("starter");
+  test("พี่เลี้ยงเห็นทุก slug ครั้งเดียว ใช้สำเนาของรุ่นที่กำลังดู", () => {
+    expect(ids(visibleAssignments("dev", null, all))).toEqual([1, 6, 7]);
+    expect(ids(visibleAssignments("dev", null, all, 2))).toEqual([5, 6, 7]);
+    expect(pickAssignment("dev", null, all, 2)?.id).toBe(5);
+    expect(pickAssignment("dev", null, all, null, "clinic")?.id).toBe(7);
+    expect(pickAssignment("dev", null, all)?.id).toBe(1);
   });
 });
 

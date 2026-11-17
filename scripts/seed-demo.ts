@@ -2,7 +2,7 @@
 // ใช้: bun --env-file=.env scripts/seed-demo.ts          ใส่ข้อมูลตัวอย่าง (ลบชุดเก่าก่อนทุกครั้ง)
 //      bun --env-file=.env scripts/seed-demo.ts --clean  ลบข้อมูลตัวอย่างทั้งหมด
 // ทุกบัญชีขึ้นต้นด้วย demo. และทุกรุ่นขึ้นต้นด้วย DEMO ลบทั้งชุดได้โดยไม่แตะข้อมูลอื่น
-import { eq, inArray, like, or } from "drizzle-orm";
+import { asc, eq, inArray, like, or } from "drizzle-orm";
 import { learnLinks } from "../src/data/learn";
 import { db } from "../server/db/client";
 import {
@@ -10,7 +10,7 @@ import {
   assignments,
   auditLogs,
   cardOverrides,
-  cohortAssignments,
+  tracks,
   cohortMentors,
   cohorts,
   mentorCards,
@@ -49,6 +49,9 @@ async function clean() {
     await db.delete(cardOverrides).where(inArray(cardOverrides.updatedBy, ids));
     await db.delete(auditLogs).where(inArray(auditLogs.actorId, ids));
   }
+  // โจทย์เป็นของรุ่น (0023) ต้องลบสำเนาโจทย์ของรุ่นตัวอย่างก่อนลบรุ่น
+  const demoCohorts = await db.select({ id: cohorts.id }).from(cohorts).where(like(cohorts.name, "DEMO%"));
+  if (demoCohorts.length) await db.delete(assignments).where(inArray(assignments.cohortId, demoCohorts.map((c) => c.id)));
   await db.delete(cohorts).where(like(cohorts.name, "DEMO%"));
   if (ids.length) await db.delete(users).where(inArray(users.id, ids));
   return ids.length;
@@ -61,19 +64,27 @@ if (process.argv.includes("--clean")) {
 await clean();
 
 const hash = await Bun.password.hash(PASSWORD);
-const [starter] = await db.select().from(assignments).where(eq(assignments.slug, "starter"));
-if (!starter) throw new Error("ไม่มีโจทย์ starter (ต้อง migrate ถึง 0015 ก่อน)");
+// ต้นแบบ = STARTER แถวเดิม (id น้อยสุด) · แต่ละรุ่นตัวอย่างได้สำเนาของตัวเอง (0023: โจทย์เป็นของรุ่นเดียว)
+const [source] = await db.select().from(assignments).where(eq(assignments.slug, "starter")).orderBy(asc(assignments.id)).limit(1);
+if (!source) throw new Error("ไม่มีโจทย์ starter (ต้อง migrate ถึง 0023 ก่อน)");
+const [it] = await db.select({ id: tracks.id }).from(tracks).where(eq(tracks.slug, "it"));
+if (!it) throw new Error("ไม่มีสายงาน IT (ต้อง migrate ถึง 0023 ก่อน)");
 
 // รุ่น: กำลังฝึก · จบแล้ว · ยังไม่เริ่ม (เปิดรับสมัคร)
 const [running, ended, upcoming] = await db
   .insert(cohorts)
   .values([
-    { name: "DEMO 3/2569 ร้านค้า", startsOn: day(-12), endsOn: day(18) },
-    { name: "DEMO 2/2569", startsOn: day(-80), endsOn: day(-40), endedAt: ago(24 * 38) },
-    { name: "DEMO 4/2570", startsOn: day(30), endsOn: day(70), signupOpen: true, signupUntil: day(25), seatLimit: 12 },
+    { name: "DEMO 3/2569 ร้านค้า", startsOn: day(-12), endsOn: day(18), trackId: it.id },
+    { name: "DEMO 2/2569", startsOn: day(-80), endsOn: day(-40), endedAt: ago(24 * 38), trackId: it.id },
+    { name: "DEMO 4/2570", startsOn: day(30), endsOn: day(70), signupOpen: true, signupUntil: day(25), seatLimit: 12, trackId: it.id },
   ])
   .returning({ id: cohorts.id });
-await db.insert(cohortAssignments).values([running, ended, upcoming].map((c) => ({ cohortId: c.id, assignmentId: starter.id })));
+const copies = await db
+  .insert(assignments)
+  .values([running, ended, upcoming].map((c) => ({ cohortId: c.id, slug: source.slug, name: source.name, brief: source.brief, pdfKey: source.pdfKey, sections: source.sections, rubric: source.rubric, overview: source.overview })))
+  .returning({ id: assignments.id });
+// งานตัวอย่างทั้งหมดเป็นของน้องรุ่นที่กำลังฝึก
+const starter = copies[0];
 
 // พี่เลี้ยง 2 คน
 const mentorRows = await db

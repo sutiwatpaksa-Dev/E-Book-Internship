@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ClipboardList, MessageSquareHeart, Newspaper, FilePlus2, FileText, FolderGit2, GraduationCap, History, Inbox, Layers, LayoutDashboard, Megaphone, MessageCircle, NotebookPen, Users, type LucideIcon } from "lucide-react";
+import { CalendarCheck, CalendarOff, ChevronDown, ClipboardList, MessageSquareHeart, Newspaper, FilePlus2, FolderGit2, GraduationCap, History, Inbox, Layers, LayoutDashboard, Megaphone, MessageCircle, NotebookPen, Users, type LucideIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { useAdmin } from "@/hooks/use-admin";
@@ -9,23 +9,24 @@ import { STATUS_LABEL } from "@/lib/thread-labels";
 import { useScopedUnread } from "@/hooks/use-unread";
 import { useCohortFilter } from "@/hooks/use-cohort-filter";
 import { cohortQuery, inCohort } from "@/lib/cohort";
-import { waitingOf } from "@/lib/submission";
-import type { AdminSubmission } from "@/types";
+import { defaultReviewCohort } from "@/lib/review-url";
 import { CohortFilterBar } from "./cohort-filter-bar";
 import { useContentAdmin } from "@/hooks/use-content-admin";
 import { AdminBoard } from "./admin-board";
 import { AdminFeed } from "./admin-feed";
 import { AdminAnnouncements } from "./admin-announcements";
+import { AdminAttendance } from "./admin-attendance";
+import { AdminLeave } from "./admin-leave";
+import { adminLeaveApi } from "@/api/admin-leave.api";
 import { AdminAudit } from "./admin-audit";
 import { AdminBuiltInCards, AdminMentorCards, AdminNotes } from "./admin-content";
-import { AdminFiles } from "./admin-files";
 import { AdminCohorts } from "./admin-cohorts";
 import { AdminInternDetail } from "./admin-intern-detail";
 import { AdminOverview } from "./admin-overview";
 import { AdminRequests } from "./admin-requests";
 import { AdminSearch, type SearchItem } from "./admin-search";
 import { AdminSendMessage, type ComposeTarget } from "./admin-send-message";
-import { AdminSubmissions } from "./admin-submissions";
+import { AdminReview } from "./admin-review";
 import { submissionsApi } from "@/api/submissions.api";
 import { AdminUsers } from "./admin-users";
 import { Button } from "./button";
@@ -34,7 +35,7 @@ import { ErrorText } from "./error-text";
 import { MobileDrawer } from "./mobile-drawer";
 import { Skeleton, SkeletonList } from "./skeleton";
 
-type TabId = "overview" | "feed" | "questions" | "board" | "submissions" | "requests" | "feedback" | "cards" | "notes" | "builtin" | "announcements" | "cohorts" | "users" | "files" | "audit";
+type TabId = "overview" | "attendance" | "leave" | "feed" | "questions" | "board" | "submissions" | "requests" | "feedback" | "cards" | "notes" | "builtin" | "announcements" | "cohorts" | "users" | "audit";
 type Tab = { id: TabId; label: string; icon: LucideIcon };
 // เมนูแบ่ง 3 กลุ่มตามความถี่ที่ใช้: งานประจำวัน (เปิดทุกวัน) → เนื้อหา (เขียน/ปรับคู่มือ) → ระบบ (นานๆ ครั้ง)
 const GROUPS: { label: string; tabs: Tab[] }[] = [
@@ -42,6 +43,8 @@ const GROUPS: { label: string; tabs: Tab[] }[] = [
     label: "งานประจำวัน",
     tabs: [
       { id: "overview", label: "ภาพรวม", icon: LayoutDashboard },
+      { id: "attendance", label: "เช็คอินของน้อง", icon: CalendarCheck },
+      { id: "leave", label: "ใบลา / แจ้งสาย", icon: CalendarOff },
       { id: "feed", label: "งานและประกาศ", icon: Newspaper },
       { id: "questions", label: "แชทกับน้อง", icon: MessageCircle },
       { id: "board", label: "โพสต์งานให้น้อง", icon: ClipboardList },
@@ -64,7 +67,6 @@ const GROUPS: { label: string; tabs: Tab[] }[] = [
     tabs: [
       { id: "cohorts", label: "รุ่นฝึกงาน", icon: GraduationCap },
       { id: "users", label: "บัญชีผู้ใช้", icon: Users },
-      { id: "files", label: "โจทย์ PDF และเกณฑ์", icon: FileText },
       { id: "audit", label: "บันทึกการกระทำ", icon: History },
     ],
   },
@@ -75,6 +77,8 @@ const CONTENT_TABS: TabId[] = ["cards", "notes", "builtin", "announcements"];
 function pickTab(tab: string | null, note: string | null, thread: number | null): TabId {
   if (note) return "notes";
   if (tab === "content") return "cards";
+  // แท็บ "โจทย์ PDF และเกณฑ์" เลิกใช้ (6 พ.ย. 2569): PDF เกณฑ์ ภาพรวม ตั้งในโพสต์งานแทน ลิงก์เก่าพามาที่นี่
+  if (tab === "files") return "board";
   if (!tab && thread) return "questions";
   return TABS.some((t) => t.id === tab) ? (tab as TabId) : "overview";
 }
@@ -143,16 +147,28 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
   const owners = cohort === "all" ? null : new Set(admin.users.filter((u) => u.role === "intern" && inScope(u.cohortId)).map((u) => u.username));
   const waiting = useScopedUnread(cohortQuery(cohort, mine));
   // จำนวนงานรอตรวจบนเมนู (ตามตัวกรองรุ่น) · โหลดใหม่หลังบันทึกผลตรวจ
-  const [subs, setSubs] = useState<AdminSubmission[]>([]);
-  const waitingSubs = waitingOf(subs.filter((s) => inScope(s.cohortId))).length;
+  // นับที่ server แยกตามรุ่น (ไม่ดึงรายการงานมานับเอง: รายการเดิมตัดที่ 500 แถว เลขบนเมนูจะต่ำกว่าจริงเมื่อมีงานเยอะ)
+  const [waitingBy, setWaitingBy] = useState<{ cohortId: number | null; waiting: number }[]>([]);
+  const waitingSubs = waitingBy.filter((r) => inScope(r.cohortId)).reduce((n, r) => n + r.waiting, 0);
   const countSubs = () =>
     submissionsApi
-      .all()
-      .then((r) => setSubs(r.items))
+      .waitingByCohort()
+      .then((r) => setWaitingBy(r.items))
       .catch(() => {});
   useEffect(() => {
     countSubs();
   }, []);
+  // จำนวนใบลารออนุมัติบนเมนู (ตามตัวกรองรุ่น) · โหลดใหม่หลังตัดสินใบ
+  const [pendingLeave, setPendingLeave] = useState(0);
+  const countLeave = () =>
+    adminLeaveApi
+      .pendingCount(cohortQuery(cohort, mine) ?? undefined)
+      .then((r) => setPendingLeave(r.count))
+      .catch(() => {});
+  useEffect(() => {
+    countLeave();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cohort, admin.cohorts.length]);
   const intern = view.intern ? admin.users.find((u) => u.id === view.intern) : undefined;
 
   // แชทเลือกเรื่องเอง: จด id ลง URL แบบ replace (รีเฟรช/แชร์ลิงก์แล้วเปิดเรื่องเดิม แต่ไม่เพิ่มประวัติทุกคลิก)
@@ -205,7 +221,7 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
   };
   const newRequests = admin.threads.filter((t) => t.kind === "content_request" && t.status === "new").length;
   const newFeedback = admin.threads.filter((t) => t.kind === "feedback" && t.status === "new").length;
-  const badge = (id: TabId) => (id === "questions" ? waiting : id === "submissions" ? waitingSubs : id === "requests" ? newRequests : id === "feedback" ? newFeedback : 0);
+  const badge = (id: TabId) => (id === "questions" ? waiting : id === "submissions" ? waitingSubs : id === "requests" ? newRequests : id === "feedback" ? newFeedback : id === "leave" ? pendingLeave : 0);
   // เมนูชุดเดียว วางได้ 2 ที่: คอลัมน์ซ้ายบนจอกว้าง และลิ้นชักบนมือถือ
   const menuGroups = (
     <>
@@ -286,7 +302,8 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
           </div>
         )}
 
-        {(tab === "questions" || tab === "submissions" || (tab === "overview" && !view.intern)) && admin.cohorts.length > 0 && (
+        {/* แท็บ "ตรวจงานที่ส่ง" เลือกรุ่นในหน้าเอง (ชั้นแรกของการเจาะลง) ไม่ใช้แถบนี้ ไม่งั้นมีตัวเลือกรุ่น 2 ตัวที่บอกคนละค่า */}
+        {(tab === "questions" || tab === "board" || (tab === "overview" && !view.intern)) && admin.cohorts.length > 0 && (
           <CohortFilterBar cohorts={admin.cohorts} mine={mine} value={cohort} onChange={setCohort} />
         )}
         {tab === "overview" &&
@@ -297,9 +314,11 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
           ))}
         {/* key: สั่งเปิดเรื่องใหม่จากข้างนอก ให้แชทเริ่มใหม่ที่เรื่องนั้น (ดู chatKey ข้างบน) */}
         {tab === "questions" && <ChatPanel key={chatKey} side="dev" titles={titles} initialId={view.thread ?? null} owners={owners} ready={!admin.loading && !!admin.me} onSelect={onSelectThread} />}
+        {tab === "attendance" && !admin.loading && <AdminAttendance admin={admin} mine={mine} />}
+        {tab === "leave" && !admin.loading && <AdminLeave admin={admin} mine={mine} onChanged={countLeave} />}
         {tab === "feed" && <AdminFeed admin={admin} />}
-        {tab === "board" && <AdminBoard admin={admin} nav={nav} />}
-        {tab === "submissions" && <AdminSubmissions admin={admin} onChange={countSubs} inScope={inScope} />}
+        {tab === "board" && <AdminBoard admin={admin} nav={nav} cohort={cohort} mine={mine} />}
+        {tab === "submissions" && <AdminReview admin={admin} defaultCohort={defaultReviewCohort(cohort, mine, admin.cohorts)} onChange={countSubs} onGoBoard={() => nav.goTab("board")} />}
         {tab === "requests" && <AdminRequests admin={admin} nav={nav} />}
         {tab === "feedback" && <AdminRequests admin={admin} nav={nav} kind="feedback" />}
         {CONTENT_TABS.includes(tab) && content.loading ? (
@@ -314,7 +333,6 @@ export function AdminPanel({ titles }: { titles: Record<string, string> }) {
         )}
         {tab === "cohorts" && <AdminCohorts admin={admin} nav={nav} cohortId={view.cohort ?? null} />}
         {tab === "users" && <AdminUsers admin={admin} nav={nav} />}
-        {tab === "files" && <AdminFiles admin={admin} />}
         {tab === "audit" && <AdminAudit />}
         {composeTo && <AdminSendMessage target={composeTo} users={admin.users} onClose={() => { setComposeTo(null); admin.reload(); }} />}
       </section>

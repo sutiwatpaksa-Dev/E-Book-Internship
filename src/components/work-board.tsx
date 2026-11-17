@@ -5,12 +5,13 @@ import Link from "next/link";
 import { useState } from "react";
 import { useMyWork } from "@/hooks/use-my-work";
 import { thaiDayMonth } from "@/lib/cohort";
+import { weightOf } from "@/lib/submission";
 import { timeAgo } from "@/lib/thread-labels";
 import { dueLabel, nextWork, WORK_STATE_LABEL, type PlanItem, type WorkState } from "@/lib/work-plan";
 import { EmptyState } from "./empty-state";
 import { WorkBadge } from "./status-badge";
 
-// กระดานงาน: งานทุกรอบของฉันเรียงตามกำหนดส่ง กรองตามสถานะได้ · กดแล้วเข้าหน้างาน (ประวัติส่ง ผลตรวจ คะแนน ความเห็น)
+// งานที่ต้องส่ง (เดิม "กระดานงาน"): งานทุกรอบของฉันเรียงตามกำหนดส่ง กรองตามสถานะได้ · กดแล้วเข้าหน้างาน (ประวัติส่ง ผลตรวจ คะแนน ความเห็น)
 type Filter = "all" | "open" | WorkState;
 const FILTERS: { id: Filter; label: string }[] = [
   { id: "all", label: "ทั้งหมด" },
@@ -33,9 +34,28 @@ export function WorkBoard() {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-8 sm:px-6 sm:py-10">
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold sm:text-3xl">กระดานงาน</h1>
-        <p className="text-fd-muted-foreground">งานทุกรอบของคุณเรียงตามกำหนดส่ง เปิดดูผลตรวจ คะแนน และคุยกับพี่เลี้ยงใต้งานได้</p>
+        <h1 className="text-2xl font-bold sm:text-3xl">งานที่ต้องส่ง</h1>
+        <p className="text-fd-muted-foreground">งานทุกชิ้นของรุ่นคุณเรียงตามวันส่ง กดงานเพื่ออ่านคำสั่งและส่งงาน</p>
+        <Link href="/projects" className="inline-flex min-h-11 w-fit items-center text-sm font-medium text-fd-primary hover:underline">
+          เอกสารโจทย์ STARTER (หน้าที่ต้องมี เกณฑ์ แผน 10 วัน)
+        </Link>
       </header>
+
+      {next && isOpen(next.state) && (
+        <section aria-label="ต้องทำต่อ" className="flex flex-wrap items-center gap-3 rounded-2xl border-2 border-fd-primary bg-fd-card p-4">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm text-fd-muted-foreground">ต้องทำต่อ</p>
+            <p className="text-lg font-bold">{next.round.label}</p>
+            <p className="text-sm">
+              {WORK_STATE_LABEL[next.state]}
+              {next.dueOn ? ` · กำหนดส่ง ${thaiDayMonth(next.dueOn)}` : ""}
+            </p>
+          </div>
+          <Link href={taskHref(next)} className="inline-flex min-h-12 items-center gap-1.5 rounded-xl bg-fd-primary px-5 font-semibold text-fd-primary-foreground hover:brightness-110">
+            {next.state === "revise" ? "ดูสิ่งที่ต้องแก้" : "เปิดงานและส่ง"} <ArrowRight className="size-4" />
+          </Link>
+        </section>
+      )}
 
       <div role="group" aria-label="กรองงาน" className="flex flex-wrap gap-2">
         {FILTERS.map((f) => (
@@ -76,7 +96,7 @@ export function WorkBoard() {
                     <ArrowRight className="ms-auto size-4 text-fd-muted-foreground" aria-hidden />
                   </div>
                   <p className="text-sm text-fd-muted-foreground">
-                    {p.assignmentName} · {p.round.what}
+                    {[p.round.what, weightOf(p.round) ? `นับ ${weightOf(p.round)}% ของคะแนนงาน` : "ไม่นับคะแนน", p.round.deploy ? "ต้องส่งลิงก์เว็บ" : ""].filter(Boolean).join(" · ")}
                   </p>
                   {p.round.postedBy && (
                     <p className="text-xs text-fd-muted-foreground">
