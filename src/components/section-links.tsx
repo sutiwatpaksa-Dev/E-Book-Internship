@@ -22,7 +22,7 @@ export function BottomNav() {
   const tone = (active: boolean) => (active ? "text-fd-primary" : "text-fd-muted-foreground");
   const second = role === "intern" ? { href: "/work", label: "งานที่ต้องส่ง", icon: ClipboardList } : { href: "/learn", label: "เส้นทาง", icon: Route };
   // น้องมีช่อง "เช็คอิน" เพิ่มหน้าสุด (เป็นงานที่ทำทุกวัน) · ช่อง "second" ยังเป็นช่องที่ขึ้นกับ role เหมือนเดิม
-  const links = [...(role === "intern" ? [{ href: "/today", label: "เช็คอิน", icon: Clock }] : []), { href: DASHBOARD_URL, label: "ภาพรวม", icon: LayoutDashboard }, second, { href: "/questions", label: "ถามพี่เลี้ยง", icon: MessageCircle }];
+  const links = [...(role === "intern" ? [{ href: "/checkin", label: "เช็คอิน", icon: Clock }] : []), { href: DASHBOARD_URL, label: "ภาพรวม", icon: LayoutDashboard }, second, { href: "/questions", label: "ถามพี่เลี้ยง", icon: MessageCircle }];
 
   return (
     <nav

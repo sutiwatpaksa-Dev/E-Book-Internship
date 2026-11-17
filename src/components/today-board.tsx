@@ -2,12 +2,13 @@
 
 import { Clock } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { useToday } from "@/hooks/use-today";
 import { hhmm, type TodayState, type TodayView } from "@/lib/attendance";
 import { Button } from "./button";
 import { ErrorText } from "./error-text";
 
-// หน้า "วันนี้" ของน้อง (/today): หน้าแรกหลัง login · งานหลักคือเช็คอิน/เช็คเอาต์ได้ใน 1 แตะ
+// หน้า "วันนี้" ของน้อง (/checkin): หน้าแรกหลัง login · งานหลักคือเช็คอิน/เช็คเอาต์ได้ใน 1 แตะ
 // สถานะบอกด้วยข้อความเสมอ ไม่ใช้สีอย่างเดียว · เวลาทั้งหมดเป็นเวลาไทยจาก server (ดู use-today.ts)
 const TZ = "Asia/Bangkok";
 const box = "rounded-2xl border border-fd-border bg-fd-card p-5 sm:p-6";
@@ -89,6 +90,9 @@ export function TodayBoard() {
 }
 
 function Card({ v, now, busy, onIn, onOut }: { v: TodayView; now: number; busy: boolean; onIn: () => void; onOut: () => void }) {
+  // เช็คเอาต์ต้องกด 2 ขั้น: ปุ่มเช็คเอาต์อยู่ตำแหน่งเดียวกับปุ่มเช็คอิน ถ้าเช็คอินแล้วกดรัวต่อ จะได้ไม่เลิกงานโดยไม่ตั้งใจ
+  // (เช็คเอาต์ไม่มีปุ่มย้อนกลับ เพราะเวลาเช็คเอาต์แก้เองไม่ได้ ต้องให้พี่เลี้ยงแก้)
+  const [confirming, setConfirming] = useState(false);
   const badge = BADGE[v.state];
   const text = note(v);
   const rule = v.workStart && v.workEnd ? `เวลางาน ${hhmm(v.workStart)}–${hhmm(v.workEnd)} น. · ผ่อนผันสาย ${v.lateGraceMinutes} นาที` : null;
@@ -125,9 +129,23 @@ function Card({ v, now, busy, onIn, onOut }: { v: TodayView; now: number; busy: 
             เช็คอินเมื่อ <strong className="tabular-nums">{time(v.checkInAt)}</strong> น. ·{" "}
             <span className={v.late ? "font-semibold text-amber-800 dark:text-amber-300" : "font-semibold text-emerald-700 dark:text-emerald-300"}>{v.late ? "สาย" : "ตรงเวลา"}</span>
           </p>
-          <Button onClick={onOut} disabled={busy} variant="ghost" className="min-h-14 w-full text-lg">
-            {busy ? "กำลังบันทึก…" : "เช็คเอาต์"}
-          </Button>
+          {confirming ? (
+            <div className="flex flex-col gap-2 rounded-xl border border-fd-border p-3">
+              <p className="text-sm">เลิกงานตอนนี้ใช่ไหม? เช็คเอาต์แล้วแก้เวลาเองไม่ได้</p>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button onClick={() => { onOut(); setConfirming(false); }} disabled={busy} className="min-h-12 flex-1">
+                  {busy ? "กำลังบันทึก…" : "ยืนยันเช็คเอาต์"}
+                </Button>
+                <Button onClick={() => setConfirming(false)} disabled={busy} variant="ghost" className="min-h-12 flex-1">
+                  ยกเลิก
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button onClick={() => setConfirming(true)} disabled={busy} variant="ghost" className="min-h-14 w-full text-lg">
+              เช็คเอาต์
+            </Button>
+          )}
           <p className="text-sm text-fd-muted-foreground">ถ้าลืมกดเช็คเอาต์ ระบบนับเวลาเลิกงานให้ตอน {v.workEnd ? hhmm(v.workEnd) : ""} น. (ในประวัติจะมีป้าย &quot;อัตโนมัติ&quot;)</p>
         </>
       )}

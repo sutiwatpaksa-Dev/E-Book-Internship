@@ -22,7 +22,7 @@ type Item = { href: string; label: string; icon: LucideIcon; also?: string[] };
 type Slot = Item | ((role: Role | null) => Item | null);
 const MY_WORK: Slot[] = [
   // เช็คอินของน้อง (v2.3): หน้าแรกหลัง login ของน้อง · พี่เลี้ยงไม่เช็คอิน จึงไม่มีช่องนี้
-  (r) => (r === "intern" ? { href: "/today", label: "วันนี้ (เช็คอิน)", icon: Clock } : null),
+  (r) => (r === "intern" ? { href: "/checkin", label: "วันนี้ (เช็คอิน)", icon: Clock } : null),
   { href: DASHBOARD_URL, label: "ภาพรวม", icon: LayoutDashboard },
   { href: "/feed", label: "งานและประกาศ", icon: Newspaper },
   // 6 พ.ย. 2569: เหลือแค่โพสต์งาน เมนู "กระดานงาน" + "โจทย์ฝึกงาน" รวมเป็น "งานที่ต้องส่ง" · หน้าเอกสาร STARTER (/projects, /starter/*) ยังเปิดได้จากหน้านั้น จึงไฮไลต์เมนูนี้ด้วย
@@ -32,7 +32,7 @@ const MY_WORK: Slot[] = [
 ];
 
 // หน้าที่อยู่นอกหมวด "งานของฉัน" และ "เรียนรู้" = บทเดิม/อ้างอิง (บท 00–23, ศัพท์, cheat sheet, มีอะไรใหม่)
-const APP_PATHS = ["/today", DASHBOARD_URL, "/feed", "/work", "/projects", "/starter", "/questions", "/profile", "/dev", LEARN_BASE];
+const APP_PATHS = ["/checkin", DASHBOARD_URL, "/feed", "/work", "/projects", "/starter", "/questions", "/profile", "/dev", LEARN_BASE];
 export const isReferencePage = (pathname: string) => pathname !== "/" && !APP_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
 const isActive = (pathname: string, href: string) => pathname === href || pathname.startsWith(`${href}/`);

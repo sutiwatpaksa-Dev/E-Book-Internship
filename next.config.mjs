@@ -10,6 +10,9 @@ const config = {
       // ลิงก์ PDF เดิม (v1.6.x) ยังใช้ได้ ไฟล์ย้ายไปอยู่หลัง login แล้ว
       { source: "/docs/starter-requirement.pdf", destination: "/api/files/requirement.pdf", permanent: false },
       { source: "/dev", destination: "/dev/admin", permanent: false },
+      // /today เคยเป็นหน้าแรกของน้อง แล้วย้ายไป /dashboard (v2.2.0) · ลิงก์ใน changelog เก่าและ bookmark ยังชี้มาที่นี่
+      // หน้าเช็คอินใหม่อยู่ที่ /checkin (ไม่ใช้ชื่อ /today อีก เพราะ browser จำ redirect ถาวร 308 นี้ไว้แล้ว)
+      { source: "/today", destination: "/dashboard", permanent: true },
       // slug การ์ดที่เปลี่ยนชื่อ (v2.1.18) · bookmark เดิมยังเปิดได้ ข้อมูลใน DB ย้ายด้วย migration 0013
       // permanent = 308: browser และ search engine จำที่อยู่ใหม่ไปเลย (ไม่เปลี่ยนกลับแน่นอน)
       ...Object.entries({

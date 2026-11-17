@@ -6,7 +6,7 @@ const RULES: { test: RegExp; roles: Role[] }[] = [
   { test: /^\/(starter|steps|projects)(\/|$)/, roles: ["intern", "dev"] },
   { test: /^\/work(\/|$)/, roles: ["intern"] },
   // เช็คอินเฉพาะน้อง (พี่เลี้ยงไม่เช็คอิน ดูของน้องจากหลังบ้านแทน)
-  { test: /^\/today(\/|$)/, roles: ["intern"] },
+  { test: /^\/checkin(\/|$)/, roles: ["intern"] },
   { test: /^\/feed(\/|$)/, roles: ["intern", "dev"] },
   { test: /^\/questions(\/|$)/, roles: ["intern", "dev"] },
   { test: /^\/profile(\/|$)/, roles: ["intern", "dev"] },

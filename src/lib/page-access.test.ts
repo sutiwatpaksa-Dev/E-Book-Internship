@@ -19,9 +19,9 @@ describe("gate", () => {
     expect(gate("/questions", "intern")).toBe("allow");
   });
   test("หน้าวันนี้ (เช็คอิน) เฉพาะน้อง", () => {
-    expect(gate("/today", null)).toBe("login");
-    expect(gate("/today", "intern")).toBe("allow");
-    expect(gate("/today", "dev")).toBe("forbidden");
+    expect(gate("/checkin", null)).toBe("login");
+    expect(gate("/checkin", "intern")).toBe("allow");
+    expect(gate("/checkin", "dev")).toBe("forbidden");
   });
   test("หน้า Dev เฉพาะพี่เลี้ยง", () => {
     expect(gate("/dev/admin", null)).toBe("login");
