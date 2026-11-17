@@ -176,6 +176,13 @@
       "when": 1794134352062,
       "tag": "0024_assignment_submit_kind",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1794888250711,
+      "tag": "0025_kpi_attendance",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { ClipboardList, LayoutDashboard, Menu, MessageCircle, Route } from "lucide-react";
+import { ClipboardList, Clock, LayoutDashboard, Menu, MessageCircle, Route } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRoleKnown, useSession } from "@/hooks/use-session";
@@ -21,7 +21,8 @@ export function BottomNav() {
   const tab = "relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium";
   const tone = (active: boolean) => (active ? "text-fd-primary" : "text-fd-muted-foreground");
   const second = role === "intern" ? { href: "/work", label: "งานที่ต้องส่ง", icon: ClipboardList } : { href: "/learn", label: "เส้นทาง", icon: Route };
-  const links = [{ href: DASHBOARD_URL, label: "ภาพรวม", icon: LayoutDashboard }, second, { href: "/questions", label: "ถามพี่เลี้ยง", icon: MessageCircle }];
+  // น้องมีช่อง "เช็คอิน" เพิ่มหน้าสุด (เป็นงานที่ทำทุกวัน) · ช่อง "second" ยังเป็นช่องที่ขึ้นกับ role เหมือนเดิม
+  const links = [...(role === "intern" ? [{ href: "/today", label: "เช็คอิน", icon: Clock }] : []), { href: DASHBOARD_URL, label: "ภาพรวม", icon: LayoutDashboard }, second, { href: "/questions", label: "ถามพี่เลี้ยง", icon: MessageCircle }];
 
   return (
     <nav
@@ -30,7 +31,7 @@ export function BottomNav() {
     >
       {links.map((l, n) => {
         // ช่อง 2 ขึ้นกับ role: ยังไม่รู้ = ช่องว่างกว้างเท่ากัน ไม่ขึ้น "เส้นทาง" แวบแล้วเปลี่ยนเป็น "กระดานงาน"
-        if (n === 1 && !known) return <span key="pending" aria-hidden className={tab} />;
+        if (l === second && !known) return <span key="pending" aria-hidden className={tab} />;
         const active = !open && on(l.href);
         return (
           <Link key={l.href} href={l.href} aria-current={active ? "page" : undefined} className={`${tab} ${tone(active)}`}>

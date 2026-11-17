@@ -1,4 +1,4 @@
-import { type AnyPgColumn, boolean, check, customType, date, index, integer, jsonb, pgTable, primaryKey, serial, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { type AnyPgColumn, boolean, check, customType, date, index, integer, jsonb, pgTable, primaryKey, serial, text, time, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import type { CommentKind, CommentTemplate, Criterion, Scores } from "../../src/lib/rubric";
 import type { PostKind, Requirement } from "../../src/lib/post";
@@ -98,6 +98,12 @@ export const cohorts = pgTable("cohorts", {
   signupUntil: date("signup_until"),
   // รับได้กี่คน (นับน้องที่อยู่ในรุ่นทั้งหมด) · null = ไม่จำกัด
   seatLimit: integer("seat_limit"),
+  // น้ำหนัก KPI ของรุ่น: คัดลอกจาก tracks.kpi ตอนสร้างรุ่น แล้วพี่เลี้ยงแก้เฉพาะรุ่นนี้ได้ (แม่แบบสายไม่เปลี่ยน) · ผลรวม 3 ส่วนต้องเป็น 100 (บังคับที่ API)
+  kpi: jsonb("kpi").$type<TrackKpi>().notNull().default({ work: 70, attendance: 20, engagement: 10, passPercent: 60 }),
+  // เวลางานของรุ่น (เวลาไทย): เกิน workStart + lateGraceMinutes = สาย · ถึง workEnd แล้วยังไม่เช็คเอาต์ = นับเลิกงานตามเวลานี้ (ติดป้าย "อัตโนมัติ")
+  workStart: time("work_start").notNull().default("09:00:00"),
+  workEnd: time("work_end").notNull().default("18:00:00"),
+  lateGraceMinutes: integer("late_grace_minutes").notNull().default(5),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -493,4 +499,102 @@ export const notifications = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("notifications_user_idx").on(t.userId, t.readAt)],
+);
+
+// ---- KPI และเช็คอินของน้อง (v2.3) ----
+// เก็บแค่ข้อมูลดิบ (เวลาเข้า-ออก ใบลา คะแนนที่พี่ให้) ส่วน "สาย" "ขาด" "ชั่วโมงสะสม" "คะแนนรวม" คิดใหม่ทุกครั้งที่เปิดหน้า
+// เพราะพี่เลี้ยงแก้เวลาเริ่มงานหรือสูตรทีหลังได้ ถ้าเก็บผลที่คิดแล้วไว้ ข้อมูลเก่ากับกฎใหม่จะขัดกันเอง
+
+// เวลาเข้า-ออกงานของน้อง 1 แถวต่อ 1 วัน · เวลามาจาก server เสมอ (ไม่รับเวลาจากเครื่องน้อง)
+// workDate เป็นวันที่ตามเวลาไทย (date ไม่มีเวลา เหมือน cohorts.starts_on)
+export const attendanceRecords = pgTable(
+  "attendance_records",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    workDate: date("work_date").notNull(),
+    checkInAt: timestamp("check_in_at", { withTimezone: true }).notNull(),
+    // ว่าง = ยังไม่เช็คเอาต์ · ถ้าวันนั้นผ่านไปแล้ว ตอนคำนวณนับเป็น cohorts.work_end และติดป้าย "อัตโนมัติ" (ไม่เขียนทับคอลัมน์นี้)
+    checkOutAt: timestamp("check_out_at", { withTimezone: true }),
+    // พี่เลี้ยงแก้เวลา: ต้องมีเหตุผลทุกครั้ง (บังคับที่ service) · เวลาเดิมอยู่ใน audit_logs
+    editedBy: integer("edited_by").references(() => users.id, { onDelete: "set null" }),
+    editedAt: timestamp("edited_at", { withTimezone: true }),
+    editReason: text("edit_reason"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    // กันแถวซ้ำเมื่อกดซ้ำหรือเปิดสองแท็บ
+    uniqueIndex("attendance_user_date_uniq").on(t.userId, t.workDate),
+    check("attendance_out_after_in", sql`${t.checkOutAt} is null or ${t.checkOutAt} >= ${t.checkInAt}`),
+  ],
+);
+
+export const LEAVE_KINDS = ["leave", "late"] as const;
+export type LeaveKind = (typeof LEAVE_KINDS)[number];
+export const LEAVE_STATUSES = ["pending", "approved", "rejected"] as const;
+export type LeaveStatus = (typeof LEAVE_STATUSES)[number];
+
+// ใบลา / แจ้งมาสายล่วงหน้า · อนุมัติแล้วเท่านั้นที่มีผลต่อ KPI (ลา = ไม่นับขาด, แจ้งสาย = ไม่นับสาย)
+export const leaveRequests = pgTable(
+  "leave_requests",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    workDate: date("work_date").notNull(),
+    kind: text("kind").$type<LeaveKind>().notNull(),
+    reason: text("reason").notNull(),
+    status: text("status").$type<LeaveStatus>().notNull().default("pending"),
+    decidedBy: integer("decided_by").references(() => users.id, { onDelete: "set null" }),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+    // คำตอบของพี่เลี้ยง (เช่น "ขอเอกสารประกอบ") น้องเห็น
+    decisionNote: text("decision_note"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("leave_user_date_idx").on(t.userId, t.workDate),
+    index("leave_status_idx").on(t.status),
+    check("leave_kind_chk", sql`${t.kind} in ('leave', 'late')`),
+    check("leave_status_chk", sql`${t.status} in ('pending', 'approved', 'rejected')`),
+  ],
+);
+
+// วันหยุดของรุ่นที่พี่เลี้ยงประกาศ · เสาร์-อาทิตย์ไม่ต้องเก็บ (คิดจากปฏิทิน)
+export const cohortHolidays = pgTable(
+  "cohort_holidays",
+  {
+    id: serial("id").primaryKey(),
+    cohortId: integer("cohort_id")
+      .notNull()
+      .references(() => cohorts.id, { onDelete: "cascade" }),
+    holidayDate: date("holiday_date").notNull(),
+    note: text("note").notNull().default(""),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("cohort_holiday_uniq").on(t.cohortId, t.holidayDate)],
+);
+
+// คะแนน KPI ที่พี่เลี้ยงให้ (ส่วน "มีส่วนร่วม" 1-5) 1 แถวต่อ น้อง × เดือน × หัวข้อ · period = วันที่ 1 ของเดือน
+export const kpiScores = pgTable(
+  "kpi_scores",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    period: date("period").notNull(),
+    criterion: text("criterion").notNull(),
+    score: integer("score").notNull(),
+    // ความเห็นถึงน้อง (น้องเห็น)
+    comment: text("comment"),
+    scoredBy: integer("scored_by").references(() => users.id, { onDelete: "set null" }),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("kpi_scores_uniq").on(t.userId, t.period, t.criterion),
+    check("kpi_scores_range", sql`${t.score} between 1 and 5`),
+  ],
 );
