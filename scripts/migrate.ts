@@ -14,33 +14,6 @@ console.log(`migrate → ${url.host}${url.pathname}`);
 // preview branch อื่นใช้ฐานเดียวกับเว็บจริง และ production ต้องให้คนมาดูเองเสมอ
 const canHeal = process.env.VERCEL_ENV === "preview" && process.env.VERCEL_GIT_COMMIT_REF === "dev";
 
-
-// ---- วินิจฉัยชั่วคราว (อ่านอย่างเดียว ลบออกหลังใช้) ----
-// พิมพ์ว่า build นี้ต่อฐานไหน (เฉพาะชื่อ endpoint แรกของ host และชื่อฐาน ไม่มีรหัสผ่าน) และสรุปข้อมูลโจทย์/งานที่ส่ง
-try {
-  const pg = await import("pg");
-  const client = new pg.default.Client({ connectionString: url.toString() });
-  await client.connect();
-  const q = async (label: string, sql: string) => {
-    try {
-      const r = await client.query(sql);
-      console.log(`DIAG ${label}:`, JSON.stringify(r.rows));
-    } catch (e) {
-      console.log(`DIAG ${label}: error`, (e as Error).message);
-    }
-  };
-  console.log("DIAG endpoint:", url.hostname.split(".")[0], "| db:", url.pathname.slice(1));
-  await q("assignments", "SELECT id, slug, archived_at FROM assignments ORDER BY id");
-  await q("submissions_by_assignment", "SELECT assignment_id, count(*)::int AS n FROM submissions GROUP BY assignment_id ORDER BY 1");
-  await q("cohort_assignments", "SELECT cohort_id, assignment_id FROM cohort_assignments ORDER BY 1, 2");
-  await q("users", "SELECT count(*)::int AS total, count(*) FILTER (WHERE username IN ('poom','ohm'))::int AS poom_ohm FROM users");
-  await q("applied_migrations", "SELECT count(*)::int AS n FROM drizzle.__drizzle_migrations");
-  await client.end();
-} catch (e) {
-  console.log("DIAG failed:", (e as Error).message);
-}
-// ---- จบวินิจฉัย ----
-
 const run = () => migrate(drizzle(url.toString()), { migrationsFolder: "./server/db/migrations" });
 
 try {
