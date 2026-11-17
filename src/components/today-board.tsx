@@ -16,6 +16,7 @@ const box = "rounded-2xl border border-fd-border bg-fd-card p-5 sm:p-6";
 const clock = (ms: number) => new Date(ms).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false, timeZone: TZ });
 const time = (iso: string) => new Date(iso).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: TZ });
 const longDate = (ms: number) => new Date(ms).toLocaleDateString("th-TH", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: TZ });
+const shortDay = (d: string) => new Date(`${d}T12:00:00+07:00`).toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric", timeZone: TZ });
 const duration = (min: number) => `${Math.floor(min / 60)} ชม. ${min % 60} นาที`;
 
 // ป้ายสถานะ: ข้อความ + โทนสี (ข้อความอ่านได้โดยไม่ต้องเห็นสี)
@@ -82,9 +83,14 @@ export function TodayBoard() {
 
       {view && now && <Card v={view} now={now} busy={busy} onIn={checkIn} onOut={checkOut} />}
 
-      <Link href="/dashboard" className="inline-flex min-h-11 items-center self-start text-sm font-medium text-fd-primary hover:underline">
-        ไปหน้าภาพรวมงานและคู่มือ
-      </Link>
+      <div className="flex flex-wrap gap-x-6">
+        <Link href="/checkin/history" className="inline-flex min-h-11 items-center text-sm font-medium text-fd-primary hover:underline">
+          ดูประวัติเข้างานของฉัน
+        </Link>
+        <Link href="/dashboard" className="inline-flex min-h-11 items-center text-sm font-medium text-fd-primary hover:underline">
+          ไปหน้าภาพรวมงานและคู่มือ
+        </Link>
+      </div>
     </div>
   );
 }
@@ -115,6 +121,12 @@ function Card({ v, now, busy, onIn, onOut }: { v: TodayView; now: number; busy: 
       </p>
 
       {rule && <p className="text-sm text-fd-muted-foreground">{rule}</p>}
+      {/* พี่เลี้ยงตั้งเวลางานใหม่ไว้ล่วงหน้า: บอกน้องก่อนถึงวันเปลี่ยน ไม่ให้ไปเจอตอนเช็คอิน */}
+      {v.nextRule && (
+        <p className="rounded-lg bg-fd-muted px-3 py-2 text-sm">
+          ตั้งแต่ {shortDay(v.nextRule.effectiveFrom)} เวลางานของรุ่นเปลี่ยนเป็น {hhmm(v.nextRule.workStart)}–{hhmm(v.nextRule.workEnd)} น. · ผ่อนผันสาย {v.nextRule.lateGraceMinutes} นาที
+        </p>
+      )}
       {text && <p className="text-fd-foreground">{text}</p>}
 
       {v.state === "ready" && (

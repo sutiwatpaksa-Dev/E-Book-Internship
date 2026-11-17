@@ -21,6 +21,7 @@ const box = "rounded-2xl border border-fd-border bg-fd-card p-5";
 
 const LABEL: Record<DayState, { text: string; tone: string }> = {
   outside: { text: "นอกช่วงรุ่น", tone: "text-fd-muted-foreground" },
+  untracked: { text: "ก่อนเริ่มใช้ระบบ", tone: "text-fd-muted-foreground" },
   off_day: { text: "วันหยุด", tone: "text-fd-muted-foreground" },
   holiday: { text: "วันหยุดของรุ่น", tone: "text-fd-muted-foreground" },
   waiting: { text: "ยังไม่เช็คอิน", tone: "text-amber-800 dark:text-amber-300" },
@@ -28,7 +29,7 @@ const LABEL: Record<DayState, { text: string; tone: string }> = {
   working: { text: "กำลังทำงาน", tone: "text-emerald-700 dark:text-emerald-300" },
   done: { text: "เลิกงานแล้ว", tone: "" },
 };
-const IS_WORKDAY = (s: DayState) => s !== "outside" && s !== "off_day" && s !== "holiday";
+const IS_WORKDAY = (s: DayState) => s !== "outside" && s !== "off_day" && s !== "holiday" && s !== "untracked";
 
 export function AdminAttendance({ admin, mine }: { admin: AdminState; mine: readonly number[] }) {
   // รุ่นเริ่มต้น: รุ่นของเราที่กำลังฝึกอยู่ → รุ่นไหนก็ได้ที่กำลังฝึก → รุ่นที่ยังไม่จบ → รุ่นแรกที่มี
@@ -75,6 +76,12 @@ export function AdminAttendance({ admin, mine }: { admin: AdminState; mine: read
           <Button variant="ghost" onClick={() => setDate(today)}>
             กลับไปวันนี้
           </Button>
+        )}
+        {/* ส่งออกทั้งเดือนของวันที่เลือก · ข้อมูลเป็นของบริษัท เปิดใน Excel ได้ ไม่ผูกกับระบบนี้ */}
+        {cohortId && (
+          <a href={`/api/admin/attendance/export?cohortId=${cohortId}&month=${date.slice(0, 7)}`} download className="inline-flex min-h-11 items-center rounded-lg border border-fd-border px-4 text-sm font-semibold hover:bg-fd-accent">
+            ดาวน์โหลด CSV เดือน {date.slice(0, 7)}
+          </a>
         )}
       </div>
 

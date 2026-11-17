@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { atThai, dayState, rulesOn, effectiveCheckOut, isHHMM, isLate, isWeekend, minutesWorked, todayState, type AttendanceRules } from "./attendance";
+import { atThai, dayState, describeDay, eachDate, isMonth, monthRange, rulesOn, effectiveCheckOut, isHHMM, isLate, isWeekend, minutesWorked, todayState, type AttendanceRules } from "./attendance";
 
 const rules: AttendanceRules = { workStart: "09:00:00", workEnd: "18:00:00", lateGraceMinutes: 5 };
 const cohort = { startsOn: "2026-11-02", endsOn: "2026-12-30", endedAt: null };
@@ -127,6 +127,25 @@ describe("dayState (มุมมองพี่เลี้ยง)", () => {
   });
 });
 
+describe("dayState: ก่อนเริ่มใช้ระบบไม่นับเป็นขาด", () => {
+  const cohort = { startsOn: "2026-10-14", endsOn: "2027-01-27" };
+  const rules = { workStart: "09:00:00", workEnd: "18:00:00", lateGraceMinutes: 5 };
+  const now = new Date("2026-11-17T03:00:00Z");
+  const base = { cohort, rules, holiday: false, record: null, now };
+  test("วันก่อนวันแรกที่มีคนเช็คอิน = untracked · ตั้งแต่วันแรก = absent ตามปกติ", () => {
+    expect(dayState({ ...base, date: "2026-11-12", trackingStart: "2026-11-16" })).toBe("untracked");
+    expect(dayState({ ...base, date: "2026-11-16", trackingStart: "2026-11-16" })).toBe("absent");
+  });
+  test("ยังไม่มีใครเช็คอินเลย: วันที่ผ่านมา = untracked แต่วันนี้ยังเป็น waiting", () => {
+    expect(dayState({ ...base, date: "2026-11-13", trackingStart: null })).toBe("untracked");
+    expect(dayState({ ...base, date: "2026-11-17", trackingStart: null })).toBe("waiting");
+  });
+  test("วันที่มีแถวเช็คอินแสดงของจริงเสมอ แม้ก่อนวันเริ่มที่คำนวณได้", () => {
+    const record = { workDate: "2026-11-12", checkInAt: new Date("2026-11-12T02:00:00Z"), checkOutAt: null };
+    expect(dayState({ ...base, record, date: "2026-11-12", trackingStart: "2026-11-16" })).toBe("done");
+  });
+});
+
 describe("isHHMM", () => {
   test("รับ 24 ชม. เท่านั้น", () => {
     expect(["00:00", "08:58", "23:59"].every(isHHMM)).toBe(true);
@@ -158,5 +177,35 @@ describe("rulesOn (กติกาตามวันที่เริ่มม�
     const after = isLate(checkIn, "2026-11-20", rulesOn("2026-11-20", base, list));
     expect(before).toBe(true);
     expect(after).toBe(before);
+  });
+});
+
+describe("monthRange / eachDate / isMonth", () => {
+  test("ช่วงเดือน รวมกุมภาพันธ์ปีอธิกสุรทิน", () => {
+    expect(monthRange("2026-11")).toEqual({ from: "2026-11-01", to: "2026-11-30" });
+    expect(monthRange("2028-02").to).toBe("2028-02-29");
+    expect(monthRange("2026-12").to).toBe("2026-12-31");
+  });
+  test("eachDate ข้ามเดือนและรวมวันปลายทาง", () => {
+    expect(eachDate("2026-11-29", "2026-12-02")).toEqual(["2026-11-29", "2026-11-30", "2026-12-01", "2026-12-02"]);
+    expect(eachDate("2026-11-05", "2026-11-04")).toEqual([]);
+  });
+  test("isMonth", () => {
+    expect(isMonth("2026-11")).toBe(true);
+    expect(["2026-13", "2026-1", "26-11", "2026-11-01"].some(isMonth)).toBe(false);
+  });
+});
+
+describe("describeDay", () => {
+  const rules = { workStart: "09:00:00", workEnd: "18:00:00", lateGraceMinutes: 5 };
+  const cohort = { startsOn: "2026-10-14", endsOn: "2027-01-27" };
+  test("วันที่ผ่านมา เช็คอิน 09:20 ไม่เช็คเอาต์ = สาย + ออกอัตโนมัติ 18:00 + 520 นาที", () => {
+    const record = { workDate: "2026-11-13", checkInAt: new Date("2026-11-13T02:20:00Z"), checkOutAt: null };
+    const d = describeDay({ date: "2026-11-13", cohort, rules, holiday: false, record, now: new Date("2026-11-17T03:00:00Z") });
+    expect(d).toMatchObject({ state: "done", late: true, checkOutAuto: true, minutes: 520 });
+  });
+  test("วันที่ผ่านมาไม่มีแถว = absent และไม่มีเวลา", () => {
+    const d = describeDay({ date: "2026-11-13", cohort, rules, holiday: false, record: null, now: new Date("2026-11-17T03:00:00Z") });
+    expect(d).toMatchObject({ state: "absent", checkInAt: null, minutes: null, late: false });
   });
 });

@@ -1,4 +1,5 @@
-import { atThai, dayState, effectiveCheckOut, isLate, isWeekend, minutesWorked, rulesOn, type AttendanceRules, type DayRow, type DayView, type HolidayRow, type RulesView } from "../../src/lib/attendance";
+import { toCsv } from "../../src/lib/csv";
+import { atThai, dayState, describeDay, eachDate, monthRange, effectiveCheckOut, isLate, isWeekend, minutesWorked, rulesOn, type AttendanceRules, type DayRow, type DayView, type HolidayRow, type RulesView } from "../../src/lib/attendance";
 import { todayTH } from "../../src/lib/cohort";
 import { attendanceRepository } from "../repositories/attendance.repository";
 import { cohortRepository } from "../repositories/cohort.repository";
@@ -22,10 +23,11 @@ export const attendanceAdminService = {
     // กติกาของ "วันที่ดู" (วันเก่าใช้กติกาเก่า) ไม่ใช่กติกาปัจจุบัน
     const base: AttendanceRules = { workStart: cohort.workStart, workEnd: cohort.workEnd, lateGraceMinutes: cohort.lateGraceMinutes };
     const rules = rulesOn(d, base, await attendanceRepository.workRules(cohortId));
-    const [interns, records, holidays] = await Promise.all([
+    const [interns, records, holidays, trackingStart] = await Promise.all([
       attendanceRepository.internsOfCohort(cohortId),
       attendanceRepository.recordsOfCohort(cohortId, d, d),
       attendanceRepository.holidayDates(cohortId, d, d),
+      attendanceRepository.firstRecordDate(cohortId),
     ]);
     const byUser = new Map(records.map((r) => [r.userId, r]));
     const rows: DayRow[] = interns.map((u) => {
@@ -34,7 +36,7 @@ export const attendanceAdminService = {
       return {
         userId: u.id,
         name: u.fullName || u.nickname || u.username,
-        state: dayState({ date: d, cohort, rules, holiday: holidays.has(d), record: rec, now }),
+        state: dayState({ date: d, cohort, rules, holiday: holidays.has(d), record: rec, now, trackingStart }),
         checkInAt: rec ? rec.checkInAt.toISOString() : null,
         checkOutAt: out ? out.at.toISOString() : null,
         checkOutAuto: out?.auto ?? false,
@@ -119,5 +121,53 @@ export const attendanceAdminService = {
     const cohort = await cohortOrThrow(r.cohortId);
     await attendanceRepository.removeWorkRule(id);
     await auditService.log(actorId, "workrule.remove", cohort.name, `มีผล ${r.effectiveFrom}`);
+  },
+
+  // ส่งออกเช็คอินทั้งรุ่นของ 1 เดือนเป็น CSV (ข้อมูลไม่ผูกกับระบบ เปิดใน Excel ได้) · เฉพาะวันที่ผ่านมาแล้วและอยู่ในช่วงรุ่น
+  async exportMonth(actorId: number, cohortId: number, month: string) {
+    const cohort = await cohortOrThrow(cohortId);
+    const now = new Date();
+    const today = todayTH(now);
+    const { from, to } = monthRange(month);
+    const lo = from > cohort.startsOn ? from : cohort.startsOn;
+    const hiCap = to < today ? to : today;
+    const hi = hiCap < cohort.endsOn ? hiCap : cohort.endsOn;
+    const base: AttendanceRules = { workStart: cohort.workStart, workEnd: cohort.workEnd, lateGraceMinutes: cohort.lateGraceMinutes };
+    const header = ["ชื่อผู้ใช้", "ชื่อ", "วันที่", "สถานะ", "เวลาเข้า", "เวลาออก", "ออกโดยระบบนับให้", "ชั่วโมงทำงาน", "เข้างานหลังเวลา", "พี่เลี้ยงแก้เวลา", "เหตุผลที่แก้"];
+    const rows: (string | number | boolean | null)[][] = [header];
+    if (lo <= hi) {
+      const [interns, records, ruleList, holidayList, trackingStart] = await Promise.all([
+        attendanceRepository.internsOfCohort(cohortId),
+        attendanceRepository.recordsOfCohort(cohortId, lo, hi),
+        attendanceRepository.workRules(cohortId),
+        attendanceRepository.holidays(cohortId),
+        attendanceRepository.firstRecordDate(cohortId),
+      ]);
+      const holidays = new Set(holidayList.map((h) => h.holidayDate));
+      const byKey = new Map(records.map((r) => [`${r.userId}|${r.workDate}`, r]));
+      const STATE: Record<string, string> = { holiday: "วันหยุดของรุ่น", absent: "ไม่มีเช็คอิน", working: "กำลังทำงาน", waiting: "ยังไม่เช็คอิน", done: "เช็คอินแล้ว" };
+      for (const u of interns) {
+        for (const date of eachDate(lo, hi)) {
+          const rec = byKey.get(`${u.id}|${date}`) ?? null;
+          const d = describeDay({ date, cohort, rules: rulesOn(date, base, ruleList), holiday: holidays.has(date), record: rec, now, trackingStart });
+          if (d.state === "off_day" || d.state === "outside" || d.state === "untracked") continue;
+          rows.push([
+            u.username,
+            u.fullName || u.nickname || "",
+            date,
+            STATE[d.state] ?? d.state,
+            d.checkInAt ? hm(d.checkInAt) : "",
+            d.checkOutAt ? hm(d.checkOutAt) : "",
+            d.checkOutAuto ? "ใช่" : "",
+            d.minutes !== null ? Math.round((d.minutes / 60) * 100) / 100 : "",
+            d.late ? "ใช่" : "",
+            rec?.editReason ? "ใช่" : "",
+            rec?.editReason ?? "",
+          ]);
+        }
+      }
+    }
+    await auditService.log(actorId, "attendance.export", cohort.name, `${month} · ${rows.length - 1} แถว`);
+    return toCsv(rows);
   },
 };

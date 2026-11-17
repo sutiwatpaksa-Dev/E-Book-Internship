@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import type { AuthVars } from "../middleware/require-role";
+import { isMonth } from "../../src/lib/attendance";
 import { attendanceAdminService } from "../services/attendance-admin.service";
 import { editAttendanceSchema, holidaySchema, workRuleSchema } from "../validators/attendance.validator";
 
@@ -65,4 +66,13 @@ adminAttendanceRoutes.delete("/rules/:id", async (c) => {
   if (!id) throw new Error("RULE_NOT_FOUND");
   await attendanceAdminService.removeRule(c.get("user").id, id);
   return c.body(null, 204);
+});
+
+// ดาวน์โหลด CSV ของ 1 เดือน: ?cohortId=1&month=2026-11 (GET ล้วน เปิดเป็นลิงก์ดาวน์โหลดได้)
+adminAttendanceRoutes.get("/export", async (c) => {
+  const cohortId = positive(c.req.query("cohortId"));
+  const month = c.req.query("month") ?? "";
+  if (!cohortId || !isMonth(month)) return c.json({ error: "ต้องระบุรุ่น และเดือนเป็น YYYY-MM" }, 400);
+  const csv = await attendanceAdminService.exportMonth(c.get("user").id, cohortId, month);
+  return c.body(csv, 200, { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="checkin-${cohortId}-${month}.csv"`, "Cache-Control": "no-store" });
 });

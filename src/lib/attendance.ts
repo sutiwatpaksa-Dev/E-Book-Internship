@@ -88,12 +88,15 @@ export type TodayView = {
   checkOutAuto: boolean;
   late: boolean;
   minutes: number | null;
+  // กติกาเวลาที่พี่เลี้ยงตั้งไว้ล่วงหน้าและยังไม่ถึงวัน (บอกน้องก่อนเปลี่ยน) · ไม่มี = null
+  nextRule: { effectiveFrom: string; workStart: string; workEnd: string; lateGraceMinutes: number } | null;
 };
 
 // ---- มุมมองของพี่เลี้ยง: น้องแต่ละคนในวันที่เลือก ----
 
 export type DayState =
   | "outside" // วันที่อยู่นอกช่วงของรุ่น
+  | "untracked" // ก่อนที่ใครในรุ่นจะเริ่มเช็คอินในระบบ (ระบบยังไม่ได้เริ่มใช้) ไม่นับเป็นขาด
   | "off_day" // เสาร์-อาทิตย์
   | "holiday" // วันหยุดที่พี่เลี้ยงประกาศ
   | "waiting" // วันนี้ ยังไม่ถึงเวลาเลิกงาน และยังไม่เช็คอิน
@@ -108,13 +111,17 @@ export type DayInput = {
   holiday: boolean;
   record: { workDate: string; checkInAt: Date; checkOutAt: Date | null } | null;
   now: Date;
+  // วันแรกที่มีการเช็คอินในรุ่นนี้ (ใครก็ได้) = วันที่เริ่มใช้ระบบ · วันก่อนหน้านั้นไม่ใช่ "ขาด" เพราะยังไม่มีระบบให้เช็คอิน
+  // null = รุ่นนี้ยังไม่มีใครเช็คอินเลย · ไม่ส่ง (undefined) = ไม่ใช้กฎนี้
+  trackingStart?: string | null;
 };
 
 // คนละฟังก์ชันกับ todayState: ของน้องดูแค่ "วันนี้" และบล็อกเมื่อรุ่นจบ · ของพี่เลี้ยงดูย้อนหลังได้ รวมรุ่นที่จบแล้ว
 // มีแถวเช็คอินแล้วแสดงของจริงก่อนเสมอ (น้องมาทำงานวันหยุดก็ยังเห็นว่ามา)
-export function dayState({ date, cohort, rules, holiday, record, now }: DayInput): DayState {
+export function dayState({ date, cohort, rules, holiday, record, now, trackingStart }: DayInput): DayState {
   if (record) return effectiveCheckOut(record, rules, now) ? "done" : "working";
   if (date < cohort.startsOn || date > cohort.endsOn) return "outside";
+  if (trackingStart !== undefined && date < todayTH(now) && (trackingStart === null || date < trackingStart)) return "untracked";
   if (isWeekend(date)) return "off_day";
   if (holiday) return "holiday";
   return date < todayTH(now) || now >= atThai(date, rules.workEnd) ? "absent" : "waiting";
@@ -161,3 +168,64 @@ export type WorkRuleRow = { id: number; effectiveFrom: string; workStart: string
 
 // กติกาเวลาของรุ่น: ตั้งต้น (ใช้กับวันก่อนกติกาแรก) + กติกาที่ตั้งไว้ล่วงหน้า/มีผลแล้ว
 export type RulesView = { today: string; base: AttendanceRules; rules: WorkRuleRow[] };
+
+// ---- วัน/เดือน และรายละเอียดของแต่ละวัน (ใช้ทั้งหน้าประวัติของน้อง และไฟล์ส่งออกของพี่เลี้ยง) ----
+
+// "2026-11" → วันแรกและวันสุดท้ายของเดือน
+export function monthRange(month: string) {
+  const [y, m] = month.split("-").map(Number);
+  const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const mm = String(m).padStart(2, "0");
+  return { from: `${month}-01`, to: `${y}-${mm}-${String(last).padStart(2, "0")}` };
+}
+
+export const isMonth = (v: string) => /^\d{4}-(0[1-9]|1[0-2])$/.test(v);
+
+// วันที่จาก from ถึง to (รวมสองวัน) เป็น YYYY-MM-DD
+export function eachDate(from: string, to: string) {
+  const out: string[] = [];
+  for (let d = new Date(`${from}T00:00:00Z`); d <= new Date(`${to}T00:00:00Z`); d = new Date(d.getTime() + 86_400_000)) out.push(d.toISOString().slice(0, 10));
+  return out;
+}
+
+export type DayDetail = { state: DayState; checkInAt: Date | null; checkOutAt: Date | null; checkOutAuto: boolean; late: boolean; minutes: number | null };
+
+// สถานะ + เวลาเข้า-ออก + สาย + ชั่วโมงของ 1 วัน จากข้อมูลดิบและกติกาของวันนั้น
+export function describeDay(input: DayInput): DayDetail {
+  const { record, rules, now, date } = input;
+  const out = record ? effectiveCheckOut(record, rules, now) : null;
+  return {
+    state: dayState(input),
+    checkInAt: record ? record.checkInAt : null,
+    checkOutAt: out ? out.at : null,
+    checkOutAuto: out?.auto ?? false,
+    late: record ? isLate(record.checkInAt, date, rules) : false,
+    minutes: record && out ? minutesWorked(record.checkInAt, out.at) : null,
+  };
+}
+
+// ---- หน้า "ประวัติเข้างานของฉัน" ----
+
+export type HistoryRow = {
+  date: string;
+  state: DayState;
+  checkInAt: string | null;
+  checkOutAt: string | null;
+  checkOutAuto: boolean;
+  late: boolean;
+  minutes: number | null;
+  // พี่เลี้ยงแก้เวลาวันนี้: เหตุผลที่พี่เลี้ยงบันทึกไว้ (น้องเห็นได้)
+  editReason: string | null;
+  // ชื่อวันหยุดที่พี่เลี้ยงประกาศ (ถ้า state = holiday)
+  holidayNote: string | null;
+};
+
+// ข้อเท็จจริงของเดือน (จำนวนวัน/ชั่วโมง) ไม่คิดเป็นเปอร์เซ็นต์หรือคะแนน · ตัวคะแนนรวมมาทีหลังสุดตามคำแนะนำของกรรมการ
+export type HistoryView = {
+  month: string;
+  today: string;
+  hasPrev: boolean;
+  hasNext: boolean;
+  rows: HistoryRow[];
+  summary: { workedDays: number; lateDays: number; noCheckInDays: number; minutes: number };
+};

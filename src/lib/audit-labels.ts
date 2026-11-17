@@ -47,6 +47,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "attendance.edit": "แก้เวลาเข้างานให้น้อง",
   "holiday.add": "ประกาศวันหยุดของรุ่น",
   "holiday.remove": "ยกเลิกวันหยุดของรุ่น",
+  "attendance.export": "ดาวน์โหลดเช็คอิน (CSV)",
   "workrule.add": "ตั้งเวลางานของรุ่น (มีผลล่วงหน้า)",
   "workrule.remove": "ลบเวลางานที่ตั้งไว้ล่วงหน้า",
 };

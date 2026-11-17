@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, isNull, lte } from "drizzle-orm";
+import { and, asc, eq, gte, isNull, lte, min } from "drizzle-orm";
 import { db } from "../db/client";
 import { attendanceRecords, cohortHolidays, cohortWorkRules, users } from "../db/schema";
 
@@ -33,6 +33,13 @@ export const attendanceRepository = {
       .from(users)
       .where(and(eq(users.cohortId, cohortId), eq(users.role, "intern"), eq(users.disabled, false)))
       .orderBy(asc(users.username)),
+  // วันแรกที่มีใครในรุ่นเช็คอิน (= วันที่เริ่มใช้ระบบของรุ่น) · ยังไม่มีเลย = null
+  async firstRecordDate(cohortId: number) {
+    const [row] = await db.select({ d: min(attendanceRecords.workDate) }).from(attendanceRecords).innerJoin(users, eq(users.id, attendanceRecords.userId)).where(eq(users.cohortId, cohortId));
+    return row?.d ?? null;
+  },
+  recordsOfUser: (userId: number, from: string, to: string) =>
+    db.select().from(attendanceRecords).where(and(eq(attendanceRecords.userId, userId), gte(attendanceRecords.workDate, from), lte(attendanceRecords.workDate, to))),
   // น้อง 1 คน (ต้องเป็น intern ที่อยู่ในรุ่น) · ไม่ใช่ intern หรือไม่มีรุ่น = undefined
   async internsOfCohortByUser(userId: number) {
     const [row] = await db.select({ username: users.username, cohortId: users.cohortId, role: users.role }).from(users).where(eq(users.id, userId));

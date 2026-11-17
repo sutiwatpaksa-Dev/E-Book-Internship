@@ -49,6 +49,7 @@ export type AuditAction =
   | "attendance.edit"
   | "holiday.add"
   | "holiday.remove"
+  | "attendance.export"
   | "workrule.add"
   | "workrule.remove";
 
